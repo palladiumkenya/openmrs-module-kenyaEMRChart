@@ -8,8 +8,6 @@ import org.openmrs.ui.framework.fragment.FragmentModel;
 public class PivotTableChartsFragmentController {
     public void controller(FragmentModel model){
 
-        model.put("startDate", "start date");
-        model.put("endDate", "end date");
 
     }
 }
