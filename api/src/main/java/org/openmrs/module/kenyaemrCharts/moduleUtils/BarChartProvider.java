@@ -25,7 +25,7 @@ package org.openmrs.module.kenyaemrCharts.moduleUtils;
 import java.util.List;
 
 /**
- * Created by ona on 04/09/2017.
+ * Bar chart class one of the chart type
  */
 public class BarChartProvider extends AbstractChartProvider {
 
@@ -43,5 +43,4 @@ public class BarChartProvider extends AbstractChartProvider {
 		}
 		return null;
 	}
-
 }

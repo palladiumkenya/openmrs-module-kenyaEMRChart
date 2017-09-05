@@ -24,9 +24,7 @@ table.gridtable td {
     border-color: #666666;
     background-color: #ffffff;
 }
-
 </style>
-
 <div>
     <table class="gridtable">
         <h1>Recommended HIV Test Kits</h1>

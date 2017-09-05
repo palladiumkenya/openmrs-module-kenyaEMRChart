@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by ona on 04/09/2017.
+ * Abstract class to create blue prints for charts
  */
 
 public abstract class AbstractChartProvider {

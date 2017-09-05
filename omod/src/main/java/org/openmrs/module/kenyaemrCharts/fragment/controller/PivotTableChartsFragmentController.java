@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * controller for pivotTableCharts fragment
+ * controller for pivotTableCharts fragments
  */
 public class PivotTableChartsFragmentController {
     public void controller(FragmentModel model){

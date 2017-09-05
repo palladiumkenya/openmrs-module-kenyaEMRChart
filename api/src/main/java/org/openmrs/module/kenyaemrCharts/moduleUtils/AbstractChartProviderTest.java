@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**
- * Created by ona on 05/09/2017.
+ * Test class for AbstractChartProvider
  */
 public class AbstractChartProviderTest {
 
