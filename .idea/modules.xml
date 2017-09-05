@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/kenyaemrCharts.iml" filepath="$PROJECT_DIR$/kenyaemrCharts.iml" />
+      <module fileurl="file://$PROJECT_DIR$/api/kenyaemrCharts-api.iml" filepath="$PROJECT_DIR$/api/kenyaemrCharts-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/omod/kenyaemrCharts-omod.iml" filepath="$PROJECT_DIR$/omod/kenyaemrCharts-omod.iml" />
+    </modules>
+  </component>
+</project>
