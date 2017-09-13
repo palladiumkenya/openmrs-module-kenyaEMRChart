@@ -1,0 +1,4 @@
+org\openmrs\module\kenyaemrCharts\page\controller\KenyaEMRChartsHomePageController.class
+org\openmrs\module\kenyaemrCharts\fragment\controller\PivotTableChartsFragmentController.class
+org\openmrs\module\kenyaemrCharts\web\controller\KenyaEMRAdhocChartsManageController.class
+org\openmrs\module\kenyaemrCharts\extension\html\AdminList.class
