@@ -1,13 +1,68 @@
+# Copied from https://github.com/github/gitignore
+
+### IntelliJ Idea ###
+*.iml
+*.ipr
+*.iws
+.idea/
+
+### Maven ###
+target/
+#############
+
+### Eclipse ###
+*.pydevproject
 .project
-.settings
-api/.classpath
-api/target
-omod/.classpath
-omod/target
-.idea
-*iml
-.DS_Store
-target/checkout/
-/target
-*.sass-cache
-omod/src/main/webapp/resources/styles/kenyaui.css
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpath
+###############
+
+### Java ###
+*.class
+
+# Java Package Files #
+*.jar
+*.war
+*.ear
+############
+
+### Netbeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+################
+
+### Linux ###
+.*
+!.gitignore
+!.gitattributes
+!.travis.yml
+*~
+#############
+

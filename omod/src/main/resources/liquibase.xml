@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9 http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+    <changeSet id="${project.parent.artifactId}-20171106-1715" author="aojwang">
+        <comment>
+            Execute DDL script for ETL
+        </comment>
+        <sqlFile path="sql/DDL.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20171106-1725" author="aojwang">
+        <comment>
+            Execute DML script for ETL
+        </comment>
+        <sqlFile path="sql/DML.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20171106-1735" author="aojwang">
+        <comment>
+            Execute Scheduled Updates script for ETL
+        </comment>
+        <sqlFile path="sql/Scheduled_Updates.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20171106-1740" author="aojwang">
+        <comment>
+            Execute DataTool script for ETL tables
+        </comment>
+        <sqlFile path="sql/DataTools.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
+    <changeSet id="${project.parent.artifactId}-20171106-1741" author="aojwang">
+        <comment>
+            Sets up ETL tables. Recreation of tables
+        </comment>
+        <sql>
+            CALL create_etl_tables();
+            CALL sp_first_time_setup();
+        </sql>
+    </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20171106-1742" author="aojwang">
+        <comment>
+            Sets up ETL dashboard tables
+        </comment>
+        <sql>
+            CALL sp_update_dashboard_table();
+        </sql>
+    </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20171106-1745" author="aojwang">
+        <comment>
+            create users for reporting
+        </comment>
+        <sql>
+            grant usage on *.* to 'kenyaemr_reports'@'localhost';
+            DROP USER 'kenyaemr_reports'@'localhost';
+            CREATE USER 'kenyaemr_reports'@'localhost' IDENTIFIED BY 'kenyaemrreports123#';
+            GRANT SELECT, SHOW VIEW ON kenyaemr_datatools.* TO 'kenyaemr_reports'@'localhost';
+            GRANT ALL PRIVILEGES ON kenyaemr_etl.* TO openmrs_user;
+            FLUSH PRIVILEGES;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
