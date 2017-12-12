@@ -48,19 +48,35 @@
             CALL sp_update_dashboard_table();
         </sql>
     </changeSet>
-
-    <changeSet id="${project.parent.artifactId}-20171106-1745" author="aojwang">
+<!-- consider removing this changeset if not necessary. data tool could be setup separately-->
+    <changeSet id="${project.parent.artifactId}-20171106-1743" author="aojwang">
         <comment>
-            create users for reporting
+            Sets up data tool tables
         </comment>
         <sql>
-            grant usage on *.* to 'kenyaemr_reports'@'localhost';
-            DROP USER 'kenyaemr_reports'@'localhost';
-            CREATE USER 'kenyaemr_reports'@'localhost' IDENTIFIED BY 'kenyaemrreports123#';
-            GRANT SELECT, SHOW VIEW ON kenyaemr_datatools.* TO 'kenyaemr_reports'@'localhost';
-            GRANT ALL PRIVILEGES ON kenyaemr_etl.* TO openmrs_user;
-            FLUSH PRIVILEGES;
+            CALL create_datatools_tables();
         </sql>
     </changeSet>
-
+    <!--Adding scheduled task to periodically refresh ETL tables-->
+    <changeSet id="${project.parent.artifactId}-20171212-1744" author="aojwang">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.kenyaemrCharts.task.RefreshETLTablesTask'
+                And name = 'Refresh ETL Tables'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Refresh ETL Tables Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Refresh ETL Tables" />
+            <column name="description" value="Periodically refreshes ETL Tables" />
+            <column name="schedulable_class" value="org.openmrs.module.kenyaemrCharts.task.RefreshETLTablesTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2017-11-28T23:59:59" />
+            <column name="repeat_interval" value="7200" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="uuid" value="ca3c92a7-a312-4a5f-b7f5-fabf4b6122d4" />
+        </insert>
+    </changeSet>
 </databaseChangeLog>

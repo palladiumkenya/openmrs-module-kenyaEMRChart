@@ -22,8 +22,16 @@
 		<constructor-arg value="kenyaemrcharts.home" />
 		<constructor-arg value="Pivot Table Charts" />
 		<constructor-arg value="kenyaemrCharts/kenyaEMRChartsHome.page" />
-		<constructor-arg value="SpeedPhasesReports:apps/hrs_report-icon.gif" />
-		<constructor-arg value="1100005" />
+		<constructor-arg value="kenyaui:apps/reports.png" />
+		<constructor-arg value="110000" />
+	</bean>
+
+	<bean id="kenyaemr.etl.etladmin" factory-bean="kenyacore.appFactoryBean" factory-method="createInstance">
+		<constructor-arg value="kenyaemretladmin.home" />
+		<constructor-arg value="ETL Admin" />
+		<constructor-arg value="kenyaemrCharts/kenyaemretlmanagerhome.page" />
+		<constructor-arg value="kenyaui:apps/reports.png" />
+		<constructor-arg value="1100001" />
 	</bean>
 	
 </beans>

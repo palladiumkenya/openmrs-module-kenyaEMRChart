@@ -4,36 +4,24 @@ BEGIN
 DECLARE script_id INT(11);
 
 -- create/recreate database kenyaemr_etl
-SELECT "Recreating kenyaemr_etl database";
 drop database if exists kenyaemr_etl;
 create database kenyaemr_etl;
 
--- grant usage on *.* to 'kenyaemr_reports'@'localhost';
--- DROP USER 'kenyaemr_reports'@'localhost';
--- CREATE USER 'kenyaemr_reports'@'localhost' IDENTIFIED BY 'kenyaemrreports123#';
--- GRANT SELECT, SHOW VIEW ON kenyaemr_datatools.* TO 'kenyaemr_reports'@'localhost';
--- GRANT ALL PRIVILEGES ON kenyaemr_etl.* TO openmrs_user;
--- FLUSH PRIVILEGES;
-
--- ------------------- create table to hold etl script progress ------------------
+drop database if exists kenyaemr_datatools;
+create database kenyaemr_datatools;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_script_status;
 CREATE TABLE kenyaemr_etl.etl_script_status(
-id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-uuid CHAR(32) DEFAULT NULL,
-script_name VARCHAR(50) DEFAULT null,
-start_time DATETIME DEFAULT NULL,
-stop_time DATETIME DEFAULT NULL,
-error VARCHAR(255) DEFAULT NULL,
-INDEX(stop_time),
-INDEX(start_time)
+  id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  script_name VARCHAR(50) DEFAULT null,
+  start_time DATETIME DEFAULT NULL,
+  stop_time DATETIME DEFAULT NULL,
+  error VARCHAR(255) DEFAULT NULL
 );
 
 -- Log start time
 INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_tables', NOW());
 SET script_id = LAST_INSERT_ID();
-
-SELECT "Droping existing etl tables";
 
 DROP TABLE if exists kenyaemr_etl.etl_hiv_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_hiv_followup;
@@ -57,7 +45,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
 
-SELECT "Recreating etl tables";
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
 patient_id INT(11) not null primary key,
@@ -446,7 +433,7 @@ INDEX(who_stage),
 INDEX(cd4),
 INDEX(arv_status)
 );
-SELECT "Successfully created etl_mch_antenatal_visit table";
+
 -- ------------ create table etl_mch_postnatal_visit-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_mch_postnatal_visit (
@@ -497,7 +484,6 @@ INDEX(mother_hiv_status),
 INDEX(arv_status)
 );
 
-SELECT "Successfully created etl_mch_postnatal_visit table";
 -- ------------ create table etl_tb_enrollment-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_tb_enrollment (
@@ -547,7 +533,7 @@ INDEX(patient_classification),
 INDEX(pulmonary_smear_result),
 INDEX(date_first_enrolled_in_tb_care)
 );
-SELECT "Successfully created etl_tb_enrollment table";
+
 -- ------------ create table etl_tb_follow_up_visit-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_tb_follow_up_visit (
@@ -583,7 +569,7 @@ INDEX(encounter_id),
 INDEX(patient_id),
 INDEX(hiv_status)
 );
-SELECT "Successfully created etl_tb_follow_up_visit table";
+
 -- ------------ create table etl_tb_screening-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_tb_screening (
@@ -613,7 +599,7 @@ INDEX(noticeable_weight_loss),
 INDEX(night_sweat_for_2wks_or_more),
 INDEX(resulting_tb_status)
 );
-SELECT "Successfully created etl_tb_screening table";
+
 -- ------------ create table etl_hei_enrollment-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_hei_enrollment (
@@ -668,7 +654,7 @@ INDEX(reason_for_special_care),
 INDEX(referral_source),
 INDEX(transfer_in)
 );
-SELECT "Successfully created etl_hei_enrollment table";
+
 -- ------------ create table etl_hei_follow_up_visit-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_hei_follow_up_visit (
@@ -720,7 +706,7 @@ INDEX(encounter_id),
 INDEX(patient_id),
 INDEX(infant_feeding)
 );
-SELECT "Successfully created etl_hei_follow_up_visit table";
+
 -- ------------ create table etl_mchs_delivery-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_mchs_delivery (
@@ -753,7 +739,7 @@ INDEX(visit_date),
 INDEX(encounter_id),
 INDEX(patient_id)
 );
-SELECT "Successfully created etl_mchs_delivery table";
+
 -- ------------ create table etl_patients_booked_today-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_patients_booked_today(
@@ -799,7 +785,6 @@ INDEX(date_started),
 INDEX(date_discontinued),
 INDEX(patient_id, date_started)
 );
-SELECT "Successfully created etl_drug_event table";
 
 -- -------------------------- CREATE hts_test table ---------------------------------
 
@@ -896,7 +881,6 @@ INDEX(ipt_started, visit_date),
 INDEX(encounter_id),
 INDEX(ipt_started)
 );
-SELECT "Successfully created etl_ipt_screening table";
 
 -- ------------ create table etl_ipt_follow_up -----------------------
 
@@ -933,11 +917,8 @@ INDEX(adherence),
 INDEX(outcome),
 INDEX(discontinuation_reason)
 );
-SELECT "Successfully created etl_ipt_follow_up table";
-
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
-
 
 END$$
 

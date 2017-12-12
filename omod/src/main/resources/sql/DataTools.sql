@@ -2,10 +2,12 @@
 DROP PROCEDURE IF EXISTS create_datatools_tables$$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
+DECLARE script_id INT(11);
 
+-- Log start time
+INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('KenyaEMR_Data_Tool', NOW());
+SET script_id = LAST_INSERT_ID();
 -- ------------------- create table to hold etl script progress ------------------
-
-SELECT "Recreating datatools tables";
 
 -- populate patient_hiv_enrollment table
 create table kenyaemr_datatools.patient_demographics as
@@ -34,7 +36,7 @@ if(dead=1, "Yes", "NO") dead,
 death_date,
 voided
 from kenyaemr_etl.etl_patient_demographics;
-SELECT "Successfully created patient demographics table";
+
 -- ADD INDICES
 
 ALTER TABLE kenyaemr_datatools.patient_demographics ADD PRIMARY KEY(patient_id); 
@@ -85,7 +87,6 @@ ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(transfer_in_date);
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(date_first_enrolled_in_care);
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(transfer_in_date);
 
-SELECT "Successfully created hiv_enrollment table";
 
 -- create table hiv_followup
 create table kenyaemr_datatools.hiv_followup as
@@ -199,8 +200,6 @@ ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,patient_id);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,condom_provided);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,family_planning_method);
 
-SELECT "Successfully created hiv_followup table";
-
 -- create table laboratory_extract
 create table kenyaemr_datatools.laboratory_extract as
 select 
@@ -228,8 +227,6 @@ ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(lab_test);
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(test_result);
-
-SELECT "Successfully created laboratory_extract table";
 
 -- create table pharmacy_extract
 create table kenyaemr_datatools.pharmacy_extract as
@@ -259,7 +256,6 @@ ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD FOREIGN KEY (patient_id) REF
 ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD INDEX(drug_name);
-SELECT "Successfully created pharmacy_extract table";
 
 -- create table patient_program_discontinuation
 create table kenyaemr_datatools.patient_program_discontinuation as
@@ -287,8 +283,6 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(encount
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(discontinuation_reason);
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(date_died);
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfer_date);
-
-SELECT "Successfully created patient_program_discontinuation table";
 
 -- create table mch_enrollment
 create table kenyaemr_datatools.mch_enrollment as
@@ -339,8 +333,6 @@ ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(tb_screening);
 ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_status);
 ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_test_date);
 ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(partner_hiv_status);
-
-SELECT "Successfully created mch_enrollment table";
 
 -- create table mch_antenatal_visit
 create table kenyaemr_datatools.mch_antenatal_visit as
@@ -396,8 +388,6 @@ ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(who_stage);
 ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(arv_status);
 
-SELECT "Successfully created mch_antenatal_visit table";
-
 -- create table mch_postnatal_visit
 create table kenyaemr_datatools.mch_postnatal_visit as
 select 
@@ -450,8 +440,6 @@ ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
 ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(mother_hiv_status);
 ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
 
-SELECT "Successfully created mch_postnatal_visit table";
-
 -- create table tb_enrollment
 create table kenyaemr_datatools.tb_enrollment as
 select 
@@ -499,7 +487,6 @@ ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(disease_classification);
 ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(patient_classification);
 ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(pulmonary_smear_result);
 ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(date_first_enrolled_in_tb_care);
-SELECT "Successfully created tb_enrollment table";
 
 -- create table tb_follow_up_visit
 create table kenyaemr_datatools.tb_follow_up_visit as
@@ -536,8 +523,6 @@ ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD FOREIGN KEY (patient_id) R
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(hiv_status);
- 
- SELECT "Successfully created tb_follow_up_visit";
 
 -- create table tb_screening
 create table kenyaemr_datatools.tb_screening as
@@ -563,8 +548,6 @@ ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFEREN
 
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(encounter_id);
-
- SELECT "Successfully created tb_screening";
 
 -- create table hei_enrollment
 create table kenyaemr_datatools.hei_enrollment as
@@ -616,7 +599,6 @@ ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(transfer_in);
 ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(child_exposed);
 ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(referral_source);
- SELECT "Successfully created hei_enrollment";
 
 -- create table hei_follow_up_visit
  create table kenyaemr_datatools.hei_follow_up_visit as
@@ -661,8 +643,6 @@ ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(infant_feeding);
 
- SELECT "Successfully created hei_follow_up_visit";
-
 -- create table mch_delivery table
 create table kenyaemr_datatools.mch_delivery as
 select 
@@ -702,9 +682,6 @@ ALTER TABLE kenyaemr_datatools.mch_delivery ADD FOREIGN KEY (patient_id) REFEREN
 ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(encounter_id);
 
-SELECT "Successfully created mch_delivey table";
-
-SELECT "Creating HTS tables";
 
 create table kenyaemr_datatools.hts_test as select * from kenyaemr_etl.etl_hts_test;
 create table kenyaemr_datatools.hts_referral_and_linkage as select * from kenyaemr_etl.etl_hts_referral_and_linkage;
@@ -722,22 +699,19 @@ ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(visit_date);
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_type);
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_status);
 
-SELECT "Creating current in care tables";
 create table kenyaemr_datatools.current_in_care as select * from kenyaemr_etl.etl_current_in_care;
 ALTER TABLE kenyaemr_datatools.current_in_care add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-SELECT "Creating drug event table";
 create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
 alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-SELECT "Creating IPT screening table";
 create table kenyaemr_datatools.ipt_screening as select * from kenyaemr_etl.etl_ipt_screening;
 alter table kenyaemr_datatools.ipt_screening add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-SELECT "Creating IPT followup table";
 create table kenyaemr_datatools.ipt_followup as select * from kenyaemr_etl.etl_ipt_follow_up;
 alter table kenyaemr_datatools.ipt_followup add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-SELECT "Completed data tool tables";
+UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+
 END$$
--- DELIMITER ;
+
