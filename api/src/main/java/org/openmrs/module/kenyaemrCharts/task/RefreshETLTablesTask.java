@@ -41,10 +41,16 @@ public class RefreshETLTablesTask extends AbstractTask {
 	 * @see AbstractTask#execute()
 	 */
 	public void execute() {
+		Context.openSession();
+
 		DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
 
 		Transaction tx = null;
 		try {
+
+			if (!Context.isAuthenticated()) {
+				authenticate();
+			}
 
 			tx = sf.getHibernateSessionFactory().getCurrentSession().beginTransaction();
 			final Transaction finalTx = tx;
@@ -57,9 +63,10 @@ public class RefreshETLTablesTask extends AbstractTask {
 			CallableStatement dataToolStatement = connection.prepareCall("{CALL create_datatools_tables}");
 			cs.execute();
 			dataToolStatement.execute();
-			finalTx.commit();
+
 				}
 			});
+			finalTx.commit();
 		}
 		catch (Exception e) {
 			throw new IllegalArgumentException("Unable to execute query", e);

@@ -1963,7 +1963,7 @@ CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
-DELETE FROM kenyaemr_etl.etl_script_status where script_name="initial_creation_of_tables" and start_time < DATE_SUB(NOW(), INTERVAL 1 HOUR);
+DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
 SELECT update_script_id;
 
 END$$

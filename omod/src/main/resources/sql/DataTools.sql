@@ -7,7 +7,9 @@ DECLARE script_id INT(11);
 -- Log start time
 INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('KenyaEMR_Data_Tool', NOW());
 SET script_id = LAST_INSERT_ID();
--- ------------------- create table to hold etl script progress ------------------
+
+drop database if exists kenyaemr_datatools;
+create database kenyaemr_datatools;
 
 -- populate patient_hiv_enrollment table
 create table kenyaemr_datatools.patient_demographics as
