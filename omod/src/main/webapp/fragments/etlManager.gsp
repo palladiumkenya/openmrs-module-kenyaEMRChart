@@ -3,6 +3,8 @@
 
     jq(function() {
         jq('#refresh').click(function() {
+            jq("#refresh").attr("disabled", true);
+            //jq("#recreate").attr("disabled", true);
             jq.getJSON('${ ui.actionLink("refreshTables") }')
                 .success(function(data) {
                     for (index in data) {
@@ -23,9 +25,13 @@
                 .error(function(xhr, status, err) {
                     alert('AJAX error ' + err);
                 })
+            jq("#refresh").attr("disabled", false);
+            //jq("#recreate").attr("disabled", false);
         });
 
         jq('#recreate').click(function() {
+            jq("#recreate").attr("disabled", true);
+            //jq("#refresh").attr("disabled", true);
             jq.getJSON('${ ui.actionLink("recreateTables") }')
                 .success(function(data) {
                     for (index in data) {
@@ -46,7 +52,10 @@
                 .error(function(xhr, status, err) {
                     alert('AJAX error ' + err);
                 })
+            jq("#recreate").attr("disabled", false);
+            //jq("#refresh").attr("disabled", false);
         });
+
     });
 </script>
 
@@ -67,6 +76,7 @@
 </div>
 <br/>
 <br/>
+<div id="msg"></div>
 <div>
     <h3>Audit Trail</h3>
     <table id="log_table">
