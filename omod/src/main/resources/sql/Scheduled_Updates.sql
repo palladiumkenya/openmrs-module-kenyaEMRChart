@@ -1010,7 +1010,7 @@ notes
 ) 
 select
 e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
-max(case o.concept_id when 1659 then o.value_coded else "" end) as resulting_tb_status,
+max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_tb_status,
 max(case o.concept_id when 1113 then date(o.value_datetime)  else "" end) as tb_treatment_start_date,
 max(case o.concept_id when 160632 then value_text else "" end) as notes
 from encounter e 
