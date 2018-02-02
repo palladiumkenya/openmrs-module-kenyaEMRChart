@@ -1899,8 +1899,8 @@ action_taken
 )
 select
 e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
-max(if(o.concept_id = 164073, o.value_datetime, "" )) as ipt_due_date,
-max(if(o.concept_id = 164074, o.value_datetime, "" )) as date_collected_ipt,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
+max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
 max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
 max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
 max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
