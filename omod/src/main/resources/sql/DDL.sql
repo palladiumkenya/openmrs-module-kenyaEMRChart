@@ -5,10 +5,10 @@ DECLARE script_id INT(11);
 
 -- create/recreate database kenyaemr_etl
 drop database if exists kenyaemr_etl;
-create database kenyaemr_etl;
+create database kenyaemr_etl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools;
+create database kenyaemr_datatools CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_script_status;
 CREATE TABLE kenyaemr_etl.etl_script_status(
@@ -820,7 +820,7 @@ patient_given_result VARCHAR(50) DEFAULT NULL,
 couple_discordant VARCHAR(100) DEFAULT NULL,
 tb_screening VARCHAR(20) DEFAULT NULL,
 patient_had_hiv_self_test VARCHAR(50) DEFAULT NULL,
-remarks VARCHAR(50) DEFAULT NULL,
+remarks VARCHAR(255) DEFAULT NULL,
 voided INT(11),
 index(patient_id),
 index(visit_id),
@@ -846,10 +846,10 @@ creator INT(11) NOT NULL,
 date_created DATE NOT NULL,
 visit_date DATE,
 tracing_type VARCHAR(50),
-tracing_status VARCHAR(10),
+tracing_status VARCHAR(100),
 ccc_number INT(11),
-facility_linked_to VARCHAR(50),
-provider_handed_to VARCHAR(50),
+facility_linked_to VARCHAR(100),
+provider_handed_to VARCHAR(100),
 voided INT(11),
 index(patient_id),
 index(visit_date),
@@ -894,13 +894,13 @@ location_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL PRIMARY KEY,
 ipt_due_date DATE DEFAULT NULL,
 date_collected_ipt DATE DEFAULT NULL,
-hepatotoxity INT(11),
-peripheral_neuropathy INT(11),
-rash INT(11),
-adherence INT(11),
-outcome INT(11),
+hepatotoxity VARCHAR(100) DEFAULT NULL,
+peripheral_neuropathy VARCHAR(100) DEFAULT NULL ,
+rash VARCHAR(100),
+adherence VARCHAR(100),
+outcome VARCHAR(100),
 date_of_outcome DATE DEFAULT NULL,
-discontinuation_reason INT(11),
+discontinuation_reason VARCHAR(100),
 action_taken VARCHAR(100),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
