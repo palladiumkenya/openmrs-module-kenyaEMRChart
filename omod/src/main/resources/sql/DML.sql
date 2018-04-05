@@ -346,7 +346,7 @@ max(if(o.concept_id=164940 or (o.concept_id=1282 and o.value_coded = 74250),o.va
 max(if(o.concept_id=162230,o.value_coded,null)) as inh_dispensed,
 max(if(o.concept_id=1658,o.value_coded,null)) as arv_adherence,
 max(if(o.concept_id=160582,o.value_coded,null)) as poor_arv_adherence_reason,
-max(if(o.concept_id=160632,trim(o.value_text),null)) as poor_arv_adherence_reason_other,
+null as poor_arv_adherence_reason_other, -- max(if(o.concept_id=160632,trim(o.value_text),null)) as poor_arv_adherence_reason_other,
 max(if(o.concept_id=159423,o.value_coded,null)) as pwp_disclosure,
 max(if(o.concept_id=161557,o.value_coded,null)) as pwp_partner_tested,
 max(if(o.concept_id=159777,o.value_coded,null)) as condom_provided ,
@@ -503,7 +503,7 @@ select
 	max(if(o.concept_id = 1282 and o.value_coded = 105281,1, 0)) as is_ctx,
 	max(if(o.concept_id = 1282 and o.value_coded = 74250,1, 0)) as is_dapsone,
 	max(if(o.concept_id = 1443, o.value_numeric, null)) as dose,
-	max(if(o.concept_id = 159368, o.value_numeric, null)) as duration,
+	max(if(o.concept_id = 159368, if(o.value_numeric > 10000, 10000, o.value_numeric), null)) as duration, -- catching typos in duration field
 	max(if(o.concept_id = 1732 and o.value_coded=1072,'Days',if(o.concept_id=1732 and o.value_coded=1073,'Weeks',if(o.concept_id=1732 and o.value_coded=1074,'Months',null)))) as duration_units,
 	o.voided,
 	o.date_voided,

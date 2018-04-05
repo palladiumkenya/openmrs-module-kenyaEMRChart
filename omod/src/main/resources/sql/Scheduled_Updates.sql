@@ -1531,7 +1531,7 @@ select
 	max(if(o.concept_id = 1282 and o.value_coded = 105281,1, 0)) as is_ctx,
 	max(if(o.concept_id = 1282 and o.value_coded = 74250,1, 0)) as is_dapsone,
 	max(if(o.concept_id = 1443, o.value_numeric, null)) as dose,
-	max(if(o.concept_id = 159368, o.value_numeric, null)) as duration,
+	max(if(o.concept_id = 159368, if(o.value_numeric > 10000, 10000, o.value_numeric), null)) as duration,
 	max(if(o.concept_id = 1732 and o.value_coded=1072,'Days',if(o.concept_id=1732 and o.value_coded=1073,'Weeks',if(o.concept_id=1732 and o.value_coded=1074,'Months',null)))) as duration_units,
 	o.voided,
 	o.date_voided,
