@@ -307,7 +307,7 @@ max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
 max(if(o.concept_id=160581,o.value_coded,null)) as key_population_type,
 max(if(o.concept_id=5356,o.value_coded,null)) as who_stage ,
 max(if(o.concept_id=1154,o.value_coded,null)) as presenting_complaints ,
-max(if(o.concept_id=160430,left(trim(o.value_text),600),null)) as clinical_notes ,
+null as clinical_notes, -- max(if(o.concept_id=160430,left(trim(o.value_text),600),null)) as clinical_notes ,
 max(if(o.concept_id=164948,o.value_coded,null)) as on_anti_tb_drugs ,
 max(if(o.concept_id=164949,o.value_coded,null)) as on_ipt ,
 max(if(o.concept_id=164950,o.value_coded,null)) as ever_on_ipt ,
@@ -1053,7 +1053,7 @@ select
 e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
 max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_tb_status,
 max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as tb_treatment_start_date,
-max(case o.concept_id when 160632 then value_text else "" end) as notes
+"" as notes -- max(case o.concept_id when 160632 then value_text else "" end) as notes
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632)
