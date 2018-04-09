@@ -2,11 +2,20 @@
     jq = jQuery;
 
     jq(function() {
+        jq("#showStatus").hide();
         jq('#refresh').click(function() {
-            jq("#refresh").attr("disabled", true);
-            //jq("#recreate").attr("disabled", true);
+            jq("#msgSpan").text("Refreshing ETL Tables");
+            jq("#showStatus").show();
+            jq("#msg").text("");
+
+            jq("#refresh").prop("disabled", true);
+            jq("#recreate").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("refreshTables") }')
                 .success(function(data) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("ETL tables refreshed successfully");
+                    jq("#refresh").prop("disabled", false);
+                    jq("#recreate").prop("disabled", false);
                     for (index in data) {
                         jq('#log_table > tbody > tr').remove();
                         var tbody = jq('#log_table > tbody');
@@ -14,26 +23,37 @@
                             var item = data[index];
                             var row = '<tr>';
                             row += '<td width="35%">' + item.script_name + '</td>';
-                            row += '<td width="15%">' + item.start_time + '</td>';
-                            row += '<td width="15%">' + item.stop_time + '</td>';
-                            row += '<td width="15%">' + item.status + '</td>';
+                            row += '<td width="20%">' + item.start_time + '</td>';
+                            row += '<td width="20%">' + item.stop_time + '</td>';
+                            row += '<td width="20%">' + item.status + '</td>';
                             row += '</tr>';
                             tbody.append(row);
                         }
                     }
                 })
                 .error(function(xhr, status, err) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("There was an error refreshing ETL tables");
+                    jq("#refresh").prop("disabled", false);
+                    jq("#recreate").prop("disabled", false);
                     alert('AJAX error ' + err);
                 })
-            jq("#refresh").attr("disabled", false);
-            //jq("#recreate").attr("disabled", false);
         });
 
         jq('#recreate').click(function() {
             jq("#recreate").attr("disabled", true);
-            //jq("#refresh").attr("disabled", true);
+            jq("#msgSpan").text("Recreating ETL Tables");
+            jq("#msg").text("");
+            jq("#showStatus").show();
+            jq("#recreate").prop("disabled", true);
+            jq("#refresh").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("recreateTables") }')
                 .success(function(data) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("ETL tables recreated successfully");
+                    jq("#recreate").prop("disabled", false);
+                    jq("#refresh").prop("disabled", false);
+
                     for (index in data) {
                         jq('#log_table > tbody > tr').remove();
                         var tbody = jq('#log_table > tbody');
@@ -41,23 +61,34 @@
                             var item = data[index];
                             var row = '<tr>';
                             row += '<td width="35%">' + item.script_name + '</td>';
-                            row += '<td width="15%">' + item.start_time + '</td>';
-                            row += '<td width="15%">' + item.stop_time + '</td>';
-                            row += '<td width="15%">' + item.status + '</td>';
+                            row += '<td width="20%">' + item.start_time + '</td>';
+                            row += '<td width="20%">' + item.stop_time + '</td>';
+                            row += '<td width="20%">' + item.status + '</td>';
                             row += '</tr>';
                             tbody.append(row);
                         }
                     }
                 })
                 .error(function(xhr, status, err) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("There was an error recreating ETL tables");
+                    jq("#recreate").prop("disabled", false);
+                    jq("#refresh").prop("disabled", false);
                     alert('AJAX error ' + err);
                 })
-            jq("#recreate").attr("disabled", false);
-            //jq("#refresh").attr("disabled", false);
         });
 
     });
 </script>
+<style>
+thead, tbody {
+    display: block;
+}
+tbody.scrollable {
+    height: 400px;
+    overflow-y: auto;
+}
+</style>
 
 <br/>
 <hr>
@@ -75,6 +106,9 @@
     </button>
 </div>
 <br/>
+<div id="showStatus">
+    <span id="msgSpan"></span> &nbsp;&nbsp;<img src="${ ui.resourceLink("kenyaui", "images/loader_small.gif") }"/>
+</div>
 <br/>
 <div id="msg"></div>
 <div>
@@ -83,19 +117,19 @@
         <thead>
         <tr>
             <td width="35%"><b>Procedure</b></td>
-            <td width="15%"><b>Start Time</b></td>
-            <td width="15%"><b>End Time</b></td>
-            <td width="15%"><b>Completion Status</b></td>
+            <td width="20%"><b>Start Time</b></td>
+            <td width="20%"><b>End Time</b></td>
+            <td width="20%"><b>Completion Status</b></td>
         </tr>
         </thead>
-        <tbody>
+        <tbody class='scrollable'>
         <% if (logs) { %>
         <% logs.each { log -> %>
         <tr>
             <td width="35%">${ log.script_name }</td>
-            <td width="15%">${ log.start_time }</td>
-            <td width="15%">${ log.stop_time }</td>
-            <td width="15%">${ log.status }</td>
+            <td width="20%">${ log.start_time }</td>
+            <td width="20%">${ log.stop_time }</td>
+            <td width="20%">${ log.status }</td>
         </tr>
         <% } %>
         <% } else { %>
