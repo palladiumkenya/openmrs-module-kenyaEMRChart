@@ -1,68 +1,15 @@
-# Copied from https://github.com/github/gitignore
-
-### IntelliJ Idea ###
-*.iml
-*.ipr
-*.iws
-.idea/
-
-### Maven ###
-target/
-#############
-
-### Eclipse ###
-*.pydevproject
 .project
-.metadata
-bin/**
-tmp/**
-tmp/**/*
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.classpath
-.settings/
-.loadpath
+.settings
+api/.classpath
+api/target
+omod/.classpath
+omod/target
+test/.classpath
+test/target
+.idea
+*.iml
+*.releaseBackup
+.DS_Store
 
-# External tool builders
-.externalToolBuilders/
-
-# Locally stored "Eclipse launch configurations"
-*.launch
-
-# CDT-specific
-.cproject
-
-# PDT-specific
-.buildpath
-###############
-
-### Java ###
-*.class
-
-# Java Package Files #
-*.jar
-*.war
-*.ear
-############
-
-### Netbeans ###
-nbproject/private/
-build/
-nbbuild/
-dist/
-nbdist/
-nbactions.xml
-nb-configuration.xml
-################
-
-### Linux ###
-.*
-!.gitignore
-!.gitattributes
-!.travis.yml
-*~
-#############
-
+target/checkout/
+/target
