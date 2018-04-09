@@ -6,7 +6,7 @@
 	<artifactId>kenyaemrCharts</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>KenyaEMR Adhoc Charts Module</name>
+	<name>KenyaEMR ETL Management</name>
 	<description>dhoc charts</description>
 	<url>https://wiki.openmrs.org/display/docs/KenyaEMR+Adhoc+Charts+Module+Module</url>
 	
