@@ -1672,7 +1672,7 @@ max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 th
 null as months_since_last_test,
 max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_disabled,
 max(if(o.concept_id=162558,(case o.value_coded when 120291 then "Deaf" when 147215 then "Blind" when 151342 then "Mentally Challenged" when 164538 then "Physically Challenged" when 5622 then "Other" else "" end),null)) as disability_type,
-max(if(o.concept_id=1710,(case o.value_boolean when 1 then "Yes" when 0 then "No" else "" end),null)) as patient_consented,
+max(if(o.concept_id=1710,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end),null)) as patient_consented,
 max(if(o.concept_id=164959,(case o.value_coded when 164957 then "Individual" when 164958 then "Couple" else "" end),null)) as client_tested_as,
 max(if(o.concept_id=164956,(
   case o.value_coded

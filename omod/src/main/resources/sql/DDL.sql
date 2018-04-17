@@ -5,10 +5,10 @@ DECLARE script_id INT(11);
 
 -- create/recreate database kenyaemr_etl
 drop database if exists kenyaemr_etl;
-create database kenyaemr_etl;
+create database kenyaemr_etl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools;
+create database kenyaemr_datatools CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_script_status;
 CREATE TABLE kenyaemr_etl.etl_script_status(
@@ -48,9 +48,9 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
 patient_id INT(11) not null primary key,
-given_name VARCHAR(100),
-middle_name VARCHAR(100),
-family_name VARCHAR(100),
+given_name VARCHAR(255),
+middle_name VARCHAR(255),
+family_name VARCHAR(255),
 Gender VARCHAR(10),
 DOB DATE,
 national_id_no VARCHAR(50),
