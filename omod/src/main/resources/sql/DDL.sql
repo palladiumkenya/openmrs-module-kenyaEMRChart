@@ -5,10 +5,10 @@ DECLARE script_id INT(11);
 
 -- create/recreate database kenyaemr_etl
 drop database if exists kenyaemr_etl;
-create database kenyaemr_etl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+create database kenyaemr_etl;
 
 drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+create database kenyaemr_datatools;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_script_status;
 CREATE TABLE kenyaemr_etl.etl_script_status(
@@ -239,7 +239,7 @@ INDEX(visit_date, family_planning_method)
 
 SELECT "Successfully created etl_patient_hiv_followup table";
 -- ------- create table etl_laboratory_extract-----------------------------------------
-
+  SELECT "Creating etl_laboratory_extract table";
 CREATE TABLE kenyaemr_etl.etl_laboratory_extract (
 uuid char(38) PRIMARY KEY,
 encounter_id INT(11),
@@ -247,8 +247,8 @@ patient_id INT(11) NOT NULL ,
 location_id INT(11) DEFAULT NULL,
 visit_date DATE,
 visit_id INT(11),
-lab_test VARCHAR(200),
-test_result VARCHAR(200),
+lab_test VARCHAR(180),
+test_result VARCHAR(180),
 date_test_requested DATE DEFAULT null,
 date_test_result_received DATE,
 test_requested_by INT(11),

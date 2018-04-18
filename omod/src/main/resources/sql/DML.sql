@@ -29,9 +29,9 @@ p.death_date
 FROM (
 select
 p.person_id,
-CONVERT(CAST(pn.given_name as BINARY) USING utf8) as given_name,
-CONVERT(CAST(pn.middle_name as BINARY) USING utf8) as middle_name,
-CONVERT(CAST(pn.family_name as BINARY) USING utf8) as family_name,
+pn.given_name,
+pn.middle_name,
+pn.family_name,
 p.gender,
 p.birthdate,
 p.dead,
