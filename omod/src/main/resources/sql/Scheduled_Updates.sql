@@ -1794,7 +1794,7 @@ facility_linked_to=VALUES(facility_linked_to), ccc_number=VALUES(ccc_number), pr
 ;
 
 -- fetch locally enrolled clients who had gone through HTS
-
+/*
   INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   patient_id,
   visit_id,
@@ -1835,7 +1835,7 @@ or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 group by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), ccc_number=VALUES(ccc_number)
-;
+;*/
 END$$
 -- DELIMITER ;
 

@@ -1634,7 +1634,7 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   group by e.encounter_id;
 
 -- fetch locally enrolled clients who had went through HTS
-
+/*
   INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   patient_id,
   visit_id,
@@ -1670,7 +1670,7 @@ select
  inner join form f on f.form_id = e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
  left outer join patient_identifier pi on pi.patient_id = e.patient_id
  left join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id and pit.uuid = '05ee9cf4-7242-4a17-b4d4-00f707265c8a'
-;
+;*/
 
 END$$
 
