@@ -18,13 +18,13 @@
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
 	<!-- Add here beans related to the API context -->
-	<bean id="kenyaemr.pivottable.chart" factory-bean="kenyacore.appFactoryBean" factory-method="createInstance">
+	<!--<bean id="kenyaemr.pivottable.chart" factory-bean="kenyacore.appFactoryBean" factory-method="createInstance">
 		<constructor-arg value="kenyaemrcharts.home" />
 		<constructor-arg value="Pivot Table Charts" />
 		<constructor-arg value="kenyaemrCharts/kenyaEMRChartsHome.page" />
 		<constructor-arg value="kenyaui:apps/reports.png" />
 		<constructor-arg value="110000" />
-	</bean>
+	</bean>-->
 
 	<bean id="kenyaemr.etl.etladmin" factory-bean="kenyacore.appFactoryBean" factory-method="createInstance">
 		<constructor-arg value="kenyaemretladmin.home" />

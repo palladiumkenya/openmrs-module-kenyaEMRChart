@@ -1961,6 +1961,7 @@ CALL sp_update_hts_test(last_update_time);
 CALL sp_update_hts_linkage_and_referral(last_update_time);
 CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
+CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
 DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
