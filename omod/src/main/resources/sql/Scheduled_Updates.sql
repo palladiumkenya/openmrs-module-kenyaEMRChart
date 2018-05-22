@@ -190,7 +190,7 @@ e.location_id,
 e.encounter_id,
 e.creator,
 e.date_created,
-max(if(o.concept_id=164932,o.value_coded,null)) as patient_type ,
+	max(if(o.concept_id in (164932), o.value_coded, if(o.concept_id=160563 and o.value_coded=1065, 160563, null))) as patient_type ,
 max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_care ,
 max(if(o.concept_id=160540,o.value_coded,null)) as entry_point,
 max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
@@ -211,8 +211,8 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
 ) et on et.encounter_type_id=e.encounter_type
 join patient p on p.patient_id=e.patient_id and p.voided=0
-left outer join obs o on o.encounter_id=e.encounter_id 
-	and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641)
+left outer join obs o on o.encounter_id=e.encounter_id
+		and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563)
 where e.voided=0 and e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
