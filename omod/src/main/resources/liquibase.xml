@@ -79,4 +79,11 @@
             <column name="uuid" value="ca3c92a7-a312-4a5f-b7f5-fabf4b6122d4" />
         </insert>
     </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20180524-1533" author="aojwang">
+        <comment>
+            Setting up process_regimen_switch function
+        </comment>
+        <sqlFile path="sql/ProcessRegimenSwitchFunction.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
 </databaseChangeLog>
