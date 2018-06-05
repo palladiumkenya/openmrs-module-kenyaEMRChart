@@ -1713,7 +1713,7 @@ where fup.visit_date <= endDate
 group by patient_id
 having (
 (date(latest_tca) > endDate and (date(latest_tca) > date(date_discontinued) or disc_patient is null )) or
-(((date(latest_tca) between startDate and endDate) and (date(latest_vis_date) >= date(latest_tca))) and (date(latest_tca) > date(date_discontinued) or disc_patient is null )) )
+(((date(latest_tca) between startDate and endDate) and ((date(latest_vis_date) >= date(latest_tca)) or date(latest_tca) > curdate())) and (date(latest_tca) > date(date_discontinued) or disc_patient is null )) )
 ;
 
 -- ADD INDICES
