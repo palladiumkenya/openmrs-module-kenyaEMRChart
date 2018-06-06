@@ -26,7 +26,7 @@ public class EtlManagerFragmentController {
     public void controller(FragmentModel model){
         DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
 
-        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status;";
+        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
         final List<SimpleObject> ret = new ArrayList<SimpleObject>();
 
         try {
@@ -48,8 +48,8 @@ public class EtlManagerFragmentController {
                                 }
                                 ret.add(SimpleObject.create(
                                         "script_name", row[0],
-                                        "start_time", row[1].toString(),
-                                        "stop_time", row[2].toString(),
+                                        "start_time", row[1] != null ? row[1].toString() : "",
+                                        "stop_time", row[2] != null? row[2].toString() : "",
                                         "status", row[3] != null? "Pending": "Success"
                                 ));
                             }
@@ -84,7 +84,7 @@ public class EtlManagerFragmentController {
 
         DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
 
-        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status;";
+        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
         final List<SimpleObject> ret = new ArrayList<SimpleObject>();
         Transaction tx = null;
         try {
@@ -114,8 +114,8 @@ public class EtlManagerFragmentController {
 
                                 ret.add(SimpleObject.create(
                                         "script_name", row[0],
-                                        "start_time", row[1].toString(),
-                                        "stop_time", row[2].toString(),
+                                        "start_time", row[1] != null ? row[1].toString() : "",
+                                        "stop_time", row[2] != null? row[2].toString() : "",
                                         "status", row[3] != null? "Pending": "Success"
                                 ));
                             }
@@ -144,7 +144,7 @@ public class EtlManagerFragmentController {
 
         DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
 
-        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status;";
+        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
 
         final List<SimpleObject> ret = new ArrayList<SimpleObject>();
         Transaction tx = null;
@@ -176,8 +176,8 @@ public class EtlManagerFragmentController {
 
                                 ret.add(SimpleObject.create(
                                         "script_name", row[0],
-                                        "start_time", row[1].toString(),
-                                        "stop_time", row[2].toString(),
+                                        "start_time", row[1] != null ? row[1].toString() : "",
+                                        "stop_time", row[2] != null? row[2].toString() : "",
                                         "status", row[3] != null? "Pending": "Success"
                                 ));
                             }

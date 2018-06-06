@@ -30,8 +30,8 @@
 		<constructor-arg value="kenyaemretladmin.home" />
 		<constructor-arg value="ETL Admin" />
 		<constructor-arg value="kenyaemrCharts/kenyaemretlmanagerhome.page" />
-		<constructor-arg value="kenyaui:apps/reports.png" />
-		<constructor-arg value="1100001" />
+		<constructor-arg value="kenyaemrCharts:apps/etl_admin.png" />
+		<constructor-arg value="520" />
 	</bean>
 	
 </beans>

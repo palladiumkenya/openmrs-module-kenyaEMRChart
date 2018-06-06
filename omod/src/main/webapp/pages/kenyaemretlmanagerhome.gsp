@@ -13,7 +13,7 @@
 
 <div class="ke-page-content">
     <div>
-        <h2>ETL Administration</h2>
+        <h2>ETL Administration Page</h2>
     </div>
     <div>
         ${ ui.includeFragment("kenyaemrCharts", "etlManager") }

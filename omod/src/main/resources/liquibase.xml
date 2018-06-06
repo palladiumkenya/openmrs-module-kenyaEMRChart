@@ -2,6 +2,14 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9 http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+    <changeSet id="${project.parent.artifactId}-20171106-1642" author="aojwang">
+        <comment>
+            Clear all sql scripts so that they are loaded afresh
+        </comment>
+        <sql>
+            DELETE FROM liquibasechangelog where id like 'kenyaemrChart%' and id not in ("kenyaemrCharts-20171212-1744"); ;
+        </sql>
+    </changeSet>
 
     <changeSet id="${project.parent.artifactId}-20171106-1715" author="aojwang">
         <comment>

@@ -81,16 +81,30 @@
     });
 </script>
 <style>
+table {
+    width: 100%;
+}
+
+/*
+thead tr {
+    display: block;
+}
+
 thead, tbody {
     display: block;
 }
 tbody.scrollable {
     height: 400px;
     overflow-y: auto;
+}*/
+th, td {
+    padding: 5px;
+    text-align: left;
+    height: 30px;
+    border-bottom: 1px solid #ddd;
 }
+tr:nth-child(even) {background-color: #f2f2f2;}
 </style>
-
-<br/>
 <hr>
 <div>
 
@@ -109,27 +123,26 @@ tbody.scrollable {
 <div id="showStatus">
     <span id="msgSpan"></span> &nbsp;&nbsp;<img src="${ ui.resourceLink("kenyaui", "images/loader_small.gif") }"/>
 </div>
-<br/>
 <div id="msg"></div>
 <div>
-    <h3>Audit Trail</h3>
+    <h3>History of ETL Operations (Last 10 entries)</h3>
     <table id="log_table">
         <thead>
         <tr>
-            <td width="35%"><b>Procedure</b></td>
-            <td width="20%"><b>Start Time</b></td>
-            <td width="20%"><b>End Time</b></td>
-            <td width="20%"><b>Completion Status</b></td>
+            <th>Procedure</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Completion Status</th>
         </tr>
         </thead>
         <tbody class='scrollable'>
         <% if (logs) { %>
         <% logs.each { log -> %>
         <tr>
-            <td width="35%">${ log.script_name }</td>
-            <td width="20%">${ log.start_time }</td>
-            <td width="20%">${ log.stop_time }</td>
-            <td width="20%">${ log.status }</td>
+            <td>${ log.script_name }</td>
+            <td>${ log.start_time }</td>
+            <td>${ log.stop_time }</td>
+            <td>${ log.status }</td>
         </tr>
         <% } %>
         <% } else { %>
