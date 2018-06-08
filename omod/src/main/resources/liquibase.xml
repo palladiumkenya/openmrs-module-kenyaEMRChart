@@ -38,6 +38,12 @@
         </comment>
         <sqlFile path="sql/DataTools.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
+    <changeSet id="${project.parent.artifactId}-20180608-1807" author="aojwang">
+        <comment>
+            Setting up sp for creating and processing drug order events
+        </comment>
+        <sqlFile path="sql/sp_drug_order_events_tmp_table.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
     <changeSet id="${project.parent.artifactId}-20171106-1741" author="aojwang">
         <comment>
             Sets up ETL tables. Recreation of tables
@@ -92,6 +98,6 @@
         <comment>
             Setting up process_regimen_switch function
         </comment>
-        <sqlFile path="sql/ProcessRegimenSwitchFunction.sql" endDelimiter="\$\$" stripComments="true" />
+        <sqlFile path="sql/FnRegimenReplacement.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
 </databaseChangeLog>
