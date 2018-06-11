@@ -44,6 +44,7 @@ DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
+DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -288,7 +289,7 @@ duration_units VARCHAR(20) ,
 duration_in_days INT(11),
 prescription_provider VARCHAR(50),
 dispensing_provider VARCHAR(50),
-regimen VARCHAR(50),
+regimen MEDIUMTEXT,
 adverse_effects VARCHAR(100),
 date_of_refill DATE,
 date_created DATE,
@@ -770,7 +771,7 @@ CREATE TABLE kenyaemr_etl.etl_drug_event(
 uuid CHAR(38) PRIMARY KEY,
 patient_id INT(11) NOT NULL ,
 date_started DATE,
-regimen VARCHAR(100),
+regimen MEDIUMTEXT,
 regimen_name VARCHAR(100),
 regimen_line VARCHAR(50),
 discontinued INT(11),
@@ -917,6 +918,8 @@ INDEX(adherence),
 INDEX(outcome),
 INDEX(discontinuation_reason)
 );
+
+-- add table to aid processing of regimen switches/substitution
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

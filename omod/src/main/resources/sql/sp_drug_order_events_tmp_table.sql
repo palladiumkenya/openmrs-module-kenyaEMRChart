@@ -7,7 +7,7 @@ DECLARE eRowNum double;
 DECLARE v_row_count INT(11);
 
 DECLARE existing_drug_orders CURSOR FOR
-SELECT distinct rowNum FROM tmp_regimen_events_ordered order by rowNum;
+SELECT distinct rowNum FROM kenyaemr_etl.tmp_regimen_events_ordered order by rowNum;
 
 DECLARE CONTINUE HANDLER FOR NOT FOUND
 SET no_more_rows = TRUE;
@@ -54,10 +54,10 @@ END;
 -- perform all procedure calls within a transaction
 START TRANSACTION;
 
-UPDATE tmp_regimen_events_ordered t
+UPDATE kenyaemr_etl.tmp_regimen_events_ordered t
 inner join (
 select ThisRow.rowNum ThisRowNum, ThisRow.uuid, ThisRow.patient_id,ThisRow.originalRegimen,  ThisRow.startedRegimen, ThisRow.DiscontinuedRegimen, PrevRow.resultingRegimen prevRowResultingRegimen
-from tmp_regimen_events_ordered ThisRow inner join tmp_regimen_events_ordered PrevRow on ThisRow.patient_id=PrevRow.patient_id and ThisRow.rowNum=(PrevRow.rowNum+1)
+from kenyaemr_etl.tmp_regimen_events_ordered ThisRow inner join kenyaemr_etl.tmp_regimen_events_ordered PrevRow on ThisRow.patient_id=PrevRow.patient_id and ThisRow.rowNum=(PrevRow.rowNum+1)
 where ThisRow.rowNum=rowNum order by ThisRow.patient_id, ThisRow.rowNum
 ) u on u.uuid = t.uuid
 SET t.originalRegimen=u.prevRowResultingRegimen,
@@ -75,12 +75,13 @@ $$
 
 -- creating tmp table to hold regimen events. rows are numbered to track which event came first for procedural processing
 
-DROP PROCEDURE IF EXISTS sp_create_regimen_switch_tmp_table$$
+DROP PROCEDURE IF EXISTS sp_create_drug_order_events_tmp_table$$
 CREATE PROCEDURE sp_create_drug_order_events_tmp_table()
 BEGIN
 -- creating numbered rows for regimen change
-drop table if exists tmp_regimen_events_ordered;
-create table tmp_regimen_events_ordered as
+DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
+
+CREATE TABLE kenyaemr_etl.tmp_regimen_events_ordered AS
 SELECT
 uuid,
 patient_id,
@@ -102,9 +103,9 @@ REPLACE(PrevRow.regimen_discontinued, ",","|") DiscontinuedRegimen,
 ThisRow.regimen startedRegimen,
 concat_ws(",", PrevRow.regimen, ThisRow.regimen) as resultingRegimen
 FROM
-etl_drug_event    AS ThisRow
+kenyaemr_etl.etl_drug_event    AS ThisRow
 LEFT JOIN
-etl_drug_event    AS PrevRow
+kenyaemr_etl.etl_drug_event    AS PrevRow
 ON  PrevRow.patient_id   = ThisRow.patient_id
 AND PrevRow.date_started = (SELECT MAX(date_started)
 FROM kenyaemr_etl.etl_drug_event
@@ -113,6 +114,103 @@ AND date_started < ThisRow.date_started) order by patient_id, date_started
 ) u,
 (SELECT  @x:=0, @same_value:='') t
 ORDER BY patient_id, date_started;
+
+END;
+$$
+
+
+-- creating tmp table to hold regimen events. rows are numbered to track which event came first for procedural processing
+
+DROP PROCEDURE IF EXISTS sp_update_drug_event_regimen_details$$
+CREATE PROCEDURE sp_update_drug_event_regimen_details()
+BEGIN
+-- creating numbered rows for regimen change
+UPDATE kenyaemr_etl.etl_drug_event do
+inner join kenyaemr_etl.tmp_regimen_events_ordered tmp on tmp.uuid=do.uuid and tmp.patient_id=do.patient_id
+set do.regimen = tmp.resultingRegimen, do.regimen_name = (CASE
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "ABC+3TC+LPV/r"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DIDANOSINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "ABC+ddI+LPV/r"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DARUNAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "AZT+3TC+DRV/r"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DARUNAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "ABC+3TC+DRV/r"
+-- ---
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "AZT+3TC+LPV/r"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "AZT+3TC+ATV/r"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "TDF+3TC+LPV/r"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "TDF+ABC+LPV/r"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "TDF+3TC+ATV/r"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "d4T+3TC+LPV/r"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "d4T+ABC+LPV/r"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DIDANOSINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "AZT+ddI+LPV/r"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "TDF+AZT+LPV/r"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "AZT+ABC+LPV/r"
+
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "AZT+3TC+NVP"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "AZT+3TC+EFV"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0  THEN "AZT+3TC+ABC"
+
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "TDF+3TC+NVP"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "TDF+3TC+EFV"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0  THEN "TDF+3TC+ABC"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0  THEN "TDF+3TC+AZT"
+
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "d4T+3TC+NVP"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "d4T+3TC+EFV"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0  THEN "d4T+3TC+ABC"
+
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "ABC+3TC+NVP"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "ABC+3TC+EFV"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0  THEN "ABC+3TC+AZT"
+
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DOLUTEGRAVIR", tmp.resultingRegimen) > 0  THEN "AZT+3TC+DTG"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DOLUTEGRAVIR", tmp.resultingRegimen) > 0  THEN "TDF+3TC+DTG"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DOLUTEGRAVIR", tmp.resultingRegimen) > 0  THEN "ABC+3TC+DTG"
+
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0  THEN "TDF+3TC+ATV/r"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0  THEN "AZT+3TC+ATV/r"
+
+END),
+regimen_line = (CASE
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DIDANOSINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DARUNAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DARUNAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+-- ---
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DIDANOSINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LOPINAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("RITONAVIR", tmp.resultingRegimen) > 0 THEN "2nd Line"
+
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0  THEN "2nd Line"
+
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0  THEN "2nd Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0  THEN "2nd Line"
+
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("STAVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0  THEN "2nd Line"
+
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("NEVIRAPINE", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("EFAVIRENZ", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0  THEN "1st Line"
+
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DOLUTEGRAVIR", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DOLUTEGRAVIR", tmp.resultingRegimen) > 0  THEN "1st Line"
+WHEN FIND_IN_SET("ABACAVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("DOLUTEGRAVIR", tmp.resultingRegimen) > 0  THEN "1st Line"
+
+WHEN FIND_IN_SET("TENOFOVIR", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0  THEN "2nd Line"
+WHEN FIND_IN_SET("ZIDOVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("LAMIVUDINE", tmp.resultingRegimen) > 0 AND FIND_IN_SET("ATAZANAVIR", tmp.resultingRegimen) > 0  THEN "2nd Line"
+
+END);
 
 END;
 $$
