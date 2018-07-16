@@ -1,4 +1,5 @@
-
+SET @OLD_SQL_MODE=@@SQL_MODE$$
+SET SQL_MODE=''$$
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_demographics$$
 CREATE PROCEDURE sp_update_etl_patient_demographics(IN last_update_time DATETIME)
 BEGIN
@@ -1845,7 +1846,7 @@ action_taken=VALUES(action_taken) ;
 
 END$$
 -- DELIMITER ;
-
+SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
 
 

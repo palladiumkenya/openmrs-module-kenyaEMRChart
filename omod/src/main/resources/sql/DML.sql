@@ -1,5 +1,6 @@
 
-
+SET @OLD_SQL_MODE=@@SQL_MODE$$
+SET SQL_MODE=''$$
 DROP PROCEDURE IF EXISTS sp_populate_etl_patient_demographics$$
 CREATE PROCEDURE sp_populate_etl_patient_demographics()
 BEGIN
@@ -1776,7 +1777,7 @@ group by e.encounter_id;
 SELECT "Completed processing IPT followup forms", CONCAT("Time: ", NOW());
 END$$
 
-
+SET sql_mode=@OLD_SQL_MODE$$
 
 -- ------------------------------------------- running all procedures -----------------------------
 
@@ -1816,6 +1817,7 @@ UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_scr
 
 SELECT "Completed first time setup", CONCAT("Time: ", NOW());
 END$$
+
 
 
 
