@@ -1383,8 +1383,8 @@ discontinued_reason_non_coded
 from orders o
 left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED'
 left outer join concept_set cs on o.concept_id = cs.concept_id
-where o.voided=0 and cs.concept_set = 1085 -- and o.discontinued=1 -- start and stopped dates should instead be used
-group by o.discontinued_date
+where o.voided=0 and cs.concept_set = 1085 and o.discontinued=1 -- start and stopped dates should instead be used
+group by o.patient_id, o.discontinued_date
 
 ) d on d.patient_id = o.patient_id and d.start_date=o.start_date
 where o.voided=0 and cs.concept_set = 1085

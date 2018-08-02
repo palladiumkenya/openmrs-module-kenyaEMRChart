@@ -1,3 +1,5 @@
+SET @OLD_SQL_MODE=@@SQL_MODE$$
+SET SQL_MODE=''$$
 DROP PROCEDURE IF EXISTS sp_process_regimen_switch_list$$
 CREATE PROCEDURE sp_process_regimen_switch_list()
 BEGIN
@@ -61,7 +63,7 @@ from kenyaemr_etl.tmp_regimen_events_ordered ThisRow inner join kenyaemr_etl.tmp
 where ThisRow.rowNum=rowNum order by ThisRow.patient_id, ThisRow.rowNum
 ) u on u.uuid = t.uuid
 SET t.originalRegimen=u.prevRowResultingRegimen,
-t.resultingRegimen=IF(CONVERT(REPLACE(TRIM(BOTH ',' FROM openmrs.process_regimen_switch(u.prevRowResultingRegimen, CONCAT("(", t.DiscontinuedRegimen, ")"), '', TRUE, 0, 0)),",,", "," ) USING utf8) <> ''
+t.resultingRegimen=IF(CONVERT(REPLACE(TRIM(BOTH ',' FROM openmrs.process_regimen_switch(u.prevRowResultingRegimen, CONCAT("(", t.DiscontinuedRegimen, ")"), '', TRUE, 0, 0)),",,", "," ) USING utf8) is not null
 AND u.startedRegimen <> '',
 concat_ws(",", u.startedRegimen, CONVERT(REPLACE(TRIM(BOTH ',' FROM openmrs.process_regimen_switch(u.prevRowResultingRegimen, CONCAT("(", t.DiscontinuedRegimen, ")"), '', TRUE, 0, 0)),",,", "," ) USING utf8)),
 u.prevRowResultingRegimen
@@ -96,8 +98,8 @@ FROM
 (
 SELECT
 ThisRow.uuid,
-ThisRow.date_started,
 ThisRow.patient_id,
+ThisRow.date_started,
 PrevRow.regimen originalRegimen,
 REPLACE(PrevRow.regimen_discontinued, ",","|") DiscontinuedRegimen,
 ThisRow.regimen startedRegimen,
@@ -214,3 +216,5 @@ END);
 
 END;
 $$
+
+SET sql_mode=@OLD_SQL_MODE$$

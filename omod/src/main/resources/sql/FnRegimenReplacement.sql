@@ -1,3 +1,6 @@
+SET @OLD_SQL_MODE=@@SQL_MODE$$
+SET SQL_MODE=''$$
+
 DROP FUNCTION IF EXISTS process_regimen_switch$$
 CREATE FUNCTION process_regimen_switch(subject VARCHAR(21845), pattern VARCHAR(21845),
                        replacement VARCHAR(21845), greedy BOOLEAN, minMatchLen INT, maxMatchLen INT)
@@ -66,6 +69,8 @@ SET result = subject;
 END IF;
 RETURN result;
 END$$
+
+SET sql_mode=@OLD_SQL_MODE$$
 
 
 
