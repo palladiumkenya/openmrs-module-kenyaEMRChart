@@ -7,7 +7,7 @@
             Clear all sql scripts so that they are loaded afresh
         </comment>
         <sql>
-            DELETE FROM liquibasechangelog where id like 'kenyaemrChart%' and id not in ("kenyaemrCharts-20171212-1744"); ;
+            DELETE FROM liquibasechangelog where id like 'kenyaemrChart%';
         </sql>
     </changeSet>
 
