@@ -88,6 +88,8 @@
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
             <column name="start_time" valueDate="2017-11-28T23:59:59" />
             <column name="repeat_interval" value="7200" />
+            <column name="start_on_startup" value="1" />
+            <column name="started" value="1" />
             <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
             <column name="created_by" value="1" />
             <column name="uuid" value="ca3c92a7-a312-4a5f-b7f5-fabf4b6122d4" />
