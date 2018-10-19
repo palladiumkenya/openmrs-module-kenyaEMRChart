@@ -378,11 +378,11 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
       final_test_result,
       patient_given_result,
-      partner_hiv_tested,
-      partner_hiv_status,
+      (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
-      (case azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as azt_dispensed,
-      (case nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as nvp_dispensed,
+      (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
+      (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
       deworming,
       urine_microscopy,
       (case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
@@ -419,7 +419,6 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(encounter_id);
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(who_stage);
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(arv_status);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(cd4);
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(final_test_result);
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(tb_screening);
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(syphilis_test_status);
@@ -437,7 +436,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       visit_date,
       location_id,
       encounter_id,
-      data_entry_date,
+      date_created,
       duration_of_pregnancy,
       (case mode_of_delivery when 1170 then "Spontaneous vaginal delivery" when 1171 then "Cesarean section" when 1172 then "Breech delivery"
        when 118159 then "Forceps or Vacuum Extractor Delivery" when 159739 then "emergency caesarean section" when 159260 then "vacuum extractor delivery"
@@ -475,8 +474,8 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case birth_with_deformity when 155871 then "deformity" when 1066 then "No"  when 1175 then "Not applicable" else "" end) as birth_with_deformity,
       final_test_result,
       patient_given_result,
-      partner_hiv_tested,
-      partner_hiv_status,
+      (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       (case prophylaxis_given when 105281 then "SULFAMETHOXAZOLE / TRIMETHOPRIM" when 74250 then "DAPSONE"  when 1107 then "None" else "" end) as prophylaxis_given,
       (case haart_given_at_anc when 1 then "Yes" when 2 then "No" else "" end) as haart_given_at_anc,
       (case haart_given_at_delivery when 1 then "Yes" when 2 then "No" else "" end) as haart_given_at_delivery,
@@ -494,6 +493,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(final_test_result);
   ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(baby_sex);
 
+  SELECT "Successfully created mchs_delivery table";
   -- create table mch_discharge table
   create table kenyaemr_datatools.mch_discharge as
     select
@@ -504,7 +504,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       visit_date,
       location_id,
       encounter_id,
-      data_entry_date,
+      date_created,
       (case counselled_on_feeding when 1065 then "Yes" when 1066 then "No" else "" end) as counselled_on_feeding,
       (case baby_status when 163016 then "Alive" when 160432 then "Dead" else "" end) as baby_status,
       (case vitamin_A_dispensed when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as vitamin_A_dispensed,
@@ -578,15 +578,15 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       pelvic_lymph_node_exam,
       final_test_result,
       patient_given_result,
-      partner_hiv_tested,
-      partner_hiv_status,
+      (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
       (case haart_given_anc when 1 then "Yes" when 2 then "No" else "" end) as haart_given_anc,
-      (case haart_given_mat when 1 then "Yes" when 2 then "No" else "" end) as haart_given_mat,
+      (case haart_given_delivery when 1 then "Yes" when 2 then "No" else "" end) as haart_given_delivery,
       haart_start_date,
-      (case azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as azt_dispensed,
-      (case nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as nvp_dispensed,
-      (case maternal_condition_coded when 130 then "Puerperal sepsis" when 114244 then "Perineal Laceration" when 1855 then "In good health" when 134612 then "Maternal Death" when 160429 then "Alive" when 162132 then "Patient condition poor" when 162133 then "Patient condition fair/satisfactory" else "" end) as maternal_condition_coded,
+      (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
+      (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
+      (case maternal_condition when 130 then "Puerperal sepsis" when 114244 then "Perineal Laceration" when 1855 then "In good health" when 134612 then "Maternal Death" when 160429 then "Alive" when 162132 then "Patient condition poor" when 162133 then "Patient condition fair/satisfactory" else "" end) as maternal_condition,
       (case iron_supplementation when 1065 then "Yes" when 1066 then "No" else "" end) as iron_supplementation,
       (case fistula_screening when 1107 then "None" when 49 then "Vesicovaginal Fistula" when 127847 then "Rectovaginal fistula" when 1118 then "Not done"  else "" end) as fistula_screening,
       (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 159393 then "Presumed" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
@@ -722,6 +722,46 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   SELECT "Successfully created hei_follow_up_visit";
 
+  -- create table hei_immunization
+  create table kenyaemr_datatools.hei_immunization as
+    select
+      patient_id,
+      uuid,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      (case BCG when 886 then "Yes" else "" end) as BCG,
+      (case OPV when 783 then "Yes" else "" end) as OPV,
+      (case OPV_sequence when 783 then "Yes" else "" end) as OPV_sequence,
+      (case IPV when 1422 then "Yes" else "" end) as IPV,
+      (case DPT_Hep_B_Hib when 781 then "Yes" else "" end) as DPT_Hep_B_Hib,
+      (case DPT_Hep_B_Hib_sequence when 781 then "Yes" else "" end) as DPT_Hep_B_Hib_sequence,
+      (case PCV_10 when 162342 then "Yes" else "" end) as PCV_10,
+      (case PCV_10_sequence when 162342 then "Yes" else "" end) as PCV_10_sequence,
+      (case ROTA when 83531 then "Yes" else "" end) as ROTA,
+      (case ROTA_sequence when 162586 then "Yes" else "" end) as ROTA_sequence,
+      (case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
+      (case Measles_rubella when 162586 then "Yes" else "" end) as Measles_rubella,
+      (case Measles_rubella_sequence when 162586 then "Yes" else "" end) as Measles_rubella_sequence,
+      (case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months,
+      (case BCG_scar_checked when 1065 then "Yes" when 1066 then "No" else "" end) as BCG_scar_checked,
+      BCG_scar_date_checked,
+      BCG_date_repeated,
+     (case Vitamin_A_given when 1065 then "Yes" when 1066 then "No" else "" end) as Vitamin_A_given,
+     (case Child_fully_immunized when 1065 then "Yes" when 1066 then "No" else "" end) as Child_fully_immunized,
+      Date_of_last_vaccine,
+      date_created,
+      created_by
+
+    from kenyaemr_etl.etl_hei_immunization;
+
+  ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(encounter_id);
+
+  SELECT "Successfully created hei_immunization table";
   -- create table tb_enrollment
   create table kenyaemr_datatools.tb_enrollment as
     select

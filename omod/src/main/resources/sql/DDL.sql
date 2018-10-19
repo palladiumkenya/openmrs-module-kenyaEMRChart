@@ -39,6 +39,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_follow_up_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_delivery;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_discharge;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_immunization;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patients_booked_today;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_missed_appointments;
 DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
@@ -240,6 +241,7 @@ INDEX(visit_date, family_planning_method)
 );
 
 SELECT "Successfully created etl_patient_hiv_followup table";
+
 -- ------- create table etl_laboratory_extract-----------------------------------------
   SELECT "Creating etl_laboratory_extract table";
 CREATE TABLE kenyaemr_etl.etl_laboratory_extract (
@@ -265,6 +267,7 @@ INDEX(test_result)
 
 );
 SELECT "Successfully created etl_laboratory_extract table";
+
 -- ------------ create table etl_pharmacy_extract-----------------------
 
 
@@ -333,6 +336,7 @@ INDEX(date_died),
 INDEX(transfer_date)
 );
 SELECT "Successfully created etl_patient_program_discontinuation table";
+
 -- ------------ create table etl_mch_enrollment-----------------------
   CREATE TABLE kenyaemr_etl.etl_mch_enrollment (
     uuid char(38),
@@ -378,8 +382,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     INDEX(visit_date),
     INDEX(encounter_id),
     INDEX(patient_id),
-    INDEX(first_anc_visit_date),
-    INDEX(age_at_menarche),
     INDEX(tb_screening),
     INDEX(hiv_status),
     INDEX(hiv_test_date),
@@ -417,17 +419,14 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     fetal_heart_rate INT(11),
     fetal_movement INT(11),
     who_stage INT(11),
-    cd4 INT(11),
-    viral_load INT(11),
-    ldl INT(11),
     arv_status INT(11),
     final_test_result VARCHAR(50) DEFAULT NULL,
     patient_given_result VARCHAR(50) DEFAULT NULL,
     partner_hiv_tested INT(11),
     partner_hiv_status INT(11),
     prophylaxis_given INT(11),
-    azt_dispensed INT(11),
-    nvp_dispensed INT(11),
+    baby_azt_dispensed INT(11),
+    baby_nvp_dispensed INT(11),
     deworming INT(11),
     urine_microscopy VARCHAR(100),
     urinary_albumin INT(11),
@@ -467,7 +466,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     INDEX(syphilis_test_status),
     INDEX(cacx_screening),
     INDEX(next_appointment_date),
-    INDEX(cd4),
     INDEX(arv_status)
   );
   SELECT "Successfully created etl_mch_antenatal_visit table";
@@ -482,7 +480,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     visit_date DATE,
     location_id INT(11) DEFAULT NULL,
     encounter_id INT(11) NOT NULL PRIMARY KEY,
-    data_entry_date DATE,
+    date_created DATE,
     duration_of_pregnancy DOUBLE,
     mode_of_delivery INT(11),
     date_of_delivery DATE,
@@ -527,7 +525,10 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     INDEX(encounter_id),
     INDEX(patient_id),
     INDEX(final_test_result),
-    INDEX(baby_sex)
+    INDEX(baby_sex),
+    INDEX( partner_hiv_tested),
+    INDEX( partner_hiv_status)
+
   );
   SELECT "Successfully created etl_mchs_delivery table";
 
@@ -541,7 +542,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     visit_date DATE,
     location_id INT(11) DEFAULT NULL,
     encounter_id INT(11) NOT NULL PRIMARY KEY,
-    data_entry_date DATE,
+    date_created DATE,
     counselled_on_feeding INT(11),
     baby_status INT(11),
     vitamin_A_dispensed INT(11),
@@ -614,11 +615,11 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     partner_hiv_status INT(11),
     prophylaxis_given INT(11),
     haart_given_anc INT(11),
-    haart_given_mat INT(11),
+    haart_given_delivery INT(11),
     haart_start_date DATE,
-    azt_dispensed INT(11),
-    nvp_dispensed INT(11),
-    maternal_condition_coded INT(11),
+    baby_azt_dispensed INT(11),
+    baby_nvp_dispensed INT(11),
+    maternal_condition INT(11),
     iron_supplementation INT(11),
     fistula_screening INT(11),
     cacx_screening INT(11),
@@ -762,6 +763,46 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     INDEX(infant_feeding)
   );
   SELECT "Successfully created etl_hei_follow_up_visit table";
+
+  -- ------- create table etl_hei_immunization table-----------------------------------------
+  SELECT "Creating etl_hei_immunization table";
+  CREATE TABLE kenyaemr_etl.etl_hei_immunization (
+    uuid char(38) PRIMARY KEY,
+    encounter_id INT(11),
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    visit_id INT(11),
+    BCG INT(11),
+    OPV INT(11),
+    OPV_sequence INT(11),
+    IPV INT(11),
+    DPT_Hep_B_Hib INT(11),
+    DPT_Hep_B_Hib_sequence INT(11),
+    PCV_10 INT(11),
+    PCV_10_sequence INT(11),
+    ROTA INT(11),
+    ROTA_sequence INT(11),
+    Measles_rubella INT(11),
+    Measles_rubella_sequence INT(11),
+    Yellow_fever INT(11),
+    Measles_6_months INT(11),
+    BCG_scar_checked INT(11),
+    BCG_scar_date_checked DATE,
+    BCG_date_repeated DATE,
+    Vitamin_A_given INT(11),
+    Child_fully_immunized INT(11),
+    Date_of_last_vaccine DATE,
+    date_created DATE,
+    created_by INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id)
+
+  );
+  SELECT "Successfully created etl_hei_immunization table";
+
 -- ------------ create table etl_tb_enrollment-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_tb_enrollment (
