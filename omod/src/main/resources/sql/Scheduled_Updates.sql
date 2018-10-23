@@ -796,9 +796,6 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 			partner_hiv_tested,
 			partner_hiv_status,
 			prophylaxis_given,
-			haart_given_at_anc,
-			haart_given_at_delivery,
-			haart_start_date,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
 			clinical_notes
@@ -843,9 +840,6 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
-				max(if(o.concept_id=5576,o.value_coded,null)) as haart_given_at_anc,
-				max(if(o.concept_id=159595,o.value_coded,null)) as haart_given_at_delivery,
-				max(if(o.concept_id=163784,date(o.value_datetime),null)) as haart_start_date,
 				max(if(o.concept_id = 1282 and o.value_coded = 160123,1,0)) as baby_azt_dispensed,
 				max(if(o.concept_id = 1282 and o.value_coded = 80586,1,0)) as baby_nvp_dispensed,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes
@@ -865,11 +859,11 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 						or o.date_created >= last_update_time
 						or o.date_voided >= last_update_time
 			group by e.encounter_id
-		ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),data_entry_date=VALUES(data_entry_date),duration_of_pregnancy=VALUES(duration_of_pregnancy),mode_of_delivery=VALUES(mode_of_delivery),date_of_delivery=VALUES(date_of_delivery),blood_loss=VALUES(blood_loss),condition_of_mother=VALUES(condition_of_mother),
+		ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),date_created=VALUES(date_created),duration_of_pregnancy=VALUES(duration_of_pregnancy),mode_of_delivery=VALUES(mode_of_delivery),date_of_delivery=VALUES(date_of_delivery),blood_loss=VALUES(blood_loss),condition_of_mother=VALUES(condition_of_mother),
 			apgar_score_1min=VALUES(apgar_score_1min),apgar_score_5min=VALUES(apgar_score_5min),apgar_score_10min=VALUES(apgar_score_10min),resuscitation_done=VALUES(resuscitation_done),place_of_delivery=VALUES(place_of_delivery),delivery_assistant=VALUES(delivery_assistant),counseling_on_infant_feeding=VALUES(counseling_on_infant_feeding) ,counseling_on_exclusive_breastfeeding=VALUES(counseling_on_exclusive_breastfeeding),
 			counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),baby_sex=VALUES(baby_sex),
-			baby_condition=VALUES(baby_condition),teo_given=VALUES(teo_given),birth_weight=VALUES(birth_weight),bf_within_one_hour=VALUES(bf_within_one_hour),birth_with_deformity=VALUES(birth_with_deformity),final_test_result=VALUES(final_test_result),patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),haart_given_at_anc=VALUES(haart_given_at_anc),
-			haart_given_at_delivery=VALUES(haart_given_at_delivery),haart_start_date=VALUES(haart_start_date),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),clinical_notes=VALUES(clinical_notes)
+			baby_condition=VALUES(baby_condition),teo_given=VALUES(teo_given),birth_weight=VALUES(birth_weight),bf_within_one_hour=VALUES(bf_within_one_hour),birth_with_deformity=VALUES(birth_with_deformity),final_test_result=VALUES(final_test_result),patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given)
+			,baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),clinical_notes=VALUES(clinical_notes)
 
 		;
 
@@ -995,9 +989,6 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
 			partner_hiv_tested,
 			partner_hiv_status,
 			prophylaxis_given,
-			haart_given_anc,
-			haart_given_delivery,
-			haart_start_date,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
 			maternal_condition,
@@ -1061,9 +1052,6 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
-				max(if(o.concept_id=5576,o.value_coded,null)) as haart_given_anc,
-				max(if(o.concept_id=159595,o.value_coded,null)) as haart_given_delivery,
-				max(if(o.concept_id=163784,o.value_datetime,null)) as haart_start_date,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
 				max(if(o.concept_id=160085,o.value_coded,null)) as maternal_condition,
@@ -1102,8 +1090,8 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
 			lochia=VALUES(lochia),pallor=VALUES(pallor),pph=VALUES(pph),mother_hiv_status=VALUES(mother_hiv_status),condition_of_baby=VALUES(condition_of_baby),baby_feeding_method=VALUES(baby_feeding_method),umblical_cord=VALUES(umblical_cord),baby_immunization_started=VALUES(baby_immunization_started),family_planning_counseling=VALUES(family_planning_counseling),uterus_examination=VALUES(uterus_examination),
 			uterus_cervix_examination=VALUES(uterus_cervix_examination),vaginal_examination=VALUES(vaginal_examination),parametrial_examination=VALUES(parametrial_examination),external_genitalia_examination=VALUES(external_genitalia_examination),ovarian_examination=VALUES(ovarian_examination),pelvic_lymph_node_exam=VALUES(pelvic_lymph_node_exam),
 			final_test_result=VALUES(final_test_result),
-			patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),haart_given_anc=VALUES(haart_given_anc),haart_given_delivery=VALUES(haart_given_delivery),haart_start_date=VALUES(haart_start_date),azt_dispensed=VALUES(azt_dispensed),nvp_dispensed=VALUES(nvp_dispensed)
-			,maternal_condition_coded=VALUES(maternal_condition_coded),iron_supplementation=VALUES(iron_supplementation),fistula_screening=VALUES(fistula_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method)
+			patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed)
+			,maternal_condition=VALUES(maternal_condition),iron_supplementation=VALUES(iron_supplementation),fistula_screening=VALUES(fistula_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method)
 			,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to), clinical_notes=VALUES(clinical_notes)
 		;
 
@@ -1434,7 +1422,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 						or o.date_created >= last_update_time
 						or o.date_voided >= last_update_time
 			group by e.encounter_id
-		ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV=VALUES(OPV),OPV_sequence=VALUES(OPV_sequence),IPV=VALUES(IPV),DPT_Hep_B_Hib=VALUES(DPT_Hep_B_Hib),DPT_Hep_B_Hib_sequence=VALUES(DPT_Hep_B_Hib_sequence),
+		ON DUPLICATE KEY UPDATE visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV=VALUES(OPV),OPV_sequence=VALUES(OPV_sequence),IPV=VALUES(IPV),DPT_Hep_B_Hib=VALUES(DPT_Hep_B_Hib),DPT_Hep_B_Hib_sequence=VALUES(DPT_Hep_B_Hib_sequence),
 			PCV_10=VALUES(PCV_10),PCV_10_sequence=VALUES(PCV_10_sequence),ROTA=VALUES(ROTA),ROTA_sequence=VALUES(ROTA_sequence),Yellow_fever=VALUES(Yellow_fever),Measles_rubella=VALUES(Measles_rubella),
 			Measles_rubella_sequence=VALUES(Measles_rubella_sequence),Measles_6_months=VALUES(Measles_6_months),
 		  BCG_scar_checked=VALUES(BCG_scar_checked),BCG_scar_date_checked=VALUES(BCG_scar_date_checked),BCG_date_repeated=VALUES(BCG_date_repeated),Vitamin_A_given=VALUES(Vitamin_A_given),
