@@ -448,8 +448,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case place_of_delivery when 1536 then "HOME" when 1588 then "HEALTH CLINIC/POST" when 1589 then "HOSPITAL"
        when 1601 then "EN ROUTE TO HEALTH FACILITY" when 159670 then "sub-district hospital" when 159671 then "Provincial hospital"
        when 159662 then "district hospital" when 159372 then "Primary Care Clinic" when 5622 then "Other" when 1067 then "Unknown" else "" end) as place_of_delivery,
-      (case delivery_assistant when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE"
-       when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then "COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as delivery_assistant,
+       delivery_assistant,
       (case counseling_on_infant_feeding when 161651 then "Counseling about infant feeding practices" else "" end) as counseling_on_infant_feeding,
       (case counseling_on_exclusive_breastfeeding when 161096 then "Counseling for exclusive breastfeeding" else "" end) as counseling_on_exclusive_breastfeeding,
       (case counseling_on_infant_feeding_for_hiv_infected when 162091 then "Counseling for infant feeding practices to prevent HIV" else "" end) as counseling_on_infant_feeding_for_hiv_infected,
@@ -458,8 +457,8 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case placenta_complete when 163455 then "Complete placenta at delivery" when 163456 then "Incomplete placenta at delivery" else "" end) as placenta_complete,
       (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" else "" end) as maternal_death_audited,
       (case cadre when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then " COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as cadre,
-      other_delivery_complications,
-      duration_of_labor,
+       other_delivery_complications,
+       duration_of_labor,
       (case baby_sex when 1534 then "Male Gender" when 1535 then "Female gender" else "" end) as baby_sex,
       (case baby_condition when 135436 then "Macerated Stillbirth" when 159916 then "Fresh stillbirth" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple "
        when 125872 then "STILLBIRTH" when 126127 then "Spontaneous abortion"
@@ -577,6 +576,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
       (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
       (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
+      (case pnc_exercises when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as pnc_exercises,
       (case maternal_condition when 130 then "Puerperal sepsis" when 114244 then "Perineal Laceration" when 1855 then "In good health" when 134612 then "Maternal Death" when 160429 then "Alive" when 162132 then "Patient condition poor" when 162133 then "Patient condition fair/satisfactory" else "" end) as maternal_condition,
       (case iron_supplementation when 1065 then "Yes" when 1066 then "No" else "" end) as iron_supplementation,
       (case fistula_screening when 1107 then "None" when 49 then "Vesicovaginal Fistula" when 127847 then "Rectovaginal fistula" when 1118 then "Not done"  else "" end) as fistula_screening,
@@ -717,33 +717,28 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   create table kenyaemr_datatools.hei_immunization as
     select
       patient_id,
-      uuid,
-      visit_id,
       visit_date,
-      location_id,
       encounter_id,
-      (case BCG when 886 then "Yes" else "" end) as BCG,
-      (case OPV when 783 then "Yes" else "" end) as OPV,
-      (case OPV_sequence when 783 then "Yes" else "" end) as OPV_sequence,
-      (case IPV when 1422 then "Yes" else "" end) as IPV,
-      (case DPT_Hep_B_Hib when 781 then "Yes" else "" end) as DPT_Hep_B_Hib,
-      (case DPT_Hep_B_Hib_sequence when 781 then "Yes" else "" end) as DPT_Hep_B_Hib_sequence,
-      (case PCV_10 when 162342 then "Yes" else "" end) as PCV_10,
-      (case PCV_10_sequence when 162342 then "Yes" else "" end) as PCV_10_sequence,
-      (case ROTA when 83531 then "Yes" else "" end) as ROTA,
-      (case ROTA_sequence when 162586 then "Yes" else "" end) as ROTA_sequence,
-      (case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
-      (case Measles_rubella when 162586 then "Yes" else "" end) as Measles_rubella,
-      (case Measles_rubella_sequence when 162586 then "Yes" else "" end) as Measles_rubella_sequence,
-      (case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months,
-      (case BCG_scar_checked when 1065 then "Yes" when 1066 then "No" else "" end) as BCG_scar_checked,
-      BCG_scar_date_checked,
-      BCG_date_repeated,
-     (case Vitamin_A_given when 1065 then "Yes" when 1066 then "No" else "" end) as Vitamin_A_given,
-     (case Child_fully_immunized when 1065 then "Yes" when 1066 then "No" else "" end) as Child_fully_immunized,
-      Date_of_last_vaccine,
       date_created,
-      created_by
+      created_by,
+      BCG,
+      OPV_birth,
+      OPV_1,
+      OPV_2,
+      OPV_3,
+      IPV,
+      DPT_Hep_B_Hib_1,
+      DPT_Hep_B_Hib_2,
+      DPT_Hep_B_Hib_3,
+      PCV_10_1,
+      PCV_10_2,
+      PCV_10_3,
+      ROTA_1,
+      ROTA_2,
+      Measles_rubella_1,
+      Measles_rubella_2,
+      #(case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
+      (case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months
 
     from kenyaemr_etl.etl_hei_immunization;
 
