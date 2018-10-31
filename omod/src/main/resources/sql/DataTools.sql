@@ -457,7 +457,8 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case placenta_complete when 163455 then "Complete placenta at delivery" when 163456 then "Incomplete placenta at delivery" else "" end) as placenta_complete,
       (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" else "" end) as maternal_death_audited,
       (case cadre when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then " COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as cadre,
-       other_delivery_complications,
+      (case delivery_complications when 1065 then "Yes" when 1066 then "No" else "" end) as delivery_complications,
+      other_delivery_complications,
        duration_of_labor,
       (case baby_sex when 1534 then "Male Gender" when 1535 then "Female gender" else "" end) as baby_sex,
       (case baby_condition when 135436 then "Macerated Stillbirth" when 159916 then "Fresh stillbirth" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple "

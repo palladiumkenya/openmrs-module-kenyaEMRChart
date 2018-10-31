@@ -507,6 +507,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     placenta_complete INT(11),
     maternal_death_audited INT(11),
     cadre INT(11),
+    delivery_complications INT(11),
     other_delivery_complications VARCHAR(100),
     duration_of_labor INT(11),
     baby_sex INT(11),

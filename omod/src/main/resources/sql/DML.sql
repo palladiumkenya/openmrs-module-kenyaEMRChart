@@ -883,6 +883,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			placenta_complete,
 			maternal_death_audited,
 			cadre,
+			delivery_complications,
 			other_delivery_complications,
 			duration_of_labor,
 			baby_sex,
@@ -935,6 +936,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=163454,o.value_coded,null)) as placenta_complete,
 				max(if(o.concept_id=1602,o.value_coded,null)) as maternal_death_audited,
 				max(if(o.concept_id=1573,o.value_coded,null)) as cadre,
+				max(if(o.concept_id=1576,o.value_coded,null)) as delivery_complications,
 				max(if(o.concept_id=162093,o.value_text,null)) as other_delivery_complications,
 				max(if(o.concept_id=159616,o.value_numeric,null)) as duration_of_labor,
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
@@ -962,7 +964,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
