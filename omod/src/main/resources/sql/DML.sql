@@ -705,6 +705,14 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			fetal_movement,
 			who_stage,
 			arv_status,
+			test_1_kit_name,
+			test_1_kit_lot_no,
+			test_1_kit_expiry,
+			test_1_result,
+			test_2_kit_name,
+			test_2_kit_lot_no,
+			test_2_kit_expiry,
+			test_2_result,
 			final_test_result,
 			patient_given_result,
 			partner_hiv_tested,
@@ -712,7 +720,11 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			prophylaxis_given,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
+			TTT,
+			IPT_malaria,
+			iron_supplement,
 			deworming,
+			bed_nets,
 			urine_microscopy,
 			urinary_albumin,
 			glucose_measurement,
@@ -769,6 +781,14 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=162107,o.value_coded,null)) as fetal_movement,
 				max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
+				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
+				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
+				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
+				max(if(t.test_1_result is not null, t.test_1_result, null)) as test_1_result,
+				max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
+				max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
+				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
+				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -776,7 +796,11 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
-				max(if(o.concept_id=984,o.value_coded,null)) as deworming,
+				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
+				max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
+				max(if(o.concept_id=984,(case o.value_coded when 104677 then "Yes" else "" end),null)) as iron_supplement,
+				max(if(o.concept_id=984,(case o.value_coded when 79413 then "Yes"  else "" end),null)) as deworming,
+				max(if(o.concept_id=984,(case o.value_coded when 160428 then "Yes" else "" end),null)) as bed_nets,
 				max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
 				max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
 				max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -806,12 +830,29 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
+														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843','d3ea25c7-a3e8-4f57-a6a9-e802c3565a30')
 				) f on f.form_id=e.form_id
+				left join (
+										 select
+											 o.person_id,
+											 o.encounter_id,
+											 o.obs_group_id,
+											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
+											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
+											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
+										 from obs o
+											 inner join encounter e on e.encounter_id = o.encounter_id
+											 inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843')
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 group by e.encounter_id, o.obs_group_id
+									 ) t on e.encounter_id = t.encounter_id
+
 			group by e.encounter_id;
 		SELECT "Completed processing MCH antenatal visits ", CONCAT("Time: ", NOW());
 		END$$
@@ -850,6 +891,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			placenta_complete,
 			maternal_death_audited,
 			cadre,
+			delivery_complications,
 			other_delivery_complications,
 			duration_of_labor,
 			baby_sex,
@@ -858,6 +900,14 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			birth_weight,
 			bf_within_one_hour,
 			birth_with_deformity,
+			test_1_kit_name,
+			test_1_kit_lot_no,
+			test_1_kit_expiry,
+			test_1_result,
+			test_2_kit_name,
+			test_2_kit_lot_no,
+			test_2_kit_expiry,
+			test_2_result,
 			final_test_result,
 			patient_given_result,
 			partner_hiv_tested,
@@ -886,7 +936,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=159605,o.value_numeric,null)) as apgar_score_10min,
 				max(if(o.concept_id=162131,o.value_coded,null)) as resuscitation_done,
 				max(if(o.concept_id=1572,o.value_coded,null)) as place_of_delivery,
-				max(if(o.concept_id=1573,o.value_coded,null)) as delivery_assistant,
+				max(if(o.concept_id=1473,o.value_text,null)) as delivery_assistant,
 				max(if(o.concept_id=1379 and o.value_coded=161651,o.value_coded,null)) as counseling_on_infant_feeding,
 				max(if(o.concept_id=1379 and o.value_coded=161096,o.value_coded,null)) as counseling_on_exclusive_breastfeeding,
 				max(if(o.concept_id=1379 and o.value_coded=162091,o.value_coded,null)) as counseling_on_infant_feeding_for_hiv_infected,
@@ -894,6 +944,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=163454,o.value_coded,null)) as placenta_complete,
 				max(if(o.concept_id=1602,o.value_coded,null)) as maternal_death_audited,
 				max(if(o.concept_id=1573,o.value_coded,null)) as cadre,
+				max(if(o.concept_id=1576,o.value_coded,null)) as delivery_complications,
 				max(if(o.concept_id=162093,o.value_text,null)) as other_delivery_complications,
 				max(if(o.concept_id=159616,o.value_numeric,null)) as duration_of_labor,
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
@@ -902,6 +953,14 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=161543,o.value_coded,null)) as bf_within_one_hour,
 				max(if(o.concept_id=164122,o.value_coded,null)) as birth_with_deformity,
+				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
+				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
+				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
+				max(if(t.test_1_result is not null, t.test_1_result, null)) as test_1_result,
+				max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
+				max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
+				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
+				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -913,13 +972,28 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1573,1379,1151,163454,1602,1573,162093,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
 				) f on f.form_id=e.form_id
-
+				left join (
+										 select
+											 o.person_id,
+											 o.encounter_id,
+											 o.obs_group_id,
+											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
+											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
+											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
+										 from obs o
+											 inner join encounter e on e.encounter_id = o.encounter_id
+											 inner join form f on f.form_id=e.form_id and f.uuid in ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 group by e.encounter_id, o.obs_group_id
+									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id ;
 		SELECT "Completed processing MCH Delivery visits", CONCAT("Time: ", NOW());
 		END$$
@@ -1030,6 +1104,14 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 			external_genitalia_examination,
 			ovarian_examination,
 			pelvic_lymph_node_exam,
+			test_1_kit_name,
+			test_1_kit_lot_no,
+			test_1_kit_expiry,
+			test_1_result,
+			test_2_kit_name,
+			test_2_kit_lot_no,
+			test_2_kit_expiry,
+			test_2_result,
 			final_test_result,
 			patient_given_result,
 			partner_hiv_tested,
@@ -1037,6 +1119,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 			prophylaxis_given,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
+			pnc_exercises,
 			maternal_condition,
 			iron_supplementation,
 			fistula_screening,
@@ -1093,6 +1176,14 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(o.concept_id=160971,o.value_text,null)) as external_genitalia_examination,
 				max(if(o.concept_id=160975,o.value_text,null)) as ovarian_examination,
 				max(if(o.concept_id=160972,o.value_text,null)) as pelvic_lymph_node_exam,
+				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
+				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
+				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
+				max(if(t.test_1_result is not null, t.test_1_result, null)) as test_1_result,
+				max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
+				max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
+				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
+				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -1100,6 +1191,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
+				max(if(o.concept_id=161074,o.value_coded,null)) as pnc_exercises,
 				max(if(o.concept_id=160085,o.value_coded,null)) as maternal_condition,
 				max(if(o.concept_id=161004,o.value_coded,null)) as iron_supplementation,
 				max(if(o.concept_id=159921,o.value_coded,null)) as fistula_screening,
@@ -1114,12 +1206,28 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,160967,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,160085,161004,159921,164934,163589,160653,374,160481,163145,159395)
+														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,160967,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
 				) f on f.form_id= e.form_id
+				left join (
+										 select
+											 o.person_id,
+											 o.encounter_id,
+											 o.obs_group_id,
+											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
+											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
+											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
+										 from obs o
+											 inner join encounter e on e.encounter_id = o.encounter_id
+											 inner join form f on f.form_id=e.form_id and f.uuid in ('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 group by e.encounter_id, o.obs_group_id
+									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id;
 		SELECT "Completed processing MCH postnatal visits ", CONCAT("Time: ", NOW());
 		END$$
@@ -1360,73 +1468,94 @@ DROP PROCEDURE IF EXISTS sp_populate_etl_hei_immunization$$
 CREATE PROCEDURE sp_populate_etl_hei_immunization()
 	BEGIN
 		SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
-		insert into kenyaemr_etl.etl_hei_immunization(
-			uuid,
-			encounter_id,
-			patient_id,
-			location_id,
-			visit_date,
-			visit_id,
-			BCG,
-			OPV,
-			OPV_sequence,
-			IPV,
-			DPT_Hep_B_Hib,
-			DPT_Hep_B_Hib_sequence,
-			PCV_10,
-			PCV_10_sequence,
-			ROTA,
-			ROTA_sequence,
-			Measles_rubella,
-			Measles_rubella_sequence,
-			Yellow_fever,
-			Measles_6_months,
-			BCG_scar_checked,
-			BCG_scar_date_checked,
-			BCG_date_repeated,
-			Vitamin_A_given,
-			Child_fully_immunized,
-			Date_of_last_vaccine,
-			date_created,
-			created_by
-		)
-			select
-				o.uuid,
-				e.encounter_id,
-				e.patient_id,
-				e.location_id,
-				e.encounter_datetime as visit_date,
-				e.visit_id,
-				max(if(o.concept_id=984 and o.value_coded=886,o.value_coded,null)) as BCG,
-				max(if(o.concept_id=984 and o.value_coded=783,o.value_coded,null)) as OPV,
-				null as OPV_sequence,
-				max(if(o.concept_id=984 and o.value_coded=1422,o.value_coded,null)) as IPV,
-				max(if(o.concept_id=984 and o.value_coded=781,o.value_coded,null)) as DPT_Hep_B_Hib,
-			  null as DPT_Hep_B_Hib_sequence,
-				max(if(o.concept_id=984 and o.value_coded=162342,o.value_coded,null)) as PCV_10,
-				null as PCV_10_sequence,
-				max(if(o.concept_id=984 and o.value_coded=83531,o.value_coded,null)) as ROTA,
-				null as ROTA_sequence,
-				max(if(o.concept_id=984 and o.value_coded=5864,o.value_coded,null)) as Yellow_fever,
-				max(if(o.concept_id=984 and o.value_coded=162586,o.value_coded,null)) as Measles_rubella,
-				null as Measles_rubella_sequence,
-				max(if(o.concept_id=984 and o.value_coded=36,o.value_coded,null)) as Measles_6_months,
-				max(if(o.concept_id=160265,o.value_coded,null)) as BCG_scar_checked,
-				max(if(o.concept_id=160753,o.value_datetime,null)) as BCG_scar_date_checked,
-				max(if(o.concept_id=1410,o.value_datetime,null)) as BCG_date_repeated,
-				max(if(o.concept_id=161534,o.value_coded,null)) as Vitamin_A_given,
-				max(if(o.concept_id=164134,o.value_coded,null)) as Child_fully_immunized,
-				max(if(o.concept_id=162585,o.value_datetime,null)) as Date_of_last_vaccine,
-				e.date_created,
-				e.creator
-			from encounter e
-				inner join obs o on e.encounter_id=o.encounter_id and o.voided=0
-														and o.concept_id in (984,160265,160753,1410,161534,164134,162585)
-				inner join
-				(
-					select encounter_type_id, uuid, name from encounter_type where uuid in('82169b8d-c945-4c41-be62-433dfd9d6c86')
-				) et on et.encounter_type_id=e.encounter_type
-			group by e.encounter_id ;
+    insert into kenyaemr_etl.etl_hei_immunization(
+
+
+      patient_id,
+      visit_date,
+      created_by,
+      date_created,
+      encounter_id,
+      BCG,
+      OPV_birth,
+      OPV_1,
+      OPV_2,
+      OPV_3,
+      IPV,
+      DPT_Hep_B_Hib_1,
+      DPT_Hep_B_Hib_2,
+      DPT_Hep_B_Hib_3,
+      PCV_10_1,
+      PCV_10_2,
+      PCV_10_3,
+      ROTA_1,
+      ROTA_2,
+      Measles_rubella_1,
+      Measles_rubella_2
+      #Yellow_fever,
+     # Measles_6_months
+      #   BCG_scar_checked,
+      #   BCG_scar_date_checked,
+      #   BCG_date_repeated,
+      #   Vitamin_A_given,
+      #   Child_fully_immunized,
+      #   Date_of_last_vaccine
+    )
+      select
+        patient_id,
+        visit_date,
+        creator,
+        date_created,
+        encounter_id,
+        max(if(vaccine="BCG", "Yes", "")) as BCG,
+        max(if(vaccine="OPV" and sequence=0, "Yes", "")) as OPV_birth,
+        max(if(vaccine="OPV" and sequence=1, "Yes", "")) as OPV_1,
+        max(if(vaccine="OPV" and sequence=2, "Yes", "")) as OPV_2,
+        max(if(vaccine="OPV" and sequence=3, "Yes", "")) as OPV_3,
+        max(if(vaccine="IPV", "Yes", ""))  as IPV,
+        max(if(vaccine="DPT" and sequence=1, "Yes", "")) as DPT_Hep_B_Hib_1,
+        max(if(vaccine="DPT" and sequence=2, "Yes", "")) as DPT_Hep_B_Hib_2,
+        max(if(vaccine="DPT" and sequence=3, "Yes", "")) as DPT_Hep_B_Hib_3,
+        max(if(vaccine="PCV" and sequence=1, "Yes", "")) as PCV_10_1,
+        max(if(vaccine="PCV" and sequence=2, "Yes", "")) as PCV_10_2,
+        max(if(vaccine="PCV" and sequence=3, "Yes", "")) as PCV_10_3,
+        max(if(vaccine="ROTA" and sequence=1, "Yes", "")) as ROTA_1,
+        max(if(vaccine="ROTA" and sequence=2, "Yes", "")) as ROTA_2,
+        max(if(vaccine="measles_rubella" and sequence=1, "Yes", "")) as Measles_rubella_1,
+        max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2
+       # max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
+       # max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
+      #      max(if(o.concept_id=160265,o.value_coded,null)) as BCG_scar_checked,
+      #      max(if(o.concept_id=160753,o.value_datetime,null)) as BCG_scar_date_checked,
+      #      max(if(o.concept_id=1410,o.value_datetime,null)) as BCG_date_repeated,
+      #      max(if(o.concept_id=161534,o.value_coded,null)) as Vitamin_A_given,
+      #      max(if(o.concept_id=164134,o.value_coded,null)) as Child_fully_immunized,
+      #      max(if(o.concept_id=162585,o.value_datetime,null)) as Date_of_last_vaccine
+      from (
+             select
+               person_id as patient_id,
+               date(encounter_datetime) as visit_date,
+               creator,
+               date(date_created) as date_created,
+               encounter_id,
+               name as encounter_type,
+               max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
+                                        when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
+                                        when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
+               max(if(concept_id=1418, value_numeric, "")) as sequence,
+               obs_group_id
+             from (
+                    select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, o.obs_group_id, o.encounter_id, et.uuid, et.name
+                    from openmrs.obs o
+                      inner join openmrs.encounter e on e.encounter_id=o.encounter_id
+                      inner join openmrs.encounter_type et on et.encounter_type_id=e.encounter_type
+                    where concept_id in(984,1418)
+                  ) t
+             group by obs_group_id
+           ) y
+
+
+      group by patient_id, obs_group_id;
 
 	SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
 	END$$
