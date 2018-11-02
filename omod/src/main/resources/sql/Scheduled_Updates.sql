@@ -1672,45 +1672,52 @@ reason_discontinued,
 reason_discontinued_other,
 voided
 )
-SELECT 
+SELECT
 o.uuid,
-o.patient_id, 
-o.start_date,
+o.patient_id,
+o.date_activated,
 group_concat(distinct cn.name order by o.order_id) as regimen,
--- cs.concept_set, 
+-- cs.concept_set,
 d.discontinued,
 d.drugs,
 d.discontinued_date,
 d.discontinued_reason,
 d.discontinued_reason_non_coded,
-o.voided 
+o.voided
 from orders o
-left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED' 
-left outer join concept_set cs on o.concept_id = cs.concept_id 
+left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED'
+left outer join concept_set cs on o.concept_id = cs.concept_id
 left outer join (
-SELECT 
-o.patient_id, 
-group_concat(distinct cn.name order by o.order_id) as drugs,
-cs.concept_set, 
-o.start_date, 
-o.discontinued, 
-o.discontinued_date, 
-o.discontinued_reason,
-discontinued_reason_non_coded 
-from orders o
-left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED' 
-left outer join concept_set cs on o.concept_id = cs.concept_id 
-where o.voided=0 and cs.concept_set = 1085
-group by o.discontinued_date
-
-) d on d.patient_id = o.patient_id and d.start_date=o.start_date
-where cs.concept_set = 1085 and (
+  SELECT
+  o.patient_id,
+  GROUP_CONCAT(DISTINCT cn.name
+  ORDER BY o.order_id) AS drugs,
+  cs.concept_set,
+  o.date_activated,
+  IF(o.date_stopped IS NOT NULL, 1, 0) as discontinued,
+  o.date_stopped as discontinued_date,
+  null as discontinued_reason,
+  null as discontinued_reason_non_coded
+  FROM
+  orders o
+  LEFT OUTER JOIN
+  concept_name cn ON o.concept_id = cn.concept_id
+  AND cn.locale = 'en'
+  AND cn.concept_name_type = 'FULLY_SPECIFIED'
+  LEFT OUTER JOIN
+  concept_set cs ON o.concept_id = cs.concept_id
+  WHERE
+  o.voided = 0 AND cs.concept_set = 1085
+  AND o.date_stopped is not null
+  GROUP BY o.patient_id , o.date_stopped IS NOT NULL
+) d on d.patient_id = o.patient_id and d.date_activated=o.date_activated
+where o.voided=0 and cs.concept_set = 1085 and (
 	o.date_created >= last_update_time
 	or o.date_voided >= last_update_time
 	)
-group by o.patient_id, o.start_date
+group by o.patient_id, o.date_activated
 ON DUPLICATE KEY UPDATE date_started=VALUES(date_started), regimen=VALUES(regimen), discontinued=VALUES(discontinued), regimen_discontinued=VALUES(regimen_discontinued),
-date_discontinued=VALUES(date_discontinued), reason_discontinued=VALUES(reason_discontinued), reason_discontinued_other=VALUES(reason_discontinued_other)
+date_discontinued=VALUES(date_discontinued)
 ;
 
 -- Recreate temporary table for in memory processing

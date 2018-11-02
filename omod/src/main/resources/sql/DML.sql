@@ -1648,7 +1648,7 @@ voided
 SELECT
 o.uuid,
 o.patient_id,
-o.start_date,
+o.date_activated,
 group_concat(distinct cn.name order by o.order_id) as regimen,
 -- cs.concept_set,
 d.discontinued,
@@ -1661,24 +1661,31 @@ from orders o
 left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED'
 left outer join concept_set cs on o.concept_id = cs.concept_id
 left outer join (
-SELECT
-o.patient_id,
-group_concat(distinct cn.name order by o.order_id) as drugs,
-cs.concept_set,
-o.start_date,
-o.discontinued,
-o.discontinued_date,
-o.discontinued_reason,
-discontinued_reason_non_coded
-from orders o
-left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED'
-left outer join concept_set cs on o.concept_id = cs.concept_id
-where o.voided=0 and cs.concept_set = 1085 and o.discontinued=1 -- start and stopped dates should instead be used
-group by o.patient_id, o.discontinued_date
-
-) d on d.patient_id = o.patient_id and d.start_date=o.start_date
+  SELECT
+  o.patient_id,
+  GROUP_CONCAT(DISTINCT cn.name
+  ORDER BY o.order_id) AS drugs,
+  cs.concept_set,
+  o.date_activated,
+  IF(o.date_stopped IS NOT NULL, 1, 0) as discontinued,
+  o.date_stopped as discontinued_date,
+  null as discontinued_reason,
+  null as discontinued_reason_non_coded
+  FROM
+  orders o
+  LEFT OUTER JOIN
+  concept_name cn ON o.concept_id = cn.concept_id
+  AND cn.locale = 'en'
+  AND cn.concept_name_type = 'FULLY_SPECIFIED'
+  LEFT OUTER JOIN
+  concept_set cs ON o.concept_id = cs.concept_id
+  WHERE
+  o.voided = 0 AND cs.concept_set = 1085
+  AND o.date_stopped is not null
+  GROUP BY o.patient_id , o.date_stopped IS NOT NULL
+) d on d.patient_id = o.patient_id and d.date_activated=o.date_activated
 where o.voided=0 and cs.concept_set = 1085
-group by o.patient_id, o.start_date
+group by o.patient_id, o.date_activated
 ;
 -- create temporary table for in memory processing
 CALL sp_create_drug_order_events_tmp_table();
