@@ -31,7 +31,7 @@
 	
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
-				
+
 	</mappingFiles>
 
 	<!-- Internationalization -->
