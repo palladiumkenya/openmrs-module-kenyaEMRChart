@@ -720,7 +720,11 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			prophylaxis_given,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
+			TTT,
+			IPT_malaria,
+			iron_supplement,
 			deworming,
+			bed_nets,
 			urine_microscopy,
 			urinary_albumin,
 			glucose_measurement,
@@ -792,7 +796,11 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
-				max(if(o.concept_id=984,o.value_coded,null)) as deworming,
+				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
+				max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
+				max(if(o.concept_id=984,(case o.value_coded when 104677 then "Yes" else "" end),null)) as iron_supplement,
+				max(if(o.concept_id=984,(case o.value_coded when 79413 then "Yes"  else "" end),null)) as deworming,
+				max(if(o.concept_id=984,(case o.value_coded when 160428 then "Yes" else "" end),null)) as bed_nets,
 				max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
 				max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
 				max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -822,13 +830,13 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
+														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843','d3ea25c7-a3e8-4f57-a6a9-e802c3565a30')
 				) f on f.form_id=e.form_id
-				inner join (
+				left join (
 										 select
 											 o.person_id,
 											 o.encounter_id,
@@ -970,7 +978,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 					select form_id, uuid,name from form where
 						uuid in('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
 				) f on f.form_id=e.form_id
-				inner join (
+				left join (
 										 select
 											 o.person_id,
 											 o.encounter_id,
@@ -1204,7 +1212,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 					select form_id, uuid,name from form where
 						uuid in('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
 				) f on f.form_id= e.form_id
-				inner join (
+				left join (
 										 select
 											 o.person_id,
 											 o.encounter_id,
@@ -1483,9 +1491,9 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
       ROTA_1,
       ROTA_2,
       Measles_rubella_1,
-      Measles_rubella_2,
-      Yellow_fever,
-      Measles_6_months
+      Measles_rubella_2
+      #Yellow_fever,
+     # Measles_6_months
       #   BCG_scar_checked,
       #   BCG_scar_date_checked,
       #   BCG_date_repeated,
@@ -1514,9 +1522,9 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
         max(if(vaccine="ROTA" and sequence=1, "Yes", "")) as ROTA_1,
         max(if(vaccine="ROTA" and sequence=2, "Yes", "")) as ROTA_2,
         max(if(vaccine="measles_rubella" and sequence=1, "Yes", "")) as Measles_rubella_1,
-        max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2,
-        max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
-        max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
+        max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2
+       # max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
+       # max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
       #      max(if(o.concept_id=160265,o.value_coded,null)) as BCG_scar_checked,
       #      max(if(o.concept_id=160753,o.value_datetime,null)) as BCG_scar_date_checked,
       #      max(if(o.concept_id=1410,o.value_datetime,null)) as BCG_date_repeated,

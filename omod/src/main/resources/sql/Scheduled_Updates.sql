@@ -628,7 +628,11 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			prophylaxis_given,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
+			TTT,
+			IPT_malaria,
+			iron_supplement,
 			deworming,
+			bed_nets,
 			urine_microscopy,
 			urinary_albumin,
 			glucose_measurement,
@@ -692,7 +696,11 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
-				max(if(o.concept_id=984,o.value_coded,null)) as deworming,
+				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
+				max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
+				max(if(o.concept_id=984,(case o.value_coded when 104677 then "Yes" else "" end),null)) as iron_supplement,
+				max(if(o.concept_id=984,(case o.value_coded when 79413 then "Yes"  else "" end),null)) as deworming,
+				max(if(o.concept_id=984,(case o.value_coded when 160428 then "Yes" else "" end),null)) as bed_nets,
 				max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
 				max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
 				max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -722,7 +730,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
+														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -742,7 +750,8 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			fetal_heart_rate=VALUES(fetal_heart_rate),fetal_movement=VALUES(fetal_movement),
 			who_stage=VALUES(who_stage),arv_status=VALUES(arv_status),final_test_result=VALUES(final_test_result),
 			patient_given_result=VALUES(patient_given_result),
-			partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),
+			partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),TTT=VALUES(TTT),IPT_malaria=VALUES(IPT_malaria),
+			iron_supplement=VALUES(iron_supplement),deworming=VALUES(deworming),bed_nets=VALUES(bed_nets),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),
 			urine_nitrite_test=VALUES(urine_nitrite_test),
 			urine_leukocyte_esterace_test=VALUES(urine_leukocyte_esterace_test),urinary_ketone=VALUES(urinary_ketone),urine_bile_salt_test=VALUES(urine_bile_salt_test),
 			urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),syphilis_test_status=VALUES(syphilis_test_status),syphilis_treated_status=VALUES(syphilis_treated_status),
@@ -1374,9 +1383,9 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 			ROTA_1,
 			ROTA_2,
 			Measles_rubella_1,
-			Measles_rubella_2,
-			Yellow_fever,
-			Measles_6_months
+			Measles_rubella_2
+			#   Yellow_fever,
+			#   Measles_6_months
 			#   BCG_scar_checked,
 			#   BCG_scar_date_checked,
 			#   BCG_date_repeated,
@@ -1405,9 +1414,9 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 				max(if(vaccine="ROTA" and sequence=1, "Yes", "")) as ROTA_1,
 				max(if(vaccine="ROTA" and sequence=2, "Yes", "")) as ROTA_2,
 				max(if(vaccine="measles_rubella" and sequence=1, "Yes", "")) as Measles_rubella_1,
-				max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2,
-				max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
-				max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
+				max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2
+			#	max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
+			#	max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
 			#      max(if(o.concept_id=160265,o.value_coded,null)) as BCG_scar_checked,
 			#      max(if(o.concept_id=160753,o.value_datetime,null)) as BCG_scar_date_checked,
 			#      max(if(o.concept_id=1410,o.value_datetime,null)) as BCG_date_repeated,
@@ -1442,7 +1451,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 
 		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV_birth=VALUES(OPV_birth),OPV_1=VALUES(OPV_1),OPV_2=VALUES(OPV_2),OPV_3=VALUES(OPV_3),IPV=VALUES(IPV),
 			DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
-			ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2),Yellow_fever=VALUES(Yellow_fever),Measles_6_months=VALUES(Measles_6_months)
+			ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2)
 		;
 		END$$
 

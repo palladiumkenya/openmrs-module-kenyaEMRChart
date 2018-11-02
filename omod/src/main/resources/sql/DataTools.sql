@@ -1,4 +1,3 @@
-
 DROP PROCEDURE IF EXISTS create_datatools_tables$$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
@@ -380,7 +379,11 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
       (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
       (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
+      TTT,
+      IPT_malaria,
+      iron_supplement,
       deworming,
+      bed_nets,
       urine_microscopy,
       (case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
       (case glucose_measurement when 1115 then "Normal" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" when 1365 then "Four Plus(++++)" else "" end) as glucose_measurement,
@@ -737,17 +740,13 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       ROTA_1,
       ROTA_2,
       Measles_rubella_1,
-      Measles_rubella_2,
+      Measles_rubella_2
       #(case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
-      (case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months
+      #(case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months
 
     from kenyaemr_etl.etl_hei_immunization;
 
   ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
-  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(encounter_id);
-
   SELECT "Successfully created hei_immunization table";
   -- create table tb_enrollment
   create table kenyaemr_datatools.tb_enrollment as
