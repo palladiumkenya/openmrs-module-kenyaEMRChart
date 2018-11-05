@@ -266,7 +266,9 @@ public class EtlManagerFragmentController {
             }
             sampleTypeObject.put("data", ret);
         }else {
-           return sampleTypeObject;
+
+            return sampleTypeObject;
+
         }
 
         return sampleTypeObject;
