@@ -974,7 +974,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 										 select
 											 o.person_id,
 											 o.encounter_id,
-											 o.obs_group_id,
+											 o.obs_group_id,etl_hts_test hts
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
@@ -1837,6 +1837,7 @@ disability_type,
 patient_consented,
 client_tested_as,
 test_strategy,
+hts_entry_point,
 test_1_kit_name,
 test_1_kit_lot_no,
 test_1_kit_expiry,
@@ -1882,6 +1883,21 @@ max(if(o.concept_id=164956,(
   when 5622 then "Other"
   else ""
   end ),null)) as test_strategy,
+   max(if(o.concept_id=160540,(
+             case o.value_coded
+             when 5485 then "In Patient Department(IPD)"
+             when 160542 then "Out Patient Department(OPD)"
+             when 162181 then "Peadiatric Clinic"
+             when 160552 then "Nutrition Clinic"
+             when 160538 then "PMTCT"
+             when 160541 then "TB"
+             when 162050 then "CCC"
+             when 159940 then "VCT"
+             when 159938 then "Home Based Testing"
+             when 159939 then "Mobile Outreach"
+             when 5622 then "Other"
+             else ""
+             end ),null)) as hts_entry_point,
 max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -1900,7 +1916,7 @@ e.voided
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
-                                                                                 159427, 164848, 6096, 1659, 164952, 163042, 159813)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813)
 inner join (
              select
                o.person_id,
