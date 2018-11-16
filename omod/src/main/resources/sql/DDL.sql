@@ -381,7 +381,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(tb_screening),
     INDEX(hiv_status),
     INDEX(hiv_test_date),
@@ -419,6 +418,9 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     fetal_heart_rate INT(11),
     fetal_movement INT(11),
     who_stage INT(11),
+    cd4 INT(11),
+    viral_load INT(11),
+    ldl INT(11),
     arv_status INT(11),
     test_1_kit_name VARCHAR(50),
     test_1_kit_lot_no VARCHAR(50) DEFAULT NULL,
@@ -470,7 +472,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(who_stage),
     INDEX(anc_visit_number),
     INDEX(final_test_result),
@@ -541,7 +542,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(final_test_result),
     INDEX(baby_sex),
     INDEX( partner_hiv_tested),
@@ -574,7 +574,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(baby_status),
     INDEX(discharge_date)
   );
@@ -783,7 +782,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(infant_feeding)
   );
   SELECT "Successfully created etl_hei_follow_up_visit table";
@@ -816,8 +814,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     #Measles_6_months VARCHAR(50),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
-    INDEX(encounter_id),
-    INDEX(patient_id)
+    INDEX(encounter_id)
 
 
   );
