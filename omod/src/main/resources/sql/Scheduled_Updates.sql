@@ -620,6 +620,9 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			fetal_heart_rate,
 			fetal_movement,
 			who_stage,
+			cd4,
+			viral_load,
+			ldl,
 			arv_status,
 			final_test_result,
 			patient_given_result,
@@ -688,6 +691,9 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 				max(if(o.concept_id=1440,o.value_numeric,null)) as fetal_heart_rate,
 				max(if(o.concept_id=162107,o.value_coded,null)) as fetal_movement,
 				max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
+				max(if(o.concept_id=5497,o.value_numeric,null)) as cd4,
+				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
+				max(if(o.concept_id=1305,o.value_numeric,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -730,7 +736,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
+														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -748,7 +754,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			oxygen_saturation=VALUES(oxygen_saturation),
 			weight=VALUES(weight),height=VALUES(height),muac=VALUES(muac),hemoglobin=VALUES(hemoglobin),breast_exam_done=VALUES(breast_exam_done),pallor=VALUES(pallor),maturity=VALUES(maturity),fundal_height=VALUES(fundal_height),fetal_presentation=VALUES(fetal_presentation),lie=VALUES(lie),
 			fetal_heart_rate=VALUES(fetal_heart_rate),fetal_movement=VALUES(fetal_movement),
-			who_stage=VALUES(who_stage),arv_status=VALUES(arv_status),final_test_result=VALUES(final_test_result),
+			who_stage=VALUES(who_stage),cd4=VALUES(cd4),viral_load=VALUES(viral_load),ldl=VALUES(ldl),arv_status=VALUES(arv_status),final_test_result=VALUES(final_test_result),
 			patient_given_result=VALUES(patient_given_result),
 			partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),TTT=VALUES(TTT),IPT_malaria=VALUES(IPT_malaria),
 			iron_supplement=VALUES(iron_supplement),deworming=VALUES(deworming),bed_nets=VALUES(bed_nets),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),

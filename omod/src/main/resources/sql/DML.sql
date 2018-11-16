@@ -704,6 +704,9 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			fetal_heart_rate,
 			fetal_movement,
 			who_stage,
+			cd4,
+			viral_load,
+			ldl,
 			arv_status,
 			test_1_kit_name,
 			test_1_kit_lot_no,
@@ -780,6 +783,9 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=1440,o.value_numeric,null)) as fetal_heart_rate,
 				max(if(o.concept_id=162107,o.value_coded,null)) as fetal_movement,
 				max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
+				max(if(o.concept_id=5497,o.value_numeric,null)) as cd4,
+				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
+				max(if(o.concept_id=1305,o.value_numeric,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
@@ -830,7 +836,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
+														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
