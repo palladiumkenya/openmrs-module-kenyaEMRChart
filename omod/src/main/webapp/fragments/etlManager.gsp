@@ -144,12 +144,13 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 <hr>
 <div>
 
-    <button id="refresh" style="height:43px;width:155px">
+
+    <button id="refresh" style="height:43px;width:185px">
         <img src="${ ui.resourceLink("kenyaui", "images/glyphs/switch.png") }" width="32" height="32" /> Refresh Tables
     </button>
 
-    <button id="recreate">
-        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" /> Recreate Tables
+    <button id="recreate"  style="height:43px;width:185px">
+        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Recreate Tables
     </button>
 </div>
 <br/>
