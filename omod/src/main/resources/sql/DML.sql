@@ -328,7 +328,7 @@ max(if(o.concept_id=121764,o.value_coded,null)) as has_adverse_drug_reaction ,
 max(if(o.concept_id=5272,o.value_coded,null)) as pregnancy_status,
 max(if(o.concept_id=164933,o.value_coded,null)) as wants_pregnancy,
 max(if(o.concept_id=161033,o.value_coded,null)) as pregnancy_outcome,
-max(if(o.concept_id=161655,o.value_numeric,null)) as anc_number,
+max(if(o.concept_id=163530,o.value_text,null)) as anc_number,
 max(if(o.concept_id=5596,date(o.value_datetime),null)) as expected_delivery_date,
 max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
 max(if(o.concept_id=5624,o.value_numeric,null)) as gravida,
@@ -366,7 +366,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
 ) et on et.encounter_type_id=e.encounter_type
 left outer join obs o on o.encounter_id=e.encounter_id
-	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,161655,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 164947)
 where e.voided=0
 group by e.patient_id, e.encounter_id, visit_date
@@ -627,7 +627,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				e.encounter_datetime,
 				e.location_id,
 				e.encounter_id,
-				max(if(o.concept_id=161655,o.value_numeric,null)) as anc_number,
+				max(if(o.concept_id=163530,o.value_text,null)) as anc_number,
 				max(if(o.concept_id=163547,o.value_datetime,null)) as first_anc_visit_date,
 				max(if(o.concept_id=5624,o.value_numeric,null)) as gravida,
 				max(if(o.concept_id=160080,o.value_numeric,null)) as parity,
@@ -661,7 +661,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				max(if(o.concept_id=161555,o.value_coded,null)) as discontinuation_reason
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(161655,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555)
+														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
