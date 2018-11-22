@@ -785,7 +785,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
 				max(if(o.concept_id=5497,o.value_numeric,null)) as cd4,
 				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
-				max(if(o.concept_id=1305,o.value_numeric,null)) as ldl,
+				max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
@@ -879,6 +879,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			location_id,
 			encounter_id,
 			date_created,
+			admission_number,
 			duration_of_pregnancy,
 			mode_of_delivery,
 			date_of_delivery,
@@ -898,6 +899,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			maternal_death_audited,
 			cadre,
 			delivery_complications,
+			coded_delivery_complications,
 			other_delivery_complications,
 			duration_of_labor,
 			baby_sex,
@@ -932,6 +934,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				e.location_id,
 				e.encounter_id,
 				e.date_created,
+				max(if(o.concept_id=162054,o.value_text,null)) as admission_number,
 				max(if(o.concept_id=1789,o.value_numeric,null)) as duration_of_pregnancy,
 				max(if(o.concept_id=5630,o.value_coded,null)) as mode_of_delivery,
 				max(if(o.concept_id=5599,o.value_datetime,null)) as date_of_delivery,
@@ -950,7 +953,8 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=163454,o.value_coded,null)) as placenta_complete,
 				max(if(o.concept_id=1602,o.value_coded,null)) as maternal_death_audited,
 				max(if(o.concept_id=1573,o.value_coded,null)) as cadre,
-				max(if(o.concept_id=1576,o.value_coded,null)) as delivery_complications,
+				max(if(o.concept_id=120216,o.value_coded,null)) as delivery_complications,
+				max(if(o.concept_id=1576,o.value_coded,null)) as coded_delivery_complications,
 				max(if(o.concept_id=162093,o.value_text,null)) as other_delivery_complications,
 				max(if(o.concept_id=159616,o.value_numeric,null)) as duration_of_labor,
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
@@ -978,7 +982,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1388,6 +1392,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			dna_pcr_sample_date,
 			dna_pcr_contextual_status,
 			dna_pcr_result,
+			azt_given,
 			nvp_given,
 			ctx_given,
 			-- dna_pcr_dbs_sample_code,
@@ -1435,7 +1440,8 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				max(if(o.concept_id=159951,o.value_datetime,null)) as dna_pcr_sample_date,
 				max(if(o.concept_id=162084,o.value_coded,null)) as dna_pcr_contextual_status,
 				max(if(o.concept_id=1030,o.value_coded,null)) as dna_pcr_result,
-				max(if(o.concept_id=966,o.value_coded,null)) as nvp_given,
+				max(if(o.concept_id=966 and o.value_coded=86663,o.value_coded,null)) as azt_given,
+				max(if(o.concept_id=966 and o.value_coded=80586,o.value_coded,null)) as nvp_given,
 				max(if(o.concept_id=1109,o.value_coded,null)) as ctx_given,
 				-- max(if(o.concept_id=162086,o.value_text,null)) as dna_pcr_dbs_sample_code,
 				-- max(if(o.concept_id=160082,o.value_datetime,null)) as dna_pcr_results_date,
