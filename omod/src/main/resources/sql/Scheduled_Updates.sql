@@ -693,7 +693,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 				max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
 				max(if(o.concept_id=5497,o.value_numeric,null)) as cd4,
 				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
-				max(if(o.concept_id=1305,o.value_numeric,null)) as ldl,
+				max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -780,6 +780,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 			location_id,
 			encounter_id,
 			date_created,
+			admission_number,
 			duration_of_pregnancy,
 			mode_of_delivery,
 			date_of_delivery,
@@ -799,6 +800,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 			maternal_death_audited,
 			cadre,
 			delivery_complications,
+			coded_delivery_complications,
 			other_delivery_complications,
 			duration_of_labor,
 			baby_sex,
@@ -825,6 +827,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				e.location_id,
 				e.encounter_id,
 				e.date_created,
+				max(if(o.concept_id=162054,o.value_text,null)) as admission_number,
 				max(if(o.concept_id=1789,o.value_numeric,null)) as duration_of_pregnancy,
 				max(if(o.concept_id=5630,o.value_coded,null)) as mode_of_delivery,
 				max(if(o.concept_id=5599,o.value_datetime,null)) as date_of_delivery,
@@ -843,7 +846,8 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				max(if(o.concept_id=163454,o.value_coded,null)) as placenta_complete,
 				max(if(o.concept_id=1602,o.value_coded,null)) as maternal_death_audited,
 				max(if(o.concept_id=1573,o.value_coded,null)) as cadre,
-				max(if(o.concept_id=1576,o.value_coded,null)) as delivery_complications,
+				max(if(o.concept_id=120216,o.value_coded,null)) as delivery_complications,
+				max(if(o.concept_id=1576,o.value_coded,null)) as coded_delivery_complications,
 				max(if(o.concept_id=162093,o.value_text,null)) as other_delivery_complications,
 				max(if(o.concept_id=159616,o.value_numeric,null)) as duration_of_labor,
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
@@ -863,7 +867,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1789,5630,5599,162092,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(162054,1789,5630,5599,162092,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -876,9 +880,9 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 						or o.date_created >= last_update_time
 						or o.date_voided >= last_update_time
 			group by e.encounter_id
-		ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),date_created=VALUES(date_created),duration_of_pregnancy=VALUES(duration_of_pregnancy),mode_of_delivery=VALUES(mode_of_delivery),date_of_delivery=VALUES(date_of_delivery),blood_loss=VALUES(blood_loss),condition_of_mother=VALUES(condition_of_mother),
+		ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),date_created=VALUES(date_created),admission_number=VALUES(admission_number),duration_of_pregnancy=VALUES(duration_of_pregnancy),mode_of_delivery=VALUES(mode_of_delivery),date_of_delivery=VALUES(date_of_delivery),blood_loss=VALUES(blood_loss),condition_of_mother=VALUES(condition_of_mother),
 			apgar_score_1min=VALUES(apgar_score_1min),apgar_score_5min=VALUES(apgar_score_5min),apgar_score_10min=VALUES(apgar_score_10min),resuscitation_done=VALUES(resuscitation_done),place_of_delivery=VALUES(place_of_delivery),delivery_assistant=VALUES(delivery_assistant),counseling_on_infant_feeding=VALUES(counseling_on_infant_feeding) ,counseling_on_exclusive_breastfeeding=VALUES(counseling_on_exclusive_breastfeeding),
-			counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),delivery_complications=VALUES(delivery_complications),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),baby_sex=VALUES(baby_sex),
+			counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),delivery_complications=VALUES(delivery_complications),coded_delivery_complications=VALUES(coded_delivery_complications),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),baby_sex=VALUES(baby_sex),
 			baby_condition=VALUES(baby_condition),teo_given=VALUES(teo_given),birth_weight=VALUES(birth_weight),bf_within_one_hour=VALUES(bf_within_one_hour),birth_with_deformity=VALUES(birth_with_deformity),
 			final_test_result=VALUES(final_test_result),patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given)
 			,baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),clinical_notes=VALUES(clinical_notes)
@@ -1270,6 +1274,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
 			dna_pcr_sample_date,
 			dna_pcr_contextual_status,
 			dna_pcr_result,
+			azt_given,
 			nvp_given,
 			ctx_given,
 			-- dna_pcr_dbs_sample_code,
@@ -1317,7 +1322,8 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
 				max(if(o.concept_id=159951,o.value_datetime,null)) as dna_pcr_sample_date,
 				max(if(o.concept_id=162084,o.value_coded,null)) as dna_pcr_contextual_status,
 				max(if(o.concept_id=1030,o.value_coded,null)) as dna_pcr_result,
-				max(if(o.concept_id=966,o.value_coded,null)) as nvp_given,
+				max(if(o.concept_id=966 and o.value_coded=86663,o.value_coded,null)) as azt_given,
+				max(if(o.concept_id=966 and o.value_coded=80586,o.value_coded,null)) as nvp_given,
 				max(if(o.concept_id=1109,o.value_coded,null)) as ctx_given,
 				-- max(if(o.concept_id=162086,o.value_text,null)) as dna_pcr_dbs_sample_code,
 				-- max(if(o.concept_id=160082,o.value_datetime,null)) as dna_pcr_results_date,
