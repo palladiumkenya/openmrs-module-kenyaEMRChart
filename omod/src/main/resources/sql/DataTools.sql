@@ -1,4 +1,3 @@
-
 DROP PROCEDURE IF EXISTS create_datatools_tables$$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
@@ -137,7 +136,8 @@ clinical_notes,
 (case pregnancy_status when 1065 then "Yes" when 1066 then "No" else "" end) as pregnancy_status,
 (case wants_pregnancy when 1065 then "Yes" when 1066 then "No" else "" end) as wants_pregnancy,
 (case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)" 
- when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,anc_number,
+ when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
+anc_number,
 expected_delivery_date,
 last_menstrual_period,
 gravida,
@@ -286,210 +286,521 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(discont
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(date_died);
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfer_date);
 
--- create table mch_enrollment
-create table kenyaemr_datatools.mch_enrollment as
-select 
-patient_id,
-uuid,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-anc_number,
-gravida,
-parity,
-parity_abortion,
-lmp,
-lmp_estimated,
-edd_ultrasound,
-(case blood_group when 690 then "A POSITIVE" when 692 then "A NEGATIVE" when 694 then "B POSITIVE" when 696 then "B NEGATIVE" when 699 then "O POSITIVE" 
- when 701 then "O NEGATIVE" when 1230 then "AB POSITIVE" when 1231 then "AB NEGATIVE" else "" end) as blood_group,
-(case serology when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as serology,
-(case tb_screening when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as tb_screening,
-(case bs_for_mps when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" else "" end) as bs_for_mps,
-(case hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1402 then "Not Tested" else "" end) as hiv_status,
-hiv_test_date,
-(case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
-partner_hiv_test_date,
-urine_microscopy,
-(case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
-(case glucose_measurement when 1115 then "Normal" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" when 1365 then "Four Plus(++++)" else "" end) as glucose_measurement,
-urine_ph,
-urine_gravity,
-(case urine_nitrite_test when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" else "" end) as urine_nitrite_test,
-(case urine_leukocyte_esterace_test when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_leukocyte_esterace_test,
-(case urinary_ketone when 664 then "NEGATIVE" when 1874 then "Trace - 5" when 1362 then "One Plus(+) - 15" when 1363 then "Two Plus(++) - 50" when 1364 then "Three Plus(+++) - 150" else "" end) as urinary_ketone,
-(case urine_bile_salt_test when 1115 then "Normal" when 1874 then "Trace - 1" when 1362 then "One Plus(+) - 4" when 1363 then "Two Plus(++) - 8" when 1364 then "Three Plus(+++) - 12" else "" end) as urine_bile_salt_test,
-(case urine_bile_pigment_test when 664 then "NEGATIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_bile_pigment_test,
-(case urine_colour when 162099 then "Colourless" when 127778 then "Red color" when 162097 then "Light yellow colour" when 162105 then "Yellow-green colour" when 162098 then "Dark yellow colour" when 162100 then "Brown color" else "" end) as urine_colour,
-(case urine_turbidity when 162102 then "Urine appears clear" when 162103 then "Cloudy urine" when 162104 then "Urine appears turbid" else "" end) as urine_turbidity,
-(case urine_dipstick_for_blood when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_dipstick_for_blood,
-(case discontinuation_reason when 159492 then "Transferred out" when 1067 then "Unknown" when 160034 then "Died" when 5622 then "Other" when 819 then "819" else "" end) as discontinuation_reason
-from kenyaemr_etl.etl_mch_enrollment;
+  -- create table mch_enrollment
+  create table kenyaemr_datatools.mch_enrollment as
+    select
+      patient_id,
+      uuid,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      anc_number,
+      first_anc_visit_date,
+      gravida,
+      parity,
+      parity_abortion,
+      age_at_menarche,
+      lmp,
+      lmp_estimated,
+      edd_ultrasound,
+      (case blood_group when 690 then "A POSITIVE" when 692 then "A NEGATIVE" when 694 then "B POSITIVE" when 696 then "B NEGATIVE" when 699 then "O POSITIVE"
+       when 701 then "O NEGATIVE" when 1230 then "AB POSITIVE" when 1231 then "AB NEGATIVE" else "" end) as blood_group,
+      (case serology when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as serology,
+      (case tb_screening when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as tb_screening,
+      (case bs_for_mps when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" else "" end) as bs_for_mps,
+      (case hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" when 1402 then "Not Tested" else "" end) as hiv_status,
+      hiv_test_date,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
+      partner_hiv_test_date,
+      urine_microscopy,
+      (case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
+      (case glucose_measurement when 1115 then "Normal" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" when 1365 then "Four Plus(++++)" else "" end) as glucose_measurement,
+      urine_ph,
+      urine_gravity,
+      (case urine_nitrite_test when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" else "" end) as urine_nitrite_test,
+      (case urine_leukocyte_esterace_test when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_leukocyte_esterace_test,
+      (case urinary_ketone when 664 then "NEGATIVE" when 1874 then "Trace - 5" when 1362 then "One Plus(+) - 15" when 1363 then "Two Plus(++) - 50" when 1364 then "Three Plus(+++) - 150" else "" end) as urinary_ketone,
+      (case urine_bile_salt_test when 1115 then "Normal" when 1874 then "Trace - 1" when 1362 then "One Plus(+) - 4" when 1363 then "Two Plus(++) - 8" when 1364 then "Three Plus(+++) - 12" else "" end) as urine_bile_salt_test,
+      (case urine_bile_pigment_test when 664 then "NEGATIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_bile_pigment_test,
+      (case urine_colour when 162099 then "Colourless" when 127778 then "Red color" when 162097 then "Light yellow colour" when 162105 then "Yellow-green colour" when 162098 then "Dark yellow colour" when 162100 then "Brown color" else "" end) as urine_colour,
+      (case urine_turbidity when 162102 then "Urine appears clear" when 162103 then "Cloudy urine" when 162104 then "Urine appears turbid" else "" end) as urine_turbidity,
+      (case urine_dipstick_for_blood when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_dipstick_for_blood,
+      (case discontinuation_reason when 159492 then "Transferred out" when 1067 then "Unknown" when 160034 then "Died" when 5622 then "Other" when 819 then "819" else "" end) as discontinuation_reason
+    from kenyaemr_etl.etl_mch_enrollment;
 
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(tb_screening);
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_status);
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_test_date);
-ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(partner_hiv_status);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(tb_screening);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_status);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_test_date);
+  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(partner_hiv_status);
 
--- create table mch_antenatal_visit
-create table kenyaemr_datatools.mch_antenatal_visit as
-select 
-patient_id,
-uuid,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-provider,
-temperature,
-pulse_rate,
-systolic_bp,
-diastolic_bp,
-respiratory_rate,
-oxygen_saturation,
-weight,
-height,
-muac,
-hemoglobin,
-(case pallor when 1065 then "Yes" when 1066 then "No" else "" end) as pallor,
-maturity,
-fundal_height,
-(case fetal_presentation when 139814 then "Frank Breech Presentation" when 160091 then "vertex presentation" when 144433 then "Compound Presentation" when 115808 then "Mentum Presentation of Fetus" 
- when 118388 then "Face or Brow Presentation of Foetus" when 129192 then "Presentation of Cord" when 112259 then "Transverse or Oblique Fetal Presentation" when 164148 then "Occiput Anterior Position" 
- when 164149 then "Brow Presentation" when 164150 then "Face Presentation" when 156352 then "footling breech presentation" else "" end) as fetal_presentation,
-(case lie when 132623 then "Oblique lie" when 162088 then "Longitudinal lie" when 124261 then "Transverse lie" else "" end) as lie,
-fetal_heart_rate,
-(case fetal_movement when 162090 then "Increased fetal movements" when 113377 then "Decreased fetal movements" when 1452 then "No fetal movements" when 162108 then "Fetal movements present" else "" end) as fetal_movement,
-(case who_stage when 1204 then "WHO Stage1" when 1205 then "WHO Stage2" when 1206 then "WHO Stage3" when 1207 then "WHO Stage4" else "" end) as who_stage,
-cd4,
-(case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
-urine_microscopy,
-(case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
-(case glucose_measurement when 1115 then "Normal" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" when 1365 then "Four Plus(++++)" else "" end) as glucose_measurement,
-urine_ph,
-urine_gravity,
-(case urine_nitrite_test when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" else "" end) as urine_nitrite_test,
-(case urine_leukocyte_esterace_test when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_leukocyte_esterace_test,
-(case urinary_ketone when 664 then "NEGATIVE" when 1874 then "Trace - 5" when 1362 then "One Plus(+) - 15" when 1363 then "Two Plus(++) - 50" when 1364 then "Three Plus(+++) - 150" else "" end) as urinary_ketone,
-(case urine_bile_salt_test when 1115 then "Normal" when 1874 then "Trace - 1" when 1362 then "One Plus(+) - 4" when 1363 then "Two Plus(++) - 8" when 1364 then "Three Plus(+++) - 12" else "" end) as urine_bile_salt_test,
-(case urine_bile_pigment_test when 664 then "NEGATIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_bile_pigment_test,
-(case urine_colour when 162099 then "Colourless" when 127778 then "Red color" when 162097 then "Light yellow colour" when 162105 then "Yellow-green colour" when 162098 then "Dark yellow colour" when 162100 then "Brown color" else "" end) as urine_colour,
-(case urine_turbidity when 162102 then "Urine appears clear" when 162103 then "Cloudy urine" when 162104 then "Urine appears turbid" else "" end) as urine_turbidity,
-(case urine_dipstick_for_blood when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_dipstick_for_blood
-from kenyaemr_etl.etl_mch_antenatal_visit;
+  SELECT "Successfully created mch_enrollment table";
 
-ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  -- create table mch_antenatal_visit
+  create table kenyaemr_datatools.mch_antenatal_visit as
+    select
+      patient_id,
+      uuid,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      provider,
+      anc_visit_number,
+      temperature,
+      pulse_rate,
+      systolic_bp,
+      diastolic_bp,
+      respiratory_rate,
+      oxygen_saturation,
+      weight,
+      height,
+      muac,
+      hemoglobin,
+      (case breast_exam_done when 1065 then "Yes" when 1066 then "No" else "" end) as breast_exam_done,
+      (case pallor when 1065 then "Yes" when 1066 then "No" else "" end) as pallor,
+      maturity,
+      fundal_height,
+      (case fetal_presentation when 139814 then "Frank Breech Presentation" when 160091 then "vertex presentation" when 144433 then "Compound Presentation" when 115808 then "Mentum Presentation of Fetus"
+       when 118388 then "Face or Brow Presentation of Foetus" when 129192 then "Presentation of Cord" when 112259 then "Transverse or Oblique Fetal Presentation" when 164148 then "Occiput Anterior Position"
+       when 164149 then "Brow Presentation" when 164150 then "Face Presentation" when 156352 then "footling breech presentation" else "" end) as fetal_presentation,
+      (case lie when 132623 then "Oblique lie" when 162088 then "Longitudinal lie" when 124261 then "Transverse lie" else "" end) as lie,
+      fetal_heart_rate,
+      (case fetal_movement when 162090 then "Increased fetal movements" when 113377 then "Decreased fetal movements" when 1452 then "No fetal movements" when 162108 then "Fetal movements present" else "" end) as fetal_movement,
+      (case who_stage when 1204 then "WHO Stage1" when 1205 then "WHO Stage2" when 1206 then "WHO Stage3" when 1207 then "WHO Stage4" else "" end) as who_stage,
+      cd4,
+      viral_load,
+      (case ldl when 1302 then "LDL"  else "" end) as ldl,
+      (case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
+      final_test_result,
+      patient_given_result,
+      (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
+      (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
+      (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
+      (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
+      TTT,
+      IPT_malaria,
+      iron_supplement,
+      deworming,
+      bed_nets,
+      urine_microscopy,
+      (case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
+      (case glucose_measurement when 1115 then "Normal" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" when 1365 then "Four Plus(++++)" else "" end) as glucose_measurement,
+      urine_ph,
+      urine_gravity,
+      (case urine_nitrite_test when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" else "" end) as urine_nitrite_test,
+      (case urine_leukocyte_esterace_test when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_leukocyte_esterace_test,
+      (case urinary_ketone when 664 then "NEGATIVE" when 1874 then "Trace - 5" when 1362 then "One Plus(+) - 15" when 1363 then "Two Plus(++) - 50" when 1364 then "Three Plus(+++) - 150" else "" end) as urinary_ketone,
+      (case urine_bile_salt_test when 1115 then "Normal" when 1874 then "Trace - 1" when 1362 then "One Plus(+) - 4" when 1363 then "Two Plus(++) - 8" when 1364 then "Three Plus(+++) - 12" else "" end) as urine_bile_salt_test,
+      (case urine_bile_pigment_test when 664 then "NEGATIVE" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_bile_pigment_test,
+      (case urine_colour when 162099 then "Colourless" when 127778 then "Red color" when 162097 then "Light yellow colour" when 162105 then "Yellow-green colour" when 162098 then "Dark yellow colour" when 162100 then "Brown color" else "" end) as urine_colour,
+      (case urine_turbidity when 162102 then "Urine appears clear" when 162103 then "Cloudy urine" when 162104 then "Urine appears turbid" else "" end) as urine_turbidity,
+      (case urine_dipstick_for_blood when 664 then "NEGATIVE" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" else "" end) as urine_dipstick_for_blood,
+      (case syphilis_test_status when 1229 then "Non Reactive" when 1228 then "Reactive" when 1402 then "Not Screened" when 1304 then "Poor Sample quality" else "" end) as syphilis_test_status,
+      (case syphilis_treated_status when 1065 then "Yes" when 1066 then "No" else "" end) as syphilis_treated_status,
+      (case bs_mps when 664 then "Negative" when 703 then "Positive" when 1138 then "Indeterminate" else "" end) as bs_mps,
+      (case anc_exercises when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as anc_exercises,
+      (case tb_screening when 1660 then "No TB signs" when 164128 then "No signs and started on INH" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "Not done" when 1111 then "On TB Treatment"  else "" end) as tb_screening,
+      (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 159393 then "Presumed" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
+      (case cacx_screening_method when 885 then "PAP Smear" when 162816 then "VIA" when 5622 then "Other" else "" end) as cacx_screening_method,
+      (case has_other_illnes  when 1065 then "Yes" when 1066 then "No" else "" end) as has_other_illnes,
+      (case counselled  when 1065 then "Yes" when 1066 then "No" else "" end) as counselled,
+      (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      next_appointment_date,
+      clinical_notes
 
-ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(who_stage);
-ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(arv_status);
+    from kenyaemr_etl.etl_mch_antenatal_visit;
 
--- create table mch_postnatal_visit
-create table kenyaemr_datatools.mch_postnatal_visit as
-select 
-patient_id,
-uuid,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-provider,
-temperature,
-pulse_rate,
-systolic_bp,
-diastolic_bp,
-respiratory_rate,
-oxygen_saturation,
-weight,
-height,
-muac,
-hemoglobin,
-(case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
-(case general_condition when 1855 then "Good" when 162133 then "Fair" when 162132 then "Poor" else "" end) as general_condition,
-(case breast when 1855 then "Good" when 162133 then "Fair" when 162132 then "Poor" else "" end) as breast,    -- recheck
-(case cs_scar when 156794 then "infection of obstetric surgical wound" when 145776 then "Caesarean Wound Disruption" when 162129 then "Wound intact and healing" when 162130 then "Surgical wound healed" else "" end) as cs_scar,
-(case gravid_uterus when 162111 then "On exam, uterine fundus 12-16 week size" when 162112 then "On exam, uterine fundus 16-20 week size" when 162113 then "On exam, uterine fundus 20-24 week size" when 162114 then "On exam, uterine fundus 24-28 week size" 
- when 162115 then "On exam, uterine fundus 28-32 week size" when 162116 then "On exam, uterine fundus 32-34 week size" when 162117 then "On exam, uterine fundus 34-36 week size" when 162118 then "On exam, uterine fundus 36-38 week size" 
- when 162119 then "On exam, uterine fundus 38 weeks-term size" when 123427 then "Uterus Involuted"  else "" end) as gravid_uterus,
-(case episiotomy when 159842 then "repaired, episiotomy wound" when 159843 then "healed, episiotomy wound" when 159841 then "gap, episiotomy wound" when 113919 then "Postoperative Wound Infection" else "" end) as episiotomy,
-(case lochia when 159845 then "lochia excessive" when 159846 then "lochia foul smelling" when 159721 then "Lochia type" else "" end) as lochia,  -- recheck
-(case mother_hiv_status when 1067 then "Unknown" when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as mother_hiv_status,
-(case condition_of_baby when 1855 then "In good health" when 162132 then "Patient condition poor" when 1067 then "Unknown" when 162133 then "Patient condition fair/satisfactory" else "" end) as condition_of_baby,
-(case baby_feeding_method when 5526 then "BREASTFED EXCLUSIVELY" when 1595 then "REPLACEMENT FEEDING" when 6046 then "Mixed feeding" when 159418 then "Not at all sure" else "" end) as baby_feeding_method,
-(case umblical_cord when 162122 then "Neonatal umbilical stump clean" when 162123 then "Neonatal umbilical stump not clean" when 162124 then "Neonatal umbilical stump moist" when 159418 then "Not at all sure" else "" end) as umblical_cord,
-(case baby_immunization_started when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as baby_immunization_started,
-(case family_planning_counseling when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as family_planning_counseling,
-uterus_examination,
-uterus_cervix_examination,
-vaginal_examination,
-parametrial_examination,
-external_genitalia_examination,
-ovarian_examination,
-pelvic_lymph_node_exam
-from kenyaemr_etl.etl_mch_postnatal_visit;
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(who_stage);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(arv_status);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(final_test_result);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(tb_screening);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(syphilis_test_status);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(cacx_screening);
+  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(next_appointment_date);
 
-ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
-ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(mother_hiv_status);
-ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
+  SELECT "Successfully created mch_antenatal_visit table";
+  -- create table mch_delivery table
+  create table kenyaemr_datatools.mch_delivery as
+    select
+      patient_id,
+      uuid,
+      provider,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      date_created,
+      admission_number,
+      duration_of_pregnancy,
+      (case mode_of_delivery when 1170 then "Spontaneous vaginal delivery" when 1171 then "Cesarean section" when 1172 then "Breech delivery"
+       when 118159 then "Forceps or Vacuum Extractor Delivery" when 159739 then "emergency caesarean section" when 159260 then "vacuum extractor delivery"
+       when 5622 then "Other" when 1067 then "Unknown" else "" end) as mode_of_delivery,
+      date_of_delivery,
+      (case blood_loss when 1499 then "Moderate" when 1107 then "None" when 1498 then "Mild" when 1500 then "Severe" else "" end) as blood_loss,
+      (case condition_of_mother when 160429 then "Alive" when 134612 then "Dead" else "" end) as condition_of_mother,
+      apgar_score_1min,
+      apgar_score_5min,
+      apgar_score_10min,
+      (case resuscitation_done when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as resuscitation_done,
+      (case place_of_delivery when 1536 then "HOME" when 1588 then "HEALTH CLINIC/POST" when 1589 then "HOSPITAL"
+       when 1601 then "EN ROUTE TO HEALTH FACILITY" when 159670 then "sub-district hospital" when 159671 then "Provincial hospital"
+       when 159662 then "district hospital" when 159372 then "Primary Care Clinic" when 5622 then "Other" when 1067 then "Unknown" else "" end) as place_of_delivery,
+       delivery_assistant,
+      (case counseling_on_infant_feeding when 161651 then "Counseling about infant feeding practices" else "" end) as counseling_on_infant_feeding,
+      (case counseling_on_exclusive_breastfeeding when 161096 then "Counseling for exclusive breastfeeding" else "" end) as counseling_on_exclusive_breastfeeding,
+      (case counseling_on_infant_feeding_for_hiv_infected when 162091 then "Counseling for infant feeding practices to prevent HIV" else "" end) as counseling_on_infant_feeding_for_hiv_infected,
+      (case mother_decision when 1173 then "EXPRESSED BREASTMILK" when 1152 then "WEANED" when 5254 then "Infant formula" when 1150 then "BREASTFED PREDOMINATELY"
+       when 6046 then "Mixed feeding" when 5526 then "BREASTFED EXCLUSIVELY" when 968 then "COW MILK" when 1595 then "REPLACEMENT FEEDING"  else "" end) as mother_decision,
+      (case placenta_complete when 163455 then "Complete placenta at delivery" when 163456 then "Incomplete placenta at delivery" else "" end) as placenta_complete,
+      (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" else "" end) as maternal_death_audited,
+      (case cadre when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then " COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as cadre,
+      (case delivery_complications when 1065 then "Yes" when 1066 then "No" else "" end) as delivery_complications,
+      (case coded_delivery_complications when 118744 then "Eclampsia" when 113195 then "Ruptured Uterus" when 115036 then "Obstructed Labor" when 228 then "APH" when 230 then "PPH" when 130 then "Puerperal sepsis" when 1067 then "Unknown" else "" end) as coded_delivery_complications,
+       other_delivery_complications,
+       duration_of_labor,
+      (case baby_sex when 1534 then "Male Gender" when 1535 then "Female gender" else "" end) as baby_sex,
+      (case baby_condition when 135436 then "Macerated Stillbirth" when 159916 then "Fresh stillbirth" when 151849 then "Live birth"
+       when 125872 then "STILLBIRTH" when 126127 then "Spontaneous abortion"
+       when 164815 then "Live birth, died before arrival at facility"
+       when 164816 then "Live birth, died after arrival or delivery in facility" else "" end) as baby_condition,
+      (case teo_given when 84893 then "TETRACYCLINE" when 1066 then "No" when 1175 then "Not applicable" else "" end) as teo_given,
+      birth_weight,
+      (case bf_within_one_hour when 1065 then "Yes" when 1066 then "No" else "" end) as bf_within_one_hour,
+      (case birth_with_deformity when 155871 then "deformity" when 1066 then "No"  when 1175 then "Not applicable" else "" end) as birth_with_deformity,
+      final_test_result,
+      patient_given_result,
+      (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
+      (case prophylaxis_given when 105281 then "SULFAMETHOXAZOLE / TRIMETHOPRIM" when 74250 then "DAPSONE"  when 1107 then "None" else "" end) as prophylaxis_given,
+      (case baby_azt_dispensed when 160123 then "Zidovudine for PMTCT" when 1066 then "No" when 1175 then "Not Applicable" else "" end) as baby_azt_dispensed,
+      (case baby_nvp_dispensed when 80586 then "NEVIRAPINE" when 1066 then "No" when 1175 then "Not Applicable" else "" end) as baby_nvp_dispensed,
+      clinical_notes
 
--- create table tb_enrollment
-create table kenyaemr_datatools.tb_enrollment as
-select 
-patient_id,
-uuid,
-provider,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-date_treatment_started,
-district,
-(case referred_by when 160539 then "VCT center" when 160631 then "HIV care clinic" when 160546 then "STI Clinic" when 161359 then "Home Based Care" 
-when 160538 then "Antenatal/PMTCT Clinic" when 1725 then "Private Sector" when 1744 then "Chemist/pharmacist" when 160551 then "Self referral" 
-when 1555 then "Community Health worker(CHW)" when 162050 then "CCC" when 164103 then "Diabetes Clinic" else "" end) as referred_by,
-referral_date,
-date_transferred_in,
-facility_transferred_from,
-district_transferred_from,
-date_first_enrolled_in_tb_care,
-weight,
-height,
-treatment_supporter,
-(case relation_to_patient when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "PARTNER OR SPOUSE"
- when 5622 then "Other" else "" end) as relation_to_patient,
-treatment_supporter_address,
-treatment_supporter_phone_contact, 
-(case disease_classification when 42 then "Pulmonary TB" when 5042 then "Extra-Pulmonary TB" else "" end) as disease_classification,
-(case patient_classification when 159878 then "New" when 159877 then "Smear positive Relapse" when 159876 then "Smear negative Relapse" when 159874 then "Treatment after Failure"  
-when 159873 then "Treatment resumed after defaulting" when 159872 then "Transfer in" when 163609 then "Previous treatment history unknown"  else "" end) as patient_classification,
-(case pulmonary_smear_result when 703 then "Smear Positive" when 664 then "Smear Negative" when 1118 then "Smear not done" else "" end) as pulmonary_smear_result,
-(case has_extra_pulmonary_pleurial_effusion when 130059 then "Pleural effusion" else "" end) as has_extra_pulmonary_pleurial_effusion,
-(case has_extra_pulmonary_milliary when 115753 then "Milliary" else "" end) as has_extra_pulmonary_milliary,
-(case has_extra_pulmonary_lymph_node when 111953 then "Lymph nodes" else "" end) as has_extra_pulmonary_lymph_node,
-(case has_extra_pulmonary_menengitis when 111967 then "Meningitis" else "" end) as has_extra_pulmonary_menengitis,
-(case has_extra_pulmonary_skeleton when 112116 then "Skeleton" else "" end) as has_extra_pulmonary_skeleton,
-(case has_extra_pulmonary_abdominal when 1350 then "Abdominal" else "" end) as has_extra_pulmonary_abdominal
-from kenyaemr_etl.etl_tb_enrollment;
+    from kenyaemr_etl.etl_mchs_delivery;
 
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.mch_delivery ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(disease_classification);
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(patient_classification);
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(pulmonary_smear_result);
-ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(date_first_enrolled_in_tb_care);
+  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(final_test_result);
+  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(baby_sex);
 
+  SELECT "Successfully created mchs_delivery table";
+  -- create table mch_discharge table
+  create table kenyaemr_datatools.mch_discharge as
+    select
+      patient_id,
+      uuid,
+      provider,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      date_created,
+      (case counselled_on_feeding when 1065 then "Yes" when 1066 then "No" else "" end) as counselled_on_feeding,
+      (case baby_status when 163016 then "Alive" when 160432 then "Dead" else "" end) as baby_status,
+      (case vitamin_A_dispensed when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as vitamin_A_dispensed,
+      birth_notification_number,
+      condition_of_mother,
+      discharge_date,
+      (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      clinical_notes
+
+    from kenyaemr_etl.etl_mchs_discharge;
+
+  ALTER TABLE kenyaemr_datatools.mch_discharge ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(baby_status);
+  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(discharge_date);
+
+  SELECT "Successfully created mch_discharge table";
+
+  -- create table mch_postnatal_visit
+  create table kenyaemr_datatools.mch_postnatal_visit as
+    select
+      patient_id,
+      uuid,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      provider,
+      pnc_register_no,
+      pnc_visit_no,
+      delivery_date,
+      (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" else "" end) as mode_of_delivery,
+      (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
+      temperature,
+      pulse_rate,
+      systolic_bp,
+      diastolic_bp,
+      respiratory_rate,
+      oxygen_saturation,
+      weight,
+      height,
+      muac,
+      hemoglobin,
+      (case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
+      (case general_condition when 1855 then "Good" when 162133 then "Fair" when 162132 then "Poor" else "" end) as general_condition,
+      (case breast when 1855 then "Good" when 162133 then "Fair" when 162132 then "Poor" else "" end) as breast,    -- recheck
+      (case cs_scar when 156794 then "infection of obstetric surgical wound" when 145776 then "Caesarean Wound Disruption" when 162129 then "Wound intact and healing" when 162130 then "Surgical wound healed" else "" end) as cs_scar,
+      (case gravid_uterus when 162111 then "On exam, uterine fundus 12-16 week size" when 162112 then "On exam, uterine fundus 16-20 week size" when 162113 then "On exam, uterine fundus 20-24 week size" when 162114 then "On exam, uterine fundus 24-28 week size"
+       when 162115 then "On exam, uterine fundus 28-32 week size" when 162116 then "On exam, uterine fundus 32-34 week size" when 162117 then "On exam, uterine fundus 34-36 week size" when 162118 then "On exam, uterine fundus 36-38 week size"
+       when 162119 then "On exam, uterine fundus 38 weeks-term size" when 123427 then "Uterus Involuted"  else "" end) as gravid_uterus,
+      (case episiotomy when 159842 then "repaired, episiotomy wound" when 159843 then "healed, episiotomy wound" when 159841 then "gap, episiotomy wound" when 113919 then "Postoperative Wound Infection" else "" end) as episiotomy,
+      (case lochia when 159845 then "lochia excessive" when 159846 then "lochia foul smelling" when 159721 then "Lochia type" else "" end) as lochia,  -- recheck
+      (case pallor when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as pallor,
+      (case pph when 1065 then "Present" when 1066 then "Absent" else "" end) as pph,
+      (case mother_hiv_status when 1067 then "Unknown" when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as mother_hiv_status,
+      (case condition_of_baby when 1855 then "In good health" when 162132 then "Patient condition poor" when 1067 then "Unknown" when 162133 then "Patient condition fair/satisfactory" else "" end) as condition_of_baby,
+      (case baby_feeding_method when 5526 then "BREASTFED EXCLUSIVELY" when 1595 then "REPLACEMENT FEEDING" when 6046 then "Mixed feeding" when 159418 then "Not at all sure" else "" end) as baby_feeding_method,
+      (case umblical_cord when 162122 then "Neonatal umbilical stump clean" when 162123 then "Neonatal umbilical stump not clean" when 162124 then "Neonatal umbilical stump moist" when 159418 then "Not at all sure" else "" end) as umblical_cord,
+      (case baby_immunization_started when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as baby_immunization_started,
+      (case family_planning_counseling when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as family_planning_counseling,
+      uterus_examination,
+      uterus_cervix_examination,
+      vaginal_examination,
+      parametrial_examination,
+      external_genitalia_examination,
+      ovarian_examination,
+      pelvic_lymph_node_exam,
+      final_test_result,
+      patient_given_result,
+      (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
+      (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
+      (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
+      (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
+      (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
+      (case pnc_exercises when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as pnc_exercises,
+      (case maternal_condition when 130 then "Puerperal sepsis" when 114244 then "Perineal Laceration" when 1855 then "In good health" when 134612 then "Maternal Death" when 160429 then "Alive" when 162132 then "Patient condition poor" when 162133 then "Patient condition fair/satisfactory" else "" end) as maternal_condition,
+      (case iron_supplementation when 1065 then "Yes" when 1066 then "No" else "" end) as iron_supplementation,
+      (case fistula_screening when 1107 then "None" when 49 then "Vesicovaginal Fistula" when 127847 then "Rectovaginal fistula" when 1118 then "Not done"  else "" end) as fistula_screening,
+      (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 159393 then "Presumed" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
+      (case cacx_screening_method when 885 then "PAP Smear" when 162816 then "VIA" when 5622 then "Other" else "" end) as cacx_screening_method,
+      (case family_planning_status when 965 then "On Family Planning" when 160652 then "Not using Family Planning"  else "" end) as family_planning_status,
+      (case family_planning_method when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectible" when 1359 then "Implant"
+       when 5275 then "Intrauterine Device" when 136163 then "Lactational Amenorhea Method" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness"
+       when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
+      (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      clinical_notes
+
+    from kenyaemr_etl.etl_mch_postnatal_visit;
+
+  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
+  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(mother_hiv_status);
+  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
+
+  -- create table hei_enrollment
+  create table kenyaemr_datatools.hei_enrollment as
+    select
+      serial_no,
+      patient_id,
+      uuid,
+      provider,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      (case child_exposed when 822 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as child_exposed,
+      spd_number,
+      birth_weight,
+      gestation_at_birth,
+      date_first_seen,
+      birth_notification_number,
+      birth_certificate_number,
+      (case need_for_special_care when 161628 then "Yes" when 1066 then "No" else "" end) as need_for_special_care,
+      (case reason_for_special_care when 116222 then "Birth weight less than 2.5 kg" when 162071 then "Birth less than 2 years after last birth" when 162072 then "Fifth or more child" when 162073 then "Teenage mother"
+       when 162074 then "Brother or sisters undernourished" when 162075 then "Multiple births(Twins,triplets)" when 162076 then "Child in family dead" when 1174 then "Orphan"
+       when 161599 then "Child has disability" when 1859 then "Parent HIV positive" when 123174 then "History/signs of child abuse/neglect" else "" end) as reason_for_special_care,
+      (case referral_source when 160537 then "Paediatric" when 160542 then "OPD" when 160456 then "Maternity" when 162050 then "CCC"  when 160538 then "MCH/PMTCT" when 5622 then "Other" else "" end) as referral_source,
+      (case transfer_in when 1065 then "Yes" when 1066 then "No" else "" end) as transfer_in,
+      transfer_in_date,
+      facility_transferred_from,
+      district_transferred_from,
+      date_first_enrolled_in_hei_care,
+      (case mother_breastfeeding when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as mother_breastfeeding,
+      (case TB_contact_history_in_household when 1065 then "Yes" when 1066 then "No" else "" end) as TB_contact_history_in_household,
+      (case mother_alive when 1 then "Yes" when 0 then "No" else "" end) as mother_alive,
+      (case mother_on_pmtct_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_pmtct_drugs,
+      (case mother_on_drug when 80586 then "Sd NVP Only" when 1652 then "AZT+NVP+3TC" when 1149 then "HAART" when 1107 then "None" else "" end) as mother_on_drug,
+      (case mother_on_art_at_infant_enrollment when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_art_at_infant_enrollment,
+      (case mother_drug_regimen when 792 then "D4T/3TC/NVP" when 160124 then "AZT/3TC/EFV" when 160104 then "D4T/3TC/EFV" when 1652 then "3TC/NVP/AZT"
+       when 161361 then "EDF/3TC/EFV" when 104565 then "EFV/FTC/TDF" when 162201 then "3TC/LPV/TDF/r" when 817 then "ABC/3TC/AZT"
+       when 162199 then "ABC/NVP/3TC" when 162200 then "3TC/ABC/LPV/r" when 162565 then "3TC/NVP/TDF" when 1652 then "3TC/NVP/AZT"
+       when 162561 then "3TC/AZT/LPV/r" when 164511 then "AZT-3TC-ATV/r" when 164512 then "TDF-3TC-ATV/r" when 162560 then "3TC/D4T/LPV/r"
+       when 162563 then "3TC/ABC/EFV" when 162562 then "ABC/LPV/R/TDF" when 162559 then "ABC/DDI/LPV/r"  else "" end) as mother_drug_regimen,
+      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "sd NVP+AZT+3TC" when 1149 then "NVP for 6 weeks(Mother on HAART)" when 1107 then "None" else "" end) as infant_prophylaxis,
+      parent_ccc_number,
+      (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" else "" end) as mode_of_delivery,
+      (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
+      birth_length,
+      birth_order,
+      health_facility_name,
+      date_of_birth_notification,
+      date_of_birth_registration,
+      birth_registration_place,
+      permanent_registration_serial,
+      mother_facility_registered
+
+    from kenyaemr_etl.etl_hei_enrollment;
+
+  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(transfer_in);
+  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(child_exposed);
+  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(referral_source);
+  SELECT "Successfully created hei_enrollment";
+
+  -- create table hei_follow_up_visit
+  create table kenyaemr_datatools.hei_follow_up_visit as
+    select
+      patient_id,
+      uuid,
+      provider,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      weight,
+      height,
+      (case primary_caregiver when 970 then "Mother" when 973 then "Guardian" when 972 then "Guardian" when 160639 then "Guardian" when 5622 then "Guardian" else "" end) as primary_caregiver,
+      (case infant_feeding when 5526 then "Exclusive Breastfeeding(EBF)" when 1595 then "Exclusive Replacement(ERF)" when 6046 then "Mixed Feeding(MF)" else "" end) as infant_feeding,
+      (case tb_assessment_outcome when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1661 then "TB Confirmed" when 1662 then "TB Rx" when 1679 then "INH" when 160737 then "TB Screening Not Done" else "" end) as tb_assessment_outcome,
+      (case social_smile_milestone when 162056 then "Social Smile" else "" end) as social_smile_milestone,
+      (case head_control_milestone when 162057 then "Head Holding/Control" else "" end) as head_control_milestone,
+      (case response_to_sound_milestone when 162058 then "Turns towards the origin of sound" else "" end) as response_to_sound_milestone,
+      (case hand_extension_milestone when 162059 then "Extends hand to grasp a toy" else "" end) as hand_extension_milestone,
+      (case sitting_milestone when 162061 then "Sitting" else "" end) as sitting_milestone,
+      (case walking_milestone when 162063 then "Walking" else "" end) as walking_milestone,
+      (case standing_milestone when 162062 then "Standing" else "" end) as standing_milestone,
+      (case talking_milestone when 162060 then "Talking" else "" end) as talking_milestone,
+      (case review_of_systems_developmental when 1115 then "Normal(N)" when 6022 then "Delayed(D)" when 6025 then "Regressed(R)" else "" end) as review_of_systems_developmental,
+      dna_pcr_sample_date,
+      (case dna_pcr_contextual_status when 162081 then "Repeat" when 162083 then "Final test (end of pediatric window)" when 162082 then "Confirmation" when 162080 then "Initial" else "" end) as dna_pcr_contextual_status,
+      (case dna_pcr_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as dna_pcr_result,
+      (case azt_given when 86663 then "Yes" else "No" end) as azt_given,
+      (case nvp_given when 80586 then "Yes" else "No" end) as nvp_given,
+      (case ctx_given when 105281 then "Yes" else "No" end) as ctx_given,
+      (case first_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as first_antibody_result,
+      (case final_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as final_antibody_result,
+      (case tetracycline_ointment_given  when 1065 then "Yes" when 1066 then "No" else "" end) as tetracycline_ointment_given,
+      (case pupil_examination when 162065 then "Black" when 1075 then "White" else "" end) as pupil_examination,
+      (case sight_examination when 1065 then "Following Objects" when 1066 then "Not Following Objects" else "" end) as sight_examination,
+      (case squint when 1065 then "Squint" when 1066 then "No Squint" else "" end) as squint,
+      (case deworming_drug when 79413 then "Mebendazole" when 70439 then "Albendazole" else "" end) as deworming_drug,
+      dosage,
+      unit,
+      comments,
+      next_appointment_date
+    from kenyaemr_etl.etl_hei_follow_up_visit;
+
+  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(infant_feeding);
+
+  SELECT "Successfully created hei_follow_up_visit";
+
+  -- create table hei_immunization
+  create table kenyaemr_datatools.hei_immunization as
+    select
+      patient_id,
+      visit_date,
+      encounter_id,
+      date_created,
+      created_by,
+      BCG,
+      OPV_birth,
+      OPV_1,
+      OPV_2,
+      OPV_3,
+      IPV,
+      DPT_Hep_B_Hib_1,
+      DPT_Hep_B_Hib_2,
+      DPT_Hep_B_Hib_3,
+      PCV_10_1,
+      PCV_10_2,
+      PCV_10_3,
+      ROTA_1,
+      ROTA_2,
+      Measles_rubella_1,
+      Measles_rubella_2
+      #(case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
+      #(case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months
+
+    from kenyaemr_etl.etl_hei_immunization;
+
+  ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  SELECT "Successfully created hei_immunization table";
+  -- create table tb_enrollment
+  create table kenyaemr_datatools.tb_enrollment as
+    select
+      patient_id,
+      uuid,
+      provider,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      date_treatment_started,
+      district,
+      (case referred_by when 160539 then "VCT center" when 160631 then "HIV care clinic" when 160546 then "STI Clinic" when 161359 then "Home Based Care"
+       when 160538 then "Antenatal/PMTCT Clinic" when 1725 then "Private Sector" when 1744 then "Chemist/pharmacist" when 160551 then "Self referral"
+       when 1555 then "Community Health worker(CHW)" when 162050 then "CCC" when 164103 then "Diabetes Clinic" else "" end) as referred_by,
+      referral_date,
+      date_transferred_in,
+      facility_transferred_from,
+      district_transferred_from,
+      date_first_enrolled_in_tb_care,
+      weight,
+      height,
+      treatment_supporter,
+      (case relation_to_patient when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "PARTNER OR SPOUSE"
+       when 5622 then "Other" else "" end) as relation_to_patient,
+      treatment_supporter_address,
+      treatment_supporter_phone_contact,
+      (case disease_classification when 42 then "Pulmonary TB" when 5042 then "Extra-Pulmonary TB" else "" end) as disease_classification,
+      (case patient_classification when 159878 then "New" when 159877 then "Smear positive Relapse" when 159876 then "Smear negative Relapse" when 159874 then "Treatment after Failure"
+       when 159873 then "Treatment resumed after defaulting" when 159872 then "Transfer in" when 163609 then "Previous treatment history unknown"  else "" end) as patient_classification,
+      (case pulmonary_smear_result when 703 then "Smear Positive" when 664 then "Smear Negative" when 1118 then "Smear not done" else "" end) as pulmonary_smear_result,
+      (case has_extra_pulmonary_pleurial_effusion when 130059 then "Pleural effusion" else "" end) as has_extra_pulmonary_pleurial_effusion,
+      (case has_extra_pulmonary_milliary when 115753 then "Milliary" else "" end) as has_extra_pulmonary_milliary,
+      (case has_extra_pulmonary_lymph_node when 111953 then "Lymph nodes" else "" end) as has_extra_pulmonary_lymph_node,
+      (case has_extra_pulmonary_menengitis when 111967 then "Meningitis" else "" end) as has_extra_pulmonary_menengitis,
+      (case has_extra_pulmonary_skeleton when 112116 then "Skeleton" else "" end) as has_extra_pulmonary_skeleton,
+      (case has_extra_pulmonary_abdominal when 1350 then "Abdominal" else "" end) as has_extra_pulmonary_abdominal
+    from kenyaemr_etl.etl_tb_enrollment;
+
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(encounter_id);
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(disease_classification);
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(patient_classification);
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(pulmonary_smear_result);
+  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(date_first_enrolled_in_tb_care);
 -- create table tb_follow_up_visit
 create table kenyaemr_datatools.tb_follow_up_visit as
 select 
@@ -550,140 +861,6 @@ ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFEREN
 
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(encounter_id);
-
--- create table hei_enrollment
-create table kenyaemr_datatools.hei_enrollment as
-select 
-patient_id,
-uuid,
-provider,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-(case child_exposed when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as child_exposed,
-spd_number,
-birth_weight,
-gestation_at_birth,
-date_first_seen,
-birth_notification_number,
-birth_certificate_number,
-(case need_for_special_care when 161628 then "Yes" when 1066 then "No" else "" end) as need_for_special_care,
-(case reason_for_special_care when 116222 then "Birth weight less than 2.5 kg" when 162071 then "Birth less than 2 years after last birth" when 162072 then "Fifth or more child" when 162073 then "Teenage mother"
-  when 162074 then "Brother or sisters undernourished" when 162075 then "Multiple births(Twins,triplets)" when 162076 then "Child in family dead" when 1174 then "Orphan"
-  when 161599 then "Child has disability" when 1859 then "Parent HIV positive" when 123174 then "History/signs of child abuse/neglect" else "" end) as reason_for_special_care,
-(case referral_source when 160537 then "Paediatric" when 160542 then "OPD" when 160456 then "Maternity" when 162050 then "CCC"  when 160538 then "MCH/PMTCT" when 5622 then "Other" else "" end) as referral_source,
-(case transfer_in when 1065 then "Yes" when 1066 then "No" else "" end) as transfer_in,
-transfer_in_date,
-facility_transferred_from,
-district_transferred_from,
-date_first_enrolled_in_hei_care, 
-(case mother_breastfeeding when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as mother_breastfeeding,
-(case TB_contact_history_in_household when 1065 then "Yes" when 1066 then "No" else "" end) as TB_contact_history_in_household,
-(case mother_alive when 1 then "Yes" when 0 then "No" else "" end) as mother_alive,
-(case mother_on_pmtct_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_pmtct_drugs,
-(case mother_on_drug when 80586 then "Sd NVP Only" when 1652 then "AZT+NVP+3TC" when 1149 then "HAART" when 1107 then "None" else "" end) as mother_on_drug,
-(case mother_on_art_at_infant_enrollment when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_art_at_infant_enrollment,
-(case mother_drug_regimen when 792 then "D4T/3TC/NVP" when 160124 then "AZT/3TC/EFV" when 160104 then "D4T/3TC/EFV" when 1652 then "3TC/NVP/AZT" 
-  when 161361 then "EDF/3TC/EFV" when 104565 then "EFV/FTC/TDF" when 162201 then "3TC/LPV/TDF/r" when 817 then "ABC/3TC/AZT" 
-  when 162199 then "ABC/NVP/3TC" when 162200 then "3TC/ABC/LPV/r" when 162565 then "3TC/NVP/TDF" when 1652 then "3TC/NVP/AZT"
-  when 162561 then "3TC/AZT/LPV/r" when 164511 then "AZT-3TC-ATV/r" when 164512 then "TDF-3TC-ATV/r" when 162560 then "3TC/D4T/LPV/r"
-  when 162563 then "3TC/ABC/EFV" when 162562 then "ABC/LPV/R/TDF" when 162559 then "ABC/DDI/LPV/r"  else "" end) as mother_drug_regimen,
-parent_ccc_number,
-(case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" else "" end) as mode_of_delivery,
-(case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery
-from kenyaemr_etl.etl_hei_enrollment;
-  
-ALTER TABLE kenyaemr_datatools.hei_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-  
-ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(transfer_in);
-ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(child_exposed);
-ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(referral_source);
-
--- create table hei_follow_up_visit
- create table kenyaemr_datatools.hei_follow_up_visit as
-select 
-patient_id,
-uuid,
-provider,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-weight,
-height,
-(case infant_feeding when 5526 then "Exclusive Breastfeeding(EBF)" when 1595 then "Exclusive Replacement(ERF)" when 6046 then "Mixed Feeding(MF)" else "" end) as infant_feeding,
-(case tb_assessment_outcome when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1661 then "TB Confirmed" when 1662 then "TB Rx" when 1679 then "INH" when 160737 then "TB Screening Not Done" else "" end) as tb_assessment_outcome,
-(case social_smile_milestone when 162056 then "Social Smile" else "" end) as social_smile_milestone,
-(case head_control_milestone when 162057 then "Head Holding/Control" else "" end) as head_control_milestone,
-(case response_to_sound_milestone when 162058 then "Turns towards the origin of sound" else "" end) as response_to_sound_milestone,
-(case hand_extension_milestone when 162059 then "Extends hand to grasp a toy" else "" end) as hand_extension_milestone,
-(case sitting_milestone when 162061 then "Sitting" else "" end) as sitting_milestone,
-(case walking_milestone when 162063 then "Walking" else "" end) as walking_milestone,
-(case standing_milestone when 162062 then "Standing" else "" end) as standing_milestone,
-(case talking_milestone when 162060 then "Talking" else "" end) as talking_milestone,
-(case review_of_systems_developmental when 1115 then "Normal(N)" when 6022 then "Delayed(D)" when 6025 then "Regressed(R)" else "" end) as review_of_systems_developmental,
-(case dna_pcr_contextual_status when 162081 then "Repeat" when 162083 then "Final test (end of pediatric window)" when 162082 then "Confirmation" when 162080 then "Initial" else "" end) as dna_pcr_contextual_status,
-(case dna_pcr_result when 1301 then "DETECTED" when 1302 then "NOT DETECTED" when 1300 then "EQUIVOCAL" when 1303 then "INHIBITORY" when 1304 then "POOR SAMPLE QUALITY" else "" end) as dna_pcr_result,
-(case first_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as first_antibody_result,
-(case final_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as final_antibody_result,
-(case tetracycline_ointment_given  when 1065 then "Yes" when 1066 then "No" else "" end) as tetracycline_ointment_given,
-(case pupil_examination when 162065 then "Black" when 1075 then "White" else "" end) as pupil_examination,
-(case sight_examination when 1065 then "Following Objects" when 1066 then "Not Following Objects" else "" end) as sight_examination,
-(case squint when 1065 then "Squint" when 1066 then "No Squint" else "" end) as squint,
-(case deworming_drug when 79413 then "Mebendazole" when 70439 then "Albendazole" else "" end) as deworming_drug,
-dosage,
-unit,
-next_appointment_date
-from kenyaemr_etl.etl_hei_follow_up_visit;
-
-ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
-ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(infant_feeding);
-
--- create table mch_delivery table
-create table kenyaemr_datatools.mch_delivery as
-select 
-patient_id,
-uuid,
-provider,
-visit_id,
-visit_date,
-location_id,
-encounter_id,
-data_entry_date,
-duration_of_pregnancy,
-(case mode_of_delivery when 1170 then "Spontaneous vaginal delivery" when 1171 then "Cesarean section" when 1172 then "Breech delivery" 
- when 118159 then "Forceps or Vacuum Extractor Delivery" when 159739 then "emergency caesarean section" when 159260 then "vacuum extractor delivery" 
- when 5622 then "Other" when 1067 then "Unknown" else "" end) as mode_of_delivery,
-date_of_delivery,
-(case blood_loss when 1499 then "Moderate" when 1107 then "None" when 1498 then "Mild" when 1500 then "Severe" else "" end) as blood_loss,
-condition_of_mother,
-apgar_score_1min,
-apgar_score_5min,
-apgar_score_10min,
-(case resuscitation_done when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as resuscitation_done,
-(case place_of_delivery when 1536 then "HOME" when 1588 then "HEALTH CLINIC/POST" when 1589 then "HOSPITAL" 
-  when 1601 then "EN ROUTE TO HEALTH FACILITY" when 159670 then "sub-district hospital" when 159671 then "Provincial hospital" 
-  when 159662 then "district hospital" when 159372 then "Primary Care Clinic" when 5622 then "Other" when 1067 then "Unknown" else "" end) as place_of_delivery,
-(case delivery_assistant when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" 
-  when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then "COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as delivery_assistant, 
-(case counseling_on_infant_feeding when 161651 then "Counseling about infant feeding practices" else "" end) as counseling_on_infant_feeding, 
-(case counseling_on_exclusive_breastfeeding when 161096 then "Counseling for exclusive breastfeeding" else "" end) as counseling_on_exclusive_breastfeeding, 
-(case counseling_on_infant_feeding_for_hiv_infected when 162091 then "Counseling for infant feeding practices to prevent HIV" else "" end) as counseling_on_infant_feeding_for_hiv_infected, 
-(case mother_decision when 1173 then "EXPRESSED BREASTMILK" when 1152 then "WEANED" when 5254 then "Infant formula" when 1150 then "BREASTFED PREDOMINATELY" 
- when 6046 then "Mixed feeding" when 5526 then "BREASTFED EXCLUSIVELY" when 968 then "COW MILK" when 1595 then "REPLACEMENT FEEDING"  else "" end) as mother_decision
-from kenyaemr_etl.etl_mchs_delivery;
-
-ALTER TABLE kenyaemr_datatools.mch_delivery ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
-ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(encounter_id);
-
 
 create table kenyaemr_datatools.hts_test as select * from kenyaemr_etl.etl_hts_test;
 create table kenyaemr_datatools.hts_referral_and_linkage as select * from kenyaemr_etl.etl_hts_referral_and_linkage;
