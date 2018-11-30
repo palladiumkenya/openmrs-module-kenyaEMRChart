@@ -136,7 +136,8 @@ clinical_notes,
 (case pregnancy_status when 1065 then "Yes" when 1066 then "No" else "" end) as pregnancy_status,
 (case wants_pregnancy when 1065 then "Yes" when 1066 then "No" else "" end) as wants_pregnancy,
 (case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)" 
- when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,anc_number,
+ when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
+anc_number,
 expected_delivery_date,
 last_menstrual_period,
 gravida,
@@ -172,6 +173,7 @@ poor_arv_adherence_reason_other,
 (case system_review_finding when 1115 then "NORMAL" when 1116 then "ABNORMAL" else "" end) as system_review_finding,
 next_appointment_date,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
+(case stability when 1 then "Yes" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
 when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care
 from kenyaemr_etl.etl_patient_hiv_followup;
@@ -196,6 +198,7 @@ ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(key_population_type);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_anti_tb_drugs);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_ipt);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ever_on_ipt);
+ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(stability);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(differentiated_care);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,patient_id);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,condom_provided);
@@ -308,7 +311,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case serology when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as serology,
       (case tb_screening when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as tb_screening,
       (case bs_for_mps when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" else "" end) as bs_for_mps,
-      (case hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1402 then "Not Tested" else "" end) as hiv_status,
+      (case hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" when 1402 then "Not Tested" else "" end) as hiv_status,
       hiv_test_date,
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       partner_hiv_test_date,
@@ -371,6 +374,9 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       fetal_heart_rate,
       (case fetal_movement when 162090 then "Increased fetal movements" when 113377 then "Decreased fetal movements" when 1452 then "No fetal movements" when 162108 then "Fetal movements present" else "" end) as fetal_movement,
       (case who_stage when 1204 then "WHO Stage1" when 1205 then "WHO Stage2" when 1206 then "WHO Stage3" when 1207 then "WHO Stage4" else "" end) as who_stage,
+      cd4,
+      viral_load,
+      (case ldl when 1302 then "LDL"  else "" end) as ldl,
       (case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
       final_test_result,
       patient_given_result,
@@ -437,6 +443,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       location_id,
       encounter_id,
       date_created,
+      admission_number,
       duration_of_pregnancy,
       (case mode_of_delivery when 1170 then "Spontaneous vaginal delivery" when 1171 then "Cesarean section" when 1172 then "Breech delivery"
        when 118159 then "Forceps or Vacuum Extractor Delivery" when 159739 then "emergency caesarean section" when 159260 then "vacuum extractor delivery"
@@ -461,10 +468,11 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" else "" end) as maternal_death_audited,
       (case cadre when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then " COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as cadre,
       (case delivery_complications when 1065 then "Yes" when 1066 then "No" else "" end) as delivery_complications,
-      other_delivery_complications,
+      (case coded_delivery_complications when 118744 then "Eclampsia" when 113195 then "Ruptured Uterus" when 115036 then "Obstructed Labor" when 228 then "APH" when 230 then "PPH" when 130 then "Puerperal sepsis" when 1067 then "Unknown" else "" end) as coded_delivery_complications,
+       other_delivery_complications,
        duration_of_labor,
       (case baby_sex when 1534 then "Male Gender" when 1535 then "Female gender" else "" end) as baby_sex,
-      (case baby_condition when 135436 then "Macerated Stillbirth" when 159916 then "Fresh stillbirth" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple "
+      (case baby_condition when 135436 then "Macerated Stillbirth" when 159916 then "Fresh stillbirth" when 151849 then "Live birth"
        when 125872 then "STILLBIRTH" when 126127 then "Spontaneous abortion"
        when 164815 then "Live birth, died before arrival at facility"
        when 164816 then "Live birth, died after arrival or delivery in facility" else "" end) as baby_condition,
@@ -516,7 +524,6 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(patient_id);
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(encounter_id);
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(baby_status);
@@ -694,6 +701,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       dna_pcr_sample_date,
       (case dna_pcr_contextual_status when 162081 then "Repeat" when 162083 then "Final test (end of pediatric window)" when 162082 then "Confirmation" when 162080 then "Initial" else "" end) as dna_pcr_contextual_status,
       (case dna_pcr_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as dna_pcr_result,
+      (case azt_given when 86663 then "Yes" else "No" end) as azt_given,
       (case nvp_given when 80586 then "Yes" else "No" end) as nvp_given,
       (case ctx_given when 105281 then "Yes" else "No" end) as ctx_given,
       (case first_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as first_antibody_result,

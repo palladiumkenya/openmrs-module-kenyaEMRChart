@@ -210,6 +210,7 @@ at_risk_population INT(11),
 system_review_finding INT(11),
 next_appointment_date DATE,
 next_appointment_reason INT(11),
+stability INT(11),
 differentiated_care INT(11),
 voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
@@ -381,7 +382,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(tb_screening),
     INDEX(hiv_status),
     INDEX(hiv_test_date),
@@ -419,6 +419,9 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     fetal_heart_rate INT(11),
     fetal_movement INT(11),
     who_stage INT(11),
+    cd4 INT(11),
+    viral_load INT(11),
+    ldl INT(11),
     arv_status INT(11),
     test_1_kit_name VARCHAR(50),
     test_1_kit_lot_no VARCHAR(50) DEFAULT NULL,
@@ -470,7 +473,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(who_stage),
     INDEX(anc_visit_number),
     INDEX(final_test_result),
@@ -493,6 +495,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     location_id INT(11) DEFAULT NULL,
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     date_created DATE,
+    admission_number VARCHAR(50),
     duration_of_pregnancy DOUBLE,
     mode_of_delivery INT(11),
     date_of_delivery DATETIME,
@@ -512,6 +515,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     maternal_death_audited INT(11),
     cadre INT(11),
     delivery_complications INT(11),
+    coded_delivery_complications INT(11),
     other_delivery_complications VARCHAR(100),
     duration_of_labor INT(11),
     baby_sex INT(11),
@@ -541,7 +545,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(final_test_result),
     INDEX(baby_sex),
     INDEX( partner_hiv_tested),
@@ -574,7 +577,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(baby_status),
     INDEX(discharge_date)
   );
@@ -760,6 +762,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     dna_pcr_result INT(11),
     dna_pcr_dbs_sample_code VARCHAR(100),
     dna_pcr_results_date DATE,
+    azt_given INT(11),
     nvp_given INT(11),
     ctx_given INT(11),
     first_antibody_sample_date DATE,
@@ -783,7 +786,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
-    INDEX(patient_id),
     INDEX(infant_feeding)
   );
   SELECT "Successfully created etl_hei_follow_up_visit table";
@@ -816,8 +818,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     #Measles_6_months VARCHAR(50),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
-    INDEX(encounter_id),
-    INDEX(patient_id)
+    INDEX(encounter_id)
 
 
   );
