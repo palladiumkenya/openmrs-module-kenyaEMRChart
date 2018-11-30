@@ -173,6 +173,7 @@ poor_arv_adherence_reason_other,
 (case system_review_finding when 1115 then "NORMAL" when 1116 then "ABNORMAL" else "" end) as system_review_finding,
 next_appointment_date,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
+(case stability when 1 then "Yes" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
 when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care
 from kenyaemr_etl.etl_patient_hiv_followup;
@@ -197,6 +198,7 @@ ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(key_population_type);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_anti_tb_drugs);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_ipt);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ever_on_ipt);
+ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(stability);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(differentiated_care);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,patient_id);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,condom_provided);
