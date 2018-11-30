@@ -1922,6 +1922,7 @@ disability_type,
 patient_consented,
 client_tested_as,
 test_strategy,
+hts_entry_point,
 test_1_kit_name,
 test_1_kit_lot_no,
 test_1_kit_expiry,
@@ -1967,6 +1968,21 @@ max(if(o.concept_id=164956,(
   when 5622 then "Other"
   else null
   end ),null)) as test_strategy,
+     max(if(o.concept_id=160540,(
+             case o.value_coded
+             when 5485 then "In Patient Department(IPD)"
+             when 160542 then "Out Patient Department(OPD)"
+             when 162181 then "Peadiatric Clinic"
+             when 160552 then "Nutrition Clinic"
+             when 160538 then "PMTCT"
+             when 160541 then "TB"
+             when 162050 then "CCC"
+             when 159940 then "VCT"
+             when 159938 then "Home Based Testing"
+             when 159939 then "Mobile Outreach"
+             when 5622 then "Other"
+             else ""
+             end ),null)) as hts_entry_point,
 max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -2014,7 +2030,7 @@ group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), test_type=VALUES(test_type), population_type=VALUES(population_type),
 key_population_type=VALUES(key_population_type), ever_tested_for_hiv=VALUES(ever_tested_for_hiv), patient_disabled=VALUES(patient_disabled),
 disability_type=VALUES(disability_type), patient_consented=VALUES(patient_consented), client_tested_as=VALUES(client_tested_as),
-test_strategy=VALUES(test_strategy), test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
+test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point), test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
 test_1_kit_expiry=VALUES(test_1_kit_expiry), test_1_result=VALUES(test_1_result), test_2_kit_name=VALUES(test_2_kit_name),
 test_2_kit_lot_no=VALUES(test_2_kit_lot_no), test_2_kit_expiry=VALUES(test_2_kit_expiry), test_2_result=VALUES(test_2_result),
 final_test_result=VALUES(final_test_result), patient_given_result=VALUES(patient_given_result), couple_discordant=VALUES(couple_discordant),
