@@ -1776,60 +1776,176 @@ DROP PROCEDURE IF EXISTS sp_drug_event$$
 CREATE PROCEDURE sp_drug_event()
 BEGIN
 SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
-INSERT INTO kenyaemr_etl.etl_drug_event(
-uuid,
-patient_id,
-date_started,
-regimen,
-discontinued,
-regimen_discontinued,
-date_discontinued,
-reason_discontinued,
-reason_discontinued_other,
-voided
-)
-SELECT
-o.uuid,
-o.patient_id,
-o.date_activated,
-group_concat(distinct cn.name order by o.order_id) as regimen,
--- cs.concept_set,
-d.discontinued,
-d.drugs,
-d.discontinued_date,
-d.discontinued_reason,
-d.discontinued_reason_non_coded,
-o.voided
-from orders o
-left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED'
-left outer join concept_set cs on o.concept_id = cs.concept_id
-left outer join (
-  SELECT
-  o.patient_id,
-  GROUP_CONCAT(DISTINCT cn.name
-  ORDER BY o.order_id) AS drugs,
-  cs.concept_set,
-  o.date_activated,
-  IF(o.date_stopped IS NOT NULL, 1, 0) as discontinued,
-  o.date_stopped as discontinued_date,
-  null as discontinued_reason,
-  null as discontinued_reason_non_coded
-  FROM
-  orders o
-  LEFT OUTER JOIN
-  concept_name cn ON o.concept_id = cn.concept_id
-  AND cn.locale = 'en'
-  AND cn.concept_name_type = 'FULLY_SPECIFIED'
-  LEFT OUTER JOIN
-  concept_set cs ON o.concept_id = cs.concept_id
-  WHERE
-  o.voided = 0 AND cs.concept_set = 1085
-  AND o.date_stopped is not null
-  GROUP BY o.patient_id , o.date_stopped IS NOT NULL
-) d on d.patient_id = o.patient_id and d.date_activated=o.date_activated
-where o.voided=0 and cs.concept_set = 1085
-group by o.patient_id, o.date_activated
-;
+	INSERT INTO kenyaemr_etl.etl_drug_event(
+		uuid,
+		patient_id,
+		date_started,
+		visit_date,
+		provider,
+		encounter_id,
+		program,
+		regimen,
+		regimen_name,
+		regimen_line,
+		discontinued,
+		regimen_discontinued,
+		date_discontinued,
+		reason_discontinued,
+		reason_discontinued_other
+	)
+		select
+			e.uuid,
+			e.patient_id,
+			e.date_created,
+			e.encounter_datetime,
+			e.creator,
+			e.encounter_id,
+			max(if(o.concept_id=1255,'HIV',if(o.concept_id=1268, 'TB', null))) as program,
+			max(if(o.concept_id=1193,(
+				case o.value_coded
+				when 162565 then "3TC/NVP/TDF"
+				when 164505 then "TDF/3TC/EFV"
+				when 1652 then "AZT/3TC/NVP"
+				when 160124 then "AZT/3TC/EFV"
+				when 792 then "D4T/3TC/NVP"
+				when 160104 then "D4T/3TC/EFV"
+				when 164971 then "TDF/3TC/AZT"
+				when 164968 then "AZT/3TC/DTG"
+				when 164969 then "TDF/3TC/DTG"
+				when 164970 then "ABC/3TC/DTG"
+				when 162561 then "AZT/3TC/LPV/r"
+				when 164511 then "AZT/3TC/ATV/r"
+				when 162201 then "TDF/3TC/LPV/r"
+				when 164512 then "TDF/3TC/ATV/r"
+				when 162560 then "D4T/3TC/LPV/r"
+				when 164972 then "AZT/TDF/3TC/LPV/r"
+				when 164973 then "ETR/RAL/DRV/RTV"
+				when 164974 then "ETR/TDF/3TC/LPV/r"
+				when 162200 then "ABC/3TC/LPV/r"
+				when 162199 then "ABC/3TC/NVP"
+				when 162563 then "ABC/3TC/EFV"
+				when 817 then "AZT/3TC/ABC"
+				when 164975 then "D4T/3TC/ABC"
+				when 162562 then "TDF/ABC/LPV/r"
+				when 162559 then "ABC/DDI/LPV/r"
+				when 164976 then "ABC/TDF/3TC/LPV/r"
+				when 1675 then "RHZE"
+				when 768 then "RHZ"
+				when 1674 then "SRHZE"
+				when 164978 then "RfbHZE"
+				when 164979 then "RfbHZ"
+				when 164980 then "SRfbHZE"
+				when 84360 then "S (1 gm vial)"
+				when 75948 then "E"
+				when 1194 then "RH"
+				when 159851 then "RHE"
+				when 1108 then "EH"
+				else ""
+				end ),null)) as regimen,
+			max(if(o.concept_id=1193,(
+				case o.value_coded
+				when 162565 then "3TC+NVP+TDF"
+				when 164505 then "TDF+3TC+EFV"
+				when 1652 then "AZT+3TC+NVP"
+				when 160124 then "AZT+3TC+EFV"
+				when 792 then "D4T+3TC+NVP"
+				when 160104 then "D4T+3TC+EFV"
+				when 164971 then "TDF+3TC+AZT"
+				when 164968 then "AZT+3TC+DTG"
+				when 164969 then "TDF+3TC+DTG"
+				when 164970 then "ABC+3TC+DTG"
+				when 162561 then "AZT+3TC+LPV/r"
+				when 164511 then "AZT+3TC+ATV/r"
+				when 162201 then "TDF+3TC+LPV/r"
+				when 164512 then "TDF+3TC+ATV/r"
+				when 162560 then "D4T+3TC+LPV/r"
+				when 164972 then "AZT+TDF+3TC+LPV/r"
+				when 164973 then "ETR+RAL+DRV+RTV"
+				when 164974 then "ETR+TDF+3TC+LPV/r"
+				when 162200 then "ABC+3TC+LPV/r"
+				when 162199 then "ABC+3TC+NVP"
+				when 162563 then "ABC+3TC+EFV"
+				when 817 then "AZT+3TC+ABC"
+				when 164975 then "D4T+3TC+ABC"
+				when 162562 then "TDF+ABC+LPV/r"
+				when 162559 then "ABC+DDI+LPV/r"
+				when 164976 then "ABC+TDF+3TC+LPV/r"
+				when 1675 then "RHZE"
+				when 768 then "RHZ"
+				when 1674 then "SRHZE"
+				when 164978 then "RfbHZE"
+				when 164979 then "RfbHZ"
+				when 164980 then "SRfbHZE"
+				when 84360 then "S (1 gm vial)"
+				when 75948 then "E"
+				when 1194 then "RH"
+				when 159851 then "RHE"
+				when 1108 then "EH"
+				else ""
+				end ),null)) as regimen_name,
+			max(if(o.concept_id=1193,(
+				case o.value_coded
+				-- adult first line
+				when 162565 then "Adult first line"
+				when 164505 then "Adult first line"
+				when 1652 then "Adult first line"
+				when 160124 then "Adult first line"
+				when 792 then "Adult first line"
+				when 160104 then "Adult first line"
+				when 164971 then "Adult first line"
+				when 164968 then "Adult first line"
+				when 164969 then "Adult first line"
+				when 164970 then "Adult first line"
+				-- adult second line
+				when 162561 then "Adult second line"
+				when 164511 then "Adult second line"
+				when 162201 then "Adult second line"
+				when 164512 then "Adult second line"
+				when 162560 then "Adult second line"
+				when 164972 then "Adult second line"
+				when 164973 then "Adult second line"
+				when 164974 then "Adult second line"
+				-- child 1st line
+				when 162200 then "Child first line"
+				when 162199 then "Child first line"
+				when 162563 then "Child first line"
+				when 817 then "Child first line"
+				when 164975 then "Child first line"
+				when 162562 then "Child first line"
+				when 162559 then "Child first line"
+				when 164976 then "Child first line"
+				-- tb
+				when 1675 then "Adult intensive"
+				when 768 then "Adult intensive"
+				when 1674 then "Adult intensive"
+				when 164978 then "Adult intensive"
+				when 164979 then "Adult intensive"
+				when 164980 then "Adult intensive"
+				when 84360 then "Adult intensive"
+				-- child intensive
+				when 75948 then "Child intensive"
+				when 1194 then "Child intensive"
+				-- adult continuation
+				when 159851 then "Adult continuation"
+				when 1108 then "Adult continuation"
+				else ""
+				end ),null)) as regimen_line,
+			max(if(o.concept_id=1191,(case o.value_datetime when NULL then 0 else 1 end),null)) as discontinued,
+			null as regimen_discontinued,
+			max(if(o.concept_id=1191,o.value_datetime,null)) as date_discontinued,
+			max(if(o.concept_id=1252,o.value_coded,null)) as reason_discontinued,
+			max(if(o.concept_id=5622,o.value_text,null)) as reason_discontinued_other
+
+		from encounter e
+			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+													and o.concept_id in(1193,1252,5622,1191,1255,1268)
+			inner join
+			(
+				select encounter_type, uuid,name from form where
+					uuid in('da687480-e197-11e8-9f32-f2801f1b9fd1') -- regimen editor form
+			) f on f.encounter_type=e.encounter_type
+		group by e.encounter_id
+		order by e.patient_id, e.encounter_datetime;
 -- create temporary table for in memory processing
 CALL sp_create_drug_order_events_tmp_table();
 CALL sp_process_regimen_switch_list();
