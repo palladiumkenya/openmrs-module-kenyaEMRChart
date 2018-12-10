@@ -1796,7 +1796,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 		select
 			e.uuid,
 			e.patient_id,
-			e.date_created,
+			e.encounter_datetime,
 			e.encounter_datetime,
 			e.creator,
 			e.encounter_id,
