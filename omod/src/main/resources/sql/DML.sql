@@ -991,16 +991,16 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 						uuid in('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
 				) f on f.form_id=e.form_id
 				left join (
-										 select
-											 o.person_id,
-											 o.encounter_id,
-											 o.obs_group_id,etl_hts_test hts
-											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
-											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
-											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
-											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
-										 from obs o
+										select
+											o.person_id,
+											o.encounter_id,
+											o.obs_group_id,
+											max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
+											max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
+											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
+										from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
@@ -1947,9 +1947,9 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 		group by e.encounter_id
 		order by e.patient_id, e.encounter_datetime;
 -- create temporary table for in memory processing
-CALL sp_create_drug_order_events_tmp_table();
-CALL sp_process_regimen_switch_list();
-CALL sp_update_drug_event_regimen_details();
+-- CALL sp_create_drug_order_events_tmp_table();
+-- CALL sp_process_regimen_switch_list();
+-- CALL sp_update_drug_event_regimen_details();
 
 SELECT "Completed processing Drug Event Data", CONCAT("Time: ", NOW());
 END$$
