@@ -1946,10 +1946,6 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 			) f on f.encounter_type=e.encounter_type
 		group by e.encounter_id
 		order by e.patient_id, e.encounter_datetime;
--- create temporary table for in memory processing
--- CALL sp_create_drug_order_events_tmp_table();
--- CALL sp_process_regimen_switch_list();
--- CALL sp_update_drug_event_regimen_details();
 
 SELECT "Completed processing Drug Event Data", CONCAT("Time: ", NOW());
 END$$
