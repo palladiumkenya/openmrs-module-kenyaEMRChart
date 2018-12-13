@@ -966,25 +966,29 @@ INDEX(patient_id)
 
 -- --------------------------- CREATE drug_event table ---------------------
 
-CREATE TABLE kenyaemr_etl.etl_drug_event(
-uuid CHAR(38) PRIMARY KEY,
-patient_id INT(11) NOT NULL ,
-date_started DATE,
-regimen MEDIUMTEXT,
-regimen_name VARCHAR(100),
-regimen_line VARCHAR(50),
-discontinued INT(11),
-regimen_discontinued VARCHAR(255),
-date_discontinued DATE,
-reason_discontinued INT(11),
-reason_discontinued_other VARCHAR(100),
-voided INT(11),
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
-INDEX(patient_id),
-INDEX(date_started),
-INDEX(date_discontinued),
-INDEX(patient_id, date_started)
-);
+  CREATE TABLE kenyaemr_etl.etl_drug_event(
+    uuid CHAR(38) PRIMARY KEY,
+    patient_id INT(11) NOT NULL,
+    date_started DATE,
+    visit_date DATE,
+    provider INT(11),
+    encounter_id INT(11) NOT NULL,
+    program VARCHAR(50),
+    regimen MEDIUMTEXT,
+    regimen_name VARCHAR(100),
+    regimen_line VARCHAR(50),
+    discontinued INT(11),
+    regimen_discontinued VARCHAR(255),
+    date_discontinued DATE,
+    reason_discontinued INT(11),
+    reason_discontinued_other VARCHAR(100),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    INDEX(patient_id),
+    INDEX(date_started),
+    INDEX(date_discontinued),
+    INDEX(patient_id, date_started)
+  );
 
 -- -------------------------- CREATE hts_test table ---------------------------------
 

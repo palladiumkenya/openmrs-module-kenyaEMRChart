@@ -858,8 +858,33 @@ location_id,
 tb_treatment_start_date,
 notes
 from kenyaemr_etl.etl_tb_screening;
+ -- Table Datatools drug event
+create table kenyaemr_datatools.drug_event as
+    select
+      uuid,
+      patient_id,
+      date_started,
+      visit_date,
+      provider,
+      encounter_id,
+      program,
+      regimen,
+      regimen_name,
+      regimen_line,
+      discontinued,
+      regimen_discontinued,
+      date_discontinued,
+      (case reason_discontinued when 102 then "Drug toxicity" when 160567 then "New diagnosis of Tuberculosis"  when 160569 then "Virologic failure"
+       when 159598 then "Non-compliance with treatment or therapy" when 1754 then "Medications unavailable"
+       when 1434 then "Currently pregnant"  when 1253 then "Completed PMTCT"  when 843 then "Regimen failure"
+       when 5622 then "Other"else "" end) as reason_discontinued,
+      reason_discontinued_other
+    from kenyaemr_etl.etl_drug_event;
 
-ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  # create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
+  alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+  ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(encounter_id);
@@ -883,7 +908,7 @@ ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_status
 create table kenyaemr_datatools.current_in_care as select * from kenyaemr_etl.etl_current_in_care;
 ALTER TABLE kenyaemr_datatools.current_in_care add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
+# create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
 alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 create table kenyaemr_datatools.ipt_screening as select * from kenyaemr_etl.etl_ipt_screening;
