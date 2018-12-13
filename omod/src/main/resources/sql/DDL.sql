@@ -48,6 +48,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
 DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
 
+
+
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
 patient_id INT(11) not null primary key,

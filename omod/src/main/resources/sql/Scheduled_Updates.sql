@@ -1879,11 +1879,6 @@ ON DUPLICATE KEY UPDATE date_started=VALUES(date_started), regimen=VALUES(regime
 date_discontinued=VALUES(date_discontinued)
 ;
 
--- Recreate temporary table for in memory processing
--- CALL sp_create_drug_order_events_tmp_table();
--- CALL sp_process_regimen_switch_list();
--- CALL sp_update_drug_event_regimen_details();
-
 END$$
 -- DELIMITER ;
 
