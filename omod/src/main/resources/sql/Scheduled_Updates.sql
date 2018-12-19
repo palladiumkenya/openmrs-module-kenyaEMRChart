@@ -1868,21 +1868,13 @@ INSERT INTO kenyaemr_etl.etl_drug_event(
 					uuid in('da687480-e197-11e8-9f32-f2801f1b9fd1') -- regimen editor form
 			) f on f.encounter_type=e.encounter_type
 
-		where o.date_created >= last_update_time
-      or  o.date_voided >= last_update_time
-      or e.encounter_datetime >= last_update_time
-      or e.date_voided >= last_update_time
+		where e.encounter_datetime >= last_update_time
 
     group by e.encounter_id
 		order by e.patient_id, e.encounter_datetime
 ON DUPLICATE KEY UPDATE date_started=VALUES(date_started), regimen=VALUES(regimen), discontinued=VALUES(discontinued), regimen_discontinued=VALUES(regimen_discontinued),
 date_discontinued=VALUES(date_discontinued)
 ;
-
--- Recreate temporary table for in memory processing
--- CALL sp_create_drug_order_events_tmp_table();
--- CALL sp_process_regimen_switch_list();
--- CALL sp_update_drug_event_regimen_details();
 
 END$$
 -- DELIMITER ;
