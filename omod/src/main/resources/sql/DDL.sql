@@ -983,7 +983,7 @@ INDEX(patient_id)
     reason_discontinued INT(11),
     reason_discontinued_other VARCHAR(100),
     voided INT(11),
-    # CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     INDEX(patient_id),
     INDEX(date_started),
     INDEX(date_discontinued),
