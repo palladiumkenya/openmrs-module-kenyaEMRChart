@@ -419,7 +419,7 @@ inner join obs o on e.encounter_id=o.encounter_id and o.voided=0
 and o.concept_id in (5497,730,299,654,790,856,1030,21,302,32, 1305) -- (5497-N,730-N,299-C,654-N,790-N,856-N,1030-C,21-N,302-C,32-C)
 inner join
 (
-	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e')
+	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1')
 ) et on et.encounter_type_id=e.encounter_type
 ;
 
