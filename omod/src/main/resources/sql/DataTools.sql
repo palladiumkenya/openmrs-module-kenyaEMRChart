@@ -214,7 +214,8 @@ location_id,
 visit_date,
 visit_id,
 (case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then " 	SERUM GLUTAMIC-PYRUVIC TRANSAMINASE (ALT)" when 790 then "Serum creatinine (umol/L)"  
-  when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,   
+  when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,
+urgency,
 if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
 if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
 if(lab_test=302, (case test_result when 1115 then "Normal" when 1116 then "Abnormal" when 1067 then "Unknown" end), 
@@ -661,8 +662,10 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       date_of_birth_registration,
       birth_registration_place,
       permanent_registration_serial,
-      mother_facility_registered
-
+      mother_facility_registered,
+      exit_date,
+     (case exit_reason when 1403 then "HIV Neg age greater 18 months" when 138571 then "Confirmed HIV Positive" when 5240 then "Lost" when 160432 then "Dead" when 159492 then "Transfer Out" else "" end) as exit_reason,
+     hiv_status_at_exit
     from kenyaemr_etl.etl_hei_enrollment;
 
   ALTER TABLE kenyaemr_datatools.hei_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
