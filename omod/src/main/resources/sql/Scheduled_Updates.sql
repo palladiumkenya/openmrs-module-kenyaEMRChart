@@ -1169,10 +1169,10 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
 			date_of_birth_registration,
 			birth_registration_place,
 			permanent_registration_serial,
-			mother_facility_registered
-			-- exit_date,
-			-- exit_reason,
-			-- hiv_status_at_exit
+			mother_facility_registered,
+			exit_date,
+      exit_reason,
+      hiv_status_at_exit
 		)
 			select
 				e.patient_id,
@@ -1219,18 +1219,17 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
 				max(if(o.concept_id=164129,o.value_datetime,null)) as date_of_birth_registration,
 				max(if(o.concept_id=164140,o.value_text,null)) as birth_registration_place,
 				max(if(o.concept_id=1646,o.value_text,null)) as permanent_registration_serial,
-				max(if(o.concept_id=162724,o.value_text,null)) as mother_facility_registered
-
-			-- max(if(o.concept_id=160972,o.value_coded,null)) as exit_date
-			-- max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
-			-- max(if(o.concept_id=159427,o.value_coded,null)) as hiv_status_at_exit
+				max(if(o.concept_id=162724,o.value_text,null)) as mother_facility_registered,
+			  max(if(o.concept_id=160753,o.value_datetime,null)) as exit_date,
+			  max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
+			  max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as hiv_status_at_exit
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646)
+														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
-						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6')
+						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
 				) et on et.encounter_type_id=e.encounter_type
 			where e.date_created >= last_update_time
 						or e.date_changed >= last_update_time
@@ -1242,7 +1241,7 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
 			birth_notification_number=VALUES(birth_notification_number),birth_certificate_number=VALUES(birth_certificate_number),need_for_special_care=VALUES(need_for_special_care),reason_for_special_care=VALUES(reason_for_special_care),referral_source=VALUES(referral_source),transfer_in=VALUES(transfer_in),transfer_in_date=VALUES(transfer_in_date),facility_transferred_from=VALUES(facility_transferred_from),
 			district_transferred_from=VALUES(district_transferred_from),date_first_enrolled_in_hei_care=VALUES(date_first_enrolled_in_hei_care),mother_breastfeeding=VALUES(mother_breastfeeding),TB_contact_history_in_household=VALUES(TB_contact_history_in_household),mother_alive=VALUES(mother_alive),mother_on_pmtct_drugs=VALUES(mother_on_pmtct_drugs),
 			mother_on_drug=VALUES(mother_on_drug),mother_on_art_at_infant_enrollment=VALUES(mother_on_art_at_infant_enrollment),mother_drug_regimen=VALUES(mother_drug_regimen),infant_prophylaxis=VALUES(infant_prophylaxis),parent_ccc_number=VALUES(parent_ccc_number),mode_of_delivery=VALUES(mode_of_delivery),place_of_delivery=VALUES(place_of_delivery),birth_length=VALUES(birth_length),birth_order=VALUES(birth_order),health_facility_name=VALUES(health_facility_name),
-			date_of_birth_notification=VALUES(date_of_birth_notification),date_of_birth_registration=VALUES(date_of_birth_registration),birth_registration_place=VALUES(birth_registration_place),permanent_registration_serial=VALUES(permanent_registration_serial),mother_facility_registered=VALUES(mother_facility_registered)
+			date_of_birth_notification=VALUES(date_of_birth_notification),date_of_birth_registration=VALUES(date_of_birth_registration),birth_registration_place=VALUES(birth_registration_place),permanent_registration_serial=VALUES(permanent_registration_serial),mother_facility_registered=VALUES(mother_facility_registered),exit_date=VALUES(exit_date),exit_reason=VALUES(exit_reason),hiv_status_at_exit=VALUES(hiv_status_at_exit)
 		;
 
 	END$$
@@ -1971,6 +1970,7 @@ location_id,
 visit_date,
 visit_id,
 lab_test,
+urgency,
 test_result,
 date_created,
 created_by 
@@ -1983,6 +1983,7 @@ e.location_id,
 e.encounter_datetime as visit_date,
 e.visit_id,
 o.concept_id,
+od.urgency,
 (CASE when o.concept_id in(5497,730,654,790,856,21) then o.value_numeric
 	when o.concept_id in(299,1030,302,32, 1305) then o.value_coded
 	END) AS test_result,
@@ -1990,6 +1991,7 @@ e.date_created,
 e.creator
 from encounter e 
 inner join obs o on e.encounter_id=o.encounter_id and o.voided=0
+left join orders od on od.order_id = o.order_id and od.voided=0
 and o.concept_id in (5497,730,299,654,790,856,1030,21,302,32, 1305)
 inner join 
 (
