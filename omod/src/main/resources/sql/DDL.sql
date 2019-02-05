@@ -796,7 +796,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
   -- ------- create table etl_hei_immunization table-----------------------------------------
   SELECT "Creating etl_hei_immunization table";
   CREATE TABLE kenyaemr_etl.etl_hei_immunization (
-    encounter_id INT(11),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
     visit_date DATE,
     date_created DATE,
