@@ -1524,22 +1524,22 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
         creator,
         date_created,
         encounter_id,
-        max(if(vaccine="BCG", "Yes", "")) as BCG,
-        max(if(vaccine="OPV" and sequence=0, "Yes", "")) as OPV_birth,
-        max(if(vaccine="OPV" and sequence=1, "Yes", "")) as OPV_1,
-        max(if(vaccine="OPV" and sequence=2, "Yes", "")) as OPV_2,
-        max(if(vaccine="OPV" and sequence=3, "Yes", "")) as OPV_3,
-        max(if(vaccine="IPV", "Yes", ""))  as IPV,
-        max(if(vaccine="DPT" and sequence=1, "Yes", "")) as DPT_Hep_B_Hib_1,
-        max(if(vaccine="DPT" and sequence=2, "Yes", "")) as DPT_Hep_B_Hib_2,
-        max(if(vaccine="DPT" and sequence=3, "Yes", "")) as DPT_Hep_B_Hib_3,
-        max(if(vaccine="PCV" and sequence=1, "Yes", "")) as PCV_10_1,
-        max(if(vaccine="PCV" and sequence=2, "Yes", "")) as PCV_10_2,
-        max(if(vaccine="PCV" and sequence=3, "Yes", "")) as PCV_10_3,
-        max(if(vaccine="ROTA" and sequence=1, "Yes", "")) as ROTA_1,
-        max(if(vaccine="ROTA" and sequence=2, "Yes", "")) as ROTA_2,
-        max(if(vaccine="measles_rubella" and sequence=1, "Yes", "")) as Measles_rubella_1,
-        max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2
+        max(if(vaccine="BCG", date_given, "")) as BCG,
+        max(if(vaccine="OPV" and sequence=0, date_given, "")) as OPV_birth,
+        max(if(vaccine="OPV" and sequence=1, date_given, "")) as OPV_1,
+        max(if(vaccine="OPV" and sequence=2, date_given, "")) as OPV_2,
+        max(if(vaccine="OPV" and sequence=3, date_given, "")) as OPV_3,
+        max(if(vaccine="IPV", date_given, ""))  as IPV,
+        max(if(vaccine="DPT" and sequence=1, date_given, "")) as DPT_Hep_B_Hib_1,
+        max(if(vaccine="DPT" and sequence=2, date_given, "")) as DPT_Hep_B_Hib_2,
+        max(if(vaccine="DPT" and sequence=3, date_given, "")) as DPT_Hep_B_Hib_3,
+        max(if(vaccine="PCV" and sequence=1, date_given, "")) as PCV_10_1,
+        max(if(vaccine="PCV" and sequence=2, date_given, "")) as PCV_10_2,
+        max(if(vaccine="PCV" and sequence=3, date_given, "")) as PCV_10_3,
+        max(if(vaccine="ROTA" and sequence=1, date_given, "")) as ROTA_1,
+        max(if(vaccine="ROTA" and sequence=2, date_given, "")) as ROTA_2,
+        max(if(vaccine="measles_rubella" and sequence=1, date_given, "")) as Measles_rubella_1,
+        max(if(vaccine="measles_rubella" and sequence=2, date_given, "")) as Measles_rubella_2
        # max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
        # max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
       #      max(if(o.concept_id=160265,o.value_coded,null)) as BCG_scar_checked,
@@ -1550,29 +1550,30 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
       #      max(if(o.concept_id=162585,o.value_datetime,null)) as Date_of_last_vaccine
       from (
              select
-               person_id as patient_id,
-               date(encounter_datetime) as visit_date,
-               creator,
-               date(date_created) as date_created,
-               encounter_id,
-               name as encounter_type,
-               max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
-                                        when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
-                                        when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
-               max(if(concept_id=1418, value_numeric, "")) as sequence,
-               obs_group_id
-             from (
-                    select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, o.obs_group_id, o.encounter_id, et.uuid, et.name
-                    from openmrs.obs o
-                      inner join openmrs.encounter e on e.encounter_id=o.encounter_id
-                      inner join openmrs.encounter_type et on et.encounter_type_id=e.encounter_type
-                    where concept_id in(984,1418)
-                  ) t
-             group by obs_group_id
+                person_id as patient_id,
+                date(encounter_datetime) as visit_date,
+                creator,
+                date(date_created) as date_created,
+                encounter_id,
+                name as encounter_type,
+                max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
+                when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
+                when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
+                max(if(concept_id=1418, value_numeric, "")) as sequence,
+                max(if(concept_id=1410, date_given, "")) as date_given,
+                obs_group_id
+              from (
+                select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
+                from openmrs.obs o
+                inner join openmrs.encounter e on e.encounter_id=o.encounter_id
+                inner join openmrs.encounter_type et on et.encounter_type_id=e.encounter_type
+                where concept_id in(984,1418,1410)
+              ) t
+              group by obs_group_id
            ) y
 
 
-      group by patient_id, obs_group_id;
+      group by patient_id;
 
 	SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
 	END$$
