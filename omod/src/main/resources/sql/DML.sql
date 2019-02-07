@@ -192,7 +192,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
 ) et on et.encounter_type_id=e.encounter_type
 join patient p on p.patient_id=e.patient_id and p.voided=0
-left outer join obs o on o.encounter_id=e.encounter_id
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
@@ -367,7 +367,7 @@ inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
 ) et on et.encounter_type_id=e.encounter_type
-left outer join obs o on o.encounter_id=e.encounter_id
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947)
 where e.voided=0
@@ -860,7 +860,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 
@@ -1006,7 +1006,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 										from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id ;
@@ -1240,7 +1240,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id;
@@ -1567,7 +1567,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                 from openmrs.obs o
                 inner join openmrs.encounter e on e.encounter_id=o.encounter_id
                 inner join openmrs.encounter_type et on et.encounter_type_id=e.encounter_type
-                where concept_id in(984,1418,1410)
+                where concept_id in(984,1418,1410) and o.voided=0
               ) t
               group by obs_group_id
            ) y
@@ -1767,7 +1767,7 @@ max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as t
 "" as notes -- max(case o.concept_id when 160632 then value_text else "" end) as notes
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 
@@ -2075,7 +2075,7 @@ inner join (
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-             where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+             where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 group by e.encounter_id;
@@ -2122,7 +2122,7 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
     e.voided
   from encounter e
   inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
-  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 162053, 1473)
+  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 162053, 1473) and o.voided=0
   group by e.encounter_id;
 
 -- fetch locally enrolled clients who had went through HTS
@@ -2297,7 +2297,7 @@ e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_i
 max(o.value_coded) as ipt_started
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id=1265
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id=1265 and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 
@@ -2343,7 +2343,7 @@ max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" wh
 max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing IPT followup forms", CONCAT("Time: ", NOW());
