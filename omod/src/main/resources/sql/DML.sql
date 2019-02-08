@@ -1486,8 +1486,6 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
 	BEGIN
 		SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_hei_immunization(
-
-
       patient_id,
       visit_date,
       created_by,
