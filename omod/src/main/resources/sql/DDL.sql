@@ -47,6 +47,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
 DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
 
 
 
@@ -1126,7 +1127,30 @@ INDEX(outcome),
 INDEX(discontinuation_reason)
 );
 
--- add table to aid processing of regimen switches/substitution
+CREATE TABLE kenyaemr_etl.etl_ccc_defaulter_tracing (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL PRIMARY KEY,
+tracing_type INT(11),
+tracing_outcome INT(11),
+attempt_number INT(11),
+is_final_trace INT(11) ,
+true_status INT(11),
+cause_of_death INT(11),
+comments VARCHAR(100),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+INDEX(visit_date),
+INDEX(encounter_id),
+INDEX(patient_id),
+INDEX(true_status),
+INDEX(cause_of_death),
+INDEX(tracing_type)
+);
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

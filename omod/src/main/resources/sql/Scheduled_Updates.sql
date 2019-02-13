@@ -1985,15 +1985,14 @@ e.encounter_datetime as visit_date,
 e.visit_id,
 o.concept_id,
 od.urgency,
-(CASE when o.concept_id in(5497,730,654,790,856,21) then o.value_numeric
-	when o.concept_id in(299,1030,302,32, 1305) then o.value_coded
+(CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
+	when o.concept_id in(1030,1305) then o.value_coded
 	END) AS test_result,
 e.date_created,
 e.creator
 from encounter e 
-inner join obs o on e.encounter_id=o.encounter_id and o.voided=0
+inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
 left join orders od on od.order_id = o.order_id and od.voided=0
-and o.concept_id in (5497,730,299,654,790,856,1030,21,302,32, 1305)
 inner join 
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1')
@@ -2341,6 +2340,55 @@ action_taken=VALUES(action_taken) ;
 
 END$$
 -- DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_update_etl_ccc_defaulter_tracing$$
+CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing()
+BEGIN
+SELECT "Processing ccc defaulter tracing form", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_ccc_defaulter_tracing(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+tracing_type,
+tracing_outcome,
+attempt_number,
+is_final_trace,
+true_status,
+cause_of_death,
+comments
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id = 164966, o.value_coded, null )) as tracing_type,
+max(if(o.concept_id = 160721, o.value_coded, null )) as tracing_outcome,
+max(if(o.concept_id = 1639, value_numeric, "" )) as attempt_number,
+max(if(o.concept_id = 163725, o.value_coded, "" )) as is_final_trace,
+max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
+max(if(o.concept_id = 1599, o.value_coded, "" )) as cause_of_death,
+max(if(o.concept_id = 160716, o.value_text, "" )) as comments
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 160721, 1639, 163725, 160433, 1599, 160716) and o.voided=0
+where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+group by e.encounter_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+tracing_type=VALUES(tracing_type),
+tracing_outcome=VALUES(tracing_outcome),
+attempt_number=VALUES(attempt_number),
+is_final_trace=VALUES(is_final_trace),
+true_status=VALUES(true_status),
+cause_of_death=VALUES(cause_of_death),
+comments=VALUES(comments);
+
+END$$
+
 SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
 
@@ -2376,6 +2424,7 @@ CALL sp_update_hts_test(last_update_time);
 CALL sp_update_hts_linkage_and_referral(last_update_time);
 CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
+CALL sp_update_etl_ccc_defaulter_tracing();
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
