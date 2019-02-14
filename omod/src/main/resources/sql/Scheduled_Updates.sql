@@ -2342,7 +2342,7 @@ END$$
 -- DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_update_etl_ccc_defaulter_tracing$$
-CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing()
+CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing ccc defaulter tracing form", CONCAT("Time: ", NOW());
 
@@ -2424,7 +2424,7 @@ CALL sp_update_hts_test(last_update_time);
 CALL sp_update_hts_linkage_and_referral(last_update_time);
 CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
-CALL sp_update_etl_ccc_defaulter_tracing();
+CALL sp_update_etl_ccc_defaulter_tracing(last_update_time);
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
