@@ -2174,6 +2174,8 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   tracing_type,
   tracing_status,
   facility_linked_to,
+	enrollment_date,
+	art_start_date,
   ccc_number,
   provider_handed_to,
   voided
@@ -2190,12 +2192,14 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
     max(if(o.concept_id=164966,(case o.value_coded when 1650 then "Phone" when 164965 then "Physical" else null end),null)) as tracing_type ,
     max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Contacted and linked" when 1066 then "Contacted but not linked" else null end),null)) as tracing_status,
     max(if(o.concept_id=162724,trim(o.value_text),null)) as facility_linked_to,
+		max(if(o.concept_id=160555,o.value_datetime,null)) as enrollment_date,
+		max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_date,
     max(if(o.concept_id=162053,o.value_numeric,null)) as ccc_number,
     max(if(o.concept_id=1473,trim(o.value_text),null)) as provider_handed_to,
     e.voided
   from encounter e
   inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
-  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 162053, 1473) and o.voided=0
+  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473) and o.voided=0
   where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
