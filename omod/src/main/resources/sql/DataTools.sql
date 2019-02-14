@@ -213,7 +213,7 @@ patient_id,
 location_id,
 visit_date,
 visit_id,
-(case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then " 	SERUM GLUTAMIC-PYRUVIC TRANSAMINASE (ALT)" when 790 then "Serum creatinine (umol/L)"  
+(case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
   when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,
 urgency,
 if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
