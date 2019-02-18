@@ -732,29 +732,34 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   create table kenyaemr_datatools.hei_immunization as
     select
       patient_id,
-      visit_date,
-      encounter_id,
-      date_created,
-      created_by,
-      BCG,
-      OPV_birth,
-      OPV_1,
-      OPV_2,
-      OPV_3,
-      IPV,
-      DPT_Hep_B_Hib_1,
-      DPT_Hep_B_Hib_2,
-      DPT_Hep_B_Hib_3,
-      PCV_10_1,
-      PCV_10_2,
-      PCV_10_3,
-      ROTA_1,
-      ROTA_2,
-      Measles_rubella_1,
-      Measles_rubella_2
-      #(case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
-      #(case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months
-
+			visit_date,
+			created_by,
+			date_created,
+			encounter_id,
+			BCG,
+			OPV_birth,
+			OPV_1,
+			OPV_2,
+			OPV_3,
+			IPV,
+			DPT_Hep_B_Hib_1,
+			DPT_Hep_B_Hib_2,
+			DPT_Hep_B_Hib_3,
+			PCV_10_1,
+			PCV_10_2,
+			PCV_10_3,
+			ROTA_1,
+			ROTA_2,
+			Measles_rubella_1,
+			Measles_rubella_2,
+			Yellow_fever,
+			Measles_6_months,
+			VitaminA_6_months,
+			VitaminA_1_yr,
+			VitaminA_1_and_half_yr,
+			VitaminA_2_yr ,
+			VitaminA_2_to_5_yr,
+			fully_immunized
     from kenyaemr_etl.etl_hei_immunization;
 
   ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
@@ -884,7 +889,6 @@ create table kenyaemr_datatools.drug_event as
       reason_discontinued_other
     from kenyaemr_etl.etl_drug_event;
 
-  # create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
   alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
   ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
@@ -911,7 +915,6 @@ ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_status
 create table kenyaemr_datatools.current_in_care as select * from kenyaemr_etl.etl_current_in_care;
 ALTER TABLE kenyaemr_datatools.current_in_care add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-# create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
 alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 create table kenyaemr_datatools.ipt_screening as select * from kenyaemr_etl.etl_ipt_screening;
