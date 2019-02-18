@@ -1546,7 +1546,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
         max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
         max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
         max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
-				max(o.value_coded) as fully_immunized
+				max(date(o.value_datetime)) as fully_immunized
       from (
 						 (select
 								person_id as patient_id,
@@ -1603,7 +1603,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
 							 having vaccine != ""
 						 )
            ) y
-				left join obs o on y.encounter_id = o.encounter_id and o.concept_id=164134 and o.voided=0
+				left join obs o on y.encounter_id = o.encounter_id and o.concept_id=162585 and o.voided=0
 
       group by patient_id;
 

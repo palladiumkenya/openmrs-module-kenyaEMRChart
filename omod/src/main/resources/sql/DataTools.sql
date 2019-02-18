@@ -759,8 +759,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 			VitaminA_1_and_half_yr,
 			VitaminA_2_yr ,
 			VitaminA_2_to_5_yr,
-			(case fully_immunized when 1065 then "Yes" when 1066 then "No" else "" end) as fully_immunized
-
+			fully_immunized
     from kenyaemr_etl.etl_hei_immunization;
 
   ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);

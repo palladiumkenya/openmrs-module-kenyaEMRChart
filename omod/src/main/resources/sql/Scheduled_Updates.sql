@@ -1435,7 +1435,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 				max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
 				max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
 				max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
-				max(o.value_coded) as fully_immunized
+				max(date(o.value_datetime)) as fully_immunized
 			from (
 						 (select
 								person_id as patient_id,
@@ -1500,7 +1500,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 							 having vaccine != ""
 						 )
 					 ) y
-				left join obs o on y.encounter_id = o.encounter_id and o.concept_id=164134 and o.voided=0
+				left join obs o on y.encounter_id = o.encounter_id and o.concept_id=162585 and o.voided=0
 			group by patient_id
 		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV_birth=VALUES(OPV_birth),OPV_1=VALUES(OPV_1),OPV_2=VALUES(OPV_2),OPV_3=VALUES(OPV_3),IPV=VALUES(IPV),
 			DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
