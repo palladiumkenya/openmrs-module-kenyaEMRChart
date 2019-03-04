@@ -2425,7 +2425,7 @@ END$$
 
 -- ------------- populate etl_ART_preparation-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ART_preparation;
+DROP PROCEDURE IF EXISTS sp_populate_etl_ART_preparation $$
 CREATE PROCEDURE sp_populate_etl_ART_preparation()
   BEGIN
     SELECT "Processing ART Preparation ", CONCAT("Time: ", NOW());
@@ -2463,27 +2463,27 @@ other_support_systems
    e.location_id,
    e.encounter_id,
    e.creator,
-   max(if(o.concept_id=1729,o.value_coded,null)) as understands_hiv_art_benefits,
-   max(if(o.concept_id=160246,o.value_coded,null)) as screened_negative_substance_abuse,
-   max(if(o.concept_id=159891,o.value_coded,null)) as screened_negative_psychiatric_illness,
-   max(if(o.concept_id=1048,o.value_coded,null)) as HIV_status_disclosure,
-   max(if(o.concept_id=164425,o.value_coded,null)) as trained_drug_admin,
-   max(if(o.concept_id=121764,o.value_coded,null)) as informed_drug_side_effects,
-   max(if(o.concept_id=5619,o.value_coded,null)) as caregiver_committed,
-   max(if(o.concept_id=159707,o.value_coded,null)) as adherance_barriers_identified,
-   max(if(o.concept_id=163089,o.value_coded,null)) as caregiver_location_contacts_given,
-   max(if(o.concept_id=162695,o.value_coded,null)) as ready_to_start_art,
-   max(if(o.concept_id=160119,o.value_coded,null)) as identified_drug_time,
-   max(if(o.concept_id=164886,o.value_coded,null)) as treatment_supporter_engaged,
-   max(if(o.concept_id=163766,o.value_coded,null)) as support_grp_meeting_awareness,
-   max(if(o.concept_id=163164,o.value_coded,null)) as enrolled_in_reminder_system,
-   max(if(o.concept_id=164360,o.value_coded,null)) as other_support_systems
-    from encounter e
-   inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+   max(if(o.concept_id=1729,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as understands_hiv_art_benefits,
+   max(if(o.concept_id=160246,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as screened_negative_substance_abuse,
+   max(if(o.concept_id=159891,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as screened_negative_psychiatric_illness,
+   max(if(o.concept_id=1048,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as HIV_status_disclosure,
+   max(if(o.concept_id=164425,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as trained_drug_admin,
+   max(if(o.concept_id=121764,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as informed_drug_side_effects,
+   max(if(o.concept_id=5619,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as caregiver_committed,
+   max(if(o.concept_id=159707,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherance_barriers_identified,
+   max(if(o.concept_id=163089,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as caregiver_location_contacts_given,
+   max(if(o.concept_id=162695,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as ready_to_start_art,
+   max(if(o.concept_id=160119,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as identified_drug_time,
+   max(if(o.concept_id=164886,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as treatment_supporter_engaged,
+   max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as support_grp_meeting_awareness,
+   max(if(o.concept_id=163164,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as enrolled_in_reminder_system,
+   max(if(o.concept_id=164360,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_support_systems
+    from openmrs.encounter e
+   inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
  and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
    inner join
      (
-     select form_id, uuid,name from form where
+     select form_id, uuid,name from openmrs.form where
  uuid in('782a4263-3ac9-4ce8-b316-534571233f12')
      ) f on f.form_id= e.form_id
    left join (
@@ -2491,9 +2491,9 @@ other_support_systems
     o.person_id,
     o.encounter_id,
     o.obs_group_id
-     from obs o
-    inner join encounter e on e.encounter_id = o.encounter_id
-    inner join form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
+     from openmrs.obs o
+    inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+    inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
      where o.voided=0
      group by e.encounter_id, o.obs_group_id
      ) t on e.encounter_id = t.encounter_id

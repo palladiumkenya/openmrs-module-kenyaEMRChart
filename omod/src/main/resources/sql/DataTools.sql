@@ -890,7 +890,7 @@ create table kenyaemr_datatools.drug_event as
     from kenyaemr_etl.etl_drug_event;
 
  -- create table art_preparation
-   create table kenyaemr_datatools.art_preparation as
+     create table kenyaemr_datatools.art_preparation as
       select
      uuid,
      patient_id,
@@ -899,23 +899,26 @@ create table kenyaemr_datatools.drug_event as
      location_id,
      encounter_id,
      provider,
-     (case understands_hiv_art_benefits when 1065 then "Yes" when 1066 then "No" else "" end) as understands_hiv_art_benefits,
-     (case screened_negative_substance_abuse when 1065 then "Yes" when 1066 then "No" else "" end) as screened_negative_substance_abuse,
-     (case screened_negative_psychiatric_illness when 1065 then "Yes" when 1066 then "No" else "" end) as screened_negative_psychiatric_illness,
-     (case HIV_status_disclosure when 1 then "Yes" when 0 then "No" else "" end) as HIV_status_disclosure,
-     (case trained_drug_admin when 1065 then "Yes" when 1066 then "No" else "" end) as trained_drug_admin,
-     (case informed_drug_side_effects when 1 then "Yes" when 0 then "No" else "" end) as informed_drug_side_effects,
-     (case caregiver_committed when 1065 then "Yes" when 1066 then "No" else "" end) as caregiver_committed,
-     (case adherance_barriers_identified when 1065 then "Yes" when 1066 then "No" else "" end) as adherance_barriers_identified,
-     (case caregiver_location_contacts_known when 1065 then "Yes" when 1066 then "No" else "" end) as caregiver_location_contacts_known,
-     (case ready_to_start_art when 1065 then "Yes" when 1066 then "No" else "" end) as ready_to_start_art,
-     (case identified_drug_time when 1065 then "Yes" when 1066 then "No" else "" end) as identified_drug_time,
-     (case treatment_supporter_engaged when 1065 then "Yes" when 1066 then "No" else "" end) as treatment_supporter_engaged,
-     (case support_grp_meeting_awareness when 1065 then "Yes" when 1066 then "No" else "" end) as support_grp_meeting_awareness,
-     (case enrolled_in_reminder_system when 1065 then "Yes" when 1066 then "No" else "" end) as enrolled_in_reminder_system,
-     (case other_support_systems when 1065 then "Yes" when 1066 then "No" else "" end) as other_support_systems
+     understands_hiv_art_benefits,
+     screened_negative_substance_abuse,
+     screened_negative_psychiatric_illness,
+     HIV_status_disclosure,
+     trained_drug_admin,
+     caregiver_committed,
+     adherance_barriers_identified,
+     caregiver_location_contacts_known,
+     ready_to_start_art,
+     identified_drug_time,
+     treatment_supporter_engaged,
+     support_grp_meeting_awareness,
+     enrolled_in_reminder_system
+    from kenyaemr_etl.etl_ART_preparation;
 
-      from kenyaemr_etl.etl_ART_preparation;
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(visit_date);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(encounter_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(ready_to_start_art);
+
 
     ALTER TABLE kenyaemr_datatools.art_preparation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
     ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(visit_date);

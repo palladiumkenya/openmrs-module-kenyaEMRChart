@@ -1161,7 +1161,7 @@ INDEX(tracing_type)
 );
 
 -- ------------ create table etl_ART_preparation-----------------------
-Drop table if exists kenyaemr_etl.etl_ART_preparation;
+drop table if exists kenyaemr_etl.etl_ART_preparation;
 CREATE TABLE kenyaemr_etl.etl_ART_preparation (
   uuid char(38),
   patient_id INT(11) NOT NULL ,
@@ -1170,21 +1170,21 @@ CREATE TABLE kenyaemr_etl.etl_ART_preparation (
   location_id INT(11) DEFAULT NULL,
   encounter_id INT(11) NOT NULL PRIMARY KEY,
   provider INT(11),
-  understands_hiv_art_benefits INT(11),
-  screened_negative_substance_abuse INT(11),
-  screened_negative_psychiatric_illness INT(11),
-  HIV_status_disclosure INT(11),
-  trained_drug_admin INT(11),
-  informed_drug_side_effects INT(11),
-  caregiver_committed INT(11),
-  adherance_barriers_identified INT(11),
-  caregiver_location_contacts_known INT(11),
-  ready_to_start_art INT(11),
-  identified_drug_time INT(11),
-  treatment_supporter_engaged INT(11),
-  support_grp_meeting_awareness INT(11),
-  enrolled_in_reminder_system INT(11),
-  other_support_systems INT(11),
+  understands_hiv_art_benefits varchar(10),
+  screened_negative_substance_abuse varchar(10),
+  screened_negative_psychiatric_illness varchar(10),
+  HIV_status_disclosure varchar(10),
+  trained_drug_admin varchar(10),
+  informed_drug_side_effects varchar(10),
+  caregiver_committed varchar(10),
+  adherance_barriers_identified varchar(10),
+  caregiver_location_contacts_known varchar(10),
+  ready_to_start_art varchar(10),
+  identified_drug_time varchar(10),
+  treatment_supporter_engaged varchar(10),
+  support_grp_meeting_awareness varchar(10),
+  enrolled_in_reminder_system varchar(10),
+  other_support_systems varchar(10),
   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
   CONSTRAINT unique_uuid UNIQUE(uuid),
   INDEX(visit_date),
@@ -1192,7 +1192,6 @@ CREATE TABLE kenyaemr_etl.etl_ART_preparation (
   INDEX(ready_to_start_art)
 );
 SELECT "Successfully created etl_ART_preparation table";
-
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
