@@ -2425,78 +2425,78 @@ END$$
 
 -- ------------- populate etl_ART_preparation-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ART_preparation$$
+DROP PROCEDURE IF EXISTS sp_populate_etl_ART_preparation;
 CREATE PROCEDURE sp_populate_etl_ART_preparation()
   BEGIN
     SELECT "Processing ART Preparation ", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ART_preparation(
 
-        uuid,
-        patient_id,
-        visit_id,
-        visit_date,
-        location_id,
-        encounter_id,
-        provider,
-        understands_hiv_art_benefits,
-        screened_negative_substance_abuse,
-        screened_negative_psychiatric_illness,
-        HIV_status_disclosure,
-        trained_drug_admin,
-        informed_drug_side_effects,
-        caregiver_committed,
-        adherance_barriers_identified,
-        caregiver_location_contacts_known,
-        ready_to_start_art,
-        identified_drug_time,
-        treatment_supporter_engaged,
-        support_grp_meeting_awareness,
-        enrolled_in_reminder_system,
-        other_support_systems
+uuid,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+provider,
+understands_hiv_art_benefits,
+screened_negative_substance_abuse,
+screened_negative_psychiatric_illness,
+HIV_status_disclosure,
+trained_drug_admin,
+informed_drug_side_effects,
+caregiver_committed,
+adherance_barriers_identified,
+caregiver_location_contacts_known,
+ready_to_start_art,
+identified_drug_time,
+treatment_supporter_engaged,
+support_grp_meeting_awareness,
+enrolled_in_reminder_system,
+other_support_systems
 
-        )
+)
     select
-           e.uuid,
-           e.patient_id,
-           e.visit_id,
-           e.encounter_datetime,
-           e.location_id,
-           e.encounter_id,
-           e.creator,
-           max(if(o.concept_id=1729,o.value_coded,null)) as understands_hiv_art_benefits,
-           max(if(o.concept_id=160246,o.value_coded,null)) as screened_negative_substance_abuse,
-           max(if(o.concept_id=159891,o.value_coded,null)) as screened_negative_psychiatric_illness,
-           max(if(o.concept_id=1048,o.value_boolean,null)) as HIV_status_disclosure,
-           max(if(o.concept_id=164425,o.value_coded,null)) as trained_drug_admin,
-           max(if(o.concept_id=121764,o.value_boolean,null)) as informed_drug_side_effects,
-           max(if(o.concept_id=5619,o.value_coded,null)) as caregiver_committed,
-           max(if(o.concept_id=159707,o.value_coded,null)) as adherance_barriers_identified,
-           max(if(o.concept_id=163089,o.value_coded,null)) as caregiver_location_contacts_given,
-           max(if(o.concept_id=162695,o.value_coded,null)) as ready_to_start_art,
-           max(if(o.concept_id=160119,o.value_coded,null)) as identified_drug_time,
-           max(if(o.concept_id=164886,o.value_coded,null)) as treatment_supporter_engaged,
-           max(if(o.concept_id=163766,o.value_coded,null)) as support_grp_meeting_awareness,
-           max(if(o.concept_id=163164,o.value_coded,null)) as enrolled_in_reminder_system,
-           max(if(o.concept_id=164360,o.value_coded,null)) as other_support_systems
+   e.uuid,
+   e.patient_id,
+   e.visit_id,
+   e.encounter_datetime,
+   e.location_id,
+   e.encounter_id,
+   e.creator,
+   max(if(o.concept_id=1729,o.value_coded,null)) as understands_hiv_art_benefits,
+   max(if(o.concept_id=160246,o.value_coded,null)) as screened_negative_substance_abuse,
+   max(if(o.concept_id=159891,o.value_coded,null)) as screened_negative_psychiatric_illness,
+   max(if(o.concept_id=1048,o.value_coded,null)) as HIV_status_disclosure,
+   max(if(o.concept_id=164425,o.value_coded,null)) as trained_drug_admin,
+   max(if(o.concept_id=121764,o.value_coded,null)) as informed_drug_side_effects,
+   max(if(o.concept_id=5619,o.value_coded,null)) as caregiver_committed,
+   max(if(o.concept_id=159707,o.value_coded,null)) as adherance_barriers_identified,
+   max(if(o.concept_id=163089,o.value_coded,null)) as caregiver_location_contacts_given,
+   max(if(o.concept_id=162695,o.value_coded,null)) as ready_to_start_art,
+   max(if(o.concept_id=160119,o.value_coded,null)) as identified_drug_time,
+   max(if(o.concept_id=164886,o.value_coded,null)) as treatment_supporter_engaged,
+   max(if(o.concept_id=163766,o.value_coded,null)) as support_grp_meeting_awareness,
+   max(if(o.concept_id=163164,o.value_coded,null)) as enrolled_in_reminder_system,
+   max(if(o.concept_id=164360,o.value_coded,null)) as other_support_systems
     from encounter e
-           inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                                 and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
-           inner join
-             (
-             select form_id, uuid,name from form where
-                 uuid in('782a4263-3ac9-4ce8-b316-534571233f12')
-             ) f on f.form_id= e.form_id
-           left join (
-                     select
-                            o.person_id,
-                            o.encounter_id,
-                            o.obs_group_id
-                     from obs o
-                            inner join encounter e on e.encounter_id = o.encounter_id
-                            inner join form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
-                     where o.voided=0
-                     group by e.encounter_id, o.obs_group_id
-                     ) t on e.encounter_id = t.encounter_id
+   inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+ and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
+   inner join
+     (
+     select form_id, uuid,name from form where
+ uuid in('782a4263-3ac9-4ce8-b316-534571233f12')
+     ) f on f.form_id= e.form_id
+   left join (
+     select
+    o.person_id,
+    o.encounter_id,
+    o.obs_group_id
+     from obs o
+    inner join encounter e on e.encounter_id = o.encounter_id
+    inner join form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
+     where o.voided=0
+     group by e.encounter_id, o.obs_group_id
+     ) t on e.encounter_id = t.encounter_id
     group by e.encounter_id;
     SELECT "Completed processing ART Preparation ", CONCAT("Time: ", NOW());
     END$$
@@ -2505,8 +2505,6 @@ CREATE PROCEDURE sp_populate_etl_ART_preparation()
 SET sql_mode=@OLD_SQL_MODE$$
 
 -- ------------------------------------------- running all procedures -----------------------------
-
-
 
 DROP PROCEDURE IF EXISTS sp_first_time_setup$$
 CREATE PROCEDURE sp_first_time_setup()
