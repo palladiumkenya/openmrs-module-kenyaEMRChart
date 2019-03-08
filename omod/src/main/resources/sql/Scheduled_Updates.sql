@@ -2433,6 +2433,82 @@ cause_of_death=VALUES(cause_of_death),
 comments=VALUES(comments);
 
 END$$
+-- ------------- Update etl_ART_preparation-------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_ART_preparation$$
+    CREATE PROCEDURE sp_update_etl_ART_preparation(IN last_update_time DATETIME)
+      BEGIN
+insert into kenyaemr_etl.etl_ART_preparation(
+    uuid,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    provider,
+    understands_hiv_art_benefits,
+    screened_negative_substance_abuse,
+    screened_negative_psychiatric_illness,
+    HIV_status_disclosure,
+    trained_drug_admin,
+    informed_drug_side_effects,
+    caregiver_committed,
+    adherance_barriers_identified,
+    caregiver_location_contacts_known,
+    ready_to_start_art,
+    identified_drug_time,
+    treatment_supporter_engaged,
+    support_grp_meeting_awareness,
+    enrolled_in_reminder_system,
+    other_support_systems
+    )
+select
+       e.uuid,
+       e.patient_id,
+       e.visit_id,
+       e.encounter_datetime,
+       e.location_id,
+       e.encounter_id,
+       e.creator,
+   max(if(o.concept_id=1729,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as understands_hiv_art_benefits,
+   max(if(o.concept_id=160246,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as screened_negative_substance_abuse,
+   max(if(o.concept_id=159891,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as screened_negative_psychiatric_illness,
+   max(if(o.concept_id=1048,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as HIV_status_disclosure,
+   max(if(o.concept_id=164425,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as trained_drug_admin,
+   max(if(o.concept_id=121764,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as informed_drug_side_effects,
+   max(if(o.concept_id=5619,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as caregiver_committed,
+   max(if(o.concept_id=159707,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherance_barriers_identified,
+   max(if(o.concept_id=163089,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as caregiver_location_contacts_given,
+   max(if(o.concept_id=162695,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as ready_to_start_art,
+   max(if(o.concept_id=160119,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as identified_drug_time,
+   max(if(o.concept_id=164886,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as treatment_supporter_engaged,
+   max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as support_grp_meeting_awareness,
+   max(if(o.concept_id=163164,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as enrolled_in_reminder_system,
+   max(if(o.concept_id=164360,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_support_systems
+from encounter e
+       inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+     and o.concept_id in (1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
+       inner join
+ (
+ select form_id, uuid,name from form where
+     uuid in('782a4263-3ac9-4ce8-b316-534571233f12')
+ ) f on f.form_id= e.form_id
+where e.date_created >= last_update_time
+   or e.date_changed >= last_update_time
+   or e.date_voided >= last_update_time
+   or o.date_created >= last_update_time
+   or o.date_voided >= last_update_time
+
+group by e.encounter_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),provider=VALUES(provider),
+understands_hiv_art_benefits=VALUES(understands_hiv_art_benefits),screened_negative_substance_abuse=VALUES(screened_negative_substance_abuse),
+screened_negative_psychiatric_illness=VALUES(screened_negative_psychiatric_illness),HIV_status_disclosure=VALUES(HIV_status_disclosure),
+trained_drug_admin=VALUES(trained_drug_admin),informed_drug_side_effects=VALUES(informed_drug_side_effects),
+caregiver_committed=VALUES(caregiver_committed),adherance_barriers_identified=VALUES(adherance_barriers_identified),caregiver_location_contacts_known=VALUES(caregiver_location_contacts_known),
+ready_to_start_art=VALUES(ready_to_start_art),
+identified_drug_time=VALUES(identified_drug_time),treatment_supporter_engaged=VALUES(treatment_supporter_engaged),support_grp_meeting_awareness=VALUES(support_grp_meeting_awareness),
+enrolled_in_reminder_system=VALUES(enrolled_in_reminder_system),other_support_systems=VALUES(other_support_systems);
+
+END$$
 
 SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
@@ -2470,6 +2546,7 @@ CALL sp_update_hts_linkage_and_referral(last_update_time);
 CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
 CALL sp_update_etl_ccc_defaulter_tracing(last_update_time);
+CALL sp_update_etl_ART_preparation(last_update_time);
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
