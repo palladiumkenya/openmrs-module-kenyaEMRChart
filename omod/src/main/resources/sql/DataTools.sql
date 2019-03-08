@@ -889,6 +889,43 @@ create table kenyaemr_datatools.drug_event as
       reason_discontinued_other
     from kenyaemr_etl.etl_drug_event;
 
+ -- create table art_preparation
+     create table kenyaemr_datatools.art_preparation as
+      select
+     uuid,
+     patient_id,
+     visit_id,
+     visit_date,
+     location_id,
+     encounter_id,
+     provider,
+     understands_hiv_art_benefits,
+     screened_negative_substance_abuse,
+     screened_negative_psychiatric_illness,
+     HIV_status_disclosure,
+     trained_drug_admin,
+     caregiver_committed,
+     adherance_barriers_identified,
+     caregiver_location_contacts_known,
+     ready_to_start_art,
+     identified_drug_time,
+     treatment_supporter_engaged,
+     support_grp_meeting_awareness,
+     enrolled_in_reminder_system
+    from kenyaemr_etl.etl_ART_preparation;
+
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(visit_date);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(encounter_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(ready_to_start_art);
+
+
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(visit_date);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(encounter_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(ready_to_start_art);
+
+
   alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
   ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
