@@ -2501,8 +2501,125 @@ other_support_systems
     SELECT "Completed processing ART Preparation ", CONCAT("Time: ", NOW());
     END$$
 
+-- ------------- populate etl_enhanced_adherence-------------------------
 
-SET sql_mode=@OLD_SQL_MODE$$
+DROP PROCEDURE IF EXISTS sp_populate_etl_enhanced_adherence $$
+CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
+	BEGIN
+		SELECT "Processing Enhanced Adherence ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_enhanced_adherence(
+
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			provider,
+			session_number,
+			first_session_date,
+			pill_count,
+			arv_adherence,
+			has_vl_results,
+			vl_results_suppressed,
+			vl_results_feeling,
+			cause_of_high_vl,
+			way_forward,
+			patient_hiv_knowledge,
+			patient_drugs_uptake,
+			patient_drugs_reminder_tools,
+			patient_drugs_uptake_during_travels,
+			patient_drugs_side_effects_responce,
+			patient_drugs_uptake_most_difficult_times,
+			patient_drugs_daily_uptake_feeling,
+			patient_ambitions,
+			patient_has_people_to_talk,
+			patient_enlisting_social_support,
+			patient_income_sources,
+			patient_challenges_reaching_clinic,
+			patient_worried_of_accidental_disclosure,
+			patient_treated_differently,
+			stigma_hinders_adherence,
+			patient_tried_faith_healing,
+			patient_adherence_improved,
+			patient_doses_missed,
+			review_and_barriers_to_adherence,
+			other_referrals,
+			appointments_honoured,
+			referral_experience,
+			home_visit_benefit,
+			adherence_plan,
+			next_appointment_date
+
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				e.visit_id,
+				e.encounter_datetime,
+				e.location_id,
+				e.encounter_id,
+				e.creator,
+				max(if(o.concept_id=1639,o.value_numeric,null)) as session_number,
+				max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
+				max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
+				max(if(o.concept_id=1658,o.value_coded,null)) as arv_adherence,
+				max(if(o.concept_id=163310,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
+				max(if(o.concept_id=1305,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vl_results_suppressed,
+				max(if(o.concept_id=164981,trim(o.value_text),null)) as vl_results_feeling,
+				max(if(o.concept_id=164982,trim(o.value_text),null)) as cause_of_high_vl,
+				max(if(o.concept_id=160632,trim(o.value_text),null)) as way_forward,
+				max(if(o.concept_id=164983,trim(o.value_text),null)) as patient_hiv_knowledge,
+				max(if(o.concept_id=164984,trim(o.value_text),null)) as patient_drugs_uptake,
+				max(if(o.concept_id=164985,trim(o.value_text),null)) as patient_drugs_reminder_tools,
+				max(if(o.concept_id=164986,trim(o.value_text),null)) as patient_drugs_uptake_during_travels,
+				max(if(o.concept_id=164987,trim(o.value_text),null)) as patient_drugs_side_effects_responce,
+				max(if(o.concept_id=164988,trim(o.value_text),null)) as patient_drugs_uptake_most_difficult_times,
+				max(if(o.concept_id=164989,trim(o.value_text),null)) as patient_drugs_daily_uptake_feeling,
+				max(if(o.concept_id=164990,trim(o.value_text),null)) as patient_ambitions,
+				max(if(o.concept_id=164991,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_has_people_to_talk,
+				max(if(o.concept_id=164992,trim(o.value_text),null)) as patient_enlisting_social_support,
+				max(if(o.concept_id=164993,trim(o.value_text),null)) as patient_income_sources,
+				max(if(o.concept_id=164994,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_challenges_reaching_clinic,
+				max(if(o.concept_id=164995,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_worried_of_accidental_disclosure,
+				max(if(o.concept_id=164996,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_treated_differently,
+				max(if(o.concept_id=164997,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as stigma_hinders_adherence,
+				max(if(o.concept_id=164998,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_tried_faith_healing,
+				max(if(o.concept_id=1898,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_adherence_improved,
+				max(if(o.concept_id=160110,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as patient_doses_missed,
+				max(if(o.concept_id=163108,trim(o.value_text),null)) as review_and_barriers_to_adherence,
+				max(if(o.concept_id=1272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_referrals,
+				max(if(o.concept_id=164999,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointments_honoured,
+				max(if(o.concept_id=165000,trim(o.value_text),null)) as referral_experience,
+				max(if(o.concept_id=165001,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as home_visit_benefit,
+				max(if(o.concept_id=165002,trim(o.value_text),null)) as adherence_plan,
+				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
+
+			from openmrs.encounter e
+				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+																		and o.concept_id in(1639,164891,162846,1658,163310,1305,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
+				inner join
+				(
+					select form_id, uuid,name from openmrs.form where
+						uuid in('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
+				) f on f.form_id= e.form_id
+				left join (
+										select
+											o.person_id,
+											o.encounter_id,
+											o.obs_group_id
+										from openmrs.obs o
+											inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+											inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
+										where o.voided=0
+										group by e.encounter_id, o.obs_group_id
+									) t on e.encounter_id = t.encounter_id
+			group by e.encounter_id;
+		SELECT "Completed processing Enhanced Adherence ", CONCAT("Time: ", NOW());
+		END$$
+
+
+		SET sql_mode=@OLD_SQL_MODE$$
 
 -- ------------------------------------------- running all procedures -----------------------------
 
@@ -2538,6 +2655,7 @@ CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_ipt_follow_up();
 CALL sp_populate_etl_ccc_defaulter_tracing();
 CALL sp_populate_etl_ART_preparation();
+CALL sp_populate_etl_enhanced_adherence();
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
