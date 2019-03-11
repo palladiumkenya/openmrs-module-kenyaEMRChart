@@ -1216,7 +1216,7 @@ SELECT "Successfully created etl_ART_preparation table";
     patient_drugs_uptake varchar(255),
     patient_drugs_reminder_tools varchar(255),
     patient_drugs_uptake_during_travels varchar(255),
-    patient_drugs_side_effects_responce varchar(255),
+    patient_drugs_side_effects_response varchar(255),
     patient_drugs_uptake_most_difficult_times varchar(255),
     patient_drugs_daily_uptake_feeling varchar(255),
     patient_ambitions varchar(255),

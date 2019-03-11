@@ -942,7 +942,7 @@ create table kenyaemr_datatools.drug_event as
       patient_drugs_uptake,
       patient_drugs_reminder_tools,
       patient_drugs_uptake_during_travels,
-      patient_drugs_side_effects_responce,
+      patient_drugs_side_effects_response,
       patient_drugs_uptake_most_difficult_times,
       patient_drugs_daily_uptake_feeling,
       patient_ambitions,
