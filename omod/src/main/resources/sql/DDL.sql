@@ -48,6 +48,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
 DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
 
 
 
@@ -1161,7 +1163,6 @@ INDEX(tracing_type)
 );
 
 -- ------------ create table etl_ART_preparation-----------------------
-drop table if exists kenyaemr_etl.etl_ART_preparation;
 CREATE TABLE kenyaemr_etl.etl_ART_preparation (
   uuid char(38),
   patient_id INT(11) NOT NULL ,
@@ -1192,6 +1193,56 @@ CREATE TABLE kenyaemr_etl.etl_ART_preparation (
   INDEX(ready_to_start_art)
 );
 SELECT "Successfully created etl_ART_preparation table";
+
+  -- ------------ create table etl_enhanced_adherence-----------------------
+  CREATE TABLE kenyaemr_etl.etl_enhanced_adherence (
+    uuid char(38),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    provider INT(11),
+    session_number INT(11),
+    first_session_date DATE,
+    pill_count INT(11),
+    arv_adherence INT(11),
+    has_vl_results INT(11),
+    vl_results_suppressed INT(11),
+    vl_results_feeling varchar(255),
+    cause_of_high_vl varchar(255),
+    way_forward varchar(255),
+    patient_hiv_knowledge varchar(255),
+    patient_drugs_uptake varchar(255),
+    patient_drugs_reminder_tools varchar(255),
+    patient_drugs_uptake_during_travels varchar(255),
+    patient_drugs_side_effects_response varchar(255),
+    patient_drugs_uptake_most_difficult_times varchar(255),
+    patient_drugs_daily_uptake_feeling varchar(255),
+    patient_ambitions varchar(255),
+    patient_has_people_to_talk INT(11),
+    patient_enlisting_social_support varchar(255),
+    patient_income_sources varchar(255),
+    patient_challenges_reaching_clinic INT(11),
+    patient_worried_of_accidental_disclosure INT(11),
+    patient_treated_differently INT(11),
+    stigma_hinders_adherence INT(11),
+    patient_tried_faith_healing INT(11),
+    patient_adherence_improved INT(11),
+    patient_doses_missed INT(11),
+    review_and_barriers_to_adherence varchar(255),
+    other_referrals INT(11),
+    appointments_honoured INT(11),
+    referral_experience varchar(255),
+    home_visit_benefit INT(11),
+    adherence_plan varchar(255),
+    next_appointment_date DATE,
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id)
+    );
+  SELECT "Successfully created etl_enhanced_adherence table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
