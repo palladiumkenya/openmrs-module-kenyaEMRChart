@@ -889,6 +889,86 @@ create table kenyaemr_datatools.drug_event as
       reason_discontinued_other
     from kenyaemr_etl.etl_drug_event;
 
+ -- create table art_preparation
+     create table kenyaemr_datatools.art_preparation as
+      select
+     uuid,
+     patient_id,
+     visit_id,
+     visit_date,
+     location_id,
+     encounter_id,
+     provider,
+     understands_hiv_art_benefits,
+     screened_negative_substance_abuse,
+     screened_negative_psychiatric_illness,
+     HIV_status_disclosure,
+     trained_drug_admin,
+     caregiver_committed,
+     adherance_barriers_identified,
+     caregiver_location_contacts_known,
+     ready_to_start_art,
+     identified_drug_time,
+     treatment_supporter_engaged,
+     support_grp_meeting_awareness,
+     enrolled_in_reminder_system
+    from kenyaemr_etl.etl_ART_preparation;
+
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(visit_date);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(encounter_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(ready_to_start_art);
+
+  -- create table enhanced_adherence
+  create table kenyaemr_datatools.enhanced_adherence as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      provider,
+      session_number,
+      first_session_date,
+      pill_count,
+      arv_adherence,
+      has_vl_results,
+      vl_results_suppressed,
+      vl_results_feeling,
+      cause_of_high_vl,
+      way_forward,
+      patient_hiv_knowledge,
+      patient_drugs_uptake,
+      patient_drugs_reminder_tools,
+      patient_drugs_uptake_during_travels,
+      patient_drugs_side_effects_response,
+      patient_drugs_uptake_most_difficult_times,
+      patient_drugs_daily_uptake_feeling,
+      patient_ambitions,
+      patient_has_people_to_talk,
+      patient_enlisting_social_support,
+      patient_income_sources,
+      patient_challenges_reaching_clinic,
+      patient_worried_of_accidental_disclosure,
+      patient_treated_differently,
+      stigma_hinders_adherence,
+      patient_tried_faith_healing,
+      patient_adherence_improved,
+      patient_doses_missed,
+      review_and_barriers_to_adherence,
+      other_referrals,
+      appointments_honoured,
+      referral_experience,
+      home_visit_benefit,
+      adherence_plan,
+      next_appointment_date
+    from kenyaemr_etl.etl_enhanced_adherence;
+
+  ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD INDEX(encounter_id);
+
   alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
   ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
