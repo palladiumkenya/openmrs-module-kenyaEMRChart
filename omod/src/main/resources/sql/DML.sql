@@ -2550,7 +2550,6 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 			home_visit_benefit,
 			adherence_plan,
 			next_appointment_date
-
 		)
 			select
 				e.uuid,
@@ -2563,7 +2562,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 				max(if(o.concept_id=1639,o.value_numeric,null)) as session_number,
 				max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
 				max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
-				max(if(o.concept_id=1658,o.value_coded,null)) as arv_adherence,
+				max(if(o.concept_id=1658,(case o.value_coded when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end), "" )) as arv_adherence,
 				max(if(o.concept_id=163310,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
 				max(if(o.concept_id=1305,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vl_results_suppressed,
 				max(if(o.concept_id=164981,trim(o.value_text),null)) as vl_results_feeling,
