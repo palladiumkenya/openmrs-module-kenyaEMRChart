@@ -2508,7 +2508,6 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 	BEGIN
 		SELECT "Processing Enhanced Adherence ", CONCAT("Time: ", NOW());
 		insert into kenyaemr_etl.etl_enhanced_adherence(
-
 			uuid,
 			patient_id,
 			visit_id,
@@ -2617,6 +2616,69 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 		SELECT "Completed processing Enhanced Adherence ", CONCAT("Time: ", NOW());
 		END$$
 
+-- ------------- populate etl_patient_triage--------------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_patient_triage$$
+CREATE PROCEDURE sp_populate_etl_patient_triage()
+	BEGIN
+		SELECT "Processing Patient Triage ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_patient_triage(
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			visit_reason,
+			weight,
+			height,
+			systolic_pressure,
+			diastolic_pressure,
+			temperature,
+			pulse_rate,
+			respiratory_rate,
+			oxygen_saturation,
+			muac,
+			nutritional_status,
+			last_menstrual_period,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				e.visit_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
+				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
+				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
+				max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
+				max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
+				max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+				max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
+				max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
+				max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
+				max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+				max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
+				max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542')
+				) et on et.encounter_type_id=e.encounter_type
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
+		END$$
 
 		SET sql_mode=@OLD_SQL_MODE$$
 
@@ -2655,6 +2717,7 @@ CALL sp_populate_etl_ipt_follow_up();
 CALL sp_populate_etl_ccc_defaulter_tracing();
 CALL sp_populate_etl_ART_preparation();
 CALL sp_populate_etl_enhanced_adherence();
+CALL sp_populate_etl_patient_triage();
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;

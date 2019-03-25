@@ -50,6 +50,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
 
 
 
@@ -1244,7 +1245,40 @@ SELECT "Successfully created etl_ART_preparation table";
     );
   SELECT "Successfully created etl_enhanced_adherence table";
 
-UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+  -- ------------ create table etl_patient_triage-----------------------
+  CREATE TABLE kenyaemr_etl.etl_patient_triage (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    visit_id INT(11),
+    encounter_provider INT(11),
+    date_created DATE,
+    visit_reason VARCHAR(255),
+    weight DOUBLE,
+    height DOUBLE,
+    systolic_pressure DOUBLE,
+    diastolic_pressure DOUBLE,
+    temperature DOUBLE,
+    pulse_rate DOUBLE,
+    respiratory_rate DOUBLE,
+    oxygen_saturation DOUBLE,
+    muac DOUBLE,
+    nutritional_status INT(11) DEFAULT NULL,
+    last_menstrual_period DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_patient_triage table";
+
+  UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
 

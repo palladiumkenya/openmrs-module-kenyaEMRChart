@@ -173,7 +173,7 @@ poor_arv_adherence_reason_other,
 (case system_review_finding when 1115 then "NORMAL" when 1116 then "ABNORMAL" else "" end) as system_review_finding,
 next_appointment_date,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
-(case stability when 1 then "Yes" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
+(case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
 when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care
 from kenyaemr_etl.etl_patient_hiv_followup;
@@ -964,12 +964,41 @@ create table kenyaemr_datatools.drug_event as
       adherence_plan,
       next_appointment_date
     from kenyaemr_etl.etl_enhanced_adherence;
-
   ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
   ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD INDEX(encounter_id);
 
-  alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  -- create table triage
+  create table kenyaemr_datatools.triage as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+      visit_reason,
+      weight,
+      height,
+      systolic_pressure,
+      diastolic_pressure,
+      temperature,
+      pulse_rate,
+      respiratory_rate,
+      oxygen_saturation,
+      muac,
+      (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
+      last_menstrual_period,
+      voided
+    from kenyaemr_etl.etl_patient_triage;
+
+  ALTER TABLE kenyaemr_datatools.triage ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.triage ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.triage ADD INDEX(encounter_id);
+
+  ALTER TABLE kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
   ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
