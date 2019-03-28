@@ -2573,8 +2573,8 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
 				max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
 				max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
 				max(if(o.concept_id=1658,(case o.value_coded when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end), "" )) as arv_adherence,
-				max(if(o.concept_id=163310,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
-				max(if(o.concept_id=1305,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vl_results_suppressed,
+				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
+				max(if(o.concept_id=163310,(case o.value_coded when 1302 then "Suppressed" when 1066 then "Unsuppresed" else "" end), "" )) as vl_results_suppressed,
 				max(if(o.concept_id=164981,trim(o.value_text),null)) as vl_results_feeling,
 				max(if(o.concept_id=164982,trim(o.value_text),null)) as cause_of_high_vl,
 				max(if(o.concept_id=160632,trim(o.value_text),null)) as way_forward,
@@ -2606,7 +2606,7 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
 
 			from openmrs.encounter e
 				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
-				and o.concept_id in(1639,164891,162846,1658,163310,1305,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
+				and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 
 				inner join
 				(
