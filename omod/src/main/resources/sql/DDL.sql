@@ -50,6 +50,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
 
 
 
@@ -1206,9 +1207,9 @@ SELECT "Successfully created etl_ART_preparation table";
     session_number INT(11),
     first_session_date DATE,
     pill_count INT(11),
-    arv_adherence INT(11),
-    has_vl_results INT(11),
-    vl_results_suppressed INT(11),
+    arv_adherence varchar(50),
+    has_vl_results varchar(10),
+    vl_results_suppressed varchar(10),
     vl_results_feeling varchar(255),
     cause_of_high_vl varchar(255),
     way_forward varchar(255),
@@ -1220,21 +1221,21 @@ SELECT "Successfully created etl_ART_preparation table";
     patient_drugs_uptake_most_difficult_times varchar(255),
     patient_drugs_daily_uptake_feeling varchar(255),
     patient_ambitions varchar(255),
-    patient_has_people_to_talk INT(11),
+    patient_has_people_to_talk varchar(10),
     patient_enlisting_social_support varchar(255),
     patient_income_sources varchar(255),
-    patient_challenges_reaching_clinic INT(11),
-    patient_worried_of_accidental_disclosure INT(11),
-    patient_treated_differently INT(11),
-    stigma_hinders_adherence INT(11),
-    patient_tried_faith_healing INT(11),
-    patient_adherence_improved INT(11),
-    patient_doses_missed INT(11),
+    patient_challenges_reaching_clinic varchar(10),
+    patient_worried_of_accidental_disclosure varchar(10),
+    patient_treated_differently varchar(10),
+    stigma_hinders_adherence varchar(10),
+    patient_tried_faith_healing varchar(10),
+    patient_adherence_improved varchar(10),
+    patient_doses_missed varchar(10),
     review_and_barriers_to_adherence varchar(255),
-    other_referrals INT(11),
-    appointments_honoured INT(11),
+    other_referrals varchar(10),
+    appointments_honoured varchar(10),
     referral_experience varchar(255),
-    home_visit_benefit INT(11),
+    home_visit_benefit varchar(10),
     adherence_plan varchar(255),
     next_appointment_date DATE,
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
@@ -1244,7 +1245,40 @@ SELECT "Successfully created etl_ART_preparation table";
     );
   SELECT "Successfully created etl_enhanced_adherence table";
 
-UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+  -- ------------ create table etl_patient_triage-----------------------
+  CREATE TABLE kenyaemr_etl.etl_patient_triage (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    visit_id INT(11),
+    encounter_provider INT(11),
+    date_created DATE,
+    visit_reason VARCHAR(255),
+    weight DOUBLE,
+    height DOUBLE,
+    systolic_pressure DOUBLE,
+    diastolic_pressure DOUBLE,
+    temperature DOUBLE,
+    pulse_rate DOUBLE,
+    respiratory_rate DOUBLE,
+    oxygen_saturation DOUBLE,
+    muac DOUBLE,
+    nutritional_status INT(11) DEFAULT NULL,
+    last_menstrual_period DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_patient_triage table";
+
+  UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
 
