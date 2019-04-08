@@ -207,6 +207,8 @@ public class EtlManagerFragmentController {
                     }
                 } catch (Exception e) {
                     throw new IllegalArgumentException("Unable to execute", e);
+                } finally {
+                    Context.closeSession();
                 }
             }
 

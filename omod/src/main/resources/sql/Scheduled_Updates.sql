@@ -212,7 +212,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
 ) et on et.encounter_type_id=e.encounter_type
 join patient p on p.patient_id=e.patient_id and p.voided=0
-left outer join obs o on o.encounter_id=e.encounter_id
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 		and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563)
 where e.voided=0 and e.date_created >= last_update_time
 or e.date_changed >= last_update_time
@@ -395,7 +395,7 @@ inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
 ) et on et.encounter_type_id=e.encounter_type
-left outer join obs o on o.encounter_id=e.encounter_id 
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947)
 where e.voided=0 and e.date_created >= last_update_time
@@ -1169,10 +1169,10 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
 			date_of_birth_registration,
 			birth_registration_place,
 			permanent_registration_serial,
-			mother_facility_registered
-			-- exit_date,
-			-- exit_reason,
-			-- hiv_status_at_exit
+			mother_facility_registered,
+			exit_date,
+      exit_reason,
+      hiv_status_at_exit
 		)
 			select
 				e.patient_id,
@@ -1219,18 +1219,17 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
 				max(if(o.concept_id=164129,o.value_datetime,null)) as date_of_birth_registration,
 				max(if(o.concept_id=164140,o.value_text,null)) as birth_registration_place,
 				max(if(o.concept_id=1646,o.value_text,null)) as permanent_registration_serial,
-				max(if(o.concept_id=162724,o.value_text,null)) as mother_facility_registered
-
-			-- max(if(o.concept_id=160972,o.value_coded,null)) as exit_date
-			-- max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
-			-- max(if(o.concept_id=159427,o.value_coded,null)) as hiv_status_at_exit
+				max(if(o.concept_id=162724,o.value_text,null)) as mother_facility_registered,
+			  max(if(o.concept_id=160753,o.value_datetime,null)) as exit_date,
+			  max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
+			  max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as hiv_status_at_exit
 			from encounter e
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646)
+														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
-						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6')
+						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
 				) et on et.encounter_type_id=e.encounter_type
 			where e.date_created >= last_update_time
 						or e.date_changed >= last_update_time
@@ -1242,7 +1241,7 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
 			birth_notification_number=VALUES(birth_notification_number),birth_certificate_number=VALUES(birth_certificate_number),need_for_special_care=VALUES(need_for_special_care),reason_for_special_care=VALUES(reason_for_special_care),referral_source=VALUES(referral_source),transfer_in=VALUES(transfer_in),transfer_in_date=VALUES(transfer_in_date),facility_transferred_from=VALUES(facility_transferred_from),
 			district_transferred_from=VALUES(district_transferred_from),date_first_enrolled_in_hei_care=VALUES(date_first_enrolled_in_hei_care),mother_breastfeeding=VALUES(mother_breastfeeding),TB_contact_history_in_household=VALUES(TB_contact_history_in_household),mother_alive=VALUES(mother_alive),mother_on_pmtct_drugs=VALUES(mother_on_pmtct_drugs),
 			mother_on_drug=VALUES(mother_on_drug),mother_on_art_at_infant_enrollment=VALUES(mother_on_art_at_infant_enrollment),mother_drug_regimen=VALUES(mother_drug_regimen),infant_prophylaxis=VALUES(infant_prophylaxis),parent_ccc_number=VALUES(parent_ccc_number),mode_of_delivery=VALUES(mode_of_delivery),place_of_delivery=VALUES(place_of_delivery),birth_length=VALUES(birth_length),birth_order=VALUES(birth_order),health_facility_name=VALUES(health_facility_name),
-			date_of_birth_notification=VALUES(date_of_birth_notification),date_of_birth_registration=VALUES(date_of_birth_registration),birth_registration_place=VALUES(birth_registration_place),permanent_registration_serial=VALUES(permanent_registration_serial),mother_facility_registered=VALUES(mother_facility_registered)
+			date_of_birth_notification=VALUES(date_of_birth_notification),date_of_birth_registration=VALUES(date_of_birth_registration),birth_registration_place=VALUES(birth_registration_place),permanent_registration_serial=VALUES(permanent_registration_serial),mother_facility_registered=VALUES(mother_facility_registered),exit_date=VALUES(exit_date),exit_reason=VALUES(exit_reason),hiv_status_at_exit=VALUES(hiv_status_at_exit)
 		;
 
 	END$$
@@ -1397,75 +1396,117 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 			ROTA_1,
 			ROTA_2,
 			Measles_rubella_1,
-			Measles_rubella_2
-			#   Yellow_fever,
-			#   Measles_6_months
-			#   BCG_scar_checked,
-			#   BCG_scar_date_checked,
-			#   BCG_date_repeated,
-			#   Vitamin_A_given,
-			#   Child_fully_immunized,
-			#   Date_of_last_vaccine
+			Measles_rubella_2,
+			Yellow_fever,
+			Measles_6_months,
+			VitaminA_6_months,
+			VitaminA_1_yr,
+			VitaminA_1_and_half_yr,
+			VitaminA_2_yr ,
+			VitaminA_2_to_5_yr,
+			fully_immunized
 		)
 			select
 				patient_id,
 				visit_date,
-				creator,
-				date_created,
-				encounter_id,
-				max(if(vaccine="BCG", "Yes", "")) as BCG,
-				max(if(vaccine="OPV" and sequence=0, "Yes", "")) as OPV_birth,
-				max(if(vaccine="OPV" and sequence=1, "Yes", "")) as OPV_1,
-				max(if(vaccine="OPV" and sequence=2, "Yes", "")) as OPV_2,
-				max(if(vaccine="OPV" and sequence=3, "Yes", "")) as OPV_3,
-				max(if(vaccine="IPV", "Yes", ""))  as IPV,
-				max(if(vaccine="DPT" and sequence=1, "Yes", "")) as DPT_Hep_B_Hib_1,
-				max(if(vaccine="DPT" and sequence=2, "Yes", "")) as DPT_Hep_B_Hib_2,
-				max(if(vaccine="DPT" and sequence=3, "Yes", "")) as DPT_Hep_B_Hib_3,
-				max(if(vaccine="PCV" and sequence=1, "Yes", "")) as PCV_10_1,
-				max(if(vaccine="PCV" and sequence=2, "Yes", "")) as PCV_10_2,
-				max(if(vaccine="PCV" and sequence=3, "Yes", "")) as PCV_10_3,
-				max(if(vaccine="ROTA" and sequence=1, "Yes", "")) as ROTA_1,
-				max(if(vaccine="ROTA" and sequence=2, "Yes", "")) as ROTA_2,
-				max(if(vaccine="measles_rubella" and sequence=1, "Yes", "")) as Measles_rubella_1,
-				max(if(vaccine="measles_rubella" and sequence=2, "Yes", "")) as Measles_rubella_2
-			#	max(if(vaccine="yellow_fever", "Yes", ""))  as Yellow_fever,
-			#	max(if(vaccine="measles", "Yes", ""))  as Measles_6_months
-			#      max(if(o.concept_id=160265,o.value_coded,null)) as BCG_scar_checked,
-			#      max(if(o.concept_id=160753,o.value_datetime,null)) as BCG_scar_date_checked,
-			#      max(if(o.concept_id=1410,o.value_datetime,null)) as BCG_date_repeated,
-			#      max(if(o.concept_id=161534,o.value_coded,null)) as Vitamin_A_given,
-			#      max(if(o.concept_id=164134,o.value_coded,null)) as Child_fully_immunized,
-			#      max(if(o.concept_id=162585,o.value_datetime,null)) as Date_of_last_vaccine
+				y.creator,
+				y.date_created,
+				y.encounter_id,
+				max(if(vaccine="BCG", date_given, "")) as BCG,
+				max(if(vaccine="OPV" and sequence=0, date_given, "")) as OPV_birth,
+				max(if(vaccine="OPV" and sequence=1, date_given, "")) as OPV_1,
+				max(if(vaccine="OPV" and sequence=2, date_given, "")) as OPV_2,
+				max(if(vaccine="OPV" and sequence=3, date_given, "")) as OPV_3,
+				max(if(vaccine="IPV", date_given, ""))  as IPV,
+				max(if(vaccine="DPT" and sequence=1, date_given, "")) as DPT_Hep_B_Hib_1,
+				max(if(vaccine="DPT" and sequence=2, date_given, "")) as DPT_Hep_B_Hib_2,
+				max(if(vaccine="DPT" and sequence=3, date_given, "")) as DPT_Hep_B_Hib_3,
+				max(if(vaccine="PCV" and sequence=1, date_given, "")) as PCV_10_1,
+				max(if(vaccine="PCV" and sequence=2, date_given, "")) as PCV_10_2,
+				max(if(vaccine="PCV" and sequence=3, date_given, "")) as PCV_10_3,
+				max(if(vaccine="ROTA" and sequence=1, date_given, "")) as ROTA_1,
+				max(if(vaccine="ROTA" and sequence=2, date_given, "")) as ROTA_2,
+				max(if(vaccine="measles_rubella" and sequence=1, date_given, "")) as Measles_rubella_1,
+				max(if(vaccine="measles_rubella" and sequence=2, date_given, "")) as Measles_rubella_2,
+				max(if(vaccine="yellow_fever", date_given, "")) as Yellow_fever,
+				max(if(vaccine="measles", date_given, "")) as Measles_6_months,
+				max(if(vaccine="Vitamin A" and sequence=1, date_given, "")) as VitaminA_6_months,
+				max(if(vaccine="Vitamin A" and sequence=2, date_given, "")) as VitaminA_1_yr,
+				max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
+				max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
+				max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
+				max(date(o.value_datetime)) as fully_immunized
 			from (
-						 select
-							 person_id as patient_id,
-							 date(encounter_datetime) as visit_date,
-							 creator,
-							 date(date_created) as date_created,
-							 encounter_id,
-							 name as encounter_type,
-							 max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
-																				when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
-																				when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
-							 max(if(concept_id=1418, value_numeric, "")) as sequence,
-							 obs_group_id
-						 from (
-										select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, o.obs_group_id, o.encounter_id, et.uuid, et.name
-										from openmrs.obs o
-											inner join openmrs.encounter e on e.encounter_id=o.encounter_id
-											inner join openmrs.encounter_type et on et.encounter_type_id=e.encounter_type
-										where concept_id in(984,1418)
-									) t
-						 group by obs_group_id
+						 (select
+								person_id as patient_id,
+								date(encounter_datetime) as visit_date,
+								creator,
+								date(date_created) as date_created,
+								encounter_id,
+								name as encounter_type,
+								max(if(concept_id=1282 , "Vitamin A", "")) as vaccine,
+								max(if(concept_id=1418, value_numeric, "")) as sequence,
+								max(if(concept_id=1282 , date(obs_datetime), "")) as date_given,
+								obs_group_id
+							from (
+										 select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime
+										 from obs o
+											 inner join encounter e on e.encounter_id=o.encounter_id
+											 inner join
+											 (
+												 select encounter_type_id, uuid, name from encounter_type where
+													 uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
+											 ) et on et.encounter_type_id=e.encounter_type
+										 where concept_id in(1282,1418) and (e.date_created >= last_update_time
+																										 or e.date_changed >= last_update_time
+										 or e.date_voided >= last_update_time
+										 or o.date_created >= last_update_time
+										 or o.date_voided >= last_update_time)
+									 ) t
+							group by obs_group_id
+							having vaccine != ""
+						 )
+						 union
+						 (
+							 select
+								 person_id as patient_id,
+								 date(encounter_datetime) as visit_date,
+								 creator,
+								 date(date_created) as date_created,
+								 encounter_id,
+								 name as encounter_type,
+								 max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
+																					when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
+																					when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
+								 max(if(concept_id=1418, value_numeric, "")) as sequence,
+								 max(if(concept_id=1410, date_given, "")) as date_given,
+								 obs_group_id
+							 from (
+											select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
+											from obs o
+												inner join encounter e on e.encounter_id=o.encounter_id
+												inner join
+												(
+													select encounter_type_id, uuid, name from encounter_type where
+														uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
+												) et on et.encounter_type_id=e.encounter_type
+											where concept_id in(984,1418,1410) and (e.date_created >= last_update_time
+																															or e.date_changed >= last_update_time
+																															or e.date_voided >= last_update_time
+																															or o.date_created >= last_update_time
+																															or o.date_voided >= last_update_time)
+										) t
+							 group by obs_group_id
+							 having vaccine != ""
+						 )
 					 ) y
-
-
-			group by patient_id, obs_group_id
-
+				left join obs o on y.encounter_id = o.encounter_id and o.concept_id=162585 and o.voided=0
+			group by patient_id
 		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV_birth=VALUES(OPV_birth),OPV_1=VALUES(OPV_1),OPV_2=VALUES(OPV_2),OPV_3=VALUES(OPV_3),IPV=VALUES(IPV),
 			DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
-			ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2)
+			ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2), Yellow_fever=VALUES(Yellow_fever),
+			Measles_6_months=VALUES(Measles_6_months), VitaminA_6_months=VALUES(VitaminA_6_months),VitaminA_1_yr=VALUES(VitaminA_1_yr),
+			VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr)
 		;
 		END$$
 
@@ -1680,7 +1721,7 @@ max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as t
 max(case o.concept_id when 160632 then value_text else NULL end) as notes
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632) and o.voided=0
 where e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
@@ -1868,10 +1909,7 @@ INSERT INTO kenyaemr_etl.etl_drug_event(
 					uuid in('da687480-e197-11e8-9f32-f2801f1b9fd1') -- regimen editor form
 			) f on f.encounter_type=e.encounter_type
 
-		where o.date_created >= last_update_time
-      or  o.date_voided >= last_update_time
-      or e.encounter_datetime >= last_update_time
-      or e.date_voided >= last_update_time
+		where e.encounter_datetime >= last_update_time
 
     group by e.encounter_id
 		order by e.patient_id, e.encounter_datetime
@@ -1974,6 +2012,7 @@ location_id,
 visit_date,
 visit_id,
 lab_test,
+urgency,
 test_result,
 date_created,
 created_by 
@@ -1986,18 +2025,19 @@ e.location_id,
 e.encounter_datetime as visit_date,
 e.visit_id,
 o.concept_id,
-(CASE when o.concept_id in(5497,730,654,790,856,21) then o.value_numeric
-	when o.concept_id in(299,1030,302,32, 1305) then o.value_coded
+od.urgency,
+(CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
+	when o.concept_id in(1030,1305) then o.value_coded
 	END) AS test_result,
 e.date_created,
 e.creator
-from encounter e 
-inner join obs o on e.encounter_id=o.encounter_id and o.voided=0
-and o.concept_id in (5497,730,299,654,790,856,1030,21,302,32, 1305)
-inner join 
+from encounter e
+inner join
 (
-	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e')
+	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
 ) et on et.encounter_type_id=e.encounter_type
+inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
+left join orders od on od.order_id = o.order_id and od.voided=0
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
@@ -2115,7 +2155,7 @@ max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
 e.voided
 from encounter e
 inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
+inner join obs o on o.encounter_id = e.encounter_id and o.voided=0 and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
                                                                                  159427, 164848, 6096, 1659, 164952, 163042, 159813)
 inner join (
              select
@@ -2174,6 +2214,8 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   tracing_type,
   tracing_status,
   facility_linked_to,
+	enrollment_date,
+	art_start_date,
   ccc_number,
   provider_handed_to,
   voided
@@ -2190,12 +2232,14 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
     max(if(o.concept_id=164966,(case o.value_coded when 1650 then "Phone" when 164965 then "Physical" else null end),null)) as tracing_type ,
     max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Contacted and linked" when 1066 then "Contacted but not linked" else null end),null)) as tracing_status,
     max(if(o.concept_id=162724,trim(o.value_text),null)) as facility_linked_to,
+		max(if(o.concept_id=160555,o.value_datetime,null)) as enrollment_date,
+		max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_date,
     max(if(o.concept_id=162053,o.value_numeric,null)) as ccc_number,
     max(if(o.concept_id=1473,trim(o.value_text),null)) as provider_handed_to,
     e.voided
   from encounter e
   inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
-  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 162053, 1473)
+  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473) and o.voided=0
   where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
@@ -2274,7 +2318,7 @@ e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_i
 max(o.value_coded) as ipt_started
 from encounter e 
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id=1265
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id=1265 and o.voided=0
 where e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
@@ -2323,7 +2367,7 @@ max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" wh
 max(if(o.concept_id = 160632, trim(o.value_text), null )) as action_taken
 from encounter e 
 inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
@@ -2341,7 +2385,323 @@ action_taken=VALUES(action_taken) ;
 
 END$$
 -- DELIMITER ;
-SET sql_mode=@OLD_SQL_MODE$$
+
+DROP PROCEDURE IF EXISTS sp_update_etl_ccc_defaulter_tracing$$
+CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing ccc defaulter tracing form", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_ccc_defaulter_tracing(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+tracing_type,
+tracing_outcome,
+attempt_number,
+is_final_trace,
+true_status,
+cause_of_death,
+comments
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id = 164966, o.value_coded, null )) as tracing_type,
+max(if(o.concept_id = 160721, o.value_coded, null )) as tracing_outcome,
+max(if(o.concept_id = 1639, value_numeric, "" )) as attempt_number,
+max(if(o.concept_id = 163725, o.value_coded, "" )) as is_final_trace,
+max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
+max(if(o.concept_id = 1599, o.value_coded, "" )) as cause_of_death,
+max(if(o.concept_id = 160716, o.value_text, "" )) as comments
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 160721, 1639, 163725, 160433, 1599, 160716) and o.voided=0
+where e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+group by e.encounter_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+tracing_type=VALUES(tracing_type),
+tracing_outcome=VALUES(tracing_outcome),
+attempt_number=VALUES(attempt_number),
+is_final_trace=VALUES(is_final_trace),
+true_status=VALUES(true_status),
+cause_of_death=VALUES(cause_of_death),
+comments=VALUES(comments);
+
+END$$
+-- ------------- Update etl_ART_preparation-------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_ART_preparation$$
+    CREATE PROCEDURE sp_update_etl_ART_preparation(IN last_update_time DATETIME)
+      BEGIN
+insert into kenyaemr_etl.etl_ART_preparation(
+    uuid,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    provider,
+    understands_hiv_art_benefits,
+    screened_negative_substance_abuse,
+    screened_negative_psychiatric_illness,
+    HIV_status_disclosure,
+    trained_drug_admin,
+    informed_drug_side_effects,
+    caregiver_committed,
+    adherance_barriers_identified,
+    caregiver_location_contacts_known,
+    ready_to_start_art,
+    identified_drug_time,
+    treatment_supporter_engaged,
+    support_grp_meeting_awareness,
+    enrolled_in_reminder_system,
+    other_support_systems
+    )
+select
+       e.uuid,
+       e.patient_id,
+       e.visit_id,
+       e.encounter_datetime,
+       e.location_id,
+       e.encounter_id,
+       e.creator,
+   max(if(o.concept_id=1729,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as understands_hiv_art_benefits,
+   max(if(o.concept_id=160246,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as screened_negative_substance_abuse,
+   max(if(o.concept_id=159891,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as screened_negative_psychiatric_illness,
+   max(if(o.concept_id=1048,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as HIV_status_disclosure,
+   max(if(o.concept_id=164425,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as trained_drug_admin,
+   max(if(o.concept_id=121764,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as informed_drug_side_effects,
+   max(if(o.concept_id=5619,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as caregiver_committed,
+   max(if(o.concept_id=159707,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherance_barriers_identified,
+   max(if(o.concept_id=163089,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as caregiver_location_contacts_given,
+   max(if(o.concept_id=162695,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as ready_to_start_art,
+   max(if(o.concept_id=160119,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as identified_drug_time,
+   max(if(o.concept_id=164886,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as treatment_supporter_engaged,
+   max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as support_grp_meeting_awareness,
+   max(if(o.concept_id=163164,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as enrolled_in_reminder_system,
+   max(if(o.concept_id=164360,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_support_systems
+from encounter e
+       inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+     and o.concept_id in (1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
+       inner join
+ (
+ select form_id, uuid,name from form where
+     uuid in('782a4263-3ac9-4ce8-b316-534571233f12')
+ ) f on f.form_id= e.form_id
+where e.date_created >= last_update_time
+   or e.date_changed >= last_update_time
+   or e.date_voided >= last_update_time
+   or o.date_created >= last_update_time
+   or o.date_voided >= last_update_time
+
+group by e.encounter_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),provider=VALUES(provider),
+understands_hiv_art_benefits=VALUES(understands_hiv_art_benefits),screened_negative_substance_abuse=VALUES(screened_negative_substance_abuse),
+screened_negative_psychiatric_illness=VALUES(screened_negative_psychiatric_illness),HIV_status_disclosure=VALUES(HIV_status_disclosure),
+trained_drug_admin=VALUES(trained_drug_admin),informed_drug_side_effects=VALUES(informed_drug_side_effects),
+caregiver_committed=VALUES(caregiver_committed),adherance_barriers_identified=VALUES(adherance_barriers_identified),caregiver_location_contacts_known=VALUES(caregiver_location_contacts_known),
+ready_to_start_art=VALUES(ready_to_start_art),
+identified_drug_time=VALUES(identified_drug_time),treatment_supporter_engaged=VALUES(treatment_supporter_engaged),support_grp_meeting_awareness=VALUES(support_grp_meeting_awareness),
+enrolled_in_reminder_system=VALUES(enrolled_in_reminder_system),other_support_systems=VALUES(other_support_systems);
+
+END$$
+
+-- ------------- update etl_enhanced_adherence-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_enhanced_adherence $$
+CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Enhanced Adherence ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_enhanced_adherence(
+
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			provider,
+			session_number,
+			first_session_date,
+			pill_count,
+			arv_adherence,
+			has_vl_results,
+			vl_results_suppressed,
+			vl_results_feeling,
+			cause_of_high_vl,
+			way_forward,
+			patient_hiv_knowledge,
+			patient_drugs_uptake,
+			patient_drugs_reminder_tools,
+			patient_drugs_uptake_during_travels,
+			patient_drugs_side_effects_response,
+			patient_drugs_uptake_most_difficult_times,
+			patient_drugs_daily_uptake_feeling,
+			patient_ambitions,
+			patient_has_people_to_talk,
+			patient_enlisting_social_support,
+			patient_income_sources,
+			patient_challenges_reaching_clinic,
+			patient_worried_of_accidental_disclosure,
+			patient_treated_differently,
+			stigma_hinders_adherence,
+			patient_tried_faith_healing,
+			patient_adherence_improved,
+			patient_doses_missed,
+			review_and_barriers_to_adherence,
+			other_referrals,
+			appointments_honoured,
+			referral_experience,
+			home_visit_benefit,
+			adherence_plan,
+			next_appointment_date
+
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				e.visit_id,
+				e.encounter_datetime,
+				e.location_id,
+				e.encounter_id,
+				e.creator,
+				max(if(o.concept_id=1639,o.value_numeric,null)) as session_number,
+				max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
+				max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
+				max(if(o.concept_id=1658,(case o.value_coded when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end), "" )) as arv_adherence,
+				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
+				max(if(o.concept_id=163310,(case o.value_coded when 1302 then "Suppressed" when 1066 then "Unsuppresed" else "" end), "" )) as vl_results_suppressed,
+				max(if(o.concept_id=164981,trim(o.value_text),null)) as vl_results_feeling,
+				max(if(o.concept_id=164982,trim(o.value_text),null)) as cause_of_high_vl,
+				max(if(o.concept_id=160632,trim(o.value_text),null)) as way_forward,
+				max(if(o.concept_id=164983,trim(o.value_text),null)) as patient_hiv_knowledge,
+				max(if(o.concept_id=164984,trim(o.value_text),null)) as patient_drugs_uptake,
+				max(if(o.concept_id=164985,trim(o.value_text),null)) as patient_drugs_reminder_tools,
+				max(if(o.concept_id=164986,trim(o.value_text),null)) as patient_drugs_uptake_during_travels,
+				max(if(o.concept_id=164987,trim(o.value_text),null)) as patient_drugs_side_effects_response,
+				max(if(o.concept_id=164988,trim(o.value_text),null)) as patient_drugs_uptake_most_difficult_times,
+				max(if(o.concept_id=164989,trim(o.value_text),null)) as patient_drugs_daily_uptake_feeling,
+				max(if(o.concept_id=164990,trim(o.value_text),null)) as patient_ambitions,
+				max(if(o.concept_id=164991,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_has_people_to_talk,
+				max(if(o.concept_id=164992,trim(o.value_text),null)) as patient_enlisting_social_support,
+				max(if(o.concept_id=164993,trim(o.value_text),null)) as patient_income_sources,
+				max(if(o.concept_id=164994,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_challenges_reaching_clinic,
+				max(if(o.concept_id=164995,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_worried_of_accidental_disclosure,
+				max(if(o.concept_id=164996,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_treated_differently,
+				max(if(o.concept_id=164997,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as stigma_hinders_adherence,
+				max(if(o.concept_id=164998,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_tried_faith_healing,
+				max(if(o.concept_id=1898,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as patient_adherence_improved,
+				max(if(o.concept_id=160110,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as patient_doses_missed,
+				max(if(o.concept_id=163108,trim(o.value_text),null)) as review_and_barriers_to_adherence,
+				max(if(o.concept_id=1272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_referrals,
+				max(if(o.concept_id=164999,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointments_honoured,
+				max(if(o.concept_id=165000,trim(o.value_text),null)) as referral_experience,
+				max(if(o.concept_id=165001,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as home_visit_benefit,
+				max(if(o.concept_id=165002,trim(o.value_text),null)) as adherence_plan,
+				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
+
+			from openmrs.encounter e
+				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+				and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
+
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
+				) f on f.form_id= e.form_id
+			where e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+
+			group by e.encounter_id
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),provider=VALUES(provider),
+			session_number=VALUES(session_number),first_session_date=VALUES(first_session_date),
+			pill_count=VALUES(pill_count),arv_adherence=VALUES(arv_adherence),
+			has_vl_results=VALUES(has_vl_results),vl_results_suppressed=VALUES(vl_results_suppressed),
+			patient_has_people_to_talk=VALUES(patient_has_people_to_talk),patient_challenges_reaching_clinic=VALUES(patient_challenges_reaching_clinic),patient_worried_of_accidental_disclosure=VALUES(patient_worried_of_accidental_disclosure),
+			patient_treated_differently=VALUES(patient_treated_differently),
+			stigma_hinders_adherence=VALUES(stigma_hinders_adherence),patient_tried_faith_healing=VALUES(patient_tried_faith_healing),patient_adherence_improved=VALUES(patient_adherence_improved),
+			patient_doses_missed=VALUES(patient_doses_missed),other_referrals=VALUES(other_referrals),appointments_honoured=VALUES(appointments_honoured),
+			home_visit_benefit=VALUES(home_visit_benefit),next_appointment_date=VALUES(next_appointment_date);
+
+		END$$
+-- ------------- update etl_patient_triage-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_triage$$
+CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Patient Triage ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_patient_triage(
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			visit_reason,
+			weight,
+			height,
+			systolic_pressure,
+			diastolic_pressure,
+			temperature,
+			pulse_rate,
+			respiratory_rate,
+			oxygen_saturation,
+			muac,
+			nutritional_status,
+			last_menstrual_period,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				e.visit_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
+				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
+				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
+				max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
+				max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
+				max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+				max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
+				max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
+				max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
+				max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+				max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
+				max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542')
+				) et on et.encounter_type_id=e.encounter_type
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
+			where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),weight=VALUES(weight),height=VALUES(height),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),
+			temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
+			oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),nutritional_status=VALUES(nutritional_status),last_menstrual_period=VALUES(last_menstrual_period),voided=VALUES(voided);
+
+		END$$
+
+		SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
 
 
@@ -2350,7 +2710,7 @@ CREATE PROCEDURE sp_scheduled_updates()
 BEGIN
 DECLARE update_script_id INT(11);
 DECLARE last_update_time DATETIME;
-SELECT max(start_time) into last_update_time from kenyaemr_etl.etl_script_status;
+SELECT max(start_time) into last_update_time from kenyaemr_etl.etl_script_status where stop_time is not null or stop_time !="";
 
 INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('scheduled_updates', NOW());
 SET update_script_id = LAST_INSERT_ID();
@@ -2376,6 +2736,10 @@ CALL sp_update_hts_test(last_update_time);
 CALL sp_update_hts_linkage_and_referral(last_update_time);
 CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
+CALL sp_update_etl_ccc_defaulter_tracing(last_update_time);
+CALL sp_update_etl_ART_preparation(last_update_time);
+CALL sp_update_etl_enhanced_adherence(last_update_time);
+CALL sp_update_etl_patient_triage(last_update_time);
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;

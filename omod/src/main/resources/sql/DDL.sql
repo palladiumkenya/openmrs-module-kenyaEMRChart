@@ -47,6 +47,10 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
 DROP TABLE IF EXISTS kenyaemr_etl.tmp_regimen_events_ordered;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
 
 
 
@@ -255,6 +259,7 @@ location_id INT(11) DEFAULT NULL,
 visit_date DATE,
 visit_id INT(11),
 lab_test VARCHAR(180),
+urgency VARCHAR(50),
 test_result VARCHAR(180),
 date_test_requested DATE DEFAULT null,
 date_test_result_received DATE,
@@ -709,9 +714,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     parent_ccc_number VARCHAR(50),
     mode_of_delivery INT(11),
     place_of_delivery INT(11),
-    exit_date DATE,
-    exit_reason INT(11),
-    hiv_status_at_exit INT(11),
     birth_length INT(11),
     birth_order INT(11),
     health_facility_name VARCHAR(50),
@@ -720,6 +722,9 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     birth_registration_place VARCHAR(50),
     permanent_registration_serial VARCHAR(50),
     mother_facility_registered VARCHAR(50),
+    exit_date DATE,
+    exit_reason INT(11),
+    hiv_status_at_exit VARCHAR(50),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -795,7 +800,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
   -- ------- create table etl_hei_immunization table-----------------------------------------
   SELECT "Creating etl_hei_immunization table";
   CREATE TABLE kenyaemr_etl.etl_hei_immunization (
-    encounter_id INT(11),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
     visit_date DATE,
     date_created DATE,
@@ -816,8 +821,14 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     ROTA_2 VARCHAR(50),
     Measles_rubella_1 VARCHAR(50),
     Measles_rubella_2 VARCHAR(50),
-    #Yellow_fever VARCHAR(50),
-    #Measles_6_months VARCHAR(50),
+    Yellow_fever VARCHAR(50),
+    Measles_6_months VARCHAR(50),
+    VitaminA_6_months VARCHAR(50),
+    VitaminA_1_yr VARCHAR(50),
+    VitaminA_1_and_half_yr VARCHAR(50),
+    VitaminA_2_yr VARCHAR(50),
+    VitaminA_2_to_5_yr VARCHAR(50),
+    fully_immunized DATE,
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
     INDEX(encounter_id)
@@ -1056,6 +1067,8 @@ tracing_type VARCHAR(50),
 tracing_status VARCHAR(100),
 ccc_number VARCHAR(100),
 facility_linked_to VARCHAR(100),
+enrollment_date DATE,
+art_start_date DATE,
 provider_handed_to VARCHAR(100),
 voided INT(11),
 index(patient_id),
@@ -1125,9 +1138,147 @@ INDEX(outcome),
 INDEX(discontinuation_reason)
 );
 
--- add table to aid processing of regimen switches/substitution
+CREATE TABLE kenyaemr_etl.etl_ccc_defaulter_tracing (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL PRIMARY KEY,
+tracing_type INT(11),
+tracing_outcome INT(11),
+attempt_number INT(11),
+is_final_trace INT(11) ,
+true_status INT(11),
+cause_of_death INT(11),
+comments VARCHAR(100),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+INDEX(visit_date),
+INDEX(encounter_id),
+INDEX(patient_id),
+INDEX(true_status),
+INDEX(cause_of_death),
+INDEX(tracing_type)
+);
 
-UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+-- ------------ create table etl_ART_preparation-----------------------
+CREATE TABLE kenyaemr_etl.etl_ART_preparation (
+  uuid char(38),
+  patient_id INT(11) NOT NULL ,
+  visit_id INT(11),
+  visit_date DATE,
+  location_id INT(11) DEFAULT NULL,
+  encounter_id INT(11) NOT NULL PRIMARY KEY,
+  provider INT(11),
+  understands_hiv_art_benefits varchar(10),
+  screened_negative_substance_abuse varchar(10),
+  screened_negative_psychiatric_illness varchar(10),
+  HIV_status_disclosure varchar(10),
+  trained_drug_admin varchar(10),
+  informed_drug_side_effects varchar(10),
+  caregiver_committed varchar(10),
+  adherance_barriers_identified varchar(10),
+  caregiver_location_contacts_known varchar(10),
+  ready_to_start_art varchar(10),
+  identified_drug_time varchar(10),
+  treatment_supporter_engaged varchar(10),
+  support_grp_meeting_awareness varchar(10),
+  enrolled_in_reminder_system varchar(10),
+  other_support_systems varchar(10),
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  CONSTRAINT unique_uuid UNIQUE(uuid),
+  INDEX(visit_date),
+  INDEX(encounter_id),
+  INDEX(ready_to_start_art)
+);
+SELECT "Successfully created etl_ART_preparation table";
+
+  -- ------------ create table etl_enhanced_adherence-----------------------
+  CREATE TABLE kenyaemr_etl.etl_enhanced_adherence (
+    uuid char(38),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    provider INT(11),
+    session_number INT(11),
+    first_session_date DATE,
+    pill_count INT(11),
+    arv_adherence varchar(50),
+    has_vl_results varchar(10),
+    vl_results_suppressed varchar(10),
+    vl_results_feeling varchar(255),
+    cause_of_high_vl varchar(255),
+    way_forward varchar(255),
+    patient_hiv_knowledge varchar(255),
+    patient_drugs_uptake varchar(255),
+    patient_drugs_reminder_tools varchar(255),
+    patient_drugs_uptake_during_travels varchar(255),
+    patient_drugs_side_effects_response varchar(255),
+    patient_drugs_uptake_most_difficult_times varchar(255),
+    patient_drugs_daily_uptake_feeling varchar(255),
+    patient_ambitions varchar(255),
+    patient_has_people_to_talk varchar(10),
+    patient_enlisting_social_support varchar(255),
+    patient_income_sources varchar(255),
+    patient_challenges_reaching_clinic varchar(10),
+    patient_worried_of_accidental_disclosure varchar(10),
+    patient_treated_differently varchar(10),
+    stigma_hinders_adherence varchar(10),
+    patient_tried_faith_healing varchar(10),
+    patient_adherence_improved varchar(10),
+    patient_doses_missed varchar(10),
+    review_and_barriers_to_adherence varchar(255),
+    other_referrals varchar(10),
+    appointments_honoured varchar(10),
+    referral_experience varchar(255),
+    home_visit_benefit varchar(10),
+    adherence_plan varchar(255),
+    next_appointment_date DATE,
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id)
+    );
+  SELECT "Successfully created etl_enhanced_adherence table";
+
+  -- ------------ create table etl_patient_triage-----------------------
+  CREATE TABLE kenyaemr_etl.etl_patient_triage (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    visit_id INT(11),
+    encounter_provider INT(11),
+    date_created DATE,
+    visit_reason VARCHAR(255),
+    weight DOUBLE,
+    height DOUBLE,
+    systolic_pressure DOUBLE,
+    diastolic_pressure DOUBLE,
+    temperature DOUBLE,
+    pulse_rate DOUBLE,
+    respiratory_rate DOUBLE,
+    oxygen_saturation DOUBLE,
+    muac DOUBLE,
+    nutritional_status INT(11) DEFAULT NULL,
+    last_menstrual_period DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_patient_triage table";
+
+  UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
 
