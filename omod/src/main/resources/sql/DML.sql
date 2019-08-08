@@ -2681,6 +2681,363 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END$$
 
+-- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_prep_behaviour_risk_assessment$$
+CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
+BEGIN
+SELECT "Processing Behaviour risk assessment form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_prep_behaviour_risk_assessment(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+sexual_partner_hiv_status,
+sexual_partner_on_art,
+risk,
+high_risk_partner,
+sex_with_multiple_partners,
+ipv_gbv,
+transactional_sex,
+recent_sti_infected,
+recurrent_pep_use,
+recurrent_sex_under_influence,
+inconsistent_no_condom_use,
+sharing_drug_needles,
+risk_education_offered,
+risk_reduction,
+willing_to_take_prep,
+reason_not_willing,
+risk_edu_offered,
+risk_education,
+referral_for_prevention_services,
+referral_facility,
+time_partner_hiv_positive_known,
+partner_enrolled_ccc,
+partner_ccc_number,
+partner_art_start_date,
+serodiscordant_confirmation_date,
+children_with_hiv_positive_partner,
+voided
+)
+select
+e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+max(if(o.concept_id = 1436, (case o.value_coded when 703 then "HIV Positive" when 664 then "HIV Negative" when 1067 then "Unknown" else "" end), "" )) as sexual_partner_hiv_status,
+max(if(o.concept_id = 160119, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sexual_partner_on_art,
+max(if(o.concept_id = 163310, (case o.value_coded when 162185 then "Detectable viral load" when 160119 then "On ART for less than 6 months"
+          when 160571 then "Couple is trying to concieve" when 159598 then "Suspected poor adherence" else "" end), "" )) as risk,
+max(if(o.concept_id = 160581, (case o.value_coded when 1065 then "High risk partner" else "" end), "" )) as high_risk_partner,
+max(if(o.concept_id = 159385, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sex_with_multiple_partners,
+max(if(o.concept_id = 160579, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as ipv_gbv,
+max(if(o.concept_id = 156660, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as transactional_sex,
+max(if(o.concept_id = 164845, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recent_sti_infected,
+max(if(o.concept_id = 165088, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_pep_use,
+max(if(o.concept_id = 165089, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_sex_under_influence,
+max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as inconsistent_no_condom_use,
+max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as sharing_drug_needles,
+max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
+max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
+max(if(o.concept_id = 165094, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as willing_to_take_prep,
+max(if(o.concept_id = 1743, (case o.value_coded when 1107 then "None" when 159935 then "Side effects(ADR)" when 159935 then "Side effects(ADR)" when 164997 then "Stigma" when 160588 then "Pill burden" when 164401 then "Too many HIV tests" when 161888 then "Taking pills for a long time" else "" end), "" )) as reason_not_willing,
+max(if(o.concept_id = 161595, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_edu_offered,
+max(if(o.concept_id = 161011, o.value_text, null )) as risk_education,
+max(if(o.concept_id = 165093, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as referral_for_prevention_services,
+max(if(o.concept_id = 161550, o.value_text, null )) as referral_facility,
+max(if(o.concept_id = 160082, o.value_datetime, null )) as time_partner_hiv_positive_known,
+max(if(o.concept_id = 165095, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as partner_enrolled_ccc,
+max(if(o.concept_id = 162053, o.value_numeric, null )) as partner_ccc_number,
+max(if(o.concept_id = 159599, o.value_datetime, null )) as partner_art_start_date,
+max(if(o.concept_id = 165096, o.value_datetime, null )) as serodiscordant_confirmation_date,
+max(if(o.concept_id = 165097, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as recent_unprotected_sex_with_positive_partner,
+max(if(o.concept_id = 1825, o.value_numeric, null )) as children_with_hiv_positive_partner,
+e.voided as voided
+
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,1825) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
+END$$
+
+-- ------------- populate etl_prep_monthly_refill-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_prep_monthly_refill$$
+CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
+BEGIN
+SELECT "Processing monthly refill form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_prep_monthly_refill(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+sexual_partner_hiv_positive,
+multiple_sexual_partners,
+sexual_partner_hiv_high_risk,
+transactional_sex,
+recurrent_sex_under_influence,
+inconsistent_no_condom_use,
+sharing_drug_needles,
+recurrent_pep_use,
+recent_sti_infected,
+ongoing_ipv_gbv,
+adherence,
+poor_adherence_reasons,
+other_poor_adherence_reasons,
+adherence_counselling_done,
+prep_status,
+prescribed_prep_today,
+prescribed_regimen,
+prescribed_regimen_months,
+prep_discontinue_reasons,
+prep_discontinue_other_reasons,
+appointment_given,
+next_appointment,
+remarks,
+voided
+)
+select
+e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
+max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
+max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
+max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
+max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
+max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
+max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
+max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
+max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
+END$$
+
+-- ------------- populate etl_prep_discontinuation-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_prep_discontinuation$$
+CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
+BEGIN
+SELECT "Processing PrEP discontinuation form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_prep_discontinuation(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+discontinue_reason,
+care_end_date,
+voided
+)
+select
+e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
+max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
+max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
+max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
+max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
+max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
+max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
+max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
+max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing PrEP discontinuation", CONCAT("Time: ", NOW());
+END$$
+
+-- ------------- populate etl_prep_enrollment-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_prep_enrolment$$
+CREATE PROCEDURE sp_populate_etl_prep_enrolment()
+BEGIN
+SELECT "Processing PrEP enrolment form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_prep_enrolment(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+transfer_in_status,
+transfer_in_entry_point,
+upn,
+nhif_number,
+transfer_in_date,
+facility_from,
+initial_enrolment_date,
+date_started_prep_trf_facility,
+previously_on_prep,
+regimen,
+prep_last_date,
+in_school,
+population_type,
+key_pop_type,
+priority_population,
+discordant,
+buddy_name,
+buddy_alias,
+buddy_relationship,
+buddy_phone,
+buddy_alt_phone,
+voided
+)
+select
+e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
+max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
+max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
+max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
+max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
+max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
+max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
+max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
+max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
+END$$
+
+-- ------------- populate etl_prep_followup-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_prep_followup$$
+CREATE PROCEDURE sp_populate_etl_prep_followup()
+BEGIN
+SELECT "Processing PrEP follow-up form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_prep_followup(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+sti_screened,
+sti_symptoms,
+sti_treated,
+vmmc_screened,
+vmmc_status,
+vmmc_referred,
+lmp,
+pregnant,
+edd,
+planned_pregnancy,
+wanted_pregnancy,
+breastfeeding,
+fp_status,
+fp_method_1,
+fp_method_2,
+ended_pregnancy,
+pregnancy_outcome,
+outcome_date,
+defects,
+chronic_illness,
+chronic_illness_onse_date,
+chronic_illness_drug,
+chronic_illness_dose,
+chronic_illness_units,
+chronic_illness_frequency,
+chronic_illness_duration,
+chronic_illness_duration_units,
+adverse_reactions,
+medicine_reactions,
+reaction,
+severity,
+action_taken,
+known_allergies,
+allergen,
+reaction,
+severity,
+allergy_date,
+hiv_signs,
+adherence_counselled,
+prep_contraindicatios,
+treatment_plan,
+condoms_issued,
+number_of_condoms,
+appointment_given,
+appointment_date,
+reason_no_appointment,
+clinical_notes,
+voided
+)
+select
+e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
+max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
+max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
+max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
+max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
+max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
+max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
+max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
+max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
+END$$
+
+-- ------------- populate etl_progress_note-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_progress_note$$
+CREATE PROCEDURE sp_populate_etl_progress_note()
+BEGIN
+SELECT "Processing progress form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_progress_note(
+uuid,
+provider ,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_created,
+notes,
+voided
+)
+select
+e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
+max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
+max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
+max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
+max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
+max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
+max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
+max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
+max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+from encounter e
+inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing progress note", CONCAT("Time: ", NOW());
+END$$
+
 		SET sql_mode=@OLD_SQL_MODE$$
 
 -- ------------------------------------------- running all procedures -----------------------------
@@ -2719,6 +3076,12 @@ CALL sp_populate_etl_ccc_defaulter_tracing();
 CALL sp_populate_etl_ART_preparation();
 CALL sp_populate_etl_enhanced_adherence();
 CALL sp_populate_etl_patient_triage();
+CALL sp_populate_etl_prep_behaviour_risk_assessment();
+CALL sp_populate_etl_prep_monthly_refill();
+CALL sp_populate_etl_prep_discontinuation();
+CALL sp_populate_etl_prep_enrolment();
+CALL sp_populate_etl_prep_followup();
+CALL sp_populate_etl_progress_note();
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
