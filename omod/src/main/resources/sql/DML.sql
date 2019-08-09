@@ -2779,18 +2779,10 @@ visit_date,
 location_id,
 encounter_id,
 date_created,
-sexual_partner_hiv_positive,
-multiple_sexual_partners,
-sexual_partner_hiv_high_risk,
-transactional_sex,
-recurrent_sex_under_influence,
-inconsistent_no_condom_use,
-sharing_drug_needles,
-recurrent_pep_use,
-recent_sti_infected,
-ongoing_ipv_gbv,
-adherence,
-poor_adherence_reasons,
+risk_for_hiv_positive_partner,
+client_assessment,
+adherence_assessment,
+poor_adherence_reasons
 other_poor_adherence_reasons,
 adherence_counselling_done,
 prep_status,
@@ -2806,18 +2798,34 @@ voided
 )
 select
 e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
-max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
-max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
-max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
-max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
-max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
-max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
-max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
-max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
-max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+max(if(o.concept_id = 1169, (case o.value_coded when 160571 then "Couple is trying to conceive" when 159598 then "Suspected poor adherence"
+        when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
+max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
+        when 160579 then "Transactional sex" when 165088 then "Recurrent sex under influence of alcohol/recreational drugs" when 165089 then "Inconsistent or no condom use" when 165090 then "Injecting drug use with shared needles and/or syringes"
+        when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/GBV"  else "" end), "" )) as client_assessment,
+max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair"
+        when 159407 then "Poor" when 1067 then "Good,Fair,Poor,N/A(Did not pick PrEP at last"  else "" end), "" )) as adherence_assessment,
+max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
+        when 164997 then "Stigma" when 160583 then "Shared with others" when 1064 then "No perceived risk"
+        when 160588 then "Pill burden" when 160584 then "Lost/out of pills" when 1056 then "Separated from HIV+"
+        when 159935 then "Side effects" when 160587 then "Forgot" when 5622 then "Other-specify" else "" end), "" )) as poor_adherence_reasons,
+max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
+max(if(o.concept_id = 164425, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselling_done,
+max(if(o.concept_id = 161641, (case o.value_coded when 159836 then "Discontinue" when 159835 then "Continue" else "" end), "" )) as prep_status,
+max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
+max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF"  when 104567 then "FTC/TDF" else "" end), "" )) as prescribed_regimen,
+max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
+max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
+        when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
+        when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
+max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
+max(if(o.concept_id = 164999, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
+max(if(o.concept_id = 160632, o.value_datetime, null )) as next_appointment,
+max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
+e.voided as voided
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+inner join form f on f.form_id=e.form_id and f.uuid in ("291c0828-a216-11e9-a2a3-2a2ae2dbcce4")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,164425,161641,1417,164515,164433,161555,160632,164999,161011) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
@@ -2844,18 +2852,13 @@ voided
 )
 select
 e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
-max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
-max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
-max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
-max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
-max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
-max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
-max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
-max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
-max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction" when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request"
+when 150506 then "Intimate partner violence"  when 978 then "Self Discontinuation"  when 160581 then "Low risk of HIV" when 5622 then "Other" else "" end), "" )) as discontinue_reason,
+max(if(o.concept_id = 164073, o.value_datetime, null )) as care_end_date,
+
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+inner join form f on f.form_id=e.form_id and f.uuid in ("467c4cc3-25eb-4330-9cf6-e41b9b14cc10")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing PrEP discontinuation", CONCAT("Time: ", NOW());
@@ -2877,9 +2880,7 @@ location_id,
 encounter_id,
 date_created,
 transfer_in_status,
-transfer_in_entry_point,
-upn,
-nhif_number,
+referred_from,
 transfer_in_date,
 facility_from,
 initial_enrolment_date,
@@ -2888,10 +2889,6 @@ previously_on_prep,
 regimen,
 prep_last_date,
 in_school,
-population_type,
-key_pop_type,
-priority_population,
-discordant,
 buddy_name,
 buddy_alias,
 buddy_relationship,
@@ -2901,18 +2898,28 @@ voided
 )
 select
 e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
-max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
-max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
-max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
-max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
-max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
-max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
-max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
-max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
-max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+max(if(o.concept_id = 164932, (case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" when 164931 then "Transit" when 159833 then "Re-enrollment(Re-activation)" else "" end), "" )) as transfer_in_status,
+max(if(o.concept_id = 160540, (case o.value_coded when 159938 then "HBTC" when 160539 then "VCT Site" when 159937 then "MCH" when 160536 then "IPD-Adult" when 160541 then "TB Clinic" when 160542 then "OPD" when 162050 then "CCC" when 160551 then "Self Test" when 5622 then "Other" else "" end), "" )) as transfer_in_entry_point,
+max(if(o.concept_id = 162724, o.value_text, null )) as referred_from,
+max(if(o.concept_id = 161550, o.value_text, null )) as transit_from,
+max(if(o.concept_id = 160534, o.value_datetime, null )) as transfer_in_date,
+max(if(o.concept_id = 160535, o.value_text, null )) as transfer_from,
+max(if(o.concept_id = 160555, o.value_datetime, null )) as initial_enrolment_date,
+max(if(o.concept_id = 159599, o.value_datetime, null )) as date_started_prep_trf_facility,
+max(if(o.concept_id = 160533, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as previously_on_prep,
+max(if(o.concept_id = 1088, (case o.value_coded when 104567 then "TDF/FTC" when 84795 then "TDF" when 161364 then "TDF/3TC" else "" end), "" )) as regimen,
+max(if(o.concept_id = 162881, o.value_datetime, null )) as prep_last_date,
+max(if(o.concept_id = 5629, o.value_coded, null )) as in_school,
+max(if(o.concept_id = 160638, o.value_text, null )) as buddy_name,
+max(if(o.concept_id = 165038, o.value_text, null )) as buddy_alias,
+max(if(o.concept_id = 160640,(case o.value_coded when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end), "" )) as buddy_relationship,
+max(if(o.concept_id = 160642, o.value_text, null )) as buddy_phone,
+max(if(o.concept_id = 160641, o.value_text, null )) as buddy_alt_phone,
+e.voided as voided
+
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
@@ -2946,14 +2953,14 @@ planned_pregnancy,
 wanted_pregnancy,
 breastfeeding,
 fp_status,
-fp_method_1,
-fp_method_2,
+fp_method,
 ended_pregnancy,
 pregnancy_outcome,
 outcome_date,
 defects,
+has_chronic_illness,
 chronic_illness,
-chronic_illness_onse_date,
+chronic_illness_onset_date,
 chronic_illness_drug,
 chronic_illness_dose,
 chronic_illness_units,
@@ -2984,12 +2991,30 @@ voided
 )
 select
 e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
-max(if(o.concept_id = 164073, o.value_datetime, null )) as ipt_due_date,
-max(if(o.concept_id = 164074, o.value_datetime, null )) as date_collected_ipt,
-max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hepatotoxity,
-max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
+max(if(o.concept_id = 161558,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_screened,
+max(if(o.concept_id = 165098,(case o.value_coded when 145762 then "Genital Ulcer Desease(GUD)" when 121809 then "Vaginitis and/or Vaginal Discharge(VG)" when 116995 then "Cervicitis and/or Cervical Discharge(CD)"  when 130644 then "Pelvic Inflammatory Desease(PID)"
+when 123529 then "Urethral Discharge(UD)" when 148895 then "Anal Discharge(AD)" when 5622 then "Other" else "" end), "" )) as sti_symptoms,
+max(if(o.concept_id = 165200,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_treated,
+max(if(o.concept_id = 165308,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vmmc_screened,
+max(if(o.concept_id = 165099,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end), "" )) as vmmc_status,
+max(if(o.concept_id = 1272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vmmc_referred,
+max(if(o.concept_id = 1472, o.value_datetime, null )) as lmp,
+max(if(o.concept_id = 5272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as pregnant,
+max(if(o.concept_id = 5596, o.value_datetime, null )) as edd,
+max(if(o.concept_id = 1426, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as planned_pregnancy,
+max(if(o.concept_id = 164933, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as wanted_pregnancy,
+max(if(o.concept_id = 5632, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as breastfeeding,
+max(if(o.concept_id = 160653, (case o.value_coded when 965 then "On Family Planning" when 160652 then "Not using Family Planning" when 1360 then "Wants Family Planning" else "" end), "" )) as fp_status,
+max(if(o.concept_id = 374, (case o.value_coded when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectable" when 1359 then "Implant" when 136163 then "Lactational Amenorhea Method"
+      when 5275 then "Intrauterine Device" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness" when 1472 then "Tubal Ligation/Female sterilization" when 190 then "Condoms" when 1489 then "Vasectomy(Partner)" when 162332 then "Undecided" else "" end), "" )) as fp_method,
+max(if(o.concept_id = 165103, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as ended_pregnancy,
+max(if(o.concept_id = 161033, (case o.value_coded when 1395 then "Term live" when 129218 then "Preterm Delivery" when 125872 then "Still birth" when 159896 then "Induced abortion" else "" end), "" )) as pregnancy_outcome,
+max(if(o.concept_id = 1596, o.value_datetime, null )) as outcome_date,
+max(if(o.concept_id = 164122, (case o.value_coded when 155871 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end), "" )) as defects,
+max(if(o.concept_id = 162747, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_chronic_illness,
+
 max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
-max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
+
 max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
 max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
 max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
