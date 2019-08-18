@@ -1389,7 +1389,6 @@ SELECT "Successfully created etl_ART_preparation table";
   SELECT "Successfully created etl_prep_discontinuation table";
 
   -- ------------ create table etl_prep_enrollment-----------------------
-
   CREATE TABLE kenyaemr_etl.etl_prep_enrolment (
     uuid char(38),
     provider INT(11),
@@ -1399,11 +1398,12 @@ SELECT "Successfully created etl_ART_preparation table";
     location_id INT(11) DEFAULT NULL,
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     date_created DATE,
-    transfer_in_status VARCHAR(255),
+    patient_type VARCHAR(255),
     transfer_in_entry_point VARCHAR(255),
     referred_from VARCHAR(255),
     transit_from VARCHAR(255),
     transfer_in_date DATE,
+    transfer_from VARCHAR(255),
     initial_enrolment_date DATE,
     date_started_prep_trf_facility DATE,
     previously_on_prep VARCHAR(10),
@@ -1419,9 +1419,7 @@ SELECT "Successfully created etl_ART_preparation table";
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
-    INDEX(encounter_id),
-    INDEX(upn),
-    INDEX(nhif_number)
+    INDEX(encounter_id)
 
   );
   SELECT "Successfully created etl_prep_enrollment table";
@@ -1471,8 +1469,8 @@ SELECT "Successfully created etl_ART_preparation table";
     action_taken VARCHAR(255),
     known_allergies VARCHAR(10),
     allergen VARCHAR(255),
-    reaction VARCHAR(255),
-    severity VARCHAR(255),
+    allergy_reaction VARCHAR(255),
+    allergy_severity VARCHAR(255),
     allergy_date DATE,
     hiv_signs VARCHAR(10),
     adherence_counselled VARCHAR(10),
@@ -1488,8 +1486,7 @@ SELECT "Successfully created etl_ART_preparation table";
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
-    INDEX(encounter_id),
-
+    INDEX(encounter_id)
   );
   SELECT "Successfully created etl_prep_followup table";
 

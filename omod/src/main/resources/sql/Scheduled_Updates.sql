@@ -2701,6 +2701,571 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
 
 		END$$
 
+
+-- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_behaviour_risk_assessment$$
+CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing Behaviour risk assessment", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_prep_behaviour_risk_assessment(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_created,
+        sexual_partner_hiv_status,
+        sexual_partner_on_art,
+        risk,
+        high_risk_partner,
+        sex_with_multiple_partners,
+        ipv_gbv,
+        transactional_sex,
+        recent_sti_infected,
+        recurrent_pep_use,
+        recurrent_sex_under_influence,
+        inconsistent_no_condom_use,
+        sharing_drug_needles,
+        risk_education_offered,
+        risk_reduction,
+        willing_to_take_prep,
+        reason_not_willing,
+        risk_edu_offered,
+        risk_education,
+        referral_for_prevention_services,
+        referral_facility,
+        time_partner_hiv_positive_known,
+        partner_enrolled_ccc,
+        partner_ccc_number,
+        partner_art_start_date,
+        serodiscordant_confirmation_date,
+        recent_unprotected_sex_with_positive_partner,
+        children_with_hiv_positive_partner,
+        voided
+        )
+    select
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           max(if(o.concept_id = 1436, (case o.value_coded when 703 then "HIV Positive" when 664 then "HIV Negative" when 1067 then "Unknown" else "" end), "" )) as sexual_partner_hiv_status,
+           max(if(o.concept_id = 160119, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sexual_partner_on_art,
+           max(if(o.concept_id = 163310, (case o.value_coded when 162185 then "Detectable viral load" when 160119 then "On ART for less than 6 months"
+                                                             when 160571 then "Couple is trying to concieve" when 159598 then "Suspected poor adherence" else "" end), "" )) as risk,
+           max(if(o.concept_id = 160581, (case o.value_coded when 1065 then "High risk partner" else "" end), "" )) as high_risk_partner,
+           max(if(o.concept_id = 159385, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sex_with_multiple_partners,
+           max(if(o.concept_id = 160579, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as ipv_gbv,
+           max(if(o.concept_id = 156660, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as transactional_sex,
+           max(if(o.concept_id = 164845, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recent_sti_infected,
+           max(if(o.concept_id = 165088, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_pep_use,
+           max(if(o.concept_id = 165089, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_sex_under_influence,
+           max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as inconsistent_no_condom_use,
+           max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as sharing_drug_needles,
+           max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
+           max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
+           max(if(o.concept_id = 165094, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as willing_to_take_prep,
+           max(if(o.concept_id = 1743, (case o.value_coded when 1107 then "None" when 159935 then "Side effects(ADR)" when 159935 then "Side effects(ADR)" when 164997 then "Stigma" when 160588 then "Pill burden" when 164401 then "Too many HIV tests" when 161888 then "Taking pills for a long time" else "" end), "" )) as reason_not_willing,
+           max(if(o.concept_id = 161595, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_edu_offered,
+           max(if(o.concept_id = 161011, o.value_text, null )) as risk_education,
+           max(if(o.concept_id = 165093, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as referral_for_prevention_services,
+           max(if(o.concept_id = 161550, o.value_text, null )) as referral_facility,
+           max(if(o.concept_id = 160082, o.value_datetime, null )) as time_partner_hiv_positive_known,
+           max(if(o.concept_id = 165095, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as partner_enrolled_ccc,
+           max(if(o.concept_id = 162053, o.value_numeric, null )) as partner_ccc_number,
+           max(if(o.concept_id = 159599, o.value_datetime, null )) as partner_art_start_date,
+           max(if(o.concept_id = 165096, o.value_datetime, null )) as serodiscordant_confirmation_date,
+           max(if(o.concept_id = 165097, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as recent_unprotected_sex_with_positive_partner,
+           max(if(o.concept_id = 1825, o.value_numeric, null )) as children_with_hiv_positive_partner,
+           e.voided as voided
+
+    from encounter e
+           inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,1825) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+       sexual_partner_hiv_status=VALUES(sexual_partner_hiv_status),
+        sexual_partner_on_art=VALUES(sexual_partner_on_art),
+        risk=VALUES(risk),
+        high_risk_partner=VALUES(high_risk_partner),
+        sex_with_multiple_partners=VALUES(sex_with_multiple_partners),
+        ipv_gbv=VALUES(ipv_gbv),
+        transactional_sex=VALUES(transactional_sex),
+        recent_sti_infected=VALUES(recent_sti_infected),
+        recurrent_pep_use=VALUES(recurrent_pep_use),
+        recurrent_sex_under_influence=VALUES(recurrent_sex_under_influence),
+        inconsistent_no_condom_use=VALUES(inconsistent_no_condom_use),
+        sharing_drug_needles=VALUES(sharing_drug_needles),
+        risk_education_offered=VALUES(risk_education_offered),
+        risk_reduction=VALUES(risk_reduction),
+        willing_to_take_prep=VALUES(willing_to_take_prep),
+        reason_not_willing=VALUES(reason_not_willing),
+        risk_edu_offered=VALUES(risk_edu_offered),
+        risk_education=VALUES(risk_education),
+        referral_for_prevention_services=VALUES(referral_for_prevention_services),
+        referral_facility=VALUES(referral_facility),
+        time_partner_hiv_positive_known=VALUES(time_partner_hiv_positive_known),
+        partner_enrolled_ccc=VALUES(partner_enrolled_ccc),
+        partner_ccc_number=VALUES(partner_ccc_number),
+        partner_art_start_date=VALUES(partner_art_start_date),
+        serodiscordant_confirmation_date=VALUES(serodiscordant_confirmation_date),
+        recent_unprotected_sex_with_positive_partner=VALUES(recent_unprotected_sex_with_positive_partner),
+        children_with_hiv_positive_partner=VALUES(children_with_hiv_positive_partner),
+        voided=VALUES(voided);
+  END$$
+
+-- ------------- populate etl_prep_monthly_refill-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_monthly_refill$$
+CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing monthly refill", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_prep_monthly_refill(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_created,
+        risk_for_hiv_positive_partner,
+        client_assessment,
+        adherence_assessment,
+        poor_adherence_reasons,
+        other_poor_adherence_reasons,
+        adherence_counselling_done,
+        prep_status,
+        prescribed_prep_today,
+        prescribed_regimen,
+        prescribed_regimen_months,
+        prep_discontinue_reasons,
+        prep_discontinue_other_reasons,
+        appointment_given,
+        next_appointment,
+        remarks,
+        voided
+        )
+    select
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           max(if(o.concept_id = 1169, (case o.value_coded when 160571 then "Couple is trying to conceive" when 159598 then "Suspected poor adherence"
+                                                           when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
+           max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
+                                                             when 160579 then "Transactional sex" when 165088 then "Recurrent sex under influence of alcohol/recreational drugs" when 165089 then "Inconsistent or no condom use" when 165090 then "Injecting drug use with shared needles and/or syringes"
+                                                             when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/GBV"  else "" end), "" )) as client_assessment,
+           max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair"
+                                                             when 159407 then "Poor" when 1067 then "Good,Fair,Poor,N/A(Did not pick PrEP at last"  else "" end), "" )) as adherence_assessment,
+           max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
+                                                             when 164997 then "Stigma" when 160583 then "Shared with others" when 1064 then "No perceived risk"
+                                                             when 160588 then "Pill burden" when 160584 then "Lost/out of pills" when 1056 then "Separated from HIV+"
+                                                             when 159935 then "Side effects" when 160587 then "Forgot" when 5622 then "Other-specify" else "" end), "" )) as poor_adherence_reasons,
+           max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
+           max(if(o.concept_id = 164425, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselling_done,
+           max(if(o.concept_id = 161641, (case o.value_coded when 159836 then "Discontinue" when 159835 then "Continue" else "" end), "" )) as prep_status,
+           max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
+           max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF"  when 104567 then "FTC/TDF" else "" end), "" )) as prescribed_regimen,
+           max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
+           max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
+                                                             when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
+                                                             when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
+           max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
+           max(if(o.concept_id = 164999, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
+           max(if(o.concept_id = 160632, o.value_datetime, null )) as next_appointment,
+           max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
+           e.voided as voided
+    from encounter e
+           inner join form f on f.form_id=e.form_id and f.uuid in ("291c0828-a216-11e9-a2a3-2a2ae2dbcce4")
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,164425,161641,1417,164515,164433,161555,160632,164999,161011) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        risk_for_hiv_positive_partner=VALUES(risk_for_hiv_positive_partner),
+        client_assessment=VALUES(client_assessment),
+        adherence_assessment=VALUES(adherence_assessment),
+        poor_adherence_reasons=VALUES(poor_adherence_reasons),
+        other_poor_adherence_reasons=VALUES(other_poor_adherence_reasons),
+        adherence_counselling_done=VALUES(adherence_counselling_done),
+        prep_status=VALUES(prep_status),
+        prescribed_prep_today=VALUES(prescribed_prep_today),
+        prescribed_regimen=VALUES(prescribed_regimen),
+        prescribed_regimen_months=VALUES(prescribed_regimen_months),
+        prep_discontinue_reasons=VALUES(prep_discontinue_reasons),
+        prep_discontinue_other_reasons=VALUES(prep_discontinue_other_reasons),
+        appointment_given=VALUES(appointment_given),
+        next_appointment=VALUES(next_appointment),
+        remarks=VALUES(remarks),
+        voided=VALUES(voided);
+  END$$
+
+-- ------------- populate etl_prep_discontinuation-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_discontinuation$$
+CREATE PROCEDURE sp_update_etl_prep_discontinuation(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing PrEP discontinuation", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_prep_discontinuation(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_created,
+        discontinue_reason,
+        care_end_date,
+        voided
+        )
+    select
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction" when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request"
+                                                             when 150506 then "Intimate partner violence"  when 978 then "Self Discontinuation"  when 160581 then "Low risk of HIV" when 5622 then "Other" else "" end), "" )) as discontinue_reason,
+           max(if(o.concept_id = 164073, o.value_datetime, null )) as care_end_date,
+           e.voided
+    from encounter e
+           inner join form f on f.form_id=e.form_id and f.uuid in ("467c4cc3-25eb-4330-9cf6-e41b9b14cc10")
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        discontinue_reason=VALUES(discontinue_reason),
+        care_end_date=VALUES(care_end_date),
+        voided=VALUES(voided);
+    END$$
+
+-- ------------- populate etl_prep_enrollment-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_enrolment$$
+CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing PrEP enrolment", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_prep_enrolment(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_created,
+        patient_type,
+        transfer_in_entry_point,
+        referred_from,
+        transit_from,
+        transfer_in_date,
+        transfer_from,
+        initial_enrolment_date,
+        date_started_prep_trf_facility,
+        previously_on_prep,
+        regimen,
+        prep_last_date,
+        in_school,
+        buddy_name,
+        buddy_alias,
+        buddy_relationship,
+        buddy_phone,
+        buddy_alt_phone,
+        voided
+        )
+    select
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           max(if(o.concept_id = 164932, (case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" when 164931 then "Transit" when 159833 then "Re-enrollment(Re-activation)" else "" end), "" )) as patient_type,
+           max(if(o.concept_id = 160540, (case o.value_coded when 159938 then "HBTC" when 160539 then "VCT Site" when 159937 then "MCH" when 160536 then "IPD-Adult" when 160541 then "TB Clinic" when 160542 then "OPD" when 162050 then "CCC" when 160551 then "Self Test" when 5622 then "Other" else "" end), "" )) as transfer_in_entry_point,
+           max(if(o.concept_id = 162724, o.value_text, null )) as referred_from,
+           max(if(o.concept_id = 161550, o.value_text, null )) as transit_from,
+           max(if(o.concept_id = 160534, o.value_datetime, null )) as transfer_in_date,
+           max(if(o.concept_id = 160535, o.value_text, null )) as transfer_from,
+           max(if(o.concept_id = 160555, o.value_datetime, null )) as initial_enrolment_date,
+           max(if(o.concept_id = 159599, o.value_datetime, null )) as date_started_prep_trf_facility,
+           max(if(o.concept_id = 160533, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as previously_on_prep,
+           max(if(o.concept_id = 1088, (case o.value_coded when 104567 then "TDF/FTC" when 84795 then "TDF" when 161364 then "TDF/3TC" else "" end), "" )) as regimen,
+           max(if(o.concept_id = 162881, o.value_datetime, null )) as prep_last_date,
+           max(if(o.concept_id = 5629, o.value_coded, null )) as in_school,
+           max(if(o.concept_id = 160638, o.value_text, null )) as buddy_name,
+           max(if(o.concept_id = 165038, o.value_text, null )) as buddy_alias,
+           max(if(o.concept_id = 160640,(case o.value_coded when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end), "" )) as buddy_relationship,
+           max(if(o.concept_id = 160642, o.value_text, null )) as buddy_phone,
+           max(if(o.concept_id = 160641, o.value_text, null )) as buddy_alt_phone,
+           e.voided as voided
+
+    from encounter e
+           inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        patient_type=VALUES(patient_type),
+        transfer_in_entry_point=VALUES(transfer_in_entry_point),
+        referred_from=VALUES(referred_from),
+        transit_from=VALUES(transit_from),
+        transfer_in_date=VALUES(transfer_in_date),
+        transfer_from=VALUES(transfer_from),
+        initial_enrolment_date=VALUES(initial_enrolment_date),
+        date_started_prep_trf_facility=VALUES(date_started_prep_trf_facility),
+        previously_on_prep=VALUES(previously_on_prep),
+        regimen=VALUES(regimen),
+        prep_last_date=VALUES(prep_last_date),
+        in_school=VALUES(in_school),
+        buddy_name=VALUES(buddy_name),
+        buddy_alias=VALUES(buddy_alias),
+        buddy_relationship=VALUES(buddy_relationship),
+        buddy_phone=VALUES(buddy_phone),
+        buddy_alt_phone=VALUES(buddy_alt_phone),
+        voided=VALUES(voided);
+
+  END$$
+
+-- ------------- populate etl_prep_followup-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_followup$$
+CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing PrEP follow-up", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_prep_followup(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_created,
+        sti_screened,
+        sti_symptoms,
+        sti_treated,
+        vmmc_screened,
+        vmmc_status,
+        vmmc_referred,
+        lmp,
+        pregnant,
+        edd,
+        planned_pregnancy,
+        wanted_pregnancy,
+        breastfeeding,
+        fp_status,
+        fp_method,
+        ended_pregnancy,
+        pregnancy_outcome,
+        outcome_date,
+        defects,
+        has_chronic_illness,
+        chronic_illness,
+        chronic_illness_onset_date,
+        chronic_illness_drug,
+        chronic_illness_dose,
+        chronic_illness_units,
+        chronic_illness_frequency,
+        chronic_illness_duration,
+        chronic_illness_duration_units,
+        adverse_reactions,
+        medicine_reactions,
+        reaction,
+        severity,
+        action_taken,
+        known_allergies,
+        allergen,
+        allergy_reaction,
+        allergy_severity,
+        allergy_date,
+        hiv_signs,
+        adherence_counselled,
+        prep_contraindicatios,
+        treatment_plan,
+        condoms_issued,
+        number_of_condoms,
+        appointment_given,
+        appointment_date,
+        reason_no_appointment,
+        clinical_notes,
+        voided
+        )
+    select
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           max(if(o.concept_id = 161558,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_screened,
+           max(if(o.concept_id = 165098,(case o.value_coded when 145762 then "Genital Ulcer Desease(GUD)" when 121809 then "Vaginitis and/or Vaginal Discharge(VG)" when 116995 then "Cervicitis and/or Cervical Discharge(CD)"  when 130644 then "Pelvic Inflammatory Desease(PID)"
+                                                            when 123529 then "Urethral Discharge(UD)" when 148895 then "Anal Discharge(AD)" when 5622 then "Other" else "" end), "" )) as sti_symptoms,
+           max(if(o.concept_id = 165200,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_treated,
+           max(if(o.concept_id = 165308,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vmmc_screened,
+           max(if(o.concept_id = 165099,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end), "" )) as vmmc_status,
+           max(if(o.concept_id = 1272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vmmc_referred,
+           max(if(o.concept_id = 1472, o.value_datetime, null )) as lmp,
+           max(if(o.concept_id = 5272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as pregnant,
+           max(if(o.concept_id = 5596, o.value_datetime, null )) as edd,
+           max(if(o.concept_id = 1426, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as planned_pregnancy,
+           max(if(o.concept_id = 164933, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as wanted_pregnancy,
+           max(if(o.concept_id = 5632, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as breastfeeding,
+           max(if(o.concept_id = 160653, (case o.value_coded when 965 then "On Family Planning" when 160652 then "Not using Family Planning" when 1360 then "Wants Family Planning" else "" end), "" )) as fp_status,
+           max(if(o.concept_id = 374, (case o.value_coded when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectable" when 1359 then "Implant" when 136163 then "Lactational Amenorhea Method"
+                                                          when 5275 then "Intrauterine Device" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness" when 1472 then "Tubal Ligation/Female sterilization" when 190 then "Condoms" when 1489 then "Vasectomy(Partner)" when 162332 then "Undecided" else "" end), "" )) as fp_method,
+           max(if(o.concept_id = 165103, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as ended_pregnancy,
+           max(if(o.concept_id = 161033, (case o.value_coded when 1395 then "Term live" when 129218 then "Preterm Delivery" when 125872 then "Still birth" when 159896 then "Induced abortion" else "" end), "" )) as pregnancy_outcome,
+           max(if(o.concept_id = 1596, o.value_datetime, null )) as outcome_date,
+           max(if(o.concept_id = 164122, (case o.value_coded when 155871 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end), "" )) as defects,
+           max(if(o.concept_id = 162747, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_chronic_illness,
+           max(if(o.concept_id = 1284, (case o.value_coded when 149019 then "Alzheimer''s Disease and other Dementias" when 148432 then "Arthritis" when 153754 then "Asthma" when 159351 then "Cancer" when 119270 then "Cardiovascular diseases" when 120637 then "Chronic Hepatitis"
+                                                           when 145438 then "Chronic Kidney Disease" when 1295 then "Chronic Obstructive Pulmonary Disease(COPD)" when 120576 then "Chronic Renal Failure" when 119692 then "Cystic Fibrosis" when 120291 then "Deafness and Hearing impairment" when 119481 then "Diabetes" when 118631 then "Endometriosis" when 117855 then "Epilepsy" when 117789 then "Glaucoma" when 139071 then "Heart Disease" when 115728 then "Hyperlipidaemia" when 117399 then "Hypertension"  when 117321 then "Hypothyroidism" when 151342 then "Mental illness"
+                                                           when 133687 then "Multiple Sclerosis" when 115115 then "Obesity" when 114662 then "Osteoporosis" when 117703 then "Sickle Cell Anaemia" when 118976 then "Thyroid disease" else "" end), "" )) as chronic_illness,
+           max(if(o.concept_id = 159948, o.value_datetime, null )) as chronic_illness_onset_date,
+           max(if(o.concept_id = 1282, o.value_coded, null )) as chronic_illness_drug,
+           max(if(o.concept_id = 1443, o.value_numeric, null )) as chronic_illness_dose,
+           max(if(o.concept_id = 1444, o.value_text, null )) as chronic_illness_units,
+           max(if(o.concept_id = 160855, (case o.value_coded when 160862 then "Once daily" when 160863 then "Once daily at bedtime" when 160864 then "Once daily in the evening" when 160865 then "Once daily in the morning" when 160858 then "Twice daily" when 160866 then "Thrice daily" when 160870 then "Four times daily" else "" end), "" )) as chronic_illness_frequency,
+           max(if(o.concept_id = 159368, o.value_numeric, null )) as chronic_illness_duration,
+           max(if(o.concept_id = 1732, (case o.value_coded when 1822 then "Hours" when 1072 then "Days" when 1073 then "Weeks" when 1074 then "Months" else "" end), "" )) as chronic_illness_duration_units,
+           max(if(o.concept_id = 121764, o.value_boolean, null )) as adverse_reactions,
+           max(if(o.concept_id = 1193, (case o.value_coded when 70056 then "Abicavir" when 162298 then "ACE inhibitors" when 70878 then "Allopurinol" when 155060 then "Aminoglycosides"
+                                                           when 162299 then "ARBs (angiotensin II receptor blockers)" when  103727 then "Aspirin" when 71647 then "Atazanavir" when 72822 then "Carbamazepine"  when 162301 then "Cephalosporins" when 73300 then "Chloroquine" when 73667 then "Codeine"
+                                                           when 74807 then "Didanosine" when 75523 then "Efavirenz" when 162302 then "Erythromycins" when 75948 then "Ethambutol" when 77164 then "Griseofulvin" when 162305 then "Heparins" when 77675 then "Hydralazine" when 78280 then "Isoniazid"
+                                                           when 794 then "Lopinavir/ritonavir" when 80106 then "Morphine" when 80586 then "Nevirapine" when 80696 then "Nitrofurans"  when 162306 then "Non-steroidal anti-inflammatory drugs" when 81723 then "Penicillamine" when 81724 then "Penicillin"
+                                                           when 81959 then "Phenolphthaleins" when 82023 then "Phenytoin" when 82559 then "Procainamide" when 82900 then "Pyrazinamide" when 83018 then "Quinidine" when 767 then "Rifampin" when 162307 then "Statins" when 84309 then "Stavudine"
+                                                           when 162170 then "Sulfonamides" when 84795 then "Tenofovir" when 84893 then "Tetracycline" when 86663 then "Zidovudine" when 5622 then "Other"
+                                                           else "" end), "" )) as medicine_reactions,
+           max(if(o.concept_id = 159935, (case o.value_coded when 1067 then "Unknown" when 121629 then "Anaemia" when 148888 then "Anaphylaxis" when 148787 then "Angioedema" when 120148 then "Arrhythmia" when 108 then "Bronchospasm" when 143264 then "Cough"
+                                                             when 142412 then "Diarrhea" when 118773 then "Dystonia" when 140238 then "Fever" when 140039 then "Flushing" when 139581 then "GI upset" when 139084 then "Headache" when 159098 then "Hepatotoxicity" when 111061 then "Hives" when 117399 then "Hypertension"
+                                                             when 879 then "Itching" when 121677 then "Mental status change" when 159347 then "Musculoskeletal pain" when 121 then "Myalgia" when 512 then "Rash" when 5622 then "Other" else "" end), "" )) as reaction,
+           max(if(o.concept_id = 162760, (case o.value_coded when 1498 then "Mild" when 1499 then "Moderate" when 1500 then "Severe" when 162819 then "Fatal" when 1067 then  "Unknown" else "" end), "" )) as severity,
+           max(if(o.concept_id = 1255, (case o.value_coded when 1257 then "Continue Regimen" when 1259 then "Switched Regimen" when 981 then "Changed Dose" when 1258 then "Substituted Drug" when 1107 then "None" when 1260 then "Stop" when 5622 then "Other" else "" end), "" )) as action_taken,
+           max(if(o.concept_id = 160557, o.value_boolean, null )) as known_allergies,
+           max(if(o.concept_id = 160643, (case o.value_coded when 162543 then "Beef" when 72609 then "Caffeine" when 162544 then "Chocolate" when 162545 then "Dairy Food" when 162171 then "Eggs" when 162546 then "Fish" when 162547  then "Milk Protein" when 162172 then "Peanuts" when 162175  then "Shellfish"
+                                                             when 162176 then "Soy" when 162548 then "Strawberries" when 162177 then "Wheat" when 162542 then "Adhesive Tape" when 162536 then "Bee Stings" when 162537 then "Dust" when 162538 then "Latex" when 162539 then "Mold" when 162540 then "Pollen"
+                                                             when 162541 then "Ragweed" when 5622 then "Other" else "" end), "" )) as allergen,
+           max(if(o.concept_id = 159935, (case o.value_coded when 1067 then "Unknown" when 121629 then "Anaemia" when 148888 then "Anaphylaxis" when 148787 then "Angioedema" when 120148 then "Arrhythmia" when 108 then "Bronchospasm" when  143264  then "Cough" when 142412  then "Diarrhea" when 118773 then "Dystonia"
+                                                             when  140238 then "Fever" when  140039 then "Flushing" when  139581  then "GI upset" when 139084 then "Headache" when 159098 then "Hepatotoxicity" when 111061 then "Hives" when  117399 then "Hypertension" when 879  then "Itching" when 121677 then "Mental status change" when 159347 then "Musculoskeletal pain"
+                                                             when 121 then "Myalgia" when 512 then "Rash" when 5622 then "Other"  else "" end), "" )) as allergy_reaction,
+           max(if(o.concept_id = 162760, (case o.value_coded when 1498 then "Mild" when 1499 then "Moderate" when 1500 then "Severe" when 162819 then "Fatal" when 1067 then "Unknown" else "" end), "" )) as allergy_severity,
+           max(if(o.concept_id = 160753, o.value_datetime, null )) as allergy_date,
+           max(if(o.concept_id = 165101, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hiv_signs,
+           max(if(o.concept_id = 165104, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselled,
+           max(if(o.concept_id = 165106, (case o.value_coded when 1107 then "None" when 138571 then "Confirmed HIV+" when 155589 then "Renal impairment" when 127750 then "Not willing" when 165105 then "Less than 35ks and under 15 yrs" else "" end), "" )) as prep_contraindicatios,
+           max(if(o.concept_id = 165109, (case o.value_coded when 1256 then "Start" when 1257 then "Continue" when 162904 then "Restart" when 1258 then "Substitute" when 1260 then "Defer" else "" end), "" )) as treatment_plan,
+           max(if(o.concept_id = 159777, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as condoms_issued,
+           max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms,
+           max(if(o.concept_id = 165309, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
+           max(if(o.concept_id = 5096, o.value_datetime, null )) as appointment_date,
+           max(if(o.concept_id = 165310, (case o.value_coded when 165053 then "Risk will no longer exist" when 159492 then "Intention to transfer out" else "" end), "" )) as reason_no_appointment,
+           max(if(o.concept_id = 163042, o.value_datetime, null )) as clinical_notes,
+           e.voided
+    from encounter e
+           inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984")
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
+            165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
+            165109,159777,165055,165309,5096,165310,163042) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        sti_screened=VALUES(sti_screened),
+        sti_symptoms=VALUES(sti_symptoms),
+        sti_treated=VALUES(sti_treated),
+        vmmc_screened=VALUES(vmmc_screened),
+        vmmc_status=VALUES(vmmc_status),
+        vmmc_referred=VALUES(vmmc_referred),
+        lmp=VALUES(lmp),
+        pregnant=VALUES(pregnant),
+        edd=VALUES(edd),
+        planned_pregnancy=VALUES(planned_pregnancy),
+        wanted_pregnancy=VALUES(wanted_pregnancy),
+        breastfeeding=VALUES(breastfeeding),
+        fp_status=VALUES(fp_status),
+        fp_method=VALUES(fp_method),
+        ended_pregnancy=VALUES(ended_pregnancy),
+        pregnancy_outcome=VALUES(pregnancy_outcome),
+        outcome_date=VALUES(outcome_date),
+        defects=VALUES(defects),
+        has_chronic_illness=VALUES(has_chronic_illness),
+        chronic_illness=VALUES(chronic_illness),
+        chronic_illness_onset_date=VALUES(chronic_illness_onset_date),
+        chronic_illness_drug=VALUES(chronic_illness_drug),
+        chronic_illness_dose=VALUES(chronic_illness_dose),
+        chronic_illness_units=VALUES(chronic_illness_units),
+        chronic_illness_frequency=VALUES(chronic_illness_frequency),
+        chronic_illness_duration=VALUES(chronic_illness_duration),
+        chronic_illness_duration_units=VALUES(chronic_illness_duration_units),
+        adverse_reactions=VALUES(adverse_reactions),
+        medicine_reactions=VALUES(medicine_reactions),
+        reaction=VALUES(reaction),
+        severity=VALUES(severity),
+        action_taken=VALUES(action_taken),
+        known_allergies=VALUES(known_allergies),
+        allergen=VALUES(allergen),
+        allergy_reaction=VALUES(allergy_reaction),
+        allergy_severity=VALUES(allergy_severity),
+        allergy_date=VALUES(allergy_date),
+        hiv_signs=VALUES(hiv_signs),
+        adherence_counselled=VALUES(adherence_counselled),
+        prep_contraindicatios=VALUES(prep_contraindicatios),
+        treatment_plan=VALUES(treatment_plan),
+        condoms_issued=VALUES(condoms_issued),
+        number_of_condoms=VALUES(number_of_condoms),
+        appointment_given=VALUES(appointment_given),
+        appointment_date=VALUES(appointment_date),
+        reason_no_appointment=VALUES(reason_no_appointment),
+        clinical_notes=VALUES(clinical_notes),
+        voided=VALUES(voided);
+
+  END$$
+
+-- ------------- populate etl_progress_note-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_progress_note$$
+CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing progress", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_progress_note(
+        uuid,
+        provider ,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_created,
+        notes,
+        voided
+        )
+    select
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           max(if(o.concept_id = 159395, o.value_text, null )) as notes,
+           e.voided
+    from encounter e
+           inner join form f on f.form_id=e.form_id and f.uuid in ("c48ed2a2-0a0f-4f4e-9fed-a79ca3e1a9b9")
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159395) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=values(visit_date),
+                        provider=values(provider),
+                        notes=values(notes),
+                        voided=values(voided);
+    END$$
+
 		SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
 
@@ -2740,6 +3305,13 @@ CALL sp_update_etl_ccc_defaulter_tracing(last_update_time);
 CALL sp_update_etl_ART_preparation(last_update_time);
 CALL sp_update_etl_enhanced_adherence(last_update_time);
 CALL sp_update_etl_patient_triage(last_update_time);
+CALL sp_update_etl_prep_behaviour_risk_assessment(last_update_time);
+CALL sp_update_etl_prep_monthly_refill(last_update_time);
+CALL sp_update_etl_prep_discontinuation(last_update_time);
+CALL sp_update_etl_prep_enrolment(last_update_time);
+CALL sp_update_etl_prep_followup(last_update_time);
+CALL sp_update_etl_progress_note(last_update_time);
+
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
