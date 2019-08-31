@@ -2947,6 +2947,49 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
 		;
 		SELECT "Completed updating patient program data ", CONCAT("Time: ", NOW());
 		END$$
+
+-- ------------------- update person address table -------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_person_address$$
+CREATE PROCEDURE sp_update_etl_person_address(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing person addresses ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_person_address(
+			uuid,
+			patient_id,
+			county,
+			sub_county,
+			location,
+			ward,
+			sub_location,
+			village,
+			postal_address,
+			land_mark,
+			voided
+		)
+			select
+				pa.uuid,
+				pa.person_id,
+				coalesce(pa.country,pa.county_district) county,
+				pa.state_province sub_county,
+				pa.address6 location,
+				pa.address4 ward,
+				pa.address5 sub_location,
+				pa.city_village village,
+				pa.address1 postal_address,
+				pa.address2 land_mark,
+				pa.voided voided
+			from person_address pa
+				inner join patient pt on pt.patient_id=pa.person_id
+			where pa.date_created >= last_update_time
+						or pa.date_changed >= last_update_time
+						or pa.date_voided >= last_update_time
+		ON DUPLICATE KEY UPDATE county=VALUES(county),sub_county=values(sub_county),location=values(location),
+			ward=values(ward),sub_location=values(sub_location),village=VALUES(village),postal_address=values(postal_address),
+			land_mark=values(land_mark),voided=values(voided)
+		;
+		SELECT "Completed processing person_address data ", CONCAT("Time: ", NOW());
+		END$$
 		-- end of scheduled updates procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -2992,6 +3035,7 @@ CALL sp_update_etl_enhanced_adherence(last_update_time);
 CALL sp_update_etl_patient_triage(last_update_time);
 CALL sp_update_etl_hts_linkage_tracing(last_update_time);
 CALL sp_update_etl_patient_program(last_update_time);
+CALL sp_update_etl_person_address(last_update_time);
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
