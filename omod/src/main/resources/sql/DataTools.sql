@@ -183,26 +183,19 @@ ALTER TABLE kenyaemr_datatools.hiv_followup ADD FOREIGN KEY (patient_id) REFEREN
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(encounter_id);
 -- ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(patient_id,visit_date);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(who_stage);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(pregnancy_status);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(pregnancy_outcome);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(family_planning_status);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(family_planning_method);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(tb_status);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(condom_provided);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ctx_dispensed);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(inh_dispensed);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(at_risk_population);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(population_type);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(key_population_type);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_anti_tb_drugs);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_ipt);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ever_on_ipt);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(stability);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(differentiated_care);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,patient_id);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,condom_provided);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,family_planning_method);
+
 
 -- create table laboratory_extract
 create table kenyaemr_datatools.laboratory_extract as
@@ -287,7 +280,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(visit_d
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(discontinuation_reason);
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(date_died);
-ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfer_date);
+
 
   -- create table mch_enrollment
   create table kenyaemr_datatools.mch_enrollment as
@@ -336,10 +329,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(tb_screening);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_status);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_test_date);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(partner_hiv_status);
+
 
   SELECT "Successfully created mch_enrollment table";
 
@@ -424,13 +414,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(who_stage);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(arv_status);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(final_test_result);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(tb_screening);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(syphilis_test_status);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(cacx_screening);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(next_appointment_date);
+
 
   SELECT "Successfully created mch_antenatal_visit table";
   -- create table mch_delivery table
@@ -496,8 +480,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(final_test_result);
-  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(baby_sex);
+
 
   SELECT "Successfully created mchs_delivery table";
   -- create table mch_discharge table
@@ -527,8 +510,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(baby_status);
-  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(discharge_date);
+
 
   SELECT "Successfully created mch_discharge table";
 
@@ -608,9 +590,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(mother_hiv_status);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
+
 
   -- create table hei_enrollment
   create table kenyaemr_datatools.hei_enrollment as
@@ -672,9 +652,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(transfer_in);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(child_exposed);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(referral_source);
+
   SELECT "Successfully created hei_enrollment";
 
   -- create table hei_follow_up_visit
@@ -807,10 +785,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
 
   ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(visit_date);
   ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(disease_classification);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(patient_classification);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(pulmonary_smear_result);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(date_first_enrolled_in_tb_care);
+
 -- create table tb_follow_up_visit
 create table kenyaemr_datatools.tb_follow_up_visit as
 select 
@@ -1033,6 +1008,8 @@ create table kenyaemr_datatools.ipt_followup as select * from kenyaemr_etl.etl_i
 alter table kenyaemr_datatools.ipt_followup add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 CREATE TABLE  kenyaemr_datatools.default_facility_info as SELECT * from kenyaemr_etl.etl_default_facility_info;
+CREATE TABLE kenyaemr_datatools.person_address as SELECT * from kenyaemr_etl.etl_person_address;
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
