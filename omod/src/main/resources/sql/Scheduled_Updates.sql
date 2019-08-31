@@ -2350,9 +2350,8 @@ hepatotoxity,
 peripheral_neuropathy,
 rash,
 adherence,
-outcome,
-discontinuation_reason,
-action_taken
+action_taken,
+voided
 )
 select
 e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
@@ -2362,12 +2361,15 @@ max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066
 max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end), null )) as peripheral_neuropathy,
 max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end), null )) as rash,
 max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else null end), null )) as adherence,
-max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else null end), null )) as outcome,
-max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else null end), null )) as discontinuation_reason,
-max(if(o.concept_id = 160632, trim(o.value_text), null )) as action_taken
-from encounter e 
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+max(if(o.concept_id = 160632, trim(o.value_text), null )) as action_taken,
+e.voided
+from encounter e
+	inner join
+	(
+		select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
+	) et on et.encounter_type_id=e.encounter_type
+	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+													 and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
@@ -2379,9 +2381,7 @@ hepatotoxity=VALUES(hepatotoxity),
 peripheral_neuropathy=VALUES(peripheral_neuropathy),
 rash=VALUES(rash),
 adherence=VALUES(adherence),
-outcome=VALUES(outcome),
-discontinuation_reason=VALUES(discontinuation_reason),
-action_taken=VALUES(action_taken) ;
+action_taken=VALUES(action_taken),voided=VALUES(voided);
 
 END$$
 -- DELIMITER ;
@@ -2701,6 +2701,254 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
 
 		END$$
 
+-- ------------------------------------- populate ipt initiation -----------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation$$
+CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating IPT initiations ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_ipt_initiation(
+			patient_id,
+			uuid,
+			encounter_provider,
+			visit_date ,
+			location_id,
+			encounter_id,
+			date_created,
+			ipt_indication,
+			voided
+		)
+			select
+				e.patient_id,
+				e.uuid,
+				e.creator,
+				e.encounter_datetime,
+				e.location_id,
+				e.encounter_id,
+				e.date_created,
+				max(if(o.concept_id=162276,o.value_coded,null)) as ipt_indication,
+				e.voided
+			from encounter e
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=162276
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where
+						uuid in('de5cacd4-7d15-4ad0-a1be-d81c77b6c37d')
+				) et on et.encounter_type_id=e.encounter_type
+			where e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.encounter_id
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),ipt_indication=VALUES(ipt_indication), voided=VALUES(voided)
+		;
+		SELECT "Completed Updating IPT Initiation ", CONCAT("Time: ", NOW());
+		END$$
+
+-- ------------------------------------- process ipt followup -------------------------
+/*DROP PROCEDURE IF EXISTS sp_update_etl_ipt_followup$$
+CREATE PROCEDURE sp_update_etl_ipt_followup(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating IPT followup ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_ipt_followup(
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			ipt_due_date,
+			date_collected_ipt,
+			has_hepatoxicity,
+			has_peripheral_neuropathy,
+			has_rash,
+			adherence,
+			action_taken,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				e.visit_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=164073,date(o.value_datetime),null)) as ipt_due_date,
+				max(if(o.concept_id=164074,date(o.value_datetime),null)) as date_collected_ipt,
+				max(if(o.concept_id=159098,o.value_coded,null)) as has_hepatoxicity,
+				max(if(o.concept_id=118983,o.value_coded,null)) as has_peripheral_neuropathy,
+				max(if(o.concept_id=512,o.value_coded,null)) as has_rash,
+				max(if(o.concept_id=164075,o.value_coded,null)) as adherence,
+				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
+				) et on et.encounter_type_id=e.encounter_type
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
+			where e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+			ipt_due_date=VALUES(ipt_due_date),date_collected_ipt=VALUES(date_collected_ipt),has_hepatoxicity=VALUES(has_hepatoxicity),
+			has_peripheral_neuropathy=VALUES(has_peripheral_neuropathy),has_rash=VALUES(has_rash),
+			adherence=VALUES(adherence),action_taken=VALUES(action_taken),voided=VALUES(voided)
+		;
+		SELECT "Completed Updating IPT followup data ", CONCAT("Time: ", NOW());
+		END$$*/
+-- ----------------------------------- process ipt outcome ---------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome$$
+CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating IPT outcome ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_ipt_outcome(
+			patient_id,
+			uuid,
+			encounter_provider,
+			visit_date ,
+			location_id,
+			encounter_id,
+			date_created,
+			outcome,
+			voided
+		)
+			select
+				e.patient_id,
+				e.uuid,
+				e.creator encounter_provider,
+				date(e.encounter_datetime) visit_date,
+				e.location_id,
+				e.encounter_id,
+				e.date_created,
+				max(if(o.concept_id=161555,o.value_coded,null)) as outcome,
+				e.voided voided
+			from encounter e
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=161555
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where
+						uuid in('bb77c683-2144-48a5-a011-66d904d776c9')
+				) et on et.encounter_type_id=e.encounter_type
+			where e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.encounter_id
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+			outcome=VALUES(outcome), voided=VALUES(voided)
+		;
+		SELECT "Completed Updating IPT outcome ", CONCAT("Time: ", NOW());
+		END$$
+
+-- --------------------------------------- process HTS linkage tracing ------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_hts_linkage_tracing$$
+CREATE PROCEDURE sp_update_etl_hts_linkage_tracing(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating HTS Linkage tracing ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_hts_linkage_tracing(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			tracing_type,
+			tracing_outcome,
+			reason_not_contacted,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=164966,o.value_coded,null)) as tracing_type,
+				max(if(o.concept_id=159811,o.value_coded,null)) as tracing_outcome,
+				max(if(o.concept_id=1779,o.value_coded,null)) as reason_not_contacted,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('15ed03d2-c972-11e9-a32f-2a2ae2dbcce4')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (164966,159811,1779)
+			where e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+			tracing_type=VALUES(tracing_type),tracing_outcome=VALUES(tracing_outcome),reason_not_contacted=VALUES(reason_not_contacted),
+			voided=VALUES(voided)
+		;
+		SELECT "Completed updating HTS linkage tracing data ", CONCAT("Time: ", NOW());
+		END$$
+
+
+-- ------------------------- process patient program ------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_program$$
+CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating patient program ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_patient_program(
+			uuid,
+			patient_id,
+			location_id,
+			program,
+			date_enrolled,
+			date_completed,
+			outcome,
+			date_created,
+			voided
+		)
+			select
+				pp.uuid uuid,
+				pp.patient_id patient_id,
+				pp.location_id location_id,
+				(case p.uuid
+				 when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
+				 when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
+				 when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
+				 when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
+				 when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+				 end) as program,
+				pp.date_enrolled date_enrolled,
+				pp.date_completed date_completed,
+				pp.outcome_concept_id outcome,
+				pp.date_created,
+				pp.voided voided
+			from patient_program pp
+				inner join program p on p.program_id=pp.program_id and p.retired=0
+				inner join patient pt on pt.patient_id=pp.patient_id and pt.voided=0
+			where pp.date_created >= last_update_time
+						or pp.date_changed >= last_update_time
+						or pp.date_voided >= last_update_time
+		GROUP BY pp.uuid
+		ON DUPLICATE KEY UPDATE date_enrolled=VALUES(date_enrolled),date_completed=VALUES(date_completed),
+			program=VALUES(program),outcome=VALUES(outcome),voided=VALUES(outcome),voided=VALUES(voided)
+		;
+		SELECT "Completed updating patient program data ", CONCAT("Time: ", NOW());
+		END$$
+		-- end of scheduled updates procedures
+
 		SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
 
@@ -2734,12 +2982,16 @@ CALL sp_update_etl_pharmacy_extract(last_update_time);
 CALL sp_update_etl_laboratory_extract(last_update_time);
 CALL sp_update_hts_test(last_update_time);
 CALL sp_update_hts_linkage_and_referral(last_update_time);
-CALL sp_update_etl_ipt_screening(last_update_time);
+-- CALL sp_update_etl_ipt_screening(last_update_time);
+CALL sp_update_etl_ipt_initiation(last_update_time);
+CALL sp_update_etl_ipt_outcome(last_update_time);
 CALL sp_update_etl_ipt_follow_up(last_update_time);
 CALL sp_update_etl_ccc_defaulter_tracing(last_update_time);
 CALL sp_update_etl_ART_preparation(last_update_time);
 CALL sp_update_etl_enhanced_adherence(last_update_time);
 CALL sp_update_etl_patient_triage(last_update_time);
+CALL sp_update_etl_hts_linkage_tracing(last_update_time);
+CALL sp_update_etl_patient_program(last_update_time);
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;

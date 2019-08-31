@@ -2361,9 +2361,8 @@ hepatotoxity,
 peripheral_neuropathy,
 rash,
 adherence,
-outcome,
-discontinuation_reason,
-action_taken
+action_taken,
+voided
 )
 select
 e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
@@ -2373,18 +2372,22 @@ max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066
 max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as peripheral_neuropathy,
 max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as rash,
 max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else "" end), "" )) as adherence,
-max(if(o.concept_id = 160433, (case o.value_coded when 1267 then "Completed" when 5240 then "Lost to followup" when 159836 then "Discontinued" when 160034 then "Died" when 159492 then "Transferred Out" else "" end), "" )) as outcome,
-max(if(o.concept_id = 1266, (case o.value_coded when 102 then "Drug Toxicity" when 112141 then "TB" when 5622 then "Other" else "" end), "" )) as discontinuation_reason,
-max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken
+max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken,
+e.voided
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164073, 164074, 159098, 118983, 512, 164075, 160433, 1266, 160632) and o.voided=0
+inner join
+(
+select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
+) et on et.encounter_type_id=e.encounter_type
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
 where e.voided=0
 group by e.encounter_id;
+
 SELECT "Completed processing IPT followup forms", CONCAT("Time: ", NOW());
 END$$
 
--- ------------- populate etl_ipt_followup-------------------------
+-- ------------- populate defaulter tracing-------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_ccc_defaulter_tracing$$
 CREATE PROCEDURE sp_populate_etl_ccc_defaulter_tracing()
@@ -2681,6 +2684,237 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END$$
 
+		-- ------------------------------------- populate ipt initiation -----------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_initiation$$
+CREATE PROCEDURE sp_populate_etl_ipt_initiation()
+	BEGIN
+		SELECT "Processing IPT initiations ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_ipt_initiation(
+			patient_id,
+			uuid,
+			encounter_provider,
+			visit_date ,
+			location_id,
+			encounter_id,
+			date_created,
+			ipt_indication,
+			voided
+		)
+			select
+				e.patient_id,
+				e.uuid,
+				e.creator,
+				e.encounter_datetime,
+				e.location_id,
+				e.encounter_id,
+				e.date_created,
+				max(if(o.concept_id=162276,o.value_coded,null)) as ipt_indication,
+				e.voided
+			from encounter e
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=162276
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where
+						uuid in('de5cacd4-7d15-4ad0-a1be-d81c77b6c37d')
+				) et on et.encounter_type_id=e.encounter_type
+			group by e.encounter_id;
+		SELECT "Completed processing IPT Initiation ", CONCAT("Time: ", NOW());
+		END$$
+
+	-- ------------------------------------- process ipt followup -------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_followup$$
+CREATE PROCEDURE sp_populate_etl_ipt_followup()
+	BEGIN
+		SELECT "Processing IPT followup ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_ipt_followup(
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			ipt_due_date,
+			date_collected_ipt,
+			has_hepatoxicity,
+			has_peripheral_neuropathy,
+			has_rash,
+			adherence,
+			action_taken,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				e.visit_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=164073,date(o.value_datetime),null)) as ipt_due_date,
+				max(if(o.concept_id=164074,date(o.value_datetime),null)) as date_collected_ipt,
+				max(if(o.concept_id=159098,o.value_coded,null)) as has_hepatoxicity,
+				max(if(o.concept_id=118983,o.value_coded,null)) as has_peripheral_neuropathy,
+				max(if(o.concept_id=512,o.value_coded,null)) as has_rash,
+				max(if(o.concept_id=164075,o.value_coded,null)) as adherence,
+				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
+				) et on et.encounter_type_id=e.encounter_type
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing IPT followup data ", CONCAT("Time: ", NOW());
+		END$$
+		-- ----------------------------------- process ipt outcome ---------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_outcome$$
+CREATE PROCEDURE sp_populate_etl_ipt_outcome()
+	BEGIN
+		SELECT "Processing IPT outcome ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_ipt_outcome(
+			patient_id,
+			uuid,
+			encounter_provider,
+			visit_date ,
+			location_id,
+			encounter_id,
+			date_created,
+			outcome,
+			voided
+		)
+			select
+				e.patient_id,
+				e.uuid,
+				e.creator,
+				e.encounter_datetime,
+				e.location_id,
+				e.encounter_id,
+				e.date_created,
+				max(if(o.concept_id=161555,o.value_coded,null)) as ipt_outcome,
+				e.voided
+			from encounter e
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=161555
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where
+						uuid in('bb77c683-2144-48a5-a011-66d904d776c9')
+				) et on et.encounter_type_id=e.encounter_type
+			group by e.encounter_id;
+		SELECT "Completed processing IPT outcome ", CONCAT("Time: ", NOW());
+		END$$
+
+		-- --------------------------------------- process HTS linkage tracing ------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_hts_linkage_tracing$$
+CREATE PROCEDURE sp_populate_etl_hts_linkage_tracing()
+	BEGIN
+		SELECT "Processing HTS Linkage tracing ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_hts_linkage_tracing(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			tracing_type,
+			tracing_outcome,
+			reason_not_contacted,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=164966,o.value_coded,null)) as tracing_type,
+				max(if(o.concept_id=159811,o.value_coded,null)) as tracing_outcome,
+				max(if(o.concept_id=1779,o.value_coded,null)) as reason_not_contacted,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('15ed03d2-c972-11e9-a32f-2a2ae2dbcce4')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (164966,159811,1779)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing HTS linkage tracing data ", CONCAT("Time: ", NOW());
+		END$$
+
+		-- ------------------------- process patient program ------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_patient_program$$
+CREATE PROCEDURE sp_populate_etl_patient_program()
+	BEGIN
+		SELECT "Processing patient program ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_patient_program(
+			uuid,
+			patient_id,
+			location_id,
+			program,
+			date_enrolled,
+			date_completed,
+			outcome,
+			date_created,
+			voided
+		)
+			select
+				pp.uuid,
+				pp.patient_id,
+				pp.location_id,
+				(case p.uuid
+				when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
+				when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
+				when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
+				when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
+				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+				end) as program,
+				pp.date_enrolled,
+				pp.date_completed,
+				pp.outcome_concept_id,
+				pp.date_created,
+				pp.voided
+			from patient_program pp
+				inner join patient pt on pt.patient_id=pp.patient_id and pt.voided=0
+				inner join program p on p.program_id=pp.program_id and p.retired=0
+        where pp.voided=0
+		;
+		SELECT "Completed processing patient program data ", CONCAT("Time: ", NOW());
+		END$$
+
+-- ------------------------- create table for default facility ------------------------
+
+DROP PROCEDURE IF EXISTS sp_create_default_facility_table$$
+CREATE PROCEDURE sp_create_default_facility_table()
+	BEGIN
+		SELECT "Processing default facility info ", CONCAT("Time: ", NOW());
+		CREATE TABLE kenyaemr_etl.etl_default_facility_info
+			as select (select value_reference from location_attribute
+			where location_id in (select property_value
+														from global_property
+														where property='kenyaemr.defaultLocation') and attribute_type_id=1) as siteCode,
+								(select name from location
+								where location_id in (select property_value
+																			from global_property
+																			where property='kenyaemr.defaultLocation')) as FacilityName;
+
+		SELECT "Completed processing information about default facility ", CONCAT("Time: ", NOW());
+		END$$
+		-- end of dml procedures
+
 		SET sql_mode=@OLD_SQL_MODE$$
 
 -- ------------------------------------------- running all procedures -----------------------------
@@ -2713,13 +2947,18 @@ CALL sp_populate_etl_mch_discharge();
 CALL sp_drug_event();
 CALL sp_populate_hts_test();
 CALL sp_populate_hts_linkage_and_referral();
-CALL sp_populate_etl_ipt_screening();
-CALL sp_populate_etl_ipt_follow_up();
+-- CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_ccc_defaulter_tracing();
 CALL sp_populate_etl_ART_preparation();
 CALL sp_populate_etl_enhanced_adherence();
 CALL sp_populate_etl_patient_triage();
+CALL sp_populate_etl_ipt_initiation();
+CALL sp_populate_etl_ipt_follow_up();
+CALL sp_populate_etl_ipt_outcome();
+CALL sp_populate_etl_hts_linkage_tracing();
+CALL sp_populate_etl_patient_program();
 CALL sp_update_dashboard_table();
+CALL sp_create_default_facility_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

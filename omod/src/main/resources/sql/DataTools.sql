@@ -1026,12 +1026,13 @@ ALTER TABLE kenyaemr_datatools.current_in_care add FOREIGN KEY(patient_id) REFER
 
 alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-create table kenyaemr_datatools.ipt_screening as select * from kenyaemr_etl.etl_ipt_screening;
-alter table kenyaemr_datatools.ipt_screening add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+-- create table kenyaemr_datatools.ipt_screening as select * from kenyaemr_etl.etl_ipt_screening;
+-- alter table kenyaemr_datatools.ipt_screening add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 create table kenyaemr_datatools.ipt_followup as select * from kenyaemr_etl.etl_ipt_follow_up;
 alter table kenyaemr_datatools.ipt_followup add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
+CREATE TABLE  kenyaemr_datatools.default_facility_info as SELECT * from kenyaemr_etl.etl_default_facility_info;
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
