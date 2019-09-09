@@ -2296,6 +2296,53 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), ccc_number=VALUES(ccc_num
 END$$
 -- DELIMITER ;
 
+-- ------------------------ update hts referrals ------------------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_hts_referral$$
+CREATE PROCEDURE sp_update_hts_referral(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing hts referrals";
+    INSERT INTO kenyaemr_etl.etl_hts_referral (
+      patient_id,
+      visit_id,
+      encounter_id,
+      encounter_uuid,
+      encounter_location,
+      creator,
+      date_created,
+      visit_date,
+      facility_referred_to,
+      date_to_enrol,
+      remarks,
+      voided
+    )
+      select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        e.date_created,
+        e.encounter_datetime as visit_date,
+        max(if(o.concept_id=161550,o.value_text,null)) as facility_referred_to ,
+        max(if(o.concept_id=161561,o.value_datetime,null)) as date_to_enrol,
+        max(if(o.concept_id=163042,o.value_text,null)) as remarks,
+        e.voided voided
+      from encounter e
+        inner join form f on f.form_id = e.form_id and f.uuid = "9284828e-ce55-11e9-a32f-2a2ae2dbcce4"
+        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550, 161561, 163042) and o.voided=0
+        where e.date_created >= last_update_time
+              or e.date_changed >= last_update_time
+              or e.date_voided >= last_update_time
+              or o.date_created >= last_update_time
+              or o.date_voided >= last_update_time
+      group by e.encounter_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), facility_referred_to=VALUES(facility_referred_to), date_to_enrol=VALUES(date_to_enrol),
+      remarks=VALUES(remarks), voided=VALUES(voided);
+    SELECT "Completed processing hts referrals", CONCAT("Time: ", NOW());
+
+    END$$
 
 -- ------------- populate etl_ipt_screening-------------------------
 
@@ -3025,6 +3072,7 @@ CALL sp_update_etl_pharmacy_extract(last_update_time);
 CALL sp_update_etl_laboratory_extract(last_update_time);
 CALL sp_update_hts_test(last_update_time);
 CALL sp_update_hts_linkage_and_referral(last_update_time);
+CALL sp_update_hts_referral(last_update_time);
 -- CALL sp_update_etl_ipt_screening(last_update_time);
 CALL sp_update_etl_ipt_initiation(last_update_time);
 CALL sp_update_etl_ipt_outcome(last_update_time);

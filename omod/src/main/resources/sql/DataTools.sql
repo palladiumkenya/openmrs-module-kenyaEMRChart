@@ -981,8 +981,6 @@ ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(encounter_id);
 
 create table kenyaemr_datatools.hts_test as select * from kenyaemr_etl.etl_hts_test;
-create table kenyaemr_datatools.hts_referral_and_linkage as select * from kenyaemr_etl.etl_hts_referral_and_linkage;
-
 ALTER TABLE kenyaemr_datatools.hts_test ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hts_test ADD FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(visit_date);
@@ -991,10 +989,16 @@ ALTER TABLE kenyaemr_datatools.hts_test ADD index(final_test_result);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(test_1_kit_name);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(test_2_kit_name);
 
+create table kenyaemr_datatools.hts_referral_and_linkage as select * from kenyaemr_etl.etl_hts_referral_and_linkage;
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(visit_date);
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_type);
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_status);
+
+create table kenyaemr_datatools.hts_referral as select * from kenyaemr_etl.etl_hts_referral;
+
+
+
 
 create table kenyaemr_datatools.current_in_care as select * from kenyaemr_etl.etl_current_in_care;
 ALTER TABLE kenyaemr_datatools.current_in_care add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);

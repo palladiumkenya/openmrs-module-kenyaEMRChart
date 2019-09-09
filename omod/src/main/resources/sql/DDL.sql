@@ -57,6 +57,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_follow_up;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_outcome;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_program;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_default_facility_info;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral;
 
 
 
@@ -1082,6 +1083,27 @@ index(visit_date),
 index(tracing_type),
 index(tracing_status)
 );
+
+
+-- -------------- create referral form ----------------------------
+
+CREATE TABLE kenyaemr_etl.etl_hts_referral (
+patient_id INT(11) not null,
+visit_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL primary key,
+encounter_uuid CHAR(38) NOT NULL,
+encounter_location INT(11) NOT NULL,
+creator INT(11) NOT NULL,
+date_created DATE NOT NULL,
+visit_date DATE,
+facility_referred_to VARCHAR(50),
+date_to_enrol DATE DEFAULT NULL,
+remarks VARCHAR(100),
+voided INT(11),
+index(patient_id),
+index(visit_date)
+);
+
 
 -- ------------ create table etl_ipt_screening-----------------------
 
