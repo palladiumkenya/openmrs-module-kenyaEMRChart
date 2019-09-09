@@ -2159,47 +2159,51 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
   left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473) and o.voided=0
   group by e.encounter_id;
-
--- fetch locally enrolled clients who had went through HTS
-/*
-  INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
-  patient_id,
-  visit_id,
-  encounter_id,
-  encounter_uuid,
-  encounter_location,
-  creator,
-  date_created,
-  visit_date,
-  tracing_status,
-  facility_linked_to,
-  ccc_number,
-  voided
-)
-select
-    e.patient_id,
-    e.visit_id,
-    e.encounter_id,
-    e.uuid,
-    e.location_id,
-    e.creator,
-    e.date_created,
-    e.encounter_datetime as visit_date,
-    "Enrolled" as contact_status,
-    (select name from location
-        where location_id in (select property_value
-        from global_property
-        where property='kenyaemr.defaultLocation'))  as facility_linked_to,
-    pi.identifier as ccc_number,
-    e.voided
- from encounter e
- inner join encounter_type et on e.encounter_type = et.encounter_type_id and et.uuid = "de78a6be-bfc5-4634-adc3-5f1a280455cc"
- inner join form f on f.form_id = e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
- left outer join patient_identifier pi on pi.patient_id = e.patient_id
- left join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id and pit.uuid = '05ee9cf4-7242-4a17-b4d4-00f707265c8a'
-;*/
+  SELECT "Completed processing hts linkages";
 
 END$$
+
+
+-- ------------------------------------ update hts referral table ---------------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_hts_referral$$
+CREATE PROCEDURE sp_populate_hts_referral()
+  BEGIN
+    SELECT "Processing hts referrals";
+    INSERT INTO kenyaemr_etl.etl_hts_referral (
+      patient_id,
+      visit_id,
+      encounter_id,
+      encounter_uuid,
+      encounter_location,
+      creator,
+      date_created,
+      visit_date,
+      facility_referred_to,
+      date_to_enrol,
+      remarks,
+      voided
+    )
+      select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        e.date_created,
+        e.encounter_datetime as visit_date,
+        max(if(o.concept_id=161550,o.value_text,null)) as facility_referred_to ,
+        max(if(o.concept_id=161561,o.value_datetime,null)) as date_to_be_enrolled,
+        max(if(o.concept_id=163042,o.value_text,null)) as remarks,
+        e.voided
+      from encounter e
+        inner join form f on f.form_id = e.form_id and f.uuid = "9284828e-ce55-11e9-a32f-2a2ae2dbcce4"
+        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550, 161561, 163042) and o.voided=0
+      group by e.encounter_id;
+    SELECT "Completed processing hts referrals";
+
+    END$$
 
 -- ----------------------------------- UPDATE DASHBOARD TABLE ---------------------
 
@@ -2985,6 +2989,7 @@ CALL sp_populate_etl_mch_discharge();
 CALL sp_drug_event();
 CALL sp_populate_hts_test();
 CALL sp_populate_hts_linkage_and_referral();
+CALL sp_populate_hts_referral();
 -- CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_ccc_defaulter_tracing();
 CALL sp_populate_etl_ART_preparation();
