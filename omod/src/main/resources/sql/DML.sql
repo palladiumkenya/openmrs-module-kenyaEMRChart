@@ -424,6 +424,7 @@ inner join
 ) et on et.encounter_type_id=e.encounter_type
 inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
 left join orders od on od.order_id = o.order_id and od.voided=0
+where e.voided=0
 ;
 
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
@@ -672,6 +673,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('3ee036d8-7c13-4393-b5d6-036f2fe45126')
 				) et on et.encounter_type_id=e.encounter_type
+				where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing MCH Enrollments ", CONCAT("Time: ", NOW());
 		END$$
@@ -863,7 +865,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
-
+    where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing MCH antenatal visits ", CONCAT("Time: ", NOW());
 		END$$
@@ -1009,6 +1011,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
+			where e.voided=0
 			group by e.encounter_id ;
 		SELECT "Completed processing MCH Delivery visits", CONCAT("Time: ", NOW());
 		END$$
@@ -1064,6 +1067,7 @@ CREATE PROCEDURE sp_populate_etl_mch_discharge()
 					select form_id, uuid,name from form where
 						uuid in('af273344-a5f9-11e8-98d0-529269fb1459')
 				) f on f.form_id=e.form_id
+				where e.voided=0
 			group by e.encounter_id ;
 		SELECT "Completed processing MCH Discharge visits", CONCAT("Time: ", NOW());
 		END$$
@@ -1243,6 +1247,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
+			where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing MCH postnatal visits ", CONCAT("Time: ", NOW());
 		END$$
@@ -1361,6 +1366,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
 				) et on et.encounter_type_id=e.encounter_type
+				where e.voided=0
 			group by e.encounter_id ;
 		SELECT "Completed processing HEI Enrollments", CONCAT("Time: ", NOW());
 		END$$
@@ -1475,7 +1481,9 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('bcc6da85-72f2-4291-b206-789b8186a021','c6d09e05-1f25-4164-8860-9f32c5a02df0')
 				) et on et.encounter_type_id=e.encounter_type
+			where e.voided=0
 			group by e.encounter_id ;
+
 		SELECT "Completed processing HEI Followup visits", CONCAT("Time: ", NOW());
 		END$$
 
@@ -1695,6 +1703,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('9d8498a4-372d-4dc4-a809-513a2434621e')
 ) et on et.encounter_type_id=e.encounter_type
+where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing TB Enrollments ", CONCAT("Time: ", NOW());
 END$$
@@ -1767,6 +1776,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('fbf0bfce-e9f4-45bb-935a-59195d8a0e35')
 ) et on et.encounter_type_id=e.encounter_type
+where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing TB Followup visits ", CONCAT("Time: ", NOW());
 END$$
@@ -1979,8 +1989,8 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				select encounter_type, uuid,name from form where
 					uuid in('da687480-e197-11e8-9f32-f2801f1b9fd1') -- regimen editor form
 			) f on f.encounter_type=e.encounter_type
-		group by e.encounter_id
-		order by e.patient_id, e.encounter_datetime;
+			where e.voided=0
+		group by e.encounter_id;
 
 SELECT "Completed processing Drug Event Data", CONCAT("Time: ", NOW());
 END$$
@@ -2109,6 +2119,7 @@ inner join (
              where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
+where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing hts tests";
 END$$
@@ -2158,6 +2169,7 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   from encounter e
   inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
   left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473) and o.voided=0
+  where e.voided=0
   group by e.encounter_id;
   SELECT "Completed processing hts linkages";
 
@@ -2200,6 +2212,7 @@ CREATE PROCEDURE sp_populate_hts_referral()
       from encounter e
         inner join form f on f.form_id = e.form_id and f.uuid = "9284828e-ce55-11e9-a32f-2a2ae2dbcce4"
         left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550, 161561, 163042) and o.voided=0
+        where e.voided=0
       group by e.encounter_id;
     SELECT "Completed processing hts referrals";
 
@@ -2505,6 +2518,7 @@ other_support_systems
      where o.voided=0
      group by e.encounter_id, o.obs_group_id
      ) t on e.encounter_id = t.encounter_id
+     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing ART Preparation ", CONCAT("Time: ", NOW());
     END$$
@@ -2601,7 +2615,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 				max(if(o.concept_id=165002,trim(o.value_text),null)) as adherence_plan,
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
 
-			from openmrs.encounter e
+			from encounter e
 				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
 																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 				inner join
@@ -2620,6 +2634,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 										where o.voided=0
 										group by e.encounter_id, o.obs_group_id
 									) t on e.encounter_id = t.encounter_id
+			where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing Enhanced Adherence ", CONCAT("Time: ", NOW());
 		END$$
@@ -2721,6 +2736,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('de5cacd4-7d15-4ad0-a1be-d81c77b6c37d')
 				) et on et.encounter_type_id=e.encounter_type
+				where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing IPT Initiation ", CONCAT("Time: ", NOW());
 		END$$
@@ -2810,6 +2826,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_outcome()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('bb77c683-2144-48a5-a011-66d904d776c9')
 				) et on et.encounter_type_id=e.encounter_type
+				where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing IPT outcome ", CONCAT("Time: ", NOW());
 		END$$
