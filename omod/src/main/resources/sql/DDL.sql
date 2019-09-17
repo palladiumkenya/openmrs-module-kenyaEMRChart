@@ -1131,17 +1131,18 @@ INDEX(ipt_started)
 );
 
 -- ------------ create table etl_ipt_follow_up -----------------------
-
 CREATE TABLE kenyaemr_etl.etl_ipt_follow_up (
 uuid char(38),
-provider INT(11),
 patient_id INT(11) NOT NULL ,
 visit_id INT(11),
 visit_date DATE,
 location_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL PRIMARY KEY,
+provider INT(11),
+date_created DATE NOT NULL,
 ipt_due_date DATE DEFAULT NULL,
 date_collected_ipt DATE DEFAULT NULL,
+weight DOUBLE,
 hepatotoxity VARCHAR(100) DEFAULT NULL,
 peripheral_neuropathy VARCHAR(100) DEFAULT NULL ,
 rash VARCHAR(100),

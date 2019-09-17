@@ -2746,20 +2746,21 @@ DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_followup$$
 CREATE PROCEDURE sp_populate_etl_ipt_followup()
 	BEGIN
 		SELECT "Processing IPT followup ", CONCAT("Time: ", NOW());
-		INSERT INTO kenyaemr_etl.etl_ipt_followup(
+		INSERT INTO kenyaemr_etl.etl_ipt_follow_up(
 			uuid,
 			patient_id,
 			visit_id,
 			visit_date,
 			location_id,
 			encounter_id,
-			encounter_provider,
+			provider,
 			date_created,
 			ipt_due_date,
+			weight,
 			date_collected_ipt,
-			has_hepatoxicity,
-			has_peripheral_neuropathy,
-			has_rash,
+			hepatotoxity,
+			peripheral_neuropathy,
+			rash,
 			adherence,
 			action_taken,
 			voided
@@ -2775,19 +2776,20 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 				e.date_created as date_created,
 				max(if(o.concept_id=164073,date(o.value_datetime),null)) as ipt_due_date,
 				max(if(o.concept_id=164074,date(o.value_datetime),null)) as date_collected_ipt,
-				max(if(o.concept_id=159098,o.value_coded,null)) as has_hepatoxicity,
-				max(if(o.concept_id=118983,o.value_coded,null)) as has_peripheral_neuropathy,
-				max(if(o.concept_id=512,o.value_coded,null)) as has_rash,
+				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
+				max(if(o.concept_id=159098,o.value_coded,null)) as hepatotoxity,
+				max(if(o.concept_id=118983,o.value_coded,null)) as peripheral_neuropathy,
+				max(if(o.concept_id=512,o.value_coded,null)) as rash,
 				max(if(o.concept_id=164075,o.value_coded,null)) as adherence,
 				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
 				e.voided as voided
-			from encounter e
+			from openmrs.encounter e
 				inner join
 				(
-					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
+					select encounter_type_id, uuid, name from openmrs.encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
 				) et on et.encounter_type_id=e.encounter_type
-				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-																 and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
+				left outer join openmrs.obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (164073,164074,159098,5089,118983,512,164075,160632)
 			where e.voided=0
 			group by e.patient_id, e.encounter_id, visit_date
 		;
