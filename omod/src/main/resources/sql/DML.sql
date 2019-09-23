@@ -563,6 +563,7 @@ et.uuid,
 	when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCH Child HEI'
 	when '5feee3f1-aa16-4513-8bd0-5d9b27ef1208' then 'MCH Child'
 	when '7c426cfc-3b47-4481-b55f-89860c21c7de' then 'MCH Mother'
+	when 'bb77c683-2144-48a5-a011-66d904d776c9' then 'IPT'
 end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
@@ -574,7 +575,7 @@ inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_i
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
-	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208','7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb')
+	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208','7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9')
 ) et on et.encounter_type_id=e.encounter_type
 where e.voided=0
 group by e.encounter_id;
@@ -2499,8 +2500,8 @@ other_support_systems
    max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as support_grp_meeting_awareness,
    max(if(o.concept_id=163164,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as enrolled_in_reminder_system,
    max(if(o.concept_id=164360,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_support_systems
-    from openmrs.encounter e
-   inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+    from encounter e
+   inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
  and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
    inner join
      (
@@ -2512,8 +2513,8 @@ other_support_systems
     o.person_id,
     o.encounter_id,
     o.obs_group_id
-     from openmrs.obs o
-    inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+     from obs o
+    inner join encounter e on e.encounter_id = o.encounter_id
     inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
      where o.voided=0
      group by e.encounter_id, o.obs_group_id
@@ -2616,7 +2617,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
 
 			from encounter e
-				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 				inner join
 				(
@@ -2628,8 +2629,8 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 											o.person_id,
 											o.encounter_id,
 											o.obs_group_id
-										from openmrs.obs o
-											inner join openmrs.encounter e on e.encounter_id = o.encounter_id
+										from obs o
+											inner join encounter e on e.encounter_id = o.encounter_id
 											inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
 										where o.voided=0
 										group by e.encounter_id, o.obs_group_id
@@ -2703,7 +2704,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END$$
 
-		-- ------------------------------------- populate ipt initiation -----------------------------
+		---------------------------------------- populate ipt initiation -----------------------------
 DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_initiation$$
 CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 	BEGIN
@@ -2783,12 +2784,12 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 				max(if(o.concept_id=164075,o.value_coded,null)) as adherence,
 				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
 				e.voided as voided
-			from openmrs.encounter e
+			from encounter e
 				inner join
 				(
-					select encounter_type_id, uuid, name from openmrs.encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
+					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
 				) et on et.encounter_type_id=e.encounter_type
-				left outer join openmrs.obs o on o.encounter_id=e.encounter_id and o.voided=0
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 																 and o.concept_id in (164073,164074,159098,5089,118983,512,164075,160632)
 			where e.voided=0
 			group by e.patient_id, e.encounter_id, visit_date
