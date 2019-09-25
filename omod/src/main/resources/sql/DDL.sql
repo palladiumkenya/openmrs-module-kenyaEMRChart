@@ -1316,9 +1316,6 @@ SELECT "Successfully created etl_ART_preparation table";
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
-    INDEX(sub_county_reg_number),
-    INDEX(sub_county_reg_date),
-    INDEX(sub_county_reg_number,sub_county_reg_date),
     INDEX(encounter_id),
     INDEX(patient_id),
     INDEX(patient_id, visit_date)
