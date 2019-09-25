@@ -2718,6 +2718,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 			encounter_id,
 			date_created,
 			ipt_indication,
+      sub_county_reg_date,
 			voided
 		)
 			select
@@ -2729,9 +2730,10 @@ CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 				e.encounter_id,
 				e.date_created,
 				max(if(o.concept_id=162276,o.value_coded,null)) as ipt_indication,
+				max(if(o.concept_id=161552,o.value_datetime,null)) as sub_county_reg_date,
 				e.voided
 			from encounter e
-				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=162276
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id in(162276,161552)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -2740,7 +2742,16 @@ CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 				where e.voided=0
 			group by e.encounter_id;
 		SELECT "Completed processing IPT Initiation ", CONCAT("Time: ", NOW());
-		END$$
+
+update kenyaemr_etl.etl_ipt_initiation i
+join (select pi.patient_id,
+max(if(pit.uuid='d8ee3b8c-a8fc-4d6b-af6a-9423be5f8906',pi.identifier,null)) sub_county_reg_number
+from patient_identifier pi
+join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
+where voided=0
+group by pi.patient_id) pid on pid.patient_id=i.patient_id
+set i.sub_county_reg_number=pid.sub_county_reg_number;
+END$$
 
 	-- ------------------------------------- process ipt followup -------------------------
 DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_followup$$
