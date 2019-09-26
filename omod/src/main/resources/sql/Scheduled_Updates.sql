@@ -2651,8 +2651,8 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
 				max(if(o.concept_id=165002,trim(o.value_text),null)) as adherence_plan,
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
 
-			from openmrs.encounter e
-				inner join openmrs.obs o on e.encounter_id = o.encounter_id and o.voided =0
+			from encounter e
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 				and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 
 				inner join
