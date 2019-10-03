@@ -220,7 +220,6 @@ or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.patient_id, e.encounter_id
-order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider), patient_type=VALUES(patient_type), date_first_enrolled_in_care=VALUES(date_first_enrolled_in_care),entry_point=VALUES(entry_point),transfer_in_date=VALUES(transfer_in_date),
 facility_transferred_from=VALUES(facility_transferred_from),district_transferred_from=VALUES(district_transferred_from),date_started_art_at_transferring_facility=VALUES(date_started_art_at_transferring_facility),date_confirmed_hiv_positive=VALUES(date_confirmed_hiv_positive),facility_confirmed_hiv_positive=VALUES(facility_confirmed_hiv_positive),
 arv_status=VALUES(arv_status),name_of_treatment_supporter=VALUES(name_of_treatment_supporter),relationship_of_treatment_supporter=VALUES(relationship_of_treatment_supporter),treatment_supporter_telephone=VALUES(treatment_supporter_telephone),treatment_supporter_address=VALUES(treatment_supporter_address),voided=VALUES(voided) 
@@ -1912,7 +1911,6 @@ INSERT INTO kenyaemr_etl.etl_drug_event(
 		where e.encounter_datetime >= last_update_time
 
     group by e.encounter_id
-		order by e.patient_id, e.encounter_datetime
 ON DUPLICATE KEY UPDATE date_started=VALUES(date_started), regimen=VALUES(regimen), discontinued=VALUES(discontinued), regimen_discontinued=VALUES(regimen_discontinued),
 date_discontinued=VALUES(date_discontinued)
 ;
@@ -2174,7 +2172,6 @@ inner join (
                ) ef on ef.form_id=e.form_id
              where o.concept_id in (1040, 1326, 164962, 164964, 162502)
              group by e.encounter_id, o.obs_group_id
-             order by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
