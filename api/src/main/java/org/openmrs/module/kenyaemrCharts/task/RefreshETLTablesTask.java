@@ -13,22 +13,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Transaction;
 import org.hibernate.jdbc.Work;
-import org.openmrs.Role;
-import org.openmrs.User;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
-import org.openmrs.notification.Alert;
 import org.openmrs.scheduler.tasks.AbstractTask;
-import org.openmrs.ui.framework.SimpleObject;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * Periodically refreshes ETL tables
@@ -47,10 +38,6 @@ public class RefreshETLTablesTask extends AbstractTask {
 
 		Transaction tx = null;
 		try {
-
-			if (!Context.isAuthenticated()) {
-				authenticate();
-			}
 
 			tx = sf.getHibernateSessionFactory().getCurrentSession().beginTransaction();
 			final Transaction finalTx = tx;

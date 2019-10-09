@@ -182,7 +182,6 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
 
     -- update patient_hiv_enrollment table
     -- uuid: de78a6be-bfc5-4634-adc3-5f1a280455cc
-
     insert into kenyaemr_etl.etl_hiv_enrollment (
       patient_id,
       uuid,
@@ -230,7 +229,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=159599,o.value_datetime,null)) as date_started_art_at_transferring_facility,
         max(if(o.concept_id=160554,o.value_datetime,null)) as date_confirmed_hiv_positive,
         max(if(o.concept_id=160632,left(trim(o.value_text),100),null)) as facility_confirmed_hiv_positive,
-        max(if(o.concept_id=160533,o.value_boolean,null)) as arv_status,
+        max(if(o.concept_id=160533,o.value_numeric,null)) as arv_status,
         max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
         max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
         max(if(o.concept_id=160642,left(trim(o.value_text),100),null)) as treatment_supporter_telephone ,
@@ -256,7 +255,6 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
       facility_transferred_from=VALUES(facility_transferred_from),district_transferred_from=VALUES(district_transferred_from),date_started_art_at_transferring_facility=VALUES(date_started_art_at_transferring_facility),date_confirmed_hiv_positive=VALUES(date_confirmed_hiv_positive),facility_confirmed_hiv_positive=VALUES(facility_confirmed_hiv_positive),
       arv_status=VALUES(arv_status),name_of_treatment_supporter=VALUES(name_of_treatment_supporter),relationship_of_treatment_supporter=VALUES(relationship_of_treatment_supporter),treatment_supporter_telephone=VALUES(treatment_supporter_telephone),treatment_supporter_address=VALUES(treatment_supporter_address),in_school=VALUES(in_school),orphan=VALUES(orphan),voided=VALUES(voided)
     ;
-
     END$$
 -- DELIMITER ;
 
