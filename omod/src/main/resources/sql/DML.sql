@@ -2707,6 +2707,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END$$
 
+
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_prep_behaviour_risk_assessment$$
@@ -2736,6 +2737,7 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
         sharing_drug_needles,
         risk_education_offered,
         risk_reduction,
+        assessment_outcome,
         willing_to_take_prep,
         reason_not_willing,
         risk_edu_offered,
@@ -2759,13 +2761,14 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
                                                              when 160571 then "Couple is trying to concieve" when 159598 then "Suspected poor adherence" else "" end), "" )) as risk,
            max(if(o.concept_id = 160581, (case o.value_coded when 1065 then "High risk partner" else "" end), "" )) as high_risk_partner,
            max(if(o.concept_id = 159385, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sex_with_multiple_partners,
-           max(if(o.concept_id = 160579, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as ipv_gbv,
-           max(if(o.concept_id = 156660, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as transactional_sex,
-           max(if(o.concept_id = 164845, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recent_sti_infected,
-           max(if(o.concept_id = 165088, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_pep_use,
-           max(if(o.concept_id = 165089, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_sex_under_influence,
-           max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as inconsistent_no_condom_use,
-           max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as sharing_drug_needles,
+           max(if(o.concept_id = 141814, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as ipv_gbv,
+           max(if(o.concept_id = 160579, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as transactional_sex,
+           max(if(o.concept_id = 156660, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recent_sti_infected,
+           max(if(o.concept_id = 164845, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_pep_use,
+           max(if(o.concept_id = 165088, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_sex_under_influence,
+           max(if(o.concept_id = 165089, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as inconsistent_no_condom_use,
+           max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sharing_drug_needles,
+           max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as risk_assessment_outcome,
            max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
            max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
            max(if(o.concept_id = 165094, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as willing_to_take_prep,
@@ -2785,7 +2788,7 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
 
     from encounter e
            inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,1825) and o.voided=0
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
@@ -2970,7 +2973,13 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         encounter_id,
         date_created,
         sti_screened,
-        sti_symptoms,
+        genital_ulcer_desease,
+        vaginal_discharge,
+        cervical_discharge,
+        pid,
+        urethral_discharge,
+        anal_discharge,
+        other_sti_symptoms,
         sti_treated,
         vmmc_screened,
         vmmc_status,
@@ -3021,8 +3030,13 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
     select
            e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
            max(if(o.concept_id = 161558,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_screened,
-           max(if(o.concept_id = 165098,(case o.value_coded when 145762 then "Genital Ulcer Desease(GUD)" when 121809 then "Vaginitis and/or Vaginal Discharge(VG)" when 116995 then "Cervicitis and/or Cervical Discharge(CD)"  when 130644 then "Pelvic Inflammatory Desease(PID)"
-                                                            when 123529 then "Urethral Discharge(UD)" when 148895 then "Anal Discharge(AD)" when 5622 then "Other" else "" end), "" )) as sti_symptoms,
+           max(if(o.concept_id = 165098 and o.value_coded = 145762,"GUD",null)) as genital_ulcer_desease,
+           max(if(o.concept_id = 165098 and o.value_coded = 121809,"VG",null)) as vaginal_discharge,
+           max(if(o.concept_id = 165098 and o.value_coded = 116995,"CD",null)) as cervical_discharge,
+           max(if(o.concept_id = 165098 and o.value_coded = 130644,"PID",null)) as pid,
+           max(if(o.concept_id = 165098 and o.value_coded = 123529,"UD",null)) as urethral_discharge,
+           max(if(o.concept_id = 165098 and o.value_coded = 148895,"AD",null)) as anal_discharge,
+           max(if(o.concept_id = 165098 and o.value_coded = 5622,"Other",null)) as other_sti_symptoms,
            max(if(o.concept_id = 165200,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_treated,
            max(if(o.concept_id = 165308,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as vmmc_screened,
            max(if(o.concept_id = 165099,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end), "" )) as vmmc_status,
@@ -3085,7 +3099,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
            max(if(o.concept_id = 163042, o.value_datetime, null )) as clinical_notes,
            e.voided
     from encounter e
-           inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984")
+           inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
            inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
             165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
             165109,159777,165055,165309,5096,165310,163042) and o.voided=0
