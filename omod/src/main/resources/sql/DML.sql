@@ -2508,7 +2508,7 @@ other_support_systems
  and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
    inner join
      (
-     select form_id, uuid,name from openmrs.form where
+     select form_id, uuid,name from form where
  uuid in('782a4263-3ac9-4ce8-b316-534571233f12')
      ) f on f.form_id= e.form_id
    left join (
@@ -2518,7 +2518,7 @@ other_support_systems
     o.obs_group_id
      from obs o
     inner join encounter e on e.encounter_id = o.encounter_id
-    inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
+    inner join form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
      where o.voided=0
      group by e.encounter_id, o.obs_group_id
      ) t on e.encounter_id = t.encounter_id
@@ -2624,7 +2624,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 				inner join
 				(
-					select form_id, uuid,name from openmrs.form where
+					select form_id, uuid,name from form where
 						uuid in('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
 				) f on f.form_id= e.form_id
 				left join (
@@ -2634,7 +2634,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 											o.obs_group_id
 										from obs o
 											inner join encounter e on e.encounter_id = o.encounter_id
-											inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
+											inner join form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
 										where o.voided=0
 										group by e.encounter_id, o.obs_group_id
 									) t on e.encounter_id = t.encounter_id
@@ -3096,7 +3096,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
            max(if(o.concept_id = 165309, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
            max(if(o.concept_id = 5096, o.value_datetime, null )) as appointment_date,
            max(if(o.concept_id = 165310, (case o.value_coded when 165053 then "Risk will no longer exist" when 159492 then "Intention to transfer out" else "" end), "" )) as reason_no_appointment,
-           max(if(o.concept_id = 163042, o.value_datetime, null )) as clinical_notes,
+           max(if(o.concept_id = 163042, o.value_text, null )) as clinical_notes,
            e.voided
     from encounter e
            inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
