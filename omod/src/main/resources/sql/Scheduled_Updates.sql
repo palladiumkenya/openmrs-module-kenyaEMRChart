@@ -3327,7 +3327,7 @@ CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
                         voided=values(voided);
     END$$
 
-		SET sql_mode=@OLD_SQL_MODE$$
+		/*SET sql_mode=@OLD_SQL_MODE$$*/
 -- ----------------------------  scheduled updates ---------------------
 -- ------------------------------------- populate ipt initiation -----------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation$$
@@ -3529,7 +3529,6 @@ CREATE PROCEDURE sp_update_etl_hts_linkage_tracing(IN last_update_time DATETIME)
 		SELECT "Completed updating HTS linkage tracing data ", CONCAT("Time: ", NOW());
 		END$$
 
-
 -- ------------------------- process patient program ------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_program$$
@@ -3662,11 +3661,12 @@ CALL sp_update_etl_ccc_defaulter_tracing(last_update_time);
 CALL sp_update_etl_ART_preparation(last_update_time);
 CALL sp_update_etl_enhanced_adherence(last_update_time);
 CALL sp_update_etl_patient_triage(last_update_time);
+CALL sp_update_etl_prep_enrolment(last_update_time);
 CALL sp_update_etl_prep_behaviour_risk_assessment(last_update_time);
 CALL sp_update_etl_prep_monthly_refill(last_update_time);
-CALL sp_update_etl_prep_discontinuation(last_update_time);
-CALL sp_update_etl_prep_enrolment(last_update_time);
 CALL sp_update_etl_prep_followup(last_update_time);
+CALL sp_update_etl_progress_note(last_update_time);
+CALL sp_update_etl_prep_discontinuation(last_update_time);
 CALL sp_update_etl_hts_linkage_tracing(last_update_time);
 CALL sp_update_etl_patient_program(last_update_time);
 CALL sp_update_etl_person_address(last_update_time);

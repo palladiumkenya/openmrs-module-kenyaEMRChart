@@ -2328,6 +2328,7 @@ WHERE date(next_appointment_date) = CURDATE()
 GROUP BY patient_id;
 
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
+
 END$$
 
 
@@ -3463,11 +3464,12 @@ CALL sp_populate_etl_patient_triage();
 CALL sp_populate_etl_ipt_initiation();
 CALL sp_populate_etl_ipt_follow_up();
 CALL sp_populate_etl_ipt_outcome();
-CALL sp_populate_etl_prep_behaviour_risk_assessment();
-CALL sp_populate_etl_prep_monthly_refill();
-CALL sp_populate_etl_prep_discontinuation();
 CALL sp_populate_etl_prep_enrolment();
 CALL sp_populate_etl_prep_followup();
+CALL sp_populate_etl_prep_behaviour_risk_assessment();
+CALL sp_populate_etl_prep_monthly_refill();
+CALL sp_populate_etl_progress_note();
+CALL sp_populate_etl_prep_discontinuation();
 CALL sp_populate_etl_hts_linkage_tracing();
 CALL sp_populate_etl_patient_program();
 CALL sp_update_dashboard_table();
