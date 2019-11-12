@@ -4,7 +4,7 @@
 
 	<groupId>org.openmrs.module</groupId>
 	<artifactId>kenyaemrCharts</artifactId>
-	<version>1.0.5</version>
+	<version>1.0.5-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>KenyaEMR ETL Management</name>
 	<description>dhoc charts</description>
@@ -33,15 +33,15 @@
 	</modules>
 
 	<properties>
-		<openMRSVersion>2.0.7</openMRSVersion>
+		<openMRSVersion>2.1.2</openMRSVersion>
 		<appframeworkVersion>2.13.0</appframeworkVersion>
 		<calculationVersion>1.2</calculationVersion>
 		<htmlformentryVersion>3.9.2</htmlformentryVersion>
-		<htmlwidgetsVersion>1.4.1</htmlwidgetsVersion>
+		<htmlwidgetsVersion>1.10.0</htmlwidgetsVersion>
 		<idgenVersion>4.5.0</idgenVersion>
-		<kenyaemrVersion>17.0.2</kenyaemrVersion>
+		<kenyaemrVersion>17.0.3</kenyaemrVersion>
 		<kenyacoreVersion>2.4.2-SNAPSHOT</kenyacoreVersion>
-		<kenyauiVersion>2.1.1</kenyauiVersion>
+		<kenyauiVersion>2.1.2-SNAPSHOT</kenyauiVersion>
 		<metadatadeployVersion>1.11.0</metadatadeployVersion>
 		<metadatasharingVersion>1.5.0</metadatasharingVersion>
 		<reportingVersion>1.18.0</reportingVersion>

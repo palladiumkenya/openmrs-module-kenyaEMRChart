@@ -11,28 +11,28 @@
         </sql>
     </changeSet>
 
-    <changeSet id="${project.parent.artifactId}-20171106-1715" author="aojwang">
+    <changeSet id="${project.parent.artifactId}-20191106-1715" author="aojwang">
         <comment>
             Execute DDL script for ETL
         </comment>
         <sqlFile path="sql/DDL.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
 
-    <changeSet id="${project.parent.artifactId}-20171106-1725" author="aojwang">
+    <changeSet id="${project.parent.artifactId}-20191106-1725" author="aojwang">
         <comment>
             Execute DML script for ETL
         </comment>
         <sqlFile path="sql/DML.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
 
-    <changeSet id="${project.parent.artifactId}-20171106-1735" author="aojwang">
+    <changeSet id="${project.parent.artifactId}-20191106-1735" author="aojwang">
         <comment>
             Execute Scheduled Updates script for ETL
         </comment>
         <sqlFile path="sql/Scheduled_Updates.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
 
-    <changeSet id="${project.parent.artifactId}-20171106-1740" author="aojwang">
+    <changeSet id="${project.parent.artifactId}-20191106-1740" author="aojwang">
         <comment>
             Execute DataTool script for ETL tables
         </comment>
@@ -102,7 +102,7 @@
             DROP PROCEDURE IF EXISTS sp_update_drug_event_regimen_details;
         </sql>
     </changeSet>
-    <changeSet id="${project.parent.artifactId}-20190222-1740" author="aojwang">
+    <changeSet id="${project.parent.artifactId}-2019110222-1740" author="aojwang">
         <comment>
             Adding jarowinkler script to kenyaemr_etl
         </comment>
