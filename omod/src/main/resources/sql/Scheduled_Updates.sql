@@ -2945,6 +2945,72 @@ CREATE PROCEDURE sp_update_etl_hts_linkage_tracing(IN last_update_time DATETIME)
 		SELECT "Completed updating HTS linkage tracing data ", CONCAT("Time: ", NOW());
 		END$$
 
+		-- --------------------------------------- process OTZ Activity ------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_otz_activity$$
+CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating OTZ Activity ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_otz_activity(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			orientation,
+			leadership,
+			participation,
+			treatment_literacy,
+			transition_to_adult_care,
+			making_decision_future,
+			srh,
+			beyond_third_ninety,
+			attended_support_group,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=165359,(case o.value_coded when 1065 then "Yes" else "" end),null)) as orientation,
+				max(if(o.concept_id=165361,(case o.value_coded when 1065 then "Yes" else "" end),null)) as leadership,
+				max(if(o.concept_id=165360,(case o.value_coded when 1065 then "Yes" else "" end),null)) as participation,
+				max(if(o.concept_id=165364,(case o.value_coded when 1065 then "Yes" else "" end),null)) as treatment_literacy,
+				max(if(o.concept_id=165363,(case o.value_coded when 1065 then "Yes" else "" end),null)) as transition_to_adult_care,
+				max(if(o.concept_id=165362,(case o.value_coded when 1065 then "Yes" else "" end),null)) as making_decision_future,
+				max(if(o.concept_id=165365,(case o.value_coded when 1065 then "Yes" else "" end),null)) as srh,
+				max(if(o.concept_id=165366,(case o.value_coded when 1065 then "Yes" else "" end),null)) as beyond_third_ninety,
+				max(if(o.concept_id=165302,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as attended_support_group,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('3ae95d48-0464-11ea-8d71-362b9e155667')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,165302)
+			where e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+			orientation=VALUES(orientation),leadership=VALUES(leadership),participation=VALUES(participation),
+			treatment_literacy=VALUES(treatment_literacy),transition_to_adult_care=VALUES(transition_to_adult_care),making_decision_future=VALUES(making_decision_future),
+			srh=VALUES(srh),beyond_third_ninety=VALUES(beyond_third_ninety),attended_support_group=VALUES(attended_support_group),
+			voided=VALUES(voided)
+		;
+		SELECT "Completed updating OTZ activity data ", CONCAT("Time: ", NOW());
+		END$$
+
+
 
 -- ------------------------- process patient program ------------------------
 
@@ -2973,6 +3039,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
 				 when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
 				 when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
 				 when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+				 when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
 				 end) as program,
 				pp.date_enrolled date_enrolled,
 				pp.date_completed date_completed,
@@ -3081,6 +3148,8 @@ CALL sp_update_etl_patient_triage(last_update_time);
 CALL sp_update_etl_hts_linkage_tracing(last_update_time);
 CALL sp_update_etl_patient_program(last_update_time);
 CALL sp_update_etl_person_address(last_update_time);
+CALL sp_update_etl_otz_activity(last_update_time);
+
 CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
