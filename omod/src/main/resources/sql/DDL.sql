@@ -1679,6 +1679,36 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     INDEX(patient_id)
   );
 
+   -- --------------------- creating OTZ activity table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_otz_activity (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    orientation VARCHAR(11) DEFAULT NULL,
+    leadership VARCHAR(11) DEFAULT NULL,
+    participation VARCHAR(11) DEFAULT NULL,
+    treatment_literacy VARCHAR(11) DEFAULT NULL,
+    transition_to_adult_care VARCHAR(11) DEFAULT NULL,
+    making_decision_future VARCHAR(11) DEFAULT NULL,
+    srh VARCHAR(11) DEFAULT NULL,
+    beyond_third_ninety VARCHAR(11) DEFAULT NULL,
+    attended_support_group VARCHAR(11) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_hts_linkage_tracing table";
+
+
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
