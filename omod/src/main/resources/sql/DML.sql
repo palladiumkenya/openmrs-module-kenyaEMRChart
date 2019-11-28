@@ -564,6 +564,7 @@ et.uuid,
 	when '5feee3f1-aa16-4513-8bd0-5d9b27ef1208' then 'MCH Child'
 	when '7c426cfc-3b47-4481-b55f-89860c21c7de' then 'MCH Mother'
 	when 'bb77c683-2144-48a5-a011-66d904d776c9' then 'IPT'
+	when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
 end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
@@ -575,7 +576,8 @@ inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_i
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
-	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208','7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9')
+	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
+	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9','162382b8-0464-11ea-9a9f-362b9e155667')
 ) et on et.encounter_type_id=e.encounter_type
 where e.voided=0
 group by e.encounter_id;
@@ -2919,6 +2921,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
 				when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
 				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+				when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
 				end) as program,
 				pp.date_enrolled,
 				pp.date_completed,
@@ -2970,6 +2973,122 @@ CREATE PROCEDURE sp_populate_etl_person_address()
     ;
     SELECT "Completed processing person_address data ", CONCAT("Time: ", NOW());
     END$$
+
+    	 -- --------------------------------------- process OTZ enrollment ------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_otz_enrollment$$
+CREATE PROCEDURE sp_populate_etl_otz_enrollment()
+	BEGIN
+		SELECT "Processing OTZ Enrollment ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_otz_enrollment(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			orientation,
+			leadership,
+			participation,
+			treatment_literacy,
+			transition_to_adult_care,
+			making_decision_future,
+			srh,
+			beyond_third_ninety,
+			transfer_in,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=165359,(case o.value_coded when 1065 then "Yes" else "" end),null)) as orientation,
+				max(if(o.concept_id=165361,(case o.value_coded when 1065 then "Yes" else "" end),null)) as leadership,
+				max(if(o.concept_id=165360,(case o.value_coded when 1065 then "Yes" else "" end),null)) as participation,
+				max(if(o.concept_id=165364,(case o.value_coded when 1065 then "Yes" else "" end),null)) as treatment_literacy,
+				max(if(o.concept_id=165363,(case o.value_coded when 1065 then "Yes" else "" end),null)) as transition_to_adult_care,
+				max(if(o.concept_id=165362,(case o.value_coded when 1065 then "Yes" else "" end),null)) as making_decision_future,
+				max(if(o.concept_id=165365,(case o.value_coded when 1065 then "Yes" else "" end),null)) as srh,
+				max(if(o.concept_id=165366,(case o.value_coded when 1065 then "Yes" else "" end),null)) as beyond_third_ninety,
+				max(if(o.concept_id=160563,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as transfer_in,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('3ae95898-0464-11ea-8d71-362b9e155667')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,160563)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing OTZ enrollment data ", CONCAT("Time: ", NOW());
+		END$$
+
+
+    -- --------------------------------------- process OTZ activity ------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_otz_activity$$
+CREATE PROCEDURE sp_populate_etl_otz_activity()
+	BEGIN
+		SELECT "Processing OTZ Activity ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_otz_activity(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			orientation,
+			leadership,
+			participation,
+			treatment_literacy,
+			transition_to_adult_care,
+			making_decision_future,
+			srh,
+			beyond_third_ninety,
+			attended_support_group,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=165359,(case o.value_coded when 1065 then "Yes" else "" end),null)) as orientation,
+				max(if(o.concept_id=165361,(case o.value_coded when 1065 then "Yes" else "" end),null)) as leadership,
+				max(if(o.concept_id=165360,(case o.value_coded when 1065 then "Yes" else "" end),null)) as participation,
+				max(if(o.concept_id=165364,(case o.value_coded when 1065 then "Yes" else "" end),null)) as treatment_literacy,
+				max(if(o.concept_id=165363,(case o.value_coded when 1065 then "Yes" else "" end),null)) as transition_to_adult_care,
+				max(if(o.concept_id=165362,(case o.value_coded when 1065 then "Yes" else "" end),null)) as making_decision_future,
+				max(if(o.concept_id=165365,(case o.value_coded when 1065 then "Yes" else "" end),null)) as srh,
+				max(if(o.concept_id=165366,(case o.value_coded when 1065 then "Yes" else "" end),null)) as beyond_third_ninety,
+				max(if(o.concept_id=165302,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as attended_support_group,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('3ae95d48-0464-11ea-8d71-362b9e155667')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,165302)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing OTZ activity data ", CONCAT("Time: ", NOW());
+		END$$
+
+
 
 -- ------------------------- create table for default facility ------------------------
 
@@ -3037,6 +3156,9 @@ CALL sp_populate_etl_patient_program();
 CALL sp_update_dashboard_table();
 CALL sp_create_default_facility_table();
 CALL sp_populate_etl_person_address();
+CALL sp_populate_etl_otz_enrollment();
+CALL sp_populate_etl_otz_activity();
+
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
