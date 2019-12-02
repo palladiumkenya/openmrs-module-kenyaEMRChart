@@ -3623,6 +3623,7 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
 			srh,
 			beyond_third_ninety,
 			attended_support_group,
+			remarks,
 			voided
 		)
 			select
@@ -3642,6 +3643,7 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
 				max(if(o.concept_id=165365,(case o.value_coded when 1065 then "Yes" else "" end),null)) as srh,
 				max(if(o.concept_id=165366,(case o.value_coded when 1065 then "Yes" else "" end),null)) as beyond_third_ninety,
 				max(if(o.concept_id=165302,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as attended_support_group,
+				max(if(o.concept_id=161011,trim(o.value_text),null)) as remarks,
 				e.voided as voided
 			from encounter e
 				inner join

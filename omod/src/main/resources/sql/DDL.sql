@@ -1698,6 +1698,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     srh VARCHAR(11) DEFAULT NULL,
     beyond_third_ninety VARCHAR(11) DEFAULT NULL,
     attended_support_group VARCHAR(11) DEFAULT NULL,
+    remarks VARCHAR(255) DEFAULT NULL,
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
