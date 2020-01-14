@@ -51,6 +51,13 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_linkage_tracing;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_initiation;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_follow_up;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_outcome;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_program;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_default_facility_info;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral;
 
 
 
@@ -258,6 +265,7 @@ patient_id INT(11) NOT NULL ,
 location_id INT(11) DEFAULT NULL,
 visit_date DATE,
 visit_id INT(11),
+order_id VARCHAR(200),
 lab_test VARCHAR(180),
 urgency VARCHAR(50),
 test_result VARCHAR(180),
@@ -1077,6 +1085,27 @@ index(tracing_type),
 index(tracing_status)
 );
 
+
+-- -------------- create referral form ----------------------------
+
+CREATE TABLE kenyaemr_etl.etl_hts_referral (
+patient_id INT(11) not null,
+visit_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL primary key,
+encounter_uuid CHAR(38) NOT NULL,
+encounter_location INT(11) NOT NULL,
+creator INT(11) NOT NULL,
+date_created DATE NOT NULL,
+visit_date DATE,
+facility_referred_to VARCHAR(50),
+date_to_enrol DATE DEFAULT NULL,
+remarks VARCHAR(100),
+voided INT(11),
+index(patient_id),
+index(visit_date)
+);
+
+
 -- ------------ create table etl_ipt_screening-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_ipt_screening (
@@ -1103,39 +1132,33 @@ INDEX(ipt_started)
 );
 
 -- ------------ create table etl_ipt_follow_up -----------------------
-
 CREATE TABLE kenyaemr_etl.etl_ipt_follow_up (
 uuid char(38),
-provider INT(11),
 patient_id INT(11) NOT NULL ,
 visit_id INT(11),
 visit_date DATE,
 location_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL PRIMARY KEY,
+provider INT(11),
+date_created DATE NOT NULL,
 ipt_due_date DATE DEFAULT NULL,
 date_collected_ipt DATE DEFAULT NULL,
+weight DOUBLE,
 hepatotoxity VARCHAR(100) DEFAULT NULL,
 peripheral_neuropathy VARCHAR(100) DEFAULT NULL ,
 rash VARCHAR(100),
 adherence VARCHAR(100),
-outcome VARCHAR(100),
-date_of_outcome DATE DEFAULT NULL,
-discontinuation_reason VARCHAR(100),
 action_taken VARCHAR(100),
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
-INDEX(visit_date, discontinuation_reason),
 INDEX(encounter_id),
 INDEX(patient_id),
-INDEX(ipt_due_date),
-INDEX(date_collected_ipt),
 INDEX(hepatotoxity),
 INDEX(peripheral_neuropathy),
 INDEX(rash),
-INDEX(adherence),
-INDEX(outcome),
-INDEX(discontinuation_reason)
+INDEX(adherence)
 );
 
 CREATE TABLE kenyaemr_etl.etl_ccc_defaulter_tracing (
@@ -1277,6 +1300,207 @@ SELECT "Successfully created etl_ART_preparation table";
   );
 
   SELECT "Successfully created etl_patient_triage table";
+
+  -- ------------ create table etl_ipt_initiation -----------------------
+  CREATE TABLE kenyaemr_etl.etl_ipt_initiation (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    ipt_indication INT(11),
+    sub_county_reg_number VARCHAR(255),
+    sub_county_reg_date DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_ipt_initiation table";
+  -- ------------------- creating ipt followup table --------------------------
+
+  /*CREATE TABLE kenyaemr_etl.etl_ipt_followup (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11) DEFAULT NULL,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    ipt_due_date DATE,
+    date_collected_ipt DATE,
+    has_hepatoxicity INT(11),
+    has_rash INT(11),
+    has_peripheral_neuropathy INT(11),
+    adherence INT(11),
+    action_taken VARCHAR(100),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(adherence)
+  );
+
+  SELECT "Successfully created etl_ipt_followup table";
+*/
+  -- --------------------- creating ipt outcome table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_ipt_outcome (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    outcome INT(11),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(outcome),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_ipt_outcome table";
+
+  -- --------------------- creating hts tracing table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_hts_linkage_tracing (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    tracing_type INT(11),
+    tracing_outcome INT(11),
+    reason_not_contacted INT(11),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(tracing_type),
+    INDEX(tracing_outcome),
+    INDEX(reason_not_contacted),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_hts_linkage_tracing table";
+
+-- ------------------------ create patient program table ---------------------
+
+CREATE TABLE kenyaemr_etl.etl_patient_program (
+    uuid CHAR(38) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    program VARCHAR(100) NOT NULL,
+    date_enrolled DATE NOT NULL,
+    date_completed DATE DEFAULT NULL,
+    outcome INT(11),
+    date_created DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(date_enrolled),
+    INDEX(date_completed),
+    INDEX(patient_id),
+    INDEX(outcome)
+  );
+
+  -- ------------------------ create person address table ---------------------
+
+  CREATE TABLE kenyaemr_etl.etl_person_address (
+    uuid CHAR(38) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    county VARCHAR(100) DEFAULT NULL,
+    sub_county VARCHAR(100) DEFAULT NULL,
+    location VARCHAR(100) DEFAULT NULL,
+    ward VARCHAR(100) DEFAULT NULL,
+    sub_location VARCHAR(100) DEFAULT NULL,
+    village VARCHAR(100) DEFAULT NULL,
+    postal_address VARCHAR(100) DEFAULT NULL,
+    land_mark VARCHAR(100) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(patient_id)
+  );
+
+   -- --------------------- creating OTZ activity table -------------------------------
+
+  CREATE TABLE kenyaemr_etl.etl_otz_activity (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    orientation VARCHAR(11) DEFAULT NULL,
+    leadership VARCHAR(11) DEFAULT NULL,
+    participation VARCHAR(11) DEFAULT NULL,
+    treatment_literacy VARCHAR(11) DEFAULT NULL,
+    transition_to_adult_care VARCHAR(11) DEFAULT NULL,
+    making_decision_future VARCHAR(11) DEFAULT NULL,
+    srh VARCHAR(11) DEFAULT NULL,
+    beyond_third_ninety VARCHAR(11) DEFAULT NULL,
+    attended_support_group VARCHAR(11) DEFAULT NULL,
+    remarks VARCHAR(255) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_otz_activity table";
+
+
+   -- --------------------- creating OTZ enrollment table -------------------------------
+
+  CREATE TABLE kenyaemr_etl.etl_otz_enrollment (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    orientation VARCHAR(11) DEFAULT NULL,
+    leadership VARCHAR(11) DEFAULT NULL,
+    participation VARCHAR(11) DEFAULT NULL,
+    treatment_literacy VARCHAR(11) DEFAULT NULL,
+    transition_to_adult_care VARCHAR(11) DEFAULT NULL,
+    making_decision_future VARCHAR(11) DEFAULT NULL,
+    srh VARCHAR(11) DEFAULT NULL,
+    beyond_third_ninety VARCHAR(11) DEFAULT NULL,
+    transfer_in VARCHAR(11) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_otz_enrollment table";
+
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
