@@ -3545,6 +3545,60 @@ CREATE PROCEDURE sp_create_default_facility_table()
 
 		SELECT "Completed processing information about default facility ", CONCAT("Time: ", NOW());
 		END$$
+
+		    	 -- --------------------------------------- process OVC enrollment ------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_ovc_enrolment$$
+CREATE PROCEDURE sp_populate_etl_ovc_enrolment$$()
+	BEGIN
+		SELECT "Processing OVC Enrolment ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_ovc_enrolment(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+		  caregiver_enrolled_here,
+		  caregiver_name,
+		  caregiver_gender,
+		  relationship_to_client,
+		  caregiver_phone_number,
+		  client_enrolled_cpims,
+		  partner_offering_ovc,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=163777,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as caregiver_enrolled_here,
+				max(if(o.concept_id=163258,o.value_text)) as caregiver_name,
+				max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
+				max(if(o.concept_id=164352,(case o.value_coded when 1527 then "Parent" when 974 then "Uncle" when 972 then "Sibling" when 162722 then "Childrens home" when 975 then "Aunt"  else "" end),null)) as relationship_to_client,
+				max(if(o.concept_id=160642,o.value_text)) as caregiver_phone_number,
+				max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" else "" end),null)) as client_enrolled_cpims,
+				max(if(o.concept_id=165347,o.value_text)) as partner_offering_ovc,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('5cf01528-09da-11ea-8d71-362b9e155667')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (163777,163258,1533,164352,160642,163766,165347)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing OVC enrolment data ", CONCAT("Time: ", NOW());
+		END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -3601,6 +3655,7 @@ CALL sp_create_default_facility_table();
 CALL sp_populate_etl_person_address();
 CALL sp_populate_etl_otz_enrollment();
 CALL sp_populate_etl_otz_activity();
+CALL sp_populate_etl_ovc_enrolment();
 
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
