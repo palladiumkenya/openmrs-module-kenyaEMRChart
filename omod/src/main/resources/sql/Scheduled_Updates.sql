@@ -425,9 +425,6 @@ END$$
 DROP PROCEDURE IF EXISTS sp_update_etl_program_discontinuation$$
 CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATETIME)
 BEGIN
-
-
-
 insert into kenyaemr_etl.etl_patient_program_discontinuation(
 patient_id,
 uuid,
@@ -454,6 +451,7 @@ et.uuid,
 	when '5feee3f1-aa16-4513-8bd0-5d9b27ef1208' then 'MCH Child'
 	when '7c426cfc-3b47-4481-b55f-89860c21c7de' then 'MCH Mother'
 	when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
+	when '5cf00d9e-09da-11ea-8d71-362b9e155667' then 'OVC'
 end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
@@ -466,7 +464,7 @@ inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where 
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
-	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','162382b8-0464-11ea-9a9f-362b9e155667')
+	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667')
 ) et on et.encounter_type_id=e.encounter_type
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
@@ -3668,8 +3666,8 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
 
 				-- --------------------------------------- process OTZ Enrollment ------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_ovc_enrolment
-CREATE PROCEDURE sp_update_etl_otz_enrollment(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_ovc_enrolment$$
+CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
 	BEGIN
 		SELECT "Updating OVC Enrolment ", CONCAT("Time: ", NOW());
 		INSERT INTO kenyaemr_etl.etl_ovc_enrolment(

@@ -1744,7 +1744,6 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
   SELECT "Successfully created etl_otz_enrollment table";
 
    -- --------------------- creating OVC enrollment table -------------------------------
-
   CREATE TABLE kenyaemr_etl.etl_ovc_enrolment (
     uuid CHAR(38),
     encounter_id INT(11) NOT NULL PRIMARY KEY,
@@ -1755,11 +1754,11 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     date_created DATE,
     caregiver_enrolled_here VARCHAR(11) DEFAULT NULL,
     caregiver_name VARCHAR(11) DEFAULT NULL,
-    caregiver_gender VARCHAR(11) DEFAULT NULL,
-    relationship_to_client VARCHAR(11) DEFAULT NULL,
-    caregiver_phone_number VARCHAR(11) DEFAULT NULL,
+    caregiver_gender VARCHAR(255) DEFAULT NULL,
+    relationship_to_client VARCHAR(255) DEFAULT NULL,
+    caregiver_phone_number VARCHAR(255) DEFAULT NULL,
     client_enrolled_cpims VARCHAR(11) DEFAULT NULL,
-    partner_offering_ovc VARCHAR(11) DEFAULT NULL,
+    partner_offering_ovc VARCHAR(255) DEFAULT NULL,
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
