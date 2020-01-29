@@ -3698,12 +3698,12 @@ CREATE PROCEDURE sp_update_etl_otz_enrollment(IN last_update_time DATETIME)
 				e.creator,
 				e.date_created as date_created,
 				max(if(o.concept_id=163777,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as caregiver_enrolled_here,
-				max(if(o.concept_id=163258,o.value_text)) as caregiver_name,
+				max(if(o.concept_id=163258,o.value_text,null)) as caregiver_name,
 				max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
 				max(if(o.concept_id=164352,(case o.value_coded when 1527 then "Parent" when 974 then "Uncle" when 972 then "Sibling" when 162722 then "Childrens home" when 975 then "Aunt"  else "" end),null)) as relationship_to_client,
-				max(if(o.concept_id=160642,o.value_text)) as caregiver_phone_number,
+				max(if(o.concept_id=160642,o.value_text,null)) as caregiver_phone_number,
 				max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" else "" end),null)) as client_enrolled_cpims,
-				max(if(o.concept_id=165347,o.value_text)) as partner_offering_ovc,
+				max(if(o.concept_id=165347,o.value_text,null)) as partner_offering_ovc,
 				e.voided as voided
 			from encounter e
 				inner join
