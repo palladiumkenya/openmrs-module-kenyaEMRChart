@@ -539,7 +539,7 @@ END$$
 DROP PROCEDURE IF EXISTS sp_populate_etl_program_discontinuation$$
 CREATE PROCEDURE sp_populate_etl_program_discontinuation()
 BEGIN
-SELECT "Processing Program (HIV, TB, MCH ...) discontinuations ", CONCAT("Time: ", NOW());
+SELECT "Processing Program (HIV, TB, MCH,IPT,OTZ,OVC ...) discontinuations ", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_patient_program_discontinuation(
 patient_id,
 uuid,
@@ -567,6 +567,7 @@ et.uuid,
 	when '7c426cfc-3b47-4481-b55f-89860c21c7de' then 'MCH Mother'
 	when 'bb77c683-2144-48a5-a011-66d904d776c9' then 'IPT'
 	when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
+	when '5cf00d9e-09da-11ea-8d71-362b9e155667' then 'OVC'
 end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
@@ -579,7 +580,7 @@ inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
-	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9','162382b8-0464-11ea-9a9f-362b9e155667')
+	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667')
 ) et on et.encounter_type_id=e.encounter_type
 where e.voided=0
 group by e.encounter_id;
@@ -3545,6 +3546,60 @@ CREATE PROCEDURE sp_create_default_facility_table()
 
 		SELECT "Completed processing information about default facility ", CONCAT("Time: ", NOW());
 		END$$
+
+		    	 -- --------------------------------------- process OVC enrollment ------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_ovc_enrolment$$
+CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
+	BEGIN
+		SELECT "Processing OVC Enrolment ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_ovc_enrolment(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+		  caregiver_enrolled_here,
+		  caregiver_name,
+		  caregiver_gender,
+		  relationship_to_client,
+		  caregiver_phone_number,
+		  client_enrolled_cpims,
+		  partner_offering_ovc,
+			voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				max(if(o.concept_id=163777,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as caregiver_enrolled_here,
+				max(if(o.concept_id=163258,o.value_text,null)) as caregiver_name,
+				max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
+				max(if(o.concept_id=164352,(case o.value_coded when 1527 then "Parent" when 974 then "Uncle" when 972 then "Sibling" when 162722 then "Childrens home" when 975 then "Aunt"  else "" end),null)) as relationship_to_client,
+				max(if(o.concept_id=160642,o.value_text,null)) as caregiver_phone_number,
+				max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" else "" end),null)) as client_enrolled_cpims,
+				max(if(o.concept_id=165347,o.value_text,null)) as partner_offering_ovc,
+				e.voided as voided
+			from encounter e
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('5cf01528-09da-11ea-8d71-362b9e155667')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (163777,163258,1533,164352,160642,163766,165347)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing OVC enrolment data ", CONCAT("Time: ", NOW());
+		END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -3601,6 +3656,7 @@ CALL sp_create_default_facility_table();
 CALL sp_populate_etl_person_address();
 CALL sp_populate_etl_otz_enrollment();
 CALL sp_populate_etl_otz_activity();
+CALL sp_populate_etl_ovc_enrolment();
 
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;

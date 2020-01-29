@@ -65,6 +65,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_discontinuation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 
 
 -- create table etl_patient_demographics
@@ -1742,6 +1743,32 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
   SELECT "Successfully created etl_otz_enrollment table";
 
+   -- --------------------- creating OVC enrollment table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_ovc_enrolment (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    encounter_provider INT(11),
+    date_created DATE,
+    caregiver_enrolled_here VARCHAR(11) DEFAULT NULL,
+    caregiver_name VARCHAR(11) DEFAULT NULL,
+    caregiver_gender VARCHAR(255) DEFAULT NULL,
+    relationship_to_client VARCHAR(255) DEFAULT NULL,
+    caregiver_phone_number VARCHAR(255) DEFAULT NULL,
+    client_enrolled_cpims VARCHAR(11) DEFAULT NULL,
+    partner_offering_ovc VARCHAR(255) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_ovc_enrolment table";
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
