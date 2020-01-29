@@ -3549,7 +3549,7 @@ CREATE PROCEDURE sp_create_default_facility_table()
 		    	 -- --------------------------------------- process OVC enrollment ------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_ovc_enrolment$$
-CREATE PROCEDURE sp_populate_etl_ovc_enrolment$$()
+CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 	BEGIN
 		SELECT "Processing OVC Enrolment ", CONCAT("Time: ", NOW());
 		INSERT INTO kenyaemr_etl.etl_ovc_enrolment(
