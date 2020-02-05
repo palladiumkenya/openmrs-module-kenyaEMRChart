@@ -3600,6 +3600,109 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 		SELECT "Completed processing OVC enrolment data ", CONCAT("Time: ", NOW());
 		END$$
 
+		-- ------------------------- process patient contact ------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_patient_contact$$
+CREATE PROCEDURE sp_populate_etl_patient_contact()
+	BEGIN
+		SELECT "Processing patient contact ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_patient_contact(
+      id,
+      uuid,
+      date_created,
+      obs_group_id,
+      first_name,
+      middle_name,
+      last_name,
+      sex,
+      birth_date,
+      physical_address,
+      phone_contact,
+      patient_related_to,
+      patient_id,
+      relationship_type,
+      appointment_date,
+      baseline_hiv_status,
+      ipv_outcome,
+      marital_status,
+      living_with_patient,
+      pns_approach,
+      contact_listing_decline_reason,
+      consented_contact_listing,
+      voided
+		)
+			select
+			  pc.id,
+			  pc.uuid,
+        pc.date_created,
+        pc.obs_group_id,
+        pc.first_name,
+        pc.middle_name,
+        pc.last_name,
+        pc.sex,
+        pc.birth_date,
+        pc.physical_address,
+        pc.phone_contact,
+        pc.patient_related_to,
+        pc.patient_id,
+        pc.relationship_type,
+        pc.appointment_date,
+        pc.baseline_hiv_status,
+        pc.ipv_outcome,
+        pc.marital_status,
+        pc.living_with_patient,
+        pc.pns_approach,
+        pc.contact_listing_decline_reason,
+        pc.consented_contact_listing,
+        pc.voided
+			from kenyaemr_hiv_testing_patient_contact pc
+				inner join kenyaemr_etl.etl_patient_demographics dm on dm.patient_id=pc.patient_related_to and dm.voided=0
+        where pc.voided=0
+		;
+		SELECT "Completed processing patient contact data ", CONCAT("Time: ", NOW());
+		END$$
+
+				-- ------------------------- process contact trace ------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_client_trace$$
+CREATE PROCEDURE sp_populate_etl_client_trace()
+	BEGIN
+		SELECT "Processing client trace ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_client_trace(
+      id,
+      uuid,
+      date_created,
+      encounter_date,
+      client_id,
+      contact_type,
+      status,
+      unique_patient_no,
+      facility_linked_to,
+      health_worker_handed_to,
+      remarks,
+      appointment_date,
+      voided
+		)
+			select
+			  ct.id,
+        ct.uuid,
+        ct.date_created,
+        ct.encounter_date,
+        ct.client_id,
+        ct.contact_type,
+        ct.status,
+        ct.unique_patient_no,
+        ct.facility_linked_to,
+        ct.health_worker_handed_to,
+        ct.remarks,
+        ct.appointment_date,
+        ct.voided
+			from kenyaemr_hiv_testing_client_trace ct
+				inner join kenyaemr_etl.etl_patient_contact pc on pc.id=ct.client_id and ct.voided=0
+        where pc.voided=0
+		;
+		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
+		END$$
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -3657,6 +3760,8 @@ CALL sp_populate_etl_person_address();
 CALL sp_populate_etl_otz_enrollment();
 CALL sp_populate_etl_otz_activity();
 CALL sp_populate_etl_ovc_enrolment();
+CALL sp_populate_etl_patient_contact();
+CALL sp_populate_etl_client_trace();
 
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;

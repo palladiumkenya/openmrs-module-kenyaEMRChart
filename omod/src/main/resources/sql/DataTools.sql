@@ -954,6 +954,59 @@ SELECT "Successfully created enhanced adherence table";
   SELECT "Successfully created triage table";
 
 
+  -- create table datatools_patient_contact
+  create table kenyaemr_datatools.patient_contact as
+    select
+        id,
+        uuid,
+        date_created,
+        obs_group_id,
+        first_name,
+        middle_name,
+        last_name,
+        sex,
+        birth_date,
+        physical_address,
+        phone_contact,
+        patient_related_to,
+        patient_id,
+        (case relationship_type when 970 then "Mother" when 971 then "Father" when 1528 then "Child" when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 162221 then "Co-wife" when 163565 then "Sexual partner" when 157351 then "Injectable drug user" when 5622 then "Other" else "" end) as relationship_type,
+        appointment_date,
+        baseline_hiv_status,
+        ipv_outcome,
+       (case marital_status when 1057 then "Single" when 5555 then "Married Monogamous" when 159715 then "Married Polygamous" when 1058 then "Divorced" when 1059 then "Widowed" else "" end) as marital_status,
+       (case living_with_patient when 1065 then "Yes" when 1066 then "No" when 162570 then "Declined to Answer" else "" end) as living_with_patient,
+       (case pns_approach when 162284 then "Dual referral" when 160551 then "Passive referral" when 161642 then "Contract referral" when 163096 then "Provider referral"  else "" end) as pns_approach,
+        contact_listing_decline_reason,
+       (case consented_contact_listing when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as consented_contact_listing,
+        voided
+    from kenyaemr_etl.etl_patient_contact;
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD PRIMARY KEY(id);
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD FOREIGN KEY (patient_related_to) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD INDEX(date_created);
+  SELECT "Successfully created patient_contact table";
+
+    -- create table datatools_client_trace
+  create table kenyaemr_datatools.client_trace as
+    select
+      id,
+      uuid,
+      date_created,
+      encounter_date,
+      client_id,
+      contact_type,
+      status,
+      unique_patient_no,
+      facility_linked_to,
+      health_worker_handed_to,
+      remarks,
+      appointment_date,
+      voided
+    from kenyaemr_etl.etl_client_trace;
+  ALTER TABLE kenyaemr_datatools.client_trace ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_contact(id);
+  ALTER TABLE kenyaemr_datatools.client_trace ADD INDEX(date_created);
+  SELECT "Successfully created client_trace table";
+
 SELECT "creating hts_test table";
 create table kenyaemr_datatools.hts_test
   as select t.* from kenyaemr_etl.etl_hts_test t

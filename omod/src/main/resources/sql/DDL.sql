@@ -1770,6 +1770,64 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
   SELECT "Successfully created etl_ovc_enrolment table";
 
+  -- --------------------- creating patient contact  table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_patient_contact (
+    id                     INT(11),
+    uuid                   CHAR(38),
+    date_created           DATE,
+    obs_group_id           INT(11),
+    first_name             VARCHAR(255),
+    middle_name            VARCHAR(255),
+    last_name              VARCHAR(255),
+    sex                    VARCHAR(50),
+    birth_date             DATETIME,
+    physical_address       VARCHAR(255),
+    phone_contact          VARCHAR(255),
+    patient_related_to     INT(11),
+    patient_id             INT(11),
+    relationship_type      INT(11),
+    appointment_date       DATETIME,
+    baseline_hiv_status    VARCHAR(255),
+    ipv_outcome            VARCHAR(255),
+    marital_status         VARCHAR(100),
+    living_with_patient    VARCHAR(100),
+    pns_approach           VARCHAR(100),
+    contact_listing_decline_reason   VARCHAR(255),
+    consented_contact_listing   VARCHAR(100),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_related_to) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(date_created),
+    INDEX(id),
+    INDEX(id, date_created)
+  );
+
+  SELECT "Successfully created etl_patient_contact table";
+
+  -- --------------------- creating client trace  table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_client_trace (
+    id                     INT(11),
+    uuid                   CHAR(38),
+    date_created           DATE,
+    encounter_date         DATETIME,
+    client_id              INT(11),
+    contact_type           VARCHAR(255),
+    status                 VARCHAR(255),
+    unique_patient_no      VARCHAR(255),
+    facility_linked_to     VARCHAR(255),
+    health_worker_handed_to    VARCHAR(255),
+    remarks                VARCHAR(255),
+    appointment_date       DATETIME,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_contact(id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(date_created),
+    INDEX(id),
+    INDEX(id, date_created)
+  );
+
+  SELECT "Successfully created etl_client_trace table";
+
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
