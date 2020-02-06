@@ -1775,7 +1775,6 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     id                     INT(11),
     uuid                   CHAR(38),
     date_created           DATE,
-    obs_group_id           INT(11),
     first_name             VARCHAR(255),
     middle_name            VARCHAR(255),
     last_name              VARCHAR(255),

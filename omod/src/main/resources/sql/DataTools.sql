@@ -960,7 +960,6 @@ SELECT "Successfully created enhanced adherence table";
         id,
         uuid,
         date_created,
-        obs_group_id,
         first_name,
         middle_name,
         last_name,
