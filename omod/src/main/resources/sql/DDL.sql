@@ -66,6 +66,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
 
 
 -- create table etl_patient_demographics
@@ -1769,6 +1770,33 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
   );
 
   SELECT "Successfully created etl_ovc_enrolment table";
+
+       -- --------------------- creating Cervical cancer screening table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_cervical_cancer_screening (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    encounter_provider INT(11),
+    patient_id INT(11) NOT NULL,
+    visit_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    date_created DATE,
+    screening_number INT(11),
+    screening_method VARCHAR(255) DEFAULT NULL,
+    screening_result VARCHAR(255) DEFAULT NULL,
+    previous_screening_method VARCHAR(255) DEFAULT NULL,
+    previous_screening_date DATE,
+    previous_screening_result VARCHAR(255) DEFAULT NULL,
+    encounter_type VARCHAR(255),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(screening_number),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+  SELECT "Successfully created etl_cervical_cancer_screening table";
 
   -- --------------------- creating patient contact  table -------------------------------
   CREATE TABLE kenyaemr_etl.etl_patient_contact (
