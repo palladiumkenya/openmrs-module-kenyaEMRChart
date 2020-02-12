@@ -3600,6 +3600,70 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 		SELECT "Completed processing OVC enrolment data ", CONCAT("Time: ", NOW());
 		END$$
 
+
+-- -------------populate etl_cervical_cancer_screening-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_cervical_cancer_screening$$
+CREATE PROCEDURE sp_populate_etl_cervical_cancer_screening()
+BEGIN
+SELECT "Processing HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_cervical_cancer_screening(
+    uuid,
+    encounter_id,
+    encounter_provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    date_created,
+    screening_method,
+    screening_result,
+    encounter_type,
+    voided
+    )
+select
+       e.uuid,  e.encounter_id,e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id,e.date_created,
+       max(if(o.concept_id = 163589, (case o.value_coded when 885 then 'Pap Smear' when 162816 then 'VIA' when 164977 then 'VILI' when 5622 then 'Other' else "" end), "" )) as screening_method,
+       max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive' when 159393 then 'Presumed' when 664  then 'Negative' when 1118 then 'Not Done' when 1175 then 'N/A' else ''end), '' )) as screening_result,
+      f.name as encounter_type,
+       e.voided as voided
+from encounter e
+       inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259')
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
+
+update kenyaemr_etl.etl_cervical_cancer_screening scr,
+     (
+     SELECT
+            ThisRow.uuid,
+            ThisRow.patient_id,
+            ThisRow.visit_date,
+            ThisRow.visit_id,
+            ThisRow.screening_result currentResult,
+            PrevRow.visit_date as prevVisitDate,
+            PrevRow.screening_result previousResult,
+            @x:=IF(@same_value=ThisRow.patient_id,@x+1,1) as rowNum,
+            @same_value:=ThisRow.patient_id as dummy
+     FROM
+          kenyaemr_etl.etl_cervical_cancer_screening    AS ThisRow
+            LEFT JOIN
+              kenyaemr_etl.etl_cervical_cancer_screening    AS PrevRow
+              ON  PrevRow.patient_id   = ThisRow.patient_id
+                    AND PrevRow.visit_date = (SELECT MAX(s.visit_date)
+                                              FROM kenyaemr_etl.etl_cervical_cancer_screening s
+                                              WHERE s.patient_id  = ThisRow.patient_id
+                                                AND s.visit_date < ThisRow.visit_date) order by ThisRow.patient_id, ThisRow.visit_date
+     ) u,
+     (SELECT  @x:=0, @same_value:='') t
+set scr.previous_screening_date = u.prevVisitDate,scr.previous_screening_result = u.previousResult, scr.screening_number = u.rowNum
+where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
+
+SELECT "Completed processing  HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
+END$$
+
 		-- ------------------------- process patient contact ------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_patient_contact$$
@@ -3758,6 +3822,7 @@ CALL sp_populate_etl_person_address();
 CALL sp_populate_etl_otz_enrollment();
 CALL sp_populate_etl_otz_activity();
 CALL sp_populate_etl_ovc_enrolment();
+CALL sp_populate_etl_cervical_cancer_screening();
 CALL sp_populate_etl_patient_contact();
 CALL sp_populate_etl_client_trace();
 
