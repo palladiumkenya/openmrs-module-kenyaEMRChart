@@ -3843,9 +3843,9 @@ select
        max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive' when 159393 then 'Presumed' when 664  then 'Negative' when 1118 then 'Not Done' when 1175 then 'N/A' else ''end), '' )) as screening_result,
       f.name as encounter_type,
        e.voided as voided
-from openmrs.encounter e
-       inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259')
-       inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589) and o.voided=0
+from encounter e
+       inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259')
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589) and o.voided=0
 where
    e.date_created >= last_update_time
 or e.date_changed >= last_update_time
@@ -3862,7 +3862,7 @@ update kenyaemr_etl.etl_cervical_cancer_screening scr,
             ThisRow.uuid,
             ThisRow.patient_id,
             ThisRow.visit_date,
-     ThisRow.visit_id,
+            ThisRow.visit_id,
             PrevRow.visit_date as prevVisitDate,
             PrevRow.screening_result previousResult,
             ThisRow.screening_result currentResult,
