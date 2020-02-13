@@ -1855,6 +1855,37 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
   SELECT "Successfully created etl_client_trace table";
 
+
+ -- --------------------- creating Viral Load table -------------------------------
+  CREATE TABLE kenyaemr_etl.etl_viral_load (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    order_date DATE ,
+    date_of_result DATE ,
+    order_reason VARCHAR(255) DEFAULT NULL ,
+    previous_vl_result VARCHAR(50) DEFAULT NULL,
+    current_vl_result VARCHAR(50) DEFAULT NULL,
+    previous_vl_date DATE,
+    previous_vl_reason VARCHAR(255) DEFAULT NULL,
+    vl_months_since_hiv_enrollment INT(11) DEFAULT NULL,
+    vl_months_since_otz_enrollment INT(11) DEFAULT NULL,
+    eligibility VARCHAR(50) DEFAULT NULL,
+    date_created DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_viral_load table";
+
+
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
