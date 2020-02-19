@@ -3840,7 +3840,7 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
 select
        e.uuid,  e.encounter_id,e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id,e.date_created,
        max(if(o.concept_id = 163589, (case o.value_coded when 885 then 'Pap Smear' when 162816 then 'VIA' when 164977 then 'VILI' when 5622 then 'Other' else "" end), "" )) as screening_method,
-       max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive' when 159393 then 'Presumed' when 664  then 'Negative' when 1118 then 'Not Done' when 1175 then 'N/A' else ''end), '' )) as screening_result,
+       max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive' when 159393 then 'Presumed' when 664  then 'Negative'  else null end), '' )) as screening_result,
       f.name as encounter_type,
        e.voided as voided
 from encounter e
@@ -3853,6 +3853,7 @@ or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
+having screening_result is not null
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), screening_method = VALUES(screening_method), screening_result = VALUES(screening_result);
 SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
