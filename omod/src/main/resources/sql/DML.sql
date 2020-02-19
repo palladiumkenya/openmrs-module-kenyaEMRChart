@@ -364,6 +364,7 @@ max(if(o.concept_id=1855,o.value_coded,null)) as stability,
 max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
 e.voided as voided
 from encounter e
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
@@ -420,7 +421,8 @@ od.urgency,
 e.date_created,
 e.creator
 from encounter e
-inner join
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc')
 ) et on et.encounter_type_id=e.encounter_type
@@ -518,7 +520,8 @@ select
 	o.date_voided,
 	e.creator
 from obs o
-left outer join encounter e on e.encounter_id = o.encounter_id and e.voided=0
+	inner join person p on p.person_id=o.person_id and p.voided=0
+	left outer join encounter e on e.encounter_id = o.encounter_id and e.voided=0
 left outer join encounter_type et on et.encounter_type_id = e.encounter_type
 left outer join concept_name cn on o.value_coded = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED' -- SHORT'
 left outer join concept_set cs on o.value_coded = cs.concept_id
@@ -575,7 +578,8 @@ max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
 max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
 max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
-inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
@@ -672,6 +676,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				-- max(if(o.concept_id=161655,o.value_text,null)) as date_of_discontinuation,
 				max(if(o.concept_id=161555,o.value_coded,null)) as discontinuation_reason
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555)
 				inner join
@@ -848,6 +853,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes
 
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
 				inner join
@@ -994,6 +1000,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes
 
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
@@ -1066,6 +1073,7 @@ CREATE PROCEDURE sp_populate_etl_mch_discharge()
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(161651,159926,161534,162051,162093,1641,160481,163145,159395)
 				inner join
@@ -1230,6 +1238,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 
 
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,160967,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395)
 				inner join
@@ -1364,6 +1373,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 			  max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
 			  max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as hiv_status_at_exit
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427)
 
@@ -1480,6 +1490,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				max(if(o.concept_id=159395,o.value_text,null)) as comments,
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096)
 				inner join
@@ -1702,7 +1713,8 @@ max(if(o.concept_id=161356 and o.value_coded=1350,o.value_coded,null)) as has_ex
 -- max(if(o.concept_id=159787,o.value_coded,null)) as treatment_outcome_date
 
 from encounter e
-inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 and o.concept_id in(160540,161561,160534,160535,161551,161552,5089,5090,160638,160640,160641,160642,160040,159871,159982,161356)
 inner join
 (
@@ -1775,7 +1787,8 @@ max(if(o.concept_id=159964,o.value_datetime,null)) as test_date,
 max(if(o.concept_id=1169,o.value_coded,null)) as hiv_status,
 max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
 from encounter e
-inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 and o.concept_id in(159961,307,159968,160023,159964,159982,159952,159956,159958,159964,1169,5096)
 inner join
 (
@@ -1813,7 +1826,8 @@ max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_t
 max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as tb_treatment_start_date,
 "" as notes -- max(case o.concept_id when 160632 then value_text else "" end) as notes
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
@@ -1991,6 +2005,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 			max(if(o.concept_id=5622,o.value_text,null)) as reason_discontinued_other
 
 		from encounter e
+			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 													and o.concept_id in(1193,1252,5622,1191,1255,1268)
 			inner join
@@ -2109,7 +2124,8 @@ max(if(o.concept_id=164952,(case o.value_coded when 1065 then "Yes" when 1066 th
 max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
 e.voided
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
                                                                                  160540,159427, 164848, 6096, 1659, 164952, 163042, 159813)
 inner join (
@@ -2176,7 +2192,8 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
     max(if(o.concept_id=1473,trim(o.value_text),null)) as provider_handed_to,
     e.voided
   from encounter e
-  inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
+		inner join person p on p.person_id=e.patient_id and p.voided=0
+		inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
   left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473) and o.voided=0
   where e.voided=0
   group by e.encounter_id;
@@ -2219,7 +2236,8 @@ CREATE PROCEDURE sp_populate_hts_referral()
         max(if(o.concept_id=163042,o.value_text,null)) as remarks,
         e.voided
       from encounter e
-        inner join form f on f.form_id = e.form_id and f.uuid = "9284828e-ce55-11e9-a32f-2a2ae2dbcce4"
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join form f on f.form_id = e.form_id and f.uuid = "9284828e-ce55-11e9-a32f-2a2ae2dbcce4"
         left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550, 161561, 163042) and o.voided=0
         where e.voided=0
       group by e.encounter_id;
@@ -2358,7 +2376,8 @@ select
 e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
 max(o.value_coded) as ipt_started
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id=1265 and o.voided=0
 where e.voided=0
 group by e.encounter_id;
@@ -2402,7 +2421,8 @@ max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 1
 max(if(o.concept_id = 160632, trim(o.value_text), "" )) as action_taken,
 e.voided
 from encounter e
-inner join
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join
 (
 select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
 ) et on et.encounter_type_id=e.encounter_type
@@ -2447,7 +2467,8 @@ max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
 max(if(o.concept_id = 1599, o.value_coded, "" )) as cause_of_death,
 max(if(o.concept_id = 160716, o.value_text, "" )) as comments
 from encounter e
-inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 160721, 1639, 163725, 160433, 1599, 160716) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
@@ -2510,7 +2531,8 @@ other_support_systems
    max(if(o.concept_id=163164,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as enrolled_in_reminder_system,
    max(if(o.concept_id=164360,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as other_support_systems
     from encounter e
-   inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
  and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
    inner join
      (
@@ -2626,6 +2648,7 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date
 
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
 				inner join
@@ -2701,6 +2724,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
 				e.voided as voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542')
@@ -2793,7 +2817,8 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
            e.voided as voided
 
     from encounter e
-           inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
            inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
@@ -2893,8 +2918,9 @@ CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
            max(if(o.concept_id = 164073, o.value_datetime, null )) as care_end_date,
            e.voided
     from encounter e
-           inner join form f on f.form_id=e.form_id and f.uuid in ("467c4cc3-25eb-4330-9cf6-e41b9b14cc10")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073) and o.voided=0
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join form f on f.form_id=e.form_id and f.uuid in ("467c4cc3-25eb-4330-9cf6-e41b9b14cc10")
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing PrEP discontinuation", CONCAT("Time: ", NOW());
@@ -2956,8 +2982,9 @@ CREATE PROCEDURE sp_populate_etl_prep_enrolment()
            e.voided as voided
 
     from encounter e
-           inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641) and o.voided=0
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
@@ -3105,8 +3132,9 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
            max(if(o.concept_id = 163042, o.value_text, null )) as clinical_notes,
            e.voided
     from encounter e
-           inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
             165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
             165109,159777,165055,165309,5096,165310,163042) and o.voided=0
     where e.voided=0
@@ -3137,8 +3165,9 @@ CREATE PROCEDURE sp_populate_etl_progress_note()
            max(if(o.concept_id = 159395, o.value_text, null )) as notes,
            e.voided
     from encounter e
-           inner join form f on f.form_id=e.form_id and f.uuid in ("c48ed2a2-0a0f-4f4e-9fed-a79ca3e1a9b9")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159395) and o.voided=0
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join form f on f.form_id=e.form_id and f.uuid in ("c48ed2a2-0a0f-4f4e-9fed-a79ca3e1a9b9")
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159395) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing progress note", CONCAT("Time: ", NOW());
@@ -3173,6 +3202,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 				max(if(o.concept_id=161552,o.value_datetime,null)) as sub_county_reg_date,
 				e.voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id in(162276,161552)
 				inner join
 				(
@@ -3236,6 +3266,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
 				e.voided as voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
@@ -3274,6 +3305,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_outcome()
 				max(if(o.concept_id=161555,o.value_coded,null)) as ipt_outcome,
 				e.voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=161555
 				inner join
 				(
@@ -3316,6 +3348,7 @@ CREATE PROCEDURE sp_populate_etl_hts_linkage_tracing()
 				max(if(o.concept_id=1779,o.value_coded,null)) as reason_not_contacted,
 				e.voided as voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -3453,6 +3486,7 @@ CREATE PROCEDURE sp_populate_etl_otz_enrollment()
 				max(if(o.concept_id=160563,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as transfer_in,
 				e.voided as voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -3513,6 +3547,7 @@ CREATE PROCEDURE sp_populate_etl_otz_activity()
 
 				e.voided as voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -3587,6 +3622,7 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 				max(if(o.concept_id=165347,o.value_text,null)) as partner_offering_ovc,
 				e.voided as voided
 			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -3629,8 +3665,9 @@ select
       f.name as encounter_type,
        e.voided as voided
 from encounter e
-       inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259')
-       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589) and o.voided=0
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259')
+  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589) and o.voided=0
 where e.voided=0
 group by e.encounter_id
 having screening_result is not null;
