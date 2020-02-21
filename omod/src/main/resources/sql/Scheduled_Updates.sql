@@ -3883,6 +3883,32 @@ update kenyaemr_etl.etl_cervical_cancer_screening scr,
 set scr.previous_screening_date = u.prevVisitDate,scr.previous_screening_result = u.previousResult, scr.screening_number = u.rowNum
 where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
 
+update kenyaemr_etl.etl_cervical_cancer_screening scr,
+     (
+     SELECT
+            ThisRow.uuid,
+            ThisRow.patient_id,
+            ThisRow.visit_date,
+            ThisRow.visit_id,
+            PrevRow.visit_date as prevVisitDate,
+            PrevRow.screening_result previousResult,
+            ThisRow.screening_result currentResult,
+            @x:=IF(@same_value=ThisRow.patient_id,@x+1,1) as rowNum,
+            @same_value:=ThisRow.patient_id as dummy
+     FROM
+          kenyaemr_etl.etl_cervical_cancer_screening    AS ThisRow
+            LEFT JOIN
+              kenyaemr_etl.etl_cervical_cancer_screening    AS PrevRow
+              ON  PrevRow.patient_id   = ThisRow.patient_id
+                    AND PrevRow.visit_date = (SELECT MAX(s.visit_date)
+                                              FROM kenyaemr_etl.etl_cervical_cancer_screening s
+                                              WHERE s.patient_id  = ThisRow.patient_id
+                                                AND s.visit_date < ThisRow.visit_date) order by ThisRow.patient_id, ThisRow.visit_date
+     ) u,
+     (SELECT  @x:=0, @same_value:='') t
+set scr.previous_screening_date = u.prevVisitDate,scr.previous_screening_result = u.previousResult, scr.screening_number = u.rowNum
+where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
+
 SELECT "Completed processing  HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
 END$$
 		-- end of scheduled updates procedures
