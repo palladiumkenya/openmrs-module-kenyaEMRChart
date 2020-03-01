@@ -1587,6 +1587,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
 										 select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime
 										 from obs o
 											 inner join encounter e on e.encounter_id=o.encounter_id
+											 inner join person p on p.person_id=o.person_id and p.voided=0
 											 inner join
 											 (
 												 select encounter_type_id, uuid, name from encounter_type where
@@ -1616,6 +1617,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
 											select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
 											from obs o
 												inner join encounter e on e.encounter_id=o.encounter_id
+												inner join person p on p.person_id=o.person_id and p.voided=0
 												inner join
 												(
 													select encounter_type_id, uuid, name from encounter_type where
