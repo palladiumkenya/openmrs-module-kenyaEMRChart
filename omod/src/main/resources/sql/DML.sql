@@ -1870,6 +1870,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 			max(if(o.concept_id=1255,'HIV',if(o.concept_id=1268, 'TB', null))) as program,
 			max(if(o.concept_id=1193,(
 				case o.value_coded
+					-- HIV
 				when 162565 then "3TC/NVP/TDF"
 				when 164505 then "TDF/3TC/EFV"
 				when 1652 then "AZT/3TC/NVP"
@@ -1897,6 +1898,18 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 162562 then "TDF/ABC/LPV/r"
 				when 162559 then "ABC/DDI/LPV/r"
 				when 164976 then "ABC/TDF/3TC/LPV/r"
+				when 165375 then "RAL/3TC/DRV/RTV"
+				when 165376 then "RAL/3TC/DRV/RTV/AZT"
+				when 165377 then "RAL/3TC/DRV/RTV/ABC"
+				when 165378 then "ETV/3TC/DRV/RTV"
+				when 165379 then "RAL/3TC/DRV/RTV/TDF"
+				when 165369 then "TDF/3TC/DTG/DRV/r"
+				when 165370 then "TDF/3TC/RAL/DRV/r"
+				when 165371 then "TDF/3TC/DTG/EFV/DRV/r"
+				when 165372 then "ABC/3TC/RAL"
+				when 165373 then "AZT/3TC/RAL/DRV/r"
+				when 165374 then "ABC/3TC/RAL/DRV/r"
+         -- TB
 				when 1675 then "RHZE"
 				when 768 then "RHZ"
 				when 1674 then "SRHZE"
@@ -1912,6 +1925,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				end ),null)) as regimen,
 			max(if(o.concept_id=1193,(
 				case o.value_coded
+					-- HIV
 				when 162565 then "3TC+NVP+TDF"
 				when 164505 then "TDF+3TC+EFV"
 				when 1652 then "AZT+3TC+NVP"
@@ -1939,6 +1953,18 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 162562 then "TDF+ABC+LPV/r"
 				when 162559 then "ABC+DDI+LPV/r"
 				when 164976 then "ABC+TDF+3TC+LPV/r"
+				when 165375 then "RAL+3TC+DRV+RTV"
+				when 165376 then "RAL+3TC+DRV+RTV+AZT"
+				when 165377 then "RAL+3TC+DRV+RTV+ABC"
+				when 165378 then "ETV+3TC+DRV+RTV"
+				when 165379 then "RAL+3TC+DRV+RTV+TDF"
+				when 165369 then "TDF+3TC+DTG+DRV/r"
+				when 165370 then "TDF+3TC+RAL+DRV/r"
+				when 165371 then "TDF+3TC+DTG+EFV+DRV/r"
+				when 165372 then "ABC+3TC+RAL"
+				when 165373 then "AZT+3TC+RAL+DRV/r"
+				when 165374 then "ABC+3TC+RAL+DRV/r"
+					-- TB
 				when 1675 then "RHZE"
 				when 768 then "RHZ"
 				when 1674 then "SRHZE"
@@ -1965,6 +1991,10 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 164968 then "First line"
 				when 164969 then "First line"
 				when 164970 then "First line"
+				when 162561 then "First line"
+				when 164511 then "First line"
+				when 164512 then "First line"
+				when 162201 then "First line"
 				-- adult second line
 				when 162561 then "Second line"
 				when 164511 then "Second line"
@@ -1975,6 +2005,17 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 164973 then "Second line"
 				when 164974 then "Second line"
 				when 165357 then "Second line"
+				when 164968 then "Second line"
+				when 164969 then "Second line"
+				when 164970 then "Second line"
+				-- adult third line
+				when 165375 then "Third line"
+				when 165376 then "Third line"
+				when 165379 then "Third line"
+				when 165378 then "Third line"
+				when 165369 then "Third line"
+				when 165370 then "Third line"
+				when 165371 then "Third line"
 				-- child 1st line
 				when 162200 then "First line"
 				when 162199 then "First line"
@@ -1984,6 +2025,21 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 162562 then "First line"
 				when 162559 then "First line"
 				when 164976 then "First line"
+				when 165372 then "First line"
+				-- child second line
+				when 162561 then "Second line"
+				when 164511 then "Second line"
+				when 162200 then "Second line"
+				when 165357 then "Second line"
+				when 165373 then "Second line"
+				when 165374 then "Second line"
+				-- child third line
+				when 165375 then "Third line"
+				when 165376 then "Third line"
+				when 165377 then "Third line"
+				when 165378 then "Third line"
+				when 165373 then "Third line"
+				when 165374 then "Third line"
 				-- tb
 				when 1675 then "Adult intensive"
 				when 768 then "Adult intensive"
