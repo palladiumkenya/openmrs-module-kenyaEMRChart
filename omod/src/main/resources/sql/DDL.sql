@@ -67,7 +67,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_19_enrolment;
 
 
 -- create table etl_patient_demographics
@@ -1885,49 +1884,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
   );
 
   SELECT "Successfully created etl_viral_load table";
-    -------------- create table etl_covid_19_enrolment-----------------------
-    CREATE TABLE kenyaemr_etl.etl_covid_19_enrolment (
-      uuid CHAR(38),
-      encounter_id INT(11) NOT NULL PRIMARY KEY,
-      visit_id INT(11) DEFAULT NULL,
-      patient_id INT(11) NOT NULL ,
-      location_id INT(11) DEFAULT NULL,
-      visit_date DATE,
-      encounter_provider INT(11),
-      date_created DATE,
-      sub_county VARCHAR(255),
-      county VARCHAR(255),
-      detection_point VARCHAR(255),
-      date_detected DATE,
-      onset_symptoms_date DATE,
-      asymptomatic VARCHAR(10),
-      admitted_to_hospital VARCHAR(10),
-      date_of_first_admission DATE,
-      hospital_name VARCHAR(255),
-      date_of_isolation DATE,
-      patient_ventilated  VARCHAR(10),
-      health_status_at_reporting VARCHAR(255),
-      date_of_death DATE,
-      recently_travelled VARCHAR(10),
-      country_recently_travelled VARCHAR(100),
-      city_recently_travelled VARCHAR(100),
-      recently_visited_health_facility VARCHAR(10),
-      recent_contact_with_infected_person VARCHAR(10),
-      recent_contact_with_confirmed_person VARCHAR(10),
-      recent_contact_setting VARCHAR(200),
-      recent_visit_to_animal_market VARCHAR(10),
-      animal_market_name varchar(200),
-      voided INT(11),
-      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
-      CONSTRAINT unique_uuid UNIQUE(uuid),
-      INDEX(visit_date),
-      INDEX(visit_id),
-      INDEX(encounter_id),
-      INDEX(patient_id),
-      INDEX(patient_id, visit_date)
-    );
 
-  SELECT "Successfully created etl_covid_19_enrolment table";
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

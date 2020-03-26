@@ -3694,6 +3694,9 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 		SELECT "Completed processing OVC enrolment data ", CONCAT("Time: ", NOW());
 		END$$
 
+
+-- -------------populate etl_cervical_cancer_screening-------------------------
+
 DROP PROCEDURE IF EXISTS sp_populate_etl_cervical_cancer_screening$$
 CREATE PROCEDURE sp_populate_etl_cervical_cancer_screening()
 BEGIN
@@ -3882,92 +3885,6 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 		;
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
 		END$$
-
-DROP PROCEDURE IF EXISTS sp_populate_etl_covid_19_enrolment$$
-CREATE PROCEDURE sp_populate_etl_covid_19_enrolment()
-	BEGIN
-		SELECT "Processing Covid Enrolment ", CONCAT("Time: ", NOW());
--- -------------populate sp_populate_etl_covid_19_enrolment-------------------------
-INSERT INTO kenyaemr_etl.etl_covid_19_enrolment(
-uuid,
-encounter_id,
-visit_id,
-patient_id,
-location_id,
-visit_date,
-encounter_provider,
-date_created,
-sub_county,
-county,
-detection_point,
-date_detected,
-onset_symptoms_date,
-asymptomatic,
-admitted_to_hospital,
-date_of_first_admission,
-hospital_name,
-date_of_isolation,
-patient_ventilated,
-health_status_at_reporting,
-date_of_death,
-recently_travelled,
-country_recently_travelled,
-city_recently_travelled,
-recently_visited_health_facility,
-recent_contact_with_infected_person,
-recent_contact_with_confirmed_person,
-recent_contact_setting,
-recent_visit_to_animal_market,
-animal_market_name,
-voided
-)
-select
-	e.uuid,
-	e.encounter_id as encounter_id,
-	e.visit_id as visit_id,
-	e.patient_id,
-	e.location_id,
-	date(e.encounter_datetime) as visit_date,
-	e.creator as encounter_provider,
-	e.date_created as date_created,
-	max(if(o.concept_id=161551,o.value_text,null)) as sub_county,
-	max(if(o.concept_id=165851,o.value_text,null)) as county,
-  max(if(o.concept_id=161010,(case o.value_coded when 165651 then "Point of entry" when 163488 then "Detected in Community" when 1067 then "Unknown" else "" end),null)) as detection_point,
-  max(if(o.concept_id=159948,o.value_datetime,null)) as date_detected,
-  max(if(o.concept_id=1730,o.value_datetime,null)) as onset_symptoms_date,
-  max(if(o.concept_id=1729,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as asymptomatic,
-  max(if(o.concept_id=163403,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as admitted_to_hospital,
-  max(if(o.concept_id=1640,o.value_datetime,null)) as date_of_first_admission,
-	max(if(o.concept_id=162724,o.value_text,null)) as hospital_name,
-	max(if(o.concept_id=165648,o.value_datetime,null)) as date_of_isolation,
-	max(if(o.concept_id=165647,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as patient_ventilated,
-	max(if(o.concept_id=159640,(case o.value_coded when 159405 then "Stable" when 159407 then "Severly ill" when 160432 then "Dead" when 1067 then "Unknown" else "" end),null)) as health_status_at_reporting,
-  max(if(o.concept_id=1543,o.value_datetime,null)) as date_of_death,
-  max(if(o.concept_id=162619,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recently_travelled,
-  max(if(o.concept_id=165198,o.value_text,null)) as country_recently_travelled,
-	max(if(o.concept_id=165645,o.value_text,null)) as city_recently_travelled,
-	max(if(o.concept_id=162723,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recently_visited_health_facility,
-	max(if(o.concept_id=165850,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_contact_with_infected_person,
-	max(if(o.concept_id=162633,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_contact_with_confirmed_person,
-	max(if(o.concept_id=163577,(case o.value_coded when 1537 then "Health care setting" when 1536 then "Family setting" when 164406 then "Work place" when 1067 then "Unknown" else "" end),null)) as recent_contact_setting,
-	max(if(o.concept_id=165844,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_visit_to_animal_market,
-  max(if(o.concept_id=165645,o.value_text,null)) as animal_market_name,
-	e.voided as voided
-from encounter e
-	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join
-	(
-		select form_id, uuid,name from form where
-			uuid in('0fe60b26-8648-438b-afea-8841dcd993c6')
-	) f on f.form_id=e.form_id
-	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-													 and o.concept_id in (161551,165851,161010,159948,1730,1729,163403,1640,162724,165648,165647,159640,1543,162619,165198,165645,162723,165850,162633,163577,165844,165645)
-where e.voided=0
-group by e.patient_id, e.encounter_id, visit_date;
-
-		SELECT "Completed processing covid_19 patient enrolment data ", CONCAT("Time: ", NOW());
-END$$
-
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -4028,7 +3945,7 @@ CALL sp_populate_etl_ovc_enrolment();
 CALL sp_populate_etl_cervical_cancer_screening();
 CALL sp_populate_etl_patient_contact();
 CALL sp_populate_etl_client_trace();
-CALL sp_populate_etl_covid_19_enrolment();
+
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
