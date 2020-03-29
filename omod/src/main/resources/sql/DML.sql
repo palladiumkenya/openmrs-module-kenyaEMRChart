@@ -562,7 +562,7 @@ select
 	e.creator as encounter_provider,
 	e.date_created as date_created,
 	max(if(o.concept_id=161551,o.value_text,null)) as sub_county,
-	max(if(o.concept_id=165851,o.value_text,null)) as county,
+	max(if(o.concept_id=165197,o.value_text,null)) as county,
   max(if(o.concept_id=161010,(case o.value_coded when 165651 then "Point of entry" when 163488 then "Detected in Community" when 1067 then "Unknown" else "" end),null)) as detection_point,
   max(if(o.concept_id=159948,o.value_datetime,null)) as date_detected,
   max(if(o.concept_id=1730,o.value_datetime,null)) as onset_symptoms_date,
