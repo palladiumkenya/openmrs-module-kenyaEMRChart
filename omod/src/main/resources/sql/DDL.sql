@@ -25,13 +25,11 @@ SET script_id = LAST_INSERT_ID();
 
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_laboratory_extract;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_pharmacy_extract;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_treatment_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_program_discontinuation;
 
 
 DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_person_address;
 
 
@@ -108,47 +106,7 @@ INDEX(test_result)
 );
 SELECT "Successfully created etl_laboratory_extract table";
 
--- ------------ create table etl_pharmacy_extract-----------------------
 
-
-CREATE TABLE kenyaemr_etl.etl_pharmacy_extract(
-obs_group_id INT(11) PRIMARY KEY,
-uuid char(38),
-patient_id INT(11) NOT NULL ,
-location_id INT(11) DEFAULT NULL,
-visit_date DATE,
-visit_id INT(11),
-encounter_id INT(11),
-encounter_name VARCHAR(100),
-drug INT(11),
-is_arv INT(11),
-is_ctx INT(11),
-is_dapsone INT(11),
-drug_name VARCHAR(255),
-dose INT(11),
-unit INT(11),
-frequency INT(11),
-duration INT(11),
-duration_units VARCHAR(20) ,
-duration_in_days INT(11),
-prescription_provider VARCHAR(50),
-dispensing_provider VARCHAR(50),
-regimen MEDIUMTEXT,
-adverse_effects VARCHAR(100),
-date_of_refill DATE,
-date_created DATE,
-voided INT(11),
-date_voided DATE,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
-CONSTRAINT unique_uuid UNIQUE(uuid),
-INDEX(visit_date),
-INDEX(encounter_id),
-INDEX(patient_id),
-INDEX(drug),
-INDEX(is_arv)
-
-);
-SELECT "Successfully created etl_pharmacy_extract table";
 -- ------------ create table etl_patient_treatment_discontinuation-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_patient_program_discontinuation(
@@ -176,33 +134,6 @@ INDEX(date_died),
 INDEX(transfer_date)
 );
 SELECT "Successfully created etl_patient_program_discontinuation table";
-
-
--- --------------------------- CREATE drug_event table ---------------------
-
-  CREATE TABLE kenyaemr_etl.etl_drug_event(
-    uuid CHAR(38) PRIMARY KEY,
-    patient_id INT(11) NOT NULL,
-    date_started DATE,
-    visit_date DATE,
-    provider INT(11),
-    encounter_id INT(11) NOT NULL,
-    program VARCHAR(50),
-    regimen MEDIUMTEXT,
-    regimen_name VARCHAR(100),
-    regimen_line VARCHAR(50),
-    discontinued INT(11),
-    regimen_discontinued VARCHAR(255),
-    date_discontinued DATE,
-    reason_discontinued INT(11),
-    reason_discontinued_other VARCHAR(100),
-    voided INT(11),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
-    INDEX(patient_id),
-    INDEX(date_started),
-    INDEX(date_discontinued),
-    INDEX(patient_id, date_started)
-  );
 
 
   -- ------------ create table etl_patient_triage-----------------------

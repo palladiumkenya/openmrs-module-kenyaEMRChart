@@ -180,12 +180,6 @@ max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
 inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
-inner join 
-(
-	select encounter_type_id, uuid, name from encounter_type where 
-	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
-	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667')
-) et on et.encounter_type_id=e.encounter_type
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
@@ -199,15 +193,11 @@ date_died=VALUES(date_died),transfer_facility=VALUES(transfer_facility),transfer
 END$$
 -- DELIMITER ;
 
-
 -- ------------------------------------- laboratory updates ---------------------------
-
 
 DROP PROCEDURE IF EXISTS sp_update_etl_laboratory_extract$$
 CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 BEGIN
-
-
 
 insert into kenyaemr_etl.etl_laboratory_extract(
 uuid,
@@ -327,8 +317,6 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
 		END$$
 
 
-
-
 -- ------------- populate etl_progress_note-------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_progress_note$$
@@ -391,14 +379,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
 				pp.uuid uuid,
 				pp.patient_id patient_id,
 				pp.location_id location_id,
-				(case p.uuid
-				 when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
-				 when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
-				 when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
-				 when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-				 when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
-				 when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
-				 end) as program,
+				"COVID-19" as program,
 				pp.date_enrolled date_enrolled,
 				pp.date_completed date_completed,
 				pp.outcome_concept_id outcome,
