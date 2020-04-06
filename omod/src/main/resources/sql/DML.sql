@@ -329,7 +329,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				pp.uuid,
 				pp.patient_id,
 				pp.location_id,
-				"COVID-19" as program,
+				p.name,
 				pp.date_enrolled,
 				pp.date_completed,
 				pp.outcome_concept_id,
@@ -341,6 +341,53 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
         where pp.voided=0
 		;
 		SELECT "Completed processing patient program data ", CONCAT("Time: ", NOW());
+		END$$
+
+-- ------------------- populate patient program discontinuation table -------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_patient_program_discontinuation$$
+CREATE PROCEDURE sp_populate_etl_patient_program_discontinuation()
+	BEGIN
+		SELECT "Processing Program (Covid -19 Quarantine and Case Investigation) discontinuations ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_patient_program_discontinuation(
+			patient_id,
+			uuid,
+			visit_id,
+			visit_date,
+			program_uuid,
+			program_name,
+			encounter_id,
+			discontinuation_reason,
+			date_died,
+			transfer_facility,
+			transfer_date
+		)
+			select
+				e.patient_id,
+				e.uuid,
+				e.visit_id,
+				e.encounter_datetime, -- trying to make us of index
+				et.uuid,
+				(case et.uuid
+				 when '7b118dac-6f61-4466-ad1a-7e01aca077ad' then 'COVID-19 Outcome'
+				 when '33a3a7be-73ae-11ea-bc55-0242ac130003' then 'COVID-19 Quarantine Outcome'
+				 end) as program_name,
+				e.encounter_id,
+				max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
+				max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
+				max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
+				max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+				inner join
+				(
+					select encounter_type_id, uuid, name from encounter_type where
+						uuid in('7b118dac-6f61-4466-ad1a-7e01aca077ad','33a3a7be-73ae-11ea-bc55-0242ac130003')
+				) et on et.encounter_type_id=e.encounter_type
+			where e.voided=0
+			group by e.encounter_id;
+		SELECT "Completed processing discontinuation data ", CONCAT("Time: ", NOW());
 		END$$
 
   -- ------------------- populate person address table -------------
@@ -947,7 +994,7 @@ SET populate_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_etl_patient_demographics();
 CALL sp_populate_etl_laboratory_extract();
--- CALL sp_populate_etl_program_discontinuation();
+CALL sp_populate_etl_patient_program_discontinuation();
 CALL sp_populate_etl_patient_triage();
 CALL sp_populate_etl_progress_note();
 CALL sp_populate_etl_patient_program();
