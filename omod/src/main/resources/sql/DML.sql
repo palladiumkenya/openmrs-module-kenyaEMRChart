@@ -641,9 +641,9 @@ from encounter e
 	) f on f.form_id=e.form_id
 	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 													 and o.concept_id in (161551,165851,161010,159948,1730,1729,140238,122943,143264,163741,163336,164441,142412,122983,5219,6023,160388,165197,
-                                                1123,1125,160687,1838,160632,5088,1166,163309,125061,122496,12,113054,163043,162737,1391,5272,160665,162747,1542,163403,
-                                                1640,162724,165648,165647,159640,1543,162619,165198,165645,162723,165850,162633,163577,165844,165645,119270,119481,6032,
-                                                165646,129317,117277,6033,155569,116031)
+                                                1123,1125,160687,1838,160632,5088,1166,163309,125061,122496,12,113054,163043,162737,1391,5272,160665,162747,
+																								119270,119481,6032,165646,129317,117277,6033,155569,116031,1542,163403,
+                                                1640,162724,165648,165647,159640,1543,162619,165198,165645,162723,165850,162633,163577,165844,165645)
 where e.voided=0
 group by e.patient_id, e.encounter_id, visit_date;
 
@@ -763,6 +763,8 @@ location_id,
 visit_date,
 encounter_provider,
 date_created,
+sub_county,
+county,
 fever,
 cough,
 difficulty_breathing,
@@ -908,6 +910,7 @@ select
 	max(if(o.concept_id=165197,o.value_text,null)) as county,
 	max(if(o.concept_id=161551,o.value_text,null)) as sublocation_estate,
 	max(if(o.concept_id=1354,o.value_text,null)) as village_house_no_hotel,
+	max(if(o.concept_id=162725,o.value_text,null)) as address,
 	max(if(o.concept_id=163152,o.value_text,null)) as local_phone_number,
 	max(if(o.concept_id=160632,o.value_text,null)) as email,
 	max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
@@ -922,7 +925,7 @@ from encounter e
 			uuid in('87513b50-6ced-11ea-bc55-0242ac130003')
 	) f on f.form_id=e.form_id
 	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-													 and o.concept_id in (160753,1375,162612,162086,165198,161550,163258,159635,165197,161551,1354,163152,160632,140238,143264,164441)
+													 and o.concept_id in (160753,1375,162612,162086,165198,161550,163258,159635,165197,161551,1354,162725,163152,160632,140238,143264,164441)
 where e.voided=0
 group by e.patient_id, e.encounter_id, visit_date;
 
@@ -944,7 +947,7 @@ SET populate_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_etl_patient_demographics();
 CALL sp_populate_etl_laboratory_extract();
-CALL sp_populate_etl_program_discontinuation();
+-- CALL sp_populate_etl_program_discontinuation();
 CALL sp_populate_etl_patient_triage();
 CALL sp_populate_etl_progress_note();
 CALL sp_populate_etl_patient_program();

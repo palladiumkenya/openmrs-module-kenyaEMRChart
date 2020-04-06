@@ -441,6 +441,8 @@ SELECT "Successfully created etl_contact_tracing_followup table";
       visit_date DATE,
       encounter_provider INT(11),
       date_created DATE,
+      sub_county VARCHAR(255),
+      county VARCHAR(255),
       fever VARCHAR(10),
       cough VARCHAR(10),
       difficulty_breathing VARCHAR(10),
