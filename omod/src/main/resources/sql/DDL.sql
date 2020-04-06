@@ -39,6 +39,11 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_program;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_default_facility_info;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_19_enrolment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_contact_tracing_followup;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_quarantine_enrolment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_quarantine_followup;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_quarantine_outcome;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_travel_history;
 
 
 -- create table etl_patient_demographics
@@ -335,6 +340,15 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       pregnancy_status VARCHAR(10),
       trimester VARCHAR(10),
       underlying_condition VARCHAR(10),
+      cardiovascular_dse_hypertension VARCHAR(10),
+      diabetes VARCHAR(10),
+      liver_disease VARCHAR(10),
+      chronic_neurological_neuromascular_dse VARCHAR(10),
+      post_partum VARCHAR(10),
+      immunodeficiency VARCHAR(10),
+      renal_disease VARCHAR(10),
+      chronic_lung_disease VARCHAR(10),
+      malignancy VARCHAR(10),
       occupation VARCHAR(10),
       other_signs VARCHAR(10),
       specify_signs VARCHAR(255),
@@ -365,6 +379,148 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     );
 
   SELECT "Successfully created etl_covid_19_enrolment table";
+
+   -------------- create table etl_contact_tracing_followup-----------------------
+    CREATE TABLE kenyaemr_etl.etl_contact_tracing_followup (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+	    fever VARCHAR(10),
+	    cough VARCHAR(10),
+	    difficulty_breathing VARCHAR(10),
+	    sore_throat VARCHAR(10),
+	    referred_to_hosp VARCHAR(10),
+	    voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+
+SELECT "Successfully created etl_contact_tracing_followup table";
+
+	 -------------- create table etl_covid_quarantine_enrolment-----------------------
+    CREATE TABLE kenyaemr_etl.etl_covid_quarantine_enrolment (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+      quarantine_center VARCHAR(100),
+      type_of_admission VARCHAR(100),
+      quarantine_center_trf_from VARCHAR(100),
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+	SELECT "Successfully created etl_covid_quarantine_enrolment table";
+
+			 -------------- create table etl_covid_quarantine_followup-----------------------
+    CREATE TABLE kenyaemr_etl.etl_covid_quarantine_followup (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+      fever VARCHAR(10),
+      cough VARCHAR(10),
+      difficulty_breathing VARCHAR(10),
+      sore_throat VARCHAR(10),
+      referred_to_hosp VARCHAR(10),
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+	SELECT "Successfully created etl_covid_quarantine_followup table";
+
+				 -------------- create table etl_covid_quarantine_outcome-----------------------
+    CREATE TABLE kenyaemr_etl.etl_covid_quarantine_outcome (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+      discontinuation_reason VARCHAR(100),
+      transfer_to_facility VARCHAR(100),
+      referral_reason VARCHAR(100),
+      facility_referred_to VARCHAR(100),
+      discharge_reason VARCHAR(100),
+      comment VARCHAR(200),
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+	SELECT "Successfully created etl_covid_quarantine_outcome table";
+
+					 -------------- create table etl_covid_travel_history-----------------------
+    CREATE TABLE kenyaemr_etl.etl_covid_travel_history (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+      date_arrived_in_kenya DATE,
+      mode_of_transport VARCHAR(100),
+      flight_bus_number VARCHAR(100),
+      seat_number VARCHAR(100),
+      country_visited VARCHAR(100),
+      destination_in_kenya VARCHAR(100),
+      name_of_contact_person VARCHAR(200),
+      phone_of_contact_person VARCHAR(200),
+      county VARCHAR(200),
+      sublocation_estate VARCHAR(200),
+      village_house_no_hotel VARCHAR(200),
+      address VARCHAR(200),
+      local_phone_number VARCHAR(200),
+      email VARCHAR(200),
+      fever VARCHAR(10),
+      cough VARCHAR(10),
+      difficulty_breathing VARCHAR(10),
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+	SELECT "Successfully created etl_covid_travel_history table";
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
