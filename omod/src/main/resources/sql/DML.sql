@@ -141,49 +141,35 @@ CREATE PROCEDURE sp_populate_etl_laboratory_extract()
 BEGIN
 SELECT "Processing Laboratory data ", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_laboratory_extract(
-uuid,
-encounter_id,
-patient_id,
-location_id,
-visit_date,
-visit_id,
-order_id,
-lab_test,
-urgency,
-test_result,
--- date_test_requested,
--- date_test_result_received,
--- test_requested_by,
-date_created,
-created_by
+  uuid,
+  patient_id,
+  order_id,
+  order_date,
+  test_type,
+  lab_test_concept,
+  order_reason,
+  testing_lab,
+  result,
+  result_date,
+  date_created,
+  created_by
 )
-select
-o.uuid,
-e.encounter_id,
-e.patient_id,
-e.location_id,
-e.encounter_datetime as visit_date,
-e.visit_id,
-o.order_id,
-o.concept_id,
-od.urgency,
-(CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-	when o.concept_id in(1030,1305) then o.value_coded
-	END) AS test_result,
--- date requested,
--- date result received
--- test requested by
-e.date_created,
-e.creator
-from encounter e
-	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join
-(
-	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc')
-) et on et.encounter_type_id=e.encounter_type
-inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
-left join orders od on od.order_id = o.order_id and od.voided=0
-where e.voided=0
+  select
+    od.uuid,
+    od.patient_id,
+    od.order_id,
+    date(od.date_activated) order_date,
+    od.instructions test_type,
+    od.concept_id lab_test_concept,
+    od.order_reason,
+    od.comment_to_fulfiller as testing_lab,
+    o.value_coded as result,
+    o.date_created as result_date,
+    od.date_created,
+    od.orderer
+  from orders od
+    left join obs o on o.order_id=od.order_id and o.voided=0
+  where od.order_action != 'DISCONTINUE'and od.voided=0
 ;
 
 END$$
@@ -366,11 +352,11 @@ CREATE PROCEDURE sp_populate_etl_patient_program_discontinuation()
 				e.patient_id,
 				e.uuid,
 				e.visit_id,
-				e.encounter_datetime, -- trying to make us of index
+				e.encounter_datetime, -- trying to make use of index
 				et.uuid,
 				(case et.uuid
-				 when '7b118dac-6f61-4466-ad1a-7e01aca077ad' then 'COVID-19 Outcome'
-				 when '33a3a7be-73ae-11ea-bc55-0242ac130003' then 'COVID-19 Quarantine Outcome'
+				 when '7b118dac-6f61-4466-ad1a-7e01aca077ad' then 'COVID-19 Case Investigation'
+				 when '33a3a7be-73ae-11ea-bc55-0242ac130003' then 'COVID-19 Quarantine Program'
 				 end) as program_name,
 				e.encounter_id,
 				max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
@@ -995,10 +981,7 @@ SET populate_script_id = LAST_INSERT_ID();
 CALL sp_populate_etl_patient_demographics();
 CALL sp_populate_etl_laboratory_extract();
 CALL sp_populate_etl_patient_program_discontinuation();
-CALL sp_populate_etl_patient_triage();
-CALL sp_populate_etl_progress_note();
 CALL sp_populate_etl_patient_program();
-CALL sp_update_dashboard_table();
 CALL sp_populate_etl_person_address();
 CALL sp_populate_etl_patient_contact();
 CALL sp_populate_etl_client_trace();

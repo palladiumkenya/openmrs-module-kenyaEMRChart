@@ -87,26 +87,24 @@ SELECT "Successfully created etl_patient_demographics table";
   SELECT "Creating etl_laboratory_extract table";
 CREATE TABLE kenyaemr_etl.etl_laboratory_extract (
 uuid char(38) PRIMARY KEY,
-encounter_id INT(11),
 patient_id INT(11) NOT NULL ,
-location_id INT(11) DEFAULT NULL,
-visit_date DATE,
-visit_id INT(11),
-order_id VARCHAR(200),
-lab_test VARCHAR(180),
-urgency VARCHAR(50),
-test_result VARCHAR(180),
-date_test_requested DATE DEFAULT null,
-date_test_result_received DATE,
-test_requested_by INT(11),
+order_id INT(11),
+order_date DATE,
+test_type VARCHAR(50),
+lab_test_concept INT(11),
+order_reason INT(11) DEFAULT NULL,
+testing_lab VARCHAR(180),
+result VARCHAR(180),
+result_date DATE,
 date_created DATE,
 created_by INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
-INDEX(visit_date),
-INDEX(encounter_id),
-INDEX(patient_id),
-INDEX(lab_test),
-INDEX(test_result)
+INDEX(order_date),
+INDEX(order_date),
+INDEX(order_id),
+INDEX(order_reason),
+INDEX(testing_lab),
+INDEX(result)
 
 );
 SELECT "Successfully created etl_laboratory_extract table";
