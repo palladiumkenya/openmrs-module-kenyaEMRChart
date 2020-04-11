@@ -84,7 +84,7 @@ select
 patient_id,
 uuid,
 visit_id,
-visit_date,
+encounter_date,
 program_uuid,
 program_name,
 encounter_id,
