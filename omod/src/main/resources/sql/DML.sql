@@ -353,7 +353,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program_discontinuation()
 			patient_id,
 			uuid,
 			visit_id,
-			visit_date,
+			encounter_date,
 			program_uuid,
 			program_name,
 			encounter_id,

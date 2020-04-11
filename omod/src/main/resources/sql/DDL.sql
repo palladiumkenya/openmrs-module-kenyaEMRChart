@@ -118,7 +118,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program_discontinuation(
 uuid char(38),
 patient_id INT(11) NOT NULL ,
 visit_id INT(11),
-visit_date DATETIME,
+encounter_date DATETIME,
 location_id INT(11) DEFAULT NULL,
 program_uuid CHAR(38) ,
 program_name VARCHAR(50),
