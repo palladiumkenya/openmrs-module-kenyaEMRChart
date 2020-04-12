@@ -152,41 +152,49 @@ END$$
 DROP PROCEDURE IF EXISTS sp_update_etl_program_discontinuation$$
 CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATETIME)
 BEGIN
-insert into kenyaemr_etl.etl_patient_program_discontinuation(
-patient_id,
-uuid,
-visit_id,
-visit_date,
-program_uuid,
-program_name,
-encounter_id,
-discontinuation_reason,
-date_died,
-transfer_facility,
-transfer_date
-)
-select 
-e.patient_id,
-e.uuid,
-e.visit_id,
-e.encounter_datetime,
-e.uuid,
-"COVID-19" as program_name,
-e.encounter_id,
-max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
-max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
-max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
-max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
+	insert into kenyaemr_etl.etl_patient_program_discontinuation(
+	patient_id,
+	uuid,
+	visit_id,
+	encounter_date,
+	program_uuid,
+	program_name,
+	encounter_id,
+	discontinuation_reason,
+	date_died,
+	transfer_facility,
+	transfer_date
+	)
+select
+	e.patient_id,
+	e.uuid,
+	e.visit_id,
+	e.encounter_datetime, -- trying to make use of index
+	et.uuid,
+	(case et.uuid
+	 when '7b118dac-6f61-4466-ad1a-7e01aca077ad' then 'COVID-19 Case Investigation'
+	 when '33a3a7be-73ae-11ea-bc55-0242ac130003' then 'COVID-19 Quarantine Program'
+	 end) as program_name,
+	e.encounter_id,
+	max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
+	max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
+	max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
+	max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
-inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+	inner join
+	(
+		select encounter_type_id, uuid, name from encounter_type where
+			uuid in('7b118dac-6f61-4466-ad1a-7e01aca077ad','33a3a7be-73ae-11ea-bc55-0242ac130003')
+	) et on et.encounter_type_id=e.encounter_type
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),discontinuation_reason=VALUES(discontinuation_reason),
+ON DUPLICATE KEY UPDATE encounter_date=VALUES(encounter_date),discontinuation_reason=VALUES(discontinuation_reason),
 date_died=VALUES(date_died),transfer_facility=VALUES(transfer_facility),transfer_date=VALUES(transfer_date)
 ;
 
@@ -200,46 +208,40 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 BEGIN
 
 insert into kenyaemr_etl.etl_laboratory_extract(
-uuid,
-encounter_id,
-patient_id,
-location_id,
-visit_date,
-visit_id,
-lab_test,
-urgency,
-test_result,
-date_created,
-created_by 
+	uuid,
+	patient_id,
+	order_id,
+	order_date,
+	test_type,
+	lab_test_concept,
+	order_reason,
+	testing_lab,
+	result,
+	result_date,
+	date_created,
+	created_by
 )
-select 
-o.uuid,
-e.encounter_id,
-e.patient_id,
-e.location_id,
-e.encounter_datetime as visit_date,
-e.visit_id,
-o.concept_id,
-od.urgency,
-(CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-	when o.concept_id in(1030,1305) then o.value_coded
-	END) AS test_result,
-e.date_created,
-e.creator
-from encounter e
-	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join
-(
-	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
-) et on et.encounter_type_id=e.encounter_type
-inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
-left join orders od on od.order_id = o.order_id and od.voided=0
-where e.date_created >= last_update_time
-or e.date_changed >= last_update_time
-or e.date_voided >= last_update_time
+	select
+		od.uuid,
+		od.patient_id,
+		od.order_id,
+		date(od.date_activated) order_date,
+		od.instructions test_type,
+		od.concept_id lab_test_concept,
+		od.order_reason,
+		od.comment_to_fulfiller as testing_lab,
+		o.value_coded as result,
+		o.date_created as result_date,
+		od.date_created,
+		od.orderer
+	from orders od
+		left join obs o on o.order_id=od.order_id and o.voided=0
+where od.order_action != 'DISCONTINUE' and (
+od.date_created >= last_update_time
+or od.date_voided >= last_update_time
 or o.date_created >= last_update_time
-or o.date_voided >= last_update_time
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
+or o.date_voided >= last_update_time )
+ON DUPLICATE KEY UPDATE order_date=VALUES(order_date), result=VALUES(result), result_date=VALUES(result_date)
 ; 
 
 END$$
