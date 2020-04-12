@@ -152,41 +152,49 @@ END$$
 DROP PROCEDURE IF EXISTS sp_update_etl_program_discontinuation$$
 CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATETIME)
 BEGIN
-insert into kenyaemr_etl.etl_patient_program_discontinuation(
-patient_id,
-uuid,
-visit_id,
-visit_date,
-program_uuid,
-program_name,
-encounter_id,
-discontinuation_reason,
-date_died,
-transfer_facility,
-transfer_date
-)
-select 
-e.patient_id,
-e.uuid,
-e.visit_id,
-e.encounter_datetime,
-e.uuid,
-"COVID-19" as program_name,
-e.encounter_id,
-max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
-max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
-max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
-max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
+	insert into kenyaemr_etl.etl_patient_program_discontinuation(
+	patient_id,
+	uuid,
+	visit_id,
+	encounter_date,
+	program_uuid,
+	program_name,
+	encounter_id,
+	discontinuation_reason,
+	date_died,
+	transfer_facility,
+	transfer_date
+	)
+select
+	e.patient_id,
+	e.uuid,
+	e.visit_id,
+	e.encounter_datetime, -- trying to make use of index
+	et.uuid,
+	(case et.uuid
+	 when '7b118dac-6f61-4466-ad1a-7e01aca077ad' then 'COVID-19 Case Investigation'
+	 when '33a3a7be-73ae-11ea-bc55-0242ac130003' then 'COVID-19 Quarantine Program'
+	 end) as program_name,
+	e.encounter_id,
+	max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
+	max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
+	max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
+	max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
-inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+	inner join
+	(
+		select encounter_type_id, uuid, name from encounter_type where
+			uuid in('7b118dac-6f61-4466-ad1a-7e01aca077ad','33a3a7be-73ae-11ea-bc55-0242ac130003')
+	) et on et.encounter_type_id=e.encounter_type
 where e.date_created >= last_update_time
 or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),discontinuation_reason=VALUES(discontinuation_reason),
+ON DUPLICATE KEY UPDATE encounter_date=VALUES(encounter_date),discontinuation_reason=VALUES(discontinuation_reason),
 date_died=VALUES(date_died),transfer_facility=VALUES(transfer_facility),transfer_date=VALUES(transfer_date)
 ;
 
