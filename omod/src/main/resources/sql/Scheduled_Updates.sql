@@ -182,6 +182,7 @@ select
 	max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_completed) and pp.voided=0
 	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
 	inner join
 	(
@@ -550,6 +551,7 @@ CREATE PROCEDURE sp_update_etl_covid_19_enrolment(IN last_update_time DATETIME)
 		e.voided as voided
 			from encounter e
 		inner join person p on p.person_id=e.patient_id and p.voided=0
+		inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_enrolled) and pp.voided=0
 		inner join
 		(
 		select form_id, uuid,name from form where
@@ -728,6 +730,7 @@ CREATE PROCEDURE sp_update_etl_covid_quarantine_enrolment(IN last_update_time DA
 				e.voided as voided
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_enrolled) and pp.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -847,6 +850,7 @@ CREATE PROCEDURE sp_update_etl_covid_quarantine_outcome(IN last_update_time DATE
 				e.voided as voided
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_completed) and pp.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
