@@ -245,7 +245,6 @@ ON DUPLICATE KEY UPDATE order_date=VALUES(order_date), result=VALUES(result), re
 ; 
 
 END$$
--- DELIMITER ;
 
 -- ------------- update etl_patient_triage-------------------------
 
@@ -318,7 +317,6 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
 
 		END$$
 
-
 -- ------------- populate etl_progress_note-------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_progress_note$$
@@ -381,7 +379,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
 				pp.uuid uuid,
 				pp.patient_id patient_id,
 				pp.location_id location_id,
-				"COVID-19" as program,
+				p.name as program,
 				pp.date_enrolled date_enrolled,
 				pp.date_completed date_completed,
 				pp.outcome_concept_id outcome,
@@ -400,6 +398,559 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
 		SELECT "Completed updating patient program data ", CONCAT("Time: ", NOW());
 		END$$
 
+
+-- ------------------- update covid-19 enrollment table
+
+DROP PROCEDURE IF EXISTS sp_update_etl_covid_19_enrolment$$
+CREATE PROCEDURE sp_update_etl_covid_19_enrolment(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Covid-19 enrollment ", CONCAT("Time: ", NOW());
+		insert into kenyaemr_etl.etl_covid_19_enrolment(
+			uuid,
+			encounter_id,
+			visit_id,
+			patient_id,
+			location_id,
+			visit_date,
+			encounter_provider,
+			date_created,
+			sub_county,
+			county,
+			detection_point,
+			date_detected,
+			onset_symptoms_date,
+			symptomatic,
+			fever,
+			cough,
+			runny_nose,
+			diarrhoea,
+			headache,
+			muscular_pain,
+			abdominal_pain,
+			general_weakness,
+			sore_throat,
+			shortness_breath,
+			vomiting,
+			confusion,
+			chest_pain,
+			joint_pain,
+			other_symptom,
+			specify_symptoms,
+			temperature,
+			pharyngeal_exudate,
+			tachypnea,
+			abnormal_xray,
+			coma,
+			conjuctival_injection,
+			abnormal_lung_auscultation,
+			seizures,
+			pregnancy_status,
+			trimester,
+			underlying_condition,
+			cardiovascular_dse_hypertension,
+			diabetes,
+			liver_disease,
+			chronic_neurological_neuromascular_dse,
+			post_partum,
+			immunodeficiency,
+			renal_disease,
+			chronic_lung_disease,
+			malignancy,
+			occupation,
+			other_signs,
+			specify_signs,
+			admitted_to_hospital,
+			date_of_first_admission,
+			hospital_name,
+			date_of_isolation,
+			patient_ventilated,
+			health_status_at_reporting,
+			date_of_death,
+			recently_travelled,
+			country_recently_travelled,
+			city_recently_travelled,
+			recently_visited_health_facility,
+			recent_contact_with_infected_person,
+			recent_contact_with_confirmed_person,
+			recent_contact_setting,
+			recent_visit_to_animal_market,
+			animal_market_name,
+			voided
+		)
+		select
+		e.uuid,
+		e.encounter_id as encounter_id,
+		e.visit_id as visit_id,
+		e.patient_id,
+		e.location_id,
+		date(e.encounter_datetime) as visit_date,
+		e.creator as encounter_provider,
+		e.date_created as date_created,
+		max(if(o.concept_id=161551,o.value_text,null)) as sub_county,
+		max(if(o.concept_id=165197,o.value_text,null)) as county,
+		max(if(o.concept_id=161010,(case o.value_coded when 165651 then "Point of entry" when 163488 then "Detected in Community" when 1067 then "Unknown" else "" end),null)) as detection_point,
+		max(if(o.concept_id=159948,o.value_datetime,null)) as date_detected,
+		max(if(o.concept_id=1730,o.value_datetime,null)) as onset_symptoms_date,
+		max(if(o.concept_id=1729,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as symptomatic,
+		max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
+		max(if(o.concept_id=122943,(case o.value_coded when 5226 then "Yes" when 1066 then "No" else "" end),null)) as general_weakness,
+		max(if(o.concept_id=143264,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as cough,
+		max(if(o.concept_id=163741,(case o.value_coded when 158843 then "Yes" when 1066 then "No" else "" end),null)) as sore_throat,
+		max(if(o.concept_id=163336,(case o.value_coded when 113224 then "Yes" when 1066 then "No" else "" end),null)) as runny_nose,
+		max(if(o.concept_id=164441,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as shortness_breath,
+		max(if(o.concept_id=142412,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as diarrhoea,
+		max(if(o.concept_id=122983,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as vomiting,
+		max(if(o.concept_id=5219,(case o.value_coded when 139084 then "Yes" when 1066 then "No" else "" end),null)) as headache,
+		max(if(o.concept_id=6023,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as confusion,
+		max(if(o.concept_id=160388,(case o.value_coded when 133632 then "Yes" when 1066 then "No" else "" end),null)) as muscular_pain,
+		max(if(o.concept_id=1123,(case o.value_coded when 120749 then "Yes" when 1066 then "No" else "" end),null)) as chest_pain,
+		max(if(o.concept_id=1125,(case o.value_coded when 151 then "Yes" when 1066 then "No" else "" end),null)) as abdominal_pain,
+		max(if(o.concept_id=160687,(case o.value_coded when 80 then "Yes" when 1066 then "No" else "" end),null)) as joint_pain,
+		max(if(o.concept_id=1838,(case o.value_coded when 139548 then "Yes" else "" end),null)) as other_symptom,
+		max(if(o.concept_id=160632,o.value_text,null)) as specify_symptoms,
+		max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+		max(if(o.concept_id=1166,(case o.value_coded when 130305 then "Yes" when 1066 then "No" else "" end),null)) as pharyngeal_exudate,
+		max(if(o.concept_id=163309,(case o.value_coded when 517 then "Yes" when 1066 then "No" else "" end),null)) as conjuctival_injection,
+		max(if(o.concept_id=125061,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as tachypnea,
+		max(if(o.concept_id=122496,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as abnormal_lung_auscultation,
+		max(if(o.concept_id=12,(case o.value_coded when 154435 then "Yes" when 1066 then "No" else "" end),null)) as abnormal_xray,
+		max(if(o.concept_id=113054,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as seizures,
+		max(if(o.concept_id=163043,(case o.value_coded when 144576 then "Yes" when 1066 then "No" else "" end),null)) as coma,
+		max(if(o.concept_id=162737,(case o.value_coded when 5622 then "Yes" else "" end),null)) as other_signs,
+		max(if(o.concept_id=1391,o.value_text,null)) as specify_signs,
+		max(if(o.concept_id=5272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as pregnancy_status ,
+		max(if(o.concept_id=160665,(case o.value_coded when 1721 then "First" when 1722 then "Second" when 1723 then "Third" else "" end),null)) as trimester,
+		max(if(o.concept_id=162747,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as underlying_condition,
+		max(if(o.concept_id=119270,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as cardiovascular_dse_hypertension,
+		max(if(o.concept_id=119481,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as diabetes,
+		max(if(o.concept_id=6032,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as liver_disease,
+		max(if(o.concept_id=165646,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as chronic_neurological_neuromascular_dse,
+		max(if(o.concept_id=129317,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as post_partum,
+		max(if(o.concept_id=117277,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as immunodeficiency,
+		max(if(o.concept_id=6033,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as renal_disease,
+		max(if(o.concept_id=155569,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as chronic_lung_disease,
+		max(if(o.concept_id=116031,(case o.value_coded when 1065 then "Yes"  else "" end),null)) as malignancy,
+		max(if(o.concept_id=1542,(case o.value_coded when 159465 then "Student" when 165834 then "Working with animals" when 5619 then "Health care worker" when 164831 then "Health laboratory worker" else "" end),null)) as occupation,
+		max(if(o.concept_id=163403,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as admitted_to_hospital,
+		max(if(o.concept_id=1640,o.value_datetime,null)) as date_of_first_admission,
+		max(if(o.concept_id=162724,o.value_text,null)) as hospital_name,
+		max(if(o.concept_id=165648,o.value_datetime,null)) as date_of_isolation,
+		max(if(o.concept_id=165647,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as patient_ventilated,
+		max(if(o.concept_id=159640,(case o.value_coded when 159405 then "Stable" when 159407 then "Severly ill" when 160432 then "Dead" when 1067 then "Unknown" else "" end),null)) as health_status_at_reporting,
+		max(if(o.concept_id=1543,o.value_datetime,null)) as date_of_death,
+		max(if(o.concept_id=162619,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recently_travelled,
+		max(if(o.concept_id=165198,o.value_text,null)) as country_recently_travelled,
+		max(if(o.concept_id=165645,o.value_text,null)) as city_recently_travelled,
+		max(if(o.concept_id=162723,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recently_visited_health_facility,
+		max(if(o.concept_id=165850,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_contact_with_infected_person,
+		max(if(o.concept_id=162633,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_contact_with_confirmed_person,
+		max(if(o.concept_id=163577,(case o.value_coded when 1537 then "Health care setting" when 1536 then "Family setting" when 164406 then "Work place" when 1067 then "Unknown" else "" end),null)) as recent_contact_setting,
+		max(if(o.concept_id=165844,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_visit_to_animal_market,
+		max(if(o.concept_id=165645,o.value_text,null)) as animal_market_name,
+		e.voided as voided
+			from encounter e
+		inner join person p on p.person_id=e.patient_id and p.voided=0
+		inner join
+		(
+		select form_id, uuid,name from form where
+		uuid in('0fe60b26-8648-438b-afea-8841dcd993c6')
+		) f on f.form_id=e.form_id
+		left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+		and o.concept_id in (161551,165851,161010,159948,1730,1729,140238,122943,143264,163741,163336,164441,142412,122983,5219,6023,160388,165197,
+		1123,1125,160687,1838,160632,5088,1166,163309,125061,122496,12,113054,163043,162737,1391,5272,160665,162747,
+		119270,119481,6032,165646,129317,117277,6033,155569,116031,1542,163403,
+		1640,162724,165648,165647,159640,1543,162619,165198,165645,162723,165850,162633,163577,165844,165645)
+
+		where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+		group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+	sub_county=VALUES(sub_county),
+	county=VALUES(county),
+	detection_point=VALUES(detection_point),
+	date_detected=VALUES(date_detected),
+	onset_symptoms_date=VALUES(onset_symptoms_date),
+	symptomatic=VALUES(symptomatic),
+	fever=VALUES(fever),
+	cough=VALUES(cough),
+	runny_nose=VALUES(runny_nose),
+	diarrhoea=VALUES(diarrhoea),
+	headache=VALUES(headache),
+	muscular_pain=VALUES(muscular_pain),
+	abdominal_pain=VALUES(abdominal_pain),
+	general_weakness=VALUES(general_weakness),
+	sore_throat=VALUES(sore_throat),
+	shortness_breath=VALUES(shortness_breath),
+	vomiting=VALUES(vomiting),
+	confusion=VALUES(confusion),
+	chest_pain=VALUES(chest_pain),
+	joint_pain=VALUES(joint_pain),
+	other_symptom=VALUES(other_symptom),
+	specify_symptoms=VALUES(specify_symptoms),
+	temperature=VALUES(temperature),
+	pharyngeal_exudate=VALUES(pharyngeal_exudate),
+	tachypnea=VALUES(tachypnea),
+	abnormal_xray=VALUES(abnormal_xray),
+	coma=VALUES(coma),
+	conjuctival_injection=VALUES(conjuctival_injection),
+	abnormal_lung_auscultation=VALUES(abnormal_lung_auscultation),
+	seizures=VALUES(seizures),
+	pregnancy_status=VALUES(pregnancy_status),
+	trimester=VALUES(trimester),
+	underlying_condition=VALUES(underlying_condition),
+	cardiovascular_dse_hypertension=VALUES(cardiovascular_dse_hypertension),
+	diabetes=VALUES(diabetes),
+	liver_disease=VALUES(liver_disease),
+	chronic_neurological_neuromascular_dse=VALUES(chronic_neurological_neuromascular_dse),
+	post_partum=VALUES(post_partum),
+	immunodeficiency=VALUES(immunodeficiency),
+	renal_disease=VALUES(renal_disease),
+	chronic_lung_disease=VALUES(chronic_lung_disease),
+	malignancy=VALUES(malignancy),
+	occupation=VALUES(occupation),
+	other_signs=VALUES(other_signs),
+	admitted_to_hospital=VALUES(admitted_to_hospital),
+	date_of_first_admission=VALUES(date_of_first_admission),
+	hospital_name=VALUES(hospital_name),
+	date_of_isolation=VALUES(date_of_isolation),
+	patient_ventilated=VALUES(patient_ventilated),
+	health_status_at_reporting=VALUES(health_status_at_reporting),
+	date_of_death=VALUES(date_of_death),
+	recently_travelled=VALUES(recently_travelled),
+	country_recently_travelled=VALUES(country_recently_travelled),
+	city_recently_travelled=VALUES(city_recently_travelled),
+	recently_visited_health_facility=VALUES(recently_visited_health_facility),
+	recent_contact_with_infected_person=VALUES(recent_contact_with_infected_person),
+	recent_contact_with_confirmed_person=VALUES(recent_contact_with_confirmed_person),
+	recent_visit_to_animal_market=VALUES(recent_visit_to_animal_market),
+	animal_market_name=VALUES(animal_market_name),
+	voided=VALUES(voided);
+
+		SELECT "Completed processing covid-19 enrollment data ", CONCAT("Time: ", NOW());
+
+		END$$
+
+
+-- ---------------------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_contact_tracing_followup$$
+CREATE PROCEDURE sp_update_etl_contact_tracing_followup(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Updating Covid contact tracing followup ", CONCAT("Time: ", NOW());
+		-- -------------populate etl_contact_tracing_followup-------------------------
+		INSERT INTO kenyaemr_etl.etl_contact_tracing_followup(
+			uuid,
+			encounter_id,
+			visit_id,
+			patient_id,
+			location_id,
+			visit_date,
+			encounter_provider,
+			date_created,
+			fever,
+			cough,
+			difficulty_breathing,
+			sore_throat,
+			referred_to_hosp,
+			voided
+		)
+			select
+				e.uuid,
+				e.encounter_id as encounter_id,
+				e.visit_id as visit_id,
+				e.patient_id,
+				e.location_id,
+				date(e.encounter_datetime) as visit_date,
+				e.creator as encounter_provider,
+				e.date_created as date_created,
+				max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
+				max(if(o.concept_id=143264,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as cough,
+				max(if(o.concept_id=164441,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as difficulty_breathing,
+				max(if(o.concept_id=162737,(case o.value_coded when 158843 then "Yes" when 1066 then "No" else "" end),null)) as sore_throat,
+				max(if(o.concept_id=1788,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as referred_to_hosp,
+				e.voided as voided
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('37ef8f3c-6cd2-11ea-bc55-0242ac130003')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (140238,143264,164441,162737,1788)
+			where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+			fever=VALUES(fever),cough=VALUES(cough),difficulty_breathing=VALUES(difficulty_breathing),sore_throat=VALUES(sore_throat),
+			referred_to_hosp=VALUES(referred_to_hosp),voided=VALUES(voided);
+
+		SELECT "Completed processing covid_19 contact tracing followup data ", CONCAT("Time: ", NOW());
+		END$$
+
+
+DROP PROCEDURE IF EXISTS sp_update_etl_covid_quarantine_enrolment$$
+CREATE PROCEDURE sp_update_etl_covid_quarantine_enrolment(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Covid quarantine enrolment", CONCAT("Time: ", NOW());
+		-- -------------populate etl_covid_quarantine_enrolment-------------------------
+		INSERT INTO kenyaemr_etl.etl_covid_quarantine_enrolment(
+			uuid,
+			encounter_id,
+			visit_id,
+			patient_id,
+			location_id,
+			visit_date,
+			encounter_provider,
+			date_created,
+			quarantine_center,
+			type_of_admission,
+			quarantine_center_trf_from,
+			voided
+		)
+			select
+				e.uuid,
+				e.encounter_id as encounter_id,
+				e.visit_id as visit_id,
+				e.patient_id,
+				e.location_id,
+				date(e.encounter_datetime) as visit_date,
+				e.creator as encounter_provider,
+				e.date_created as date_created,
+				max(if(o.concept_id=162724,o.value_text,null)) as quarantine_center,
+				max(if(o.concept_id=161641,(case o.value_coded when 164144 then "New" when 160563 then "Transfer in" else "" end),null)) as type_of_admission,
+				max(if(o.concept_id=161550,o.value_text,null)) as quarantine_center_trf_from,
+				e.voided as voided
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('9a5d57b6-739a-11ea-bc55-0242ac130003')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (162724,161641,161550)
+			where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.encounter_id
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),quarantine_center=VALUES(quarantine_center),type_of_admission=VALUES(type_of_admission),quarantine_center_trf_from=VALUES(quarantine_center_trf_from);
+
+		SELECT "Completed processing covid_19 quarantine enrolment data ", CONCAT("Time: ", NOW());
+		END$$
+
+DROP PROCEDURE IF EXISTS sp_update_etl_covid_quarantine_followup$$
+CREATE PROCEDURE sp_update_etl_covid_quarantine_followup(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Covid quarantine followup ", CONCAT("Time: ", NOW());
+		-- -------------populate etl_covid_quarantine_followup-------------------------
+		INSERT INTO kenyaemr_etl.etl_covid_quarantine_followup(
+			uuid,
+			encounter_id,
+			visit_id,
+			patient_id,
+			location_id,
+			visit_date,
+			encounter_provider,
+			date_created,
+			sub_county,
+			county,
+			fever,
+			cough,
+			difficulty_breathing,
+			sore_throat,
+			referred_to_hosp,
+			voided
+		)
+			select
+				e.uuid,
+				e.encounter_id as encounter_id,
+				e.visit_id as visit_id,
+				e.patient_id,
+				e.location_id,
+				date(e.encounter_datetime) as visit_date,
+				e.creator as encounter_provider,
+				e.date_created as date_created,
+				max(if(o.concept_id=161551,o.value_text,null)) as sub_county,
+				max(if(o.concept_id=165197,o.value_text,null)) as county,
+				max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
+				max(if(o.concept_id=143264,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as cough,
+				max(if(o.concept_id=164441,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as difficulty_breathing,
+				max(if(o.concept_id=162737,(case o.value_coded when 158843 then "Yes" when 1066 then "No" else "" end),null)) as sore_throat,
+				max(if(o.concept_id=1788,(case o.value_coded when 140238 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as referred_to_hosp,
+				e.voided as voided
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('37ef8f3c-6cd2-11ea-bc55-0242ac130003')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (161551,165197,140238,143264,164441,162737,1788)
+			where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),fever=VALUES(fever),cough=VALUES(cough),difficulty_breathing=VALUES(difficulty_breathing),sore_throat=VALUES(sore_throat),
+			referred_to_hosp=VALUES(referred_to_hosp);
+
+		SELECT "Completed processing covid_19 quarantine followup data ", CONCAT("Time: ", NOW());
+		END$$
+
+DROP PROCEDURE IF EXISTS sp_update_etl_covid_quarantine_outcome$$
+CREATE PROCEDURE sp_update_etl_covid_quarantine_outcome(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Covid quarantine outcome", CONCAT("Time: ", NOW());
+		-- -------------populate etl_covid_quarantine_outcome-------------------------
+		INSERT INTO kenyaemr_etl.etl_covid_quarantine_outcome(
+			uuid,
+			encounter_id,
+			visit_id,
+			patient_id,
+			location_id,
+			visit_date,
+			encounter_provider,
+			date_created,
+			discontinuation_reason,
+			transfer_to_facility,
+			comment,
+			referral_reason,
+			facility_referred_to,
+			discharge_reason,
+			voided
+		)
+			select
+				e.uuid,
+				e.encounter_id as encounter_id,
+				e.visit_id as visit_id,
+				e.patient_id,
+				e.location_id,
+				date(e.encounter_datetime) as visit_date,
+				e.creator as encounter_provider,
+				e.date_created as date_created,
+				max(if(o.concept_id=161555,(case o.value_coded when 159492 then "Transferred out" when 164165 then "Referral" when 1692 then "Discharged" else "" end),null)) as discontinuation_reason,
+				max(if(o.concept_id=159495,o.value_text,null)) as transfer_to_facility,
+				max(if(o.concept_id=160632,o.value_text,null)) as comment,
+				max(if(o.concept_id=159623,(case o.value_coded when 162747 then "Cormobidity management" when 1185 then "Covid treatment" else "" end),null)) as referral_reason,
+				max(if(o.concept_id=161562,o.value_text,null)) as facility_referred_to,
+				max(if(o.concept_id=160433,(case o.value_coded when 126311 then "Home quarantine" when 1855 then "End of quarantine" else "" end),null)) as discharge_reason,
+				e.voided as voided
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('9a5d58c4-739a-11ea-bc55-0242ac130003')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (161555,159495,160632,159623,161562,160433)
+			where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),discontinuation_reason=VALUES(discontinuation_reason),transfer_to_facility=VALUES(transfer_to_facility),comment=VALUES(comment),referral_reason=VALUES(referral_reason),
+			facility_referred_to=VALUES(facility_referred_to),discharge_reason=VALUES(discharge_reason),voided=VALUES(voided);
+
+		SELECT "Completed processing covid_19 quarantine followup data ", CONCAT("Time: ", NOW());
+		END$$
+
+DROP PROCEDURE IF EXISTS sp_update_etl_covid_travel_history$$
+CREATE PROCEDURE sp_update_etl_covid_travel_history(IN last_update_time DATETIME)
+	BEGIN
+		SELECT "Processing Covid Travel history", CONCAT("Time: ", NOW());
+		-- -------------populate etl_covid_travel_history-------------------------
+		INSERT INTO kenyaemr_etl.etl_covid_travel_history(
+			uuid,
+			encounter_id,
+			visit_id,
+			patient_id,
+			location_id,
+			visit_date,
+			encounter_provider,
+			date_created,
+			date_arrived_in_kenya,
+			mode_of_transport,
+			flight_bus_number,
+			seat_number,
+			country_visited,
+			destination_in_kenya,
+			name_of_contact_person,
+			phone_of_contact_person,
+			county,
+			sublocation_estate,
+			village_house_no_hotel,
+			address,
+			local_phone_number,
+			email,
+			fever,
+			cough,
+			difficulty_breathing,
+			voided
+		)
+			select
+				e.uuid,
+				e.encounter_id as encounter_id,
+				e.visit_id as visit_id,
+				e.patient_id,
+				e.location_id,
+				date(e.encounter_datetime) as visit_date,
+				e.creator as encounter_provider,
+				e.date_created as date_created,
+				max(if(o.concept_id=160753,o.value_datetime,null)) as date_arrived_in_kenya,
+				max(if(o.concept_id=1375,(case o.value_coded when 1378 then "Airline" when 1787 then "Bus" else "" end),null)) as mode_of_transport,
+				max(if(o.concept_id=162612,o.value_text,null)) as flight_bus_number,
+				max(if(o.concept_id=162086,o.value_text,null)) as seat_number,
+				max(if(o.concept_id=165198,o.value_text,null)) as country_visited,
+				max(if(o.concept_id=161550,o.value_text,null)) as destination_in_kenya,
+				max(if(o.concept_id=163258,o.value_text,null)) as name_of_contact_person,
+				max(if(o.concept_id=159635,o.value_text,null)) as phone_of_contact_person,
+				max(if(o.concept_id=165197,o.value_text,null)) as county,
+				max(if(o.concept_id=161551,o.value_text,null)) as sublocation_estate,
+				max(if(o.concept_id=1354,o.value_text,null)) as village_house_no_hotel,
+				max(if(o.concept_id=162725,o.value_text,null)) as address,
+				max(if(o.concept_id=163152,o.value_text,null)) as local_phone_number,
+				max(if(o.concept_id=160632,o.value_text,null)) as email,
+				max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
+				max(if(o.concept_id=143264,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as cough,
+				max(if(o.concept_id=164441,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as difficulty_breathing,
+				e.voided as voided
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('87513b50-6ced-11ea-bc55-0242ac130003')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+																 and o.concept_id in (160753,1375,162612,162086,165198,161550,163258,159635,165197,161551,1354,162725,163152,160632,140238,143264,164441)
+			where e.voided=0 and e.date_created >= last_update_time
+						or e.date_changed >= last_update_time
+						or e.date_voided >= last_update_time
+						or o.date_created >= last_update_time
+						or o.date_voided >= last_update_time
+			group by e.patient_id, e.encounter_id, visit_date
+		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+			date_arrived_in_kenya=VALUES(date_arrived_in_kenya),mode_of_transport=VALUES(mode_of_transport),country_visited=VALUES(country_visited),
+			destination_in_kenya=VALUES(destination_in_kenya),name_of_contact_person=VALUES(name_of_contact_person),
+			phone_of_contact_person=VALUES(phone_of_contact_person),fever=VALUES(fever),
+			cough=VALUES(cough),difficulty_breathing=VALUES(difficulty_breathing),voided=VALUES(voided);
+
+		SELECT "Completed processing covid_19 quarantine followup data ", CONCAT("Time: ", NOW());
+		END$$
+
+-- ---------------------------------------------------------------------------------------
 -- ------------------- update person address table -------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_person_address$$
@@ -465,6 +1016,13 @@ CALL sp_update_etl_program_discontinuation(last_update_time);
 CALL sp_update_etl_patient_triage(last_update_time);
 CALL sp_update_etl_progress_note(last_update_time);
 CALL sp_update_etl_patient_program(last_update_time);
+CALL sp_update_etl_covid_19_enrolment(last_update_time);
+
+CALL sp_update_etl_contact_tracing_followup(last_update_time);
+CALL sp_update_etl_covid_quarantine_enrolment(last_update_time);
+CALL sp_update_etl_covid_quarantine_followup(last_update_time);
+CALL sp_update_etl_covid_quarantine_outcome(last_update_time);
+CALL sp_update_etl_covid_travel_history(last_update_time);
 CALL sp_update_etl_person_address(last_update_time);
 
 CALL sp_update_dashboard_table();
