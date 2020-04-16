@@ -365,6 +365,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program_discontinuation()
 				max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_completed) and pp.voided=0
 				inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
 				inner join
 				(
@@ -469,7 +470,7 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
         pc.consented_contact_listing,
         pc.voided
 			from kenyaemr_hiv_testing_patient_contact pc
-				inner join kenyaemr_etl.etl_patient_demographics dm on dm.patient_id=pc.patient_related_to and dm.voided=0
+				inner join person p on p.person_id = pc.patient_related_to and p.voided=0
         where pc.voided=0
 		;
 		SELECT "Completed processing patient contact data ", CONCAT("Time: ", NOW());
@@ -511,8 +512,9 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
         ct.appointment_date,
         ct.voided
 			from kenyaemr_hiv_testing_client_trace ct
-				inner join kenyaemr_etl.etl_patient_contact pc on pc.id=ct.client_id and ct.voided=0
-        where pc.voided=0
+				inner join kenyaemr_etl.etl_patient_contact pc on pc.id=ct.client_id and pc.voided=0
+				inner join person p on p.person_id = pc.patient_related_to and p.voided=0
+			where ct.voided=0
 		;
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
 		END$$
@@ -667,6 +669,7 @@ select
 	e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_enrolled) and pp.voided=0
 	inner join
 	(
 		select form_id, uuid,name from form where
@@ -769,6 +772,7 @@ select
   	e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_enrolled) and pp.voided=0
 	inner join
 	(
 		select form_id, uuid,name from form where
@@ -877,6 +881,7 @@ select
   	e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join patient_program pp on pp.patient_id = e.patient_id and date(e.encounter_datetime) = date(pp.date_enrolled) and pp.voided=0
 	inner join
 	(
 		select form_id, uuid,name from form where
