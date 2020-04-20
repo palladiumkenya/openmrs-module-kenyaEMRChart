@@ -1021,7 +1021,7 @@ CALL sp_update_etl_patient_triage(last_update_time);
 CALL sp_update_etl_progress_note(last_update_time);
 CALL sp_update_etl_patient_program(last_update_time);
 CALL sp_update_etl_covid_19_enrolment(last_update_time);
-
+CALL sp_update_etl_laboratory_extract(last_update_time);
 CALL sp_update_etl_contact_tracing_followup(last_update_time);
 CALL sp_update_etl_covid_quarantine_enrolment(last_update_time);
 CALL sp_update_etl_covid_quarantine_followup(last_update_time);
