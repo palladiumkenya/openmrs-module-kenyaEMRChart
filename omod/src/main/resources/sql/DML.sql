@@ -168,7 +168,8 @@ insert into kenyaemr_etl.etl_laboratory_extract(
     od.date_created,
     od.orderer
   from orders od
-    left join obs o on o.order_id=od.order_id and o.voided=0
+		inner join person p on p.person_id=od.patient_id and p.voided=0
+		left join obs o on o.order_id=od.order_id and o.voided=0
   where od.order_action != 'DISCONTINUE'and od.voided=0
 ;
 
