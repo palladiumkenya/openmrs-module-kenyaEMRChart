@@ -176,7 +176,7 @@ max(if(o.concept_id in (164932), o.value_coded, if(o.concept_id=160563 and o.val
 max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_care ,
 max(if(o.concept_id=160540,o.value_coded,null)) as entry_point,
 max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
-max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
+max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_tcingfrom,
 max(if(o.concept_id=161551,left(trim(o.value_text),100),null)) as district_transferred_from,
 max(if(o.concept_id=159599,o.value_datetime,null)) as date_started_art_at_transferring_facility,
 max(if(o.concept_id=160554,o.value_datetime,null)) as date_confirmed_hiv_positive,
@@ -2251,7 +2251,7 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
     e.voided
   from encounter e
 		inner join person p on p.person_id=e.patient_id and p.voided=0
-		inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
+		inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","63917c60-3fea-11e9-b210-d663bd873d93")
   left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473) and o.voided=0
   where e.voided=0
   group by e.encounter_id;
@@ -4037,8 +4037,8 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                e.encounter_id,
                e.creator,
                e.date_created,
-               max(if(o.concept_id=164929,(case o.value_coded when 165083 then "Female sex worker" when 160578 then "Male who have sex with Men" when 165084 then "Male sex worker" when 165085
-                                                     then  "People who use drugs" when 105 then "People who inject drugs"  when  165108 then "Transgender"  when 165107 then "Transgender" else "" end),null)) as key_population_type,
+               max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
+                                                     then  "PWUD" when 105 then "PWID"  when  165108 then "Transman"  when 165107 then "Transwoman" else "" end),null)) as key_population_type,
                max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
                max(if(o.concept_id=165137,o.value_text,null)) as program_name,
                max(if(o.concept_id=165006,o.value_text,null)) as frequent_hotspot_name,
@@ -4047,6 +4047,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                                               when 165012 then "Injecting den"
                                               when 165013 then "Uninhabitable building"
                                               when 165014 then "Public Park"
+                                              when '1536AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Homes"
                                               when 165015 then "Beach"
                                               when 165016 then "Casino"
                                               when 165017 then "Bar with lodging"
@@ -4056,8 +4057,12 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                                               when 165021 then "Highway"
                                               when 165022 then "Brothel"
                                               when 165023 then "Guest house/hotel"
+                                              when 165024 then "Massage parlor"
                                               when 165025 then "illicit brew den"
-                                              when 165026 then "Barber shop/salon" else "" end),null)) as frequent_hotspot_type,
+                                              when 165026 then "Barber shop/salon"
+                                              when 165297 then "Virtual Space"
+                                              when '5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Other"
+                                              else "" end),null)) as frequent_hotspot_type,
                max(if(o.concept_id=165030,o.value_numeric,null)) as year_started_sex_work,
                max(if(o.concept_id=165031,o.value_numeric,null)) as year_started_sex_with_men,
                max(if(o.concept_id=165032,o.value_numeric,null)) as year_started_drugs,
@@ -4610,6 +4615,61 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
             SELECT "Completed processing Peer calendar data ", CONCAT("Time: ", NOW());
             END$$
 
+
+-- ------------- populate kp peer tracking-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_peer_tracking$$
+CREATE PROCEDURE sp_populate_etl_peer_tracking()
+BEGIN
+SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_peer_tracking(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+tracing_attempted,
+tracing_not_attempted_reason,
+attempt_number,
+tracing_date,
+tracing_type,
+tracing_outcome,
+is_final_trace,
+tracing_outcome_status,
+voluntary_exit_comment,
+status_in_program,
+source_of_information,
+other_informant,
+voided
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+ max(if(o.concept_id=165004,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as tracing_attempted,
+ max(if(o.concept_id=165071,(case o.value_coded when 165078 THEN "Contact information illegible" when 165073 then "Location listed too general to make tracking possible"
+ when 165072 then "Contact information missing" when 163777 then "Cohort register or peer outreach calendar reviewed and client not lost to follow up" when 5622 then "other" else "" end),null)) as tracing_not_attempted_reason,
+ max(if(o.concept_id = 1639, o.value_numeric, "" )) as attempt_number,
+ max(if(o.concept_id = 160753, o.value_datetime, "" )) as tracing_date,
+ max(if(o.concept_id = 164966, (case o.value_coded when 1650 THEN "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type,
+ max(if(o.concept_id = 160721, (case o.value_coded when 160718 THEN "KP reached" when 160717 then "KP not reached but other informant reached" when 160720 then "KP not reached" else "" end),null)) as tracing_outcome,
+ max(if(o.concept_id = 163725, (case o.value_coded when 1267 THEN "Yes" when 163339 then "No" else "" end),null)) as is_final_trace,
+ max(if(o.concept_id = 160433,(case o.value_coded when 160432 then "Dead" when 160415 then "Relocated" when 165219 then "Voluntary exit" when
+  134236 then "Enrolled in MAT (applicable to PWIDS only)" when 165067 then "Untraceable" when 162752 then "Bedridden" when 156761 then "Imprisoned" when 162632 then "Found" else "" end),null)) as tracing_outcome_status,
+  max(if(o.concept_id = 160716, o.value_text, "" )) as voluntary_exit_comment,
+  max(if(o.concept_id = 161641, (case o.value_coded when 5240 THEN "Lost to follow up" when 160031 then "Defaulted" when 161636 then "Active" when 160432 then "Dead" else "" end),null)) as status_in_program,
+  max(if(o.concept_id = 162568, (case o.value_coded when 164929 THEN "KP" when 165037 then "PE" when 5622 then "Other" else "" end),null)) as source_of_information,
+  max(if(o.concept_id = 160632, o.value_text, "" )) as other_informant,
+  e.voided as voided
+  from encounter e
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ("63917c60-3fea-11e9-b210-d663bd873d93")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568,160632) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing peer tracking form", CONCAT("Time: ", NOW());
+END$$
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -4676,6 +4736,7 @@ CALL sp_populate_etl_client_enrollment();
 CALL sp_populate_etl_clinical_visit();
 CALL sp_populate_etl_sti_treatment();
 CALL sp_populate_etl_peer_calendar();
+CALL sp_populate_etl_peer_tracking();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
