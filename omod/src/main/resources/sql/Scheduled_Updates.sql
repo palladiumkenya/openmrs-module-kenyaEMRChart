@@ -4158,8 +4158,8 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
                e.encounter_id,
                e.creator,
                e.date_created,
-               max(if(o.concept_id=164929,(case o.value_coded when 165083 then "Female sex worker" when 160578 then "Male who have sex with Men" when 165084 then "Male sex worker" when 165085
-                                                     then  "People who use drugs" when 105 then "People who inject drugs"  when  165108 then "Transgender"  when 165107 then "Transgender" else "" end),null)) as key_population_type,
+               max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
+                                                     then  "PWUD" when 105 then "PWID"  when  165108 then "Transman"  when 165107 then "Transwoman" else "" end),null)) as key_population_type,
                max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
                max(if(o.concept_id=165137,o.value_text,null)) as program_name,
                max(if(o.concept_id=165006,o.value_text,null)) as frequent_hotspot_name,
@@ -4168,6 +4168,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
                                               when 165012 then "Injecting den"
                                               when 165013 then "Uninhabitable building"
                                               when 165014 then "Public Park"
+                                              when '1536AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Homes"
                                               when 165015 then "Beach"
                                               when 165016 then "Casino"
                                               when 165017 then "Bar with lodging"
@@ -4177,8 +4178,12 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
                                               when 165021 then "Highway"
                                               when 165022 then "Brothel"
                                               when 165023 then "Guest house/hotel"
+                                              when 165024 then "Massage parlor"
                                               when 165025 then "illicit brew den"
-                                              when 165026 then "Barber shop/salon" else "" end),null)) as frequent_hotspot_type,
+                                              when 165026 then "Barber shop/salon"
+                                              when 165297 then "Virtual Space"
+                                              when '5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Other"
+                                              else "" end),null)) as frequent_hotspot_type,
                max(if(o.concept_id=165030,o.value_numeric,null)) as year_started_sex_work,
                max(if(o.concept_id=165031,o.value_numeric,null)) as year_started_sex_with_men,
                max(if(o.concept_id=165032,o.value_numeric,null)) as year_started_drugs,
