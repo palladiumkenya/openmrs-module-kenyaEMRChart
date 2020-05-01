@@ -128,6 +128,7 @@ where o.concept_id in (1054,1712) and o.voided=0
 group by person_id) pstatus on pstatus.patient_id=d.patient_id
 set d.marital_status=pstatus.marital_status,
 d.education_level=pstatus.education_level;
+SELECT "Completed processing demographics data";
 
 END$$
 
@@ -171,7 +172,9 @@ insert into kenyaemr_etl.etl_laboratory_extract(
 		inner join person p on p.person_id=od.patient_id and p.voided=0
 		left join obs o on o.order_id=od.order_id and o.voided=0
   where od.order_action != 'DISCONTINUE'and od.voided=0
+	group by od.uuid
 ;
+SELECT "Completed processing laboratory data";
 
 END$$
 -- ----------------------------------- UPDATE DASHBOARD TABLE ---------------------
