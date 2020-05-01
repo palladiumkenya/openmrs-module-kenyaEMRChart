@@ -243,6 +243,7 @@ od.date_created >= last_update_time
 or od.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time )
+	group by od.uuid
 ON DUPLICATE KEY UPDATE order_date=VALUES(order_date), result=VALUES(result), result_date=VALUES(result_date)
 ; 
 
