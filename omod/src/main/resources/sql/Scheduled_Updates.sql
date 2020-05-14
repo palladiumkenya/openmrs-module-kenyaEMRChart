@@ -4940,6 +4940,279 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
 
                     END$$
 
+DROP PROCEDURE IF EXISTS sp_populate_etl_treatment_verification$$
+CREATE PROCEDURE sp_populate_etl_treatment_verification(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing kp treatment verification form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_treatment_verification(
+uuid,
+provider,
+client_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_diagnosed_with_hiv,
+art_health_facility,
+ccc_number,
+is_pepfar_site,
+date_initiated_art,
+current_regimen,
+information_source,
+cd4_test_date,
+cd4,
+vl_test_date,
+viral_load,
+disclosed_status,
+person_disclosed_to,
+other_person_disclosed_to,
+IPT_start_date,
+IPT_completion_date,
+on_diff_care,
+in_support_group,
+support_group_name,
+opportunistic_infection,
+oi_diagnosis_date,
+oi_treatment_start_date,
+oi_treatment_end_date,
+comment,
+voided
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id = 159948, o.value_datetime, "" )) as date_diagnosed_with_hiv,
+max(if(o.concept_id = 162724, o.value_text, "" )) as art_health_facility,
+max(if(o.concept_id = 162053, o.value_numeric, "" )) as ccc_number,
+max(if(o.concept_id=1768,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as is_pepfar_site,
+max(if(o.concept_id = 159599, o.value_datetime, "" )) as date_initiated_art,
+max(if(o.concept_id = 164515,(case o.value_coded
+       when 162565 then TDF/3TC/NVP
+       when 164505 then TDF/3TC/EFV
+       when 1652 then AZT/3TC/NVP
+       when 160124 then AZT/3TC/EFV
+       when 792 then D4T/3TC/NVP
+       when 160104 then D4T/3TC/EFV
+       when 162561 then AZT/3TC/LPV/r
+       when 164511 then AZT/3TC/ATV/r
+       when 164512 then TDF/3TC/ATV/r
+       when 162201 then TDF/3TC/LPV/r
+       when 162561 then AZT/3TC/LPV/r
+       when 164511 then AZT/3TC/ATV/r
+       when 162201 then TDF/3TC/LPV/r
+       when 164512 then TDF/3TC/ATV/r
+       when 162560 then D4T/3TC/LPV/r
+       when 162200 then ABC/3TC/LPV/r
+       when '98e38a9c-435d-4a94-9b66-5ca524159d0e' then TDF/3TC/AZT
+       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then AZT/3TC/DTG
+       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then TDF/3TC/DTG
+       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then ABC/3TC/DTG
+       when 'c421d8e7-4f43-43b4-8d2f-c7d4cfb976a4' then AZT/TDF/3TC/LPV/r
+       when '337b6cfd-9fa7-47dc-82b4-d479c39ef355' then ETR/RAL/DRV/RTV
+       when '7a6c51c4-2b68-4d5a-b5a2-7ba420dde203' then ETR/TDF/3TC/LPV/r
+       when 'dddd9cf2-2b9c-4c52-84b3-38cfe652529a' then ABC/3TC/ATV/r
+       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then AZT/3TC/DTG
+       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then TDF/3TC/DTG
+       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then ABC/3TC/DTG
+       when '5b8e4955-897a-423b-ab66-7e202b9c304c' then RAL/3TC/DRV/RTV
+       when '092604d3-e9cb-4589-824e-9e17e3cb4f5e' then RAL/3TC/DRV/RTV/AZT
+       when 'c6372744-9e06-40cf-83e5-c794c985b6bf' then RAL/3TC/DRV/RTV/TDF
+       when '1995c4a1-a625-4449-ab28-aae88d0f80e6' then ETV/3TC/DRV/RTV
+       when '5f429c76-2976-4374-a69e-d2d138dd16bf' then TDF/3TC/DTG/DRV/r
+       when '9b9817dd-4c84-4093-95c3-690d65d24b99' then TDF/3TC/RAL/DRV/r
+       when 'f2acaf9b-3da9-4d71-b0cf-fd6af1073c9e' then TDF/3TC/DTG/EFV/DRV/r else "" end),null)) as current_regimen,
+max(if(o.concept_id = 162568, (case o.value_coded when 162969 THEN "SMS" when 163787 then "Verbal report"  when 1238 then "Written record" when 162189 then "Phone call" when 160526 then "EID Dashboard" when 165048 then "Appointment card" else "" end),null)) as information_source,
+max(if(o.concept_id = 160103, o.value_datetime, "" )) as cd4_test_date,
+max(if(o.concept_id = 5497, o.value_numeric, "" )) as cd4,
+max(if(o.concept_id = 163281, o.value_datetime, "" )) as vl_test_date,
+max(if(o.concept_id = 160632, o.value_numeric, "" )) as viral_load,
+max(if(o.concept_id = 163524, (case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as disclosed_status,
+max(if(o.concept_id = 5616, (case o.value_coded when 159423 THEN "Sexual Partner" when 1560 then "Family member" when 161642 then "Treatment partner" when 160639 then "Spiritual Leader" when 5622 then "Other" else "" end),null)) as person_disclosed_to,
+max(if(o.concept_id = 163101, o.value_text, "" )) as other_person_disclosed_to,
+max(if(o.concept_id = 162320, o.value_datetime, "" )) as IPT_start_date,
+max(if(o.concept_id = 162279, o.value_datetime, "" )) as IPT_completion_date,
+max(if(o.concept_id=164947,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as on_diff_care,
+max(if(o.concept_id=165302,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_support_group,
+max(if(o.concept_id = 165137, o.value_text, "" )) as support_group_name,
+max(if(o.concept_id = 162634, (case o.value_coded when 112141 THEN "Tuberculosis" when 990 then "Toxoplasmosis" when 130021 then "Pneumocystosis carinii pneumonia" when 114100 then "Pneumonia" when 136326 then "Kaposi Sarcoma"
+when 123118 then "HIV encephalitis" when 117543 then "Herpes Zoster" when 154119 then "Cytomegalovirus (CMV)" when 1219 then "Cryptococcosis" when 120939 then "Candidiasis" when 116104 then "Lymphoma" when 5622 then "Other" else "" end),null)) as opportunistic_infection,
+max(if(o.concept_id = 159948, o.value_datetime, "" )) as oi_diagnosis_date,
+max(if(o.concept_id = 160753, o.value_datetime, "" )) as oi_treatment_end_date,
+max(if(o.concept_id = 162868, o.value_datetime, "" )) as oi_treatment_end_date,
+max(if(o.concept_id = 161011, o.value_datetime, "" )) as comment,
+e.voided as voided
+from openmrs.encounter e
+inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
+inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (159948,162724,162053,1768,
+159599,164515,162568,657,5497,163281,160632,163524,5616,5497,160716,161641,162568,163101,162320,162279,164947,
+165302,165137,162634,159948,160753,162868,161011) and o.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+        or e.date_changed >= last_update_time
+        or e.date_voided >= last_update_time
+        or o.date_created >= last_update_time
+        or o.date_voided >= last_update_time
+        group by e.patient_id, e.encounter_id, visit_date
+        order by e.patient_id
+        ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                        encounter_provider=VALUES(encounter_provider),
+                        date_diagnosed_with_hiv=VALUES(date_diagnosed_with_hiv),
+                        art_health_facility=VALUES(art_health_facility),
+                        ccc_number=VALUES(ccc_number),
+                        is_pepfar_site=VALUES(is_pepfar_site),
+                        date_initiated_art=VALUES(date_initiated_art),
+                        current_regimen=VALUES(current_regimen),
+                        information_source=VALUES(information_source),
+                        cd4_test_date=VALUES(cd4_test_date),
+                        cd4=VALUES(cd4),
+                        vl_test_date=VALUES(vl_test_date),
+                        viral_load=VALUES(viral_load),
+                        disclosed_status=VALUES(disclosed_status),
+                        person_disclosed_to=VALUES(person_disclosed_to),
+                        other_person_disclosed_to=VALUES(other_person_disclosed_to),
+                        IPT_start_date=VALUES(IPT_start_date),
+                        IPT_completion_date=VALUES(IPT_completion_date),
+                        on_diff_care=VALUES(on_diff_care),
+                        in_support_group=VALUES(in_support_group),
+                        support_group_name=VALUES(support_group_name),
+                        opportunistic_infection=VALUES(opportunistic_infection),
+                        oi_diagnosis_date=VALUES(oi_diagnosis_date),
+                        oi_treatment_start_date=VALUES(oi_treatment_start_date),
+                        oi_treatment_end_date=VALUES(oi_treatment_end_date),
+                        comment=VALUES(comment),
+                        voided=VALUES(voided);
+
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_gender_based_violence$$
+CREATE PROCEDURE sp_populate_etl_gender_based_violence(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing kp gender based violence form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_gender_based_violence(
+uuid,
+provider,
+client_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+is_physically_abused,
+physical_abuse_perpetrator,
+other_physical_abuse_perpetrator,
+in_physically_abusive_relationship,
+in_physically_abusive_relationship_with,
+other_physically_abusive_relationship_perpetrator,
+in_emotionally_abusive_relationship,
+emotional_abuse_perpetrator,
+other_emotional_abuse_perpetrator,
+in_sexually_abusive_relationship,
+sexual_abuse_perpetrator,
+other_sexual_abuse_perpetrator,
+ever_abused_by_unrelated_person,
+unrelated_perpetrator,
+other_unrelated_perpetrator,
+sought_help,
+help_provider,
+date_helped,
+help_outcome,
+other_outcome,
+reason_for_not_reporting,
+other_reason_for_not_reporting,
+voided
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as is_physically_abused,
+max(if(o.concept_id=159449,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 1067 then "Stranger" when 5622 then "Other" else "" end),null)) as physical_abuse_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_physical_abuse_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_physically_abusive_relationship,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as in_physically_abusive_relationship_with,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_physically_abusive_relationship_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_emotionally_abusive_relationship,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as emotional_abuse_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_emotional_abuse_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_sexually_abusive_relationship,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as sexual_abuse_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_sexual_abuse_perpetrator,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as ever_abused_by_unrelated_person,
+max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as unrelated_perpetrator,
+max(if(o.concept_id=165230, o.value_text, "" )) as other_unrelated_perpetrator,
+max(if(o.concept_id=162871,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as sought_help,
+max(if(o.concept_id=162886,(case o.value_coded when 1589 THEN "Hospital" when 165284 then "Police" when 165037 then "Peer Educator" when 1560 then "Family" when 165294 then "Peers" when 5618 then "Friends"
+                          when 165290 then "Religious Leader" when 165350 then "Dice" when 162690 then "Chief" when 5622 then "Other" else "" end),null)) as help_provider,
+max(if(o.concept_id = 160753, o.value_datetime, "" )) as date_helped,
+max(if(o.concept_id=162875,(case o.value_coded when 1066 then "No action taken"
+        when 165070 then "Counselling"
+        when 160570 then "Emergency pills"
+        when 1356 then "Hiv testing"
+        when 130719 then "Investigation done"
+        when 135914 then "Matter presented to court"
+        when 165228 then "P3 form issued"
+        when 165171 then "PEP given"
+        when 165192 then "Perpetrator arrested"
+        when 127910 then "Post rape care"
+        when 165203 then "PrEP given"
+        when 5618 then "Reconciliation"
+        when 165093 then "Referred back to the family"
+        when 165274 then "Referred to hospital"
+        when 165180 then "Statement taken"
+        when 165200 then "STI Prophylaxis"
+        when 165184 then "Trauma counselling done"
+        when 1185 then "Treatment"
+        when 5622 then "Other"
+        else "" end),null)) as help_outcome,
+max(if(o.concept_id = 165230, o.value_text, "" )) as other_outcome,
+max(if(o.concept_id=6098,(case o.value_coded
+       when 162951 then "Did not know where to report"
+       when 1811 then "Distance"
+       when 140923 then "Exhaustion/Lack of energy"
+       when 163473 then "Fear shame"
+       when 159418 then "Lack of faith in system"
+       when 162951 then "Lack of knowledge"
+       when 664 then "Negative attitude of the person reported to"
+       when 143100 then "Not allowed culturally"
+       when 165161 then "Perpetrator above the law"
+       when 163475 then "Self blame"
+       else "" end),null)) as reason_for_not_reporting,
+max(if(o.concept_id = 165230, o.value_text, "" )) as other_reason_for_not_reporting,
+e.voided as voided
+from openmrs.encounter e
+inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("94eec122-83a1-11ea-bc55-0242ac130003")
+inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+        or e.date_changed >= last_update_time
+        or e.date_voided >= last_update_time
+        or o.date_created >= last_update_time
+        or o.date_voided >= last_update_time
+        group by e.patient_id, e.encounter_id, visit_date
+        order by e.patient_id
+        ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                        encounter_provider=VALUES(encounter_provider),
+                        is_physically_abused=VALUES(is_physically_abused),
+                        physical_abuse_perpetrator=VALUES(physical_abuse_perpetrator),
+                        other_physical_abuse_perpetrator=VALUES(other_physical_abuse_perpetrator),
+                        in_physically_abusive_relationship=VALUES(in_physically_abusive_relationship),
+                        in_physically_abusive_relationship_with=VALUES(in_physically_abusive_relationship_with),
+                        other_physically_abusive_relationship_perpetrator=VALUES(other_physically_abusive_relationship_perpetrator),
+                        in_emotionally_abusive_relationship=VALUES(in_emotionally_abusive_relationship),
+                        emotional_abuse_perpetrator=VALUES(emotional_abuse_perpetrator),
+                        other_emotional_abuse_perpetrator=VALUES(other_emotional_abuse_perpetrator),
+                        in_sexually_abusive_relationship=VALUES(in_sexually_abusive_relationship),
+                        sexual_abuse_perpetrator=VALUES(sexual_abuse_perpetrator),
+                        other_sexual_abuse_perpetrator=VALUES(other_sexual_abuse_perpetrator),
+                        ever_abused_by_unrelated_person=VALUES(ever_abused_by_unrelated_person),
+                        unrelated_perpetrator=VALUES(unrelated_perpetrator),
+                        other_unrelated_perpetrator=VALUES(other_unrelated_perpetrator),
+                        sought_help=VALUES(sought_help),
+                        help_provider=VALUES(help_provider),
+                        date_helped=VALUES(date_helped),
+                        help_outcome=VALUES(help_outcome),
+                        other_outcome=VALUES(other_outcome),
+                        reason_for_not_reporting=VALUES(reason_for_not_reporting),
+                        other_reason_for_not_reporting=VALUES(other_reason_for_not_reporting),
+                        voided=VALUES(voided);
+END$$
 		-- end of scheduled updates procedures
 
 SET sql_mode=@OLD_SQL_MODE$$
@@ -5003,6 +5276,8 @@ CALL sp_update_etl_client_enrollment(last_update_time);
 CALL sp_update_etl_clinical_visit(last_update_time);
 CALL sp_update_etl_sti_treatment(last_update_time);
 CALL sp_update_etl_peer_calendar(last_update_time);
+CALL sp_populate_etl_treatment_verification(last_update_time);
+CALL sp_populate_etl_gender_based_violence(last_update_time);
 
 CALL sp_update_dashboard_table();
 

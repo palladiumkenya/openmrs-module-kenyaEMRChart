@@ -75,6 +75,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2212,7 +2214,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
   CREATE TABLE kenyaemr_etl.etl_peer_tracking (
       uuid char(38),
       provider INT(11),
-      patient_id INT(11) NOT NULL ,
+      client_id INT(11) NOT NULL ,
       visit_id INT(11),
       visit_date DATE,
       location_id INT(11) DEFAULT NULL,
@@ -2230,15 +2232,92 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       source_of_information VARCHAR(100),
       other_informant VARCHAR(100),
       voided INT(11),
-      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       INDEX(visit_date),
       INDEX(encounter_id),
-      INDEX(patient_id),
+      INDEX(client_id),
       INDEX(status_in_program),
       INDEX(tracing_type)
     );
 
+    CREATE TABLE kenyaemr_etl.etl_treatment_verification (
+      uuid char(38),
+      provider INT(11),
+      client_id INT(11) NOT NULL ,
+      visit_id INT(11),
+      visit_date DATE,
+      location_id INT(11) DEFAULT NULL,
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      date_diagnosed_with_hiv DATE,
+      art_health_facility VARCHAR(100),
+      ccc_number VARCHAR(100),
+      is_pepfar_site VARCHAR(11),
+      date_initiated_art DATE,
+      current_regimen VARCHAR(100),
+      information_source VARCHAR(100),
+      cd4_test_date DATE,
+      cd4 VARCHAR(100),
+      vl_test_date DATE,
+      viral_load VARCHAR(100),
+      disclosed_status VARCHAR(11),
+      person_disclosed_to VARCHAR(100),
+      other_person_disclosed_to VARCHAR(100),
+      IPT_start_date DATE,
+      IPT_completion_date DATE,
+      on_diff_care VARCHAR(11),
+      in_support_group VARCHAR(11),
+      support_group_name VARCHAR(100),
+      opportunistic_infection VARCHAR(100),
+      oi_diagnosis_date DATE,
+      oi_treatment_start_date DATE,
+      oi_treatment_end_date DATE,
+      comment VARCHAR(100),
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(encounter_id),
+      INDEX(client_id)
+    );
+
+CREATE TABLE kenyaemr_etl.etl_gender_based_violence (
+  uuid char(38),
+  provider INT(11),
+  client_id INT(11) NOT NULL ,
+  visit_id INT(11),
+  visit_date DATE,
+  location_id INT(11) DEFAULT NULL,
+  encounter_id INT(11) NOT NULL PRIMARY KEY,
+  is_physically_abused VARCHAR(10),
+  physical_abuse_perpetrator VARCHAR(100),
+  other_physical_abuse_perpetrator VARCHAR(100),
+  in_physically_abusive_relationship VARCHAR(10),
+  in_physically_abusive_relationship_with VARCHAR(100),
+  other_physically_abusive_relationship_perpetrator VARCHAR(100),
+  in_emotionally_abusive_relationship VARCHAR(10),
+  emotional_abuse_perpetrator VARCHAR(100),
+  other_emotional_abuse_perpetrator VARCHAR(100),
+  in_sexually_abusive_relationship VARCHAR(10),
+  sexual_abuse_perpetrator VARCHAR(100),
+  other_sexual_abuse_perpetrator VARCHAR(100),
+  ever_abused_by_unrelated_person VARCHAR(10),
+  unrelated_perpetrator VARCHAR(100),
+  other_unrelated_perpetrator VARCHAR(100),
+  sought_help VARCHAR(10),
+  help_provider VARCHAR(100),
+  date_helped DATE,
+  help_outcome VARCHAR(100),
+  other_outcome VARCHAR(100),
+  reason_for_not_reporting VARCHAR(100),
+  other_reason_for_not_reporting VARCHAR(100),
+  voided INT(11),
+  CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+  CONSTRAINT unique_uuid UNIQUE(uuid),
+  INDEX(visit_date),
+  INDEX(encounter_id),
+  INDEX(client_id)
+);
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
