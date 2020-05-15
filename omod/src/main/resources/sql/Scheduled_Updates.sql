@@ -4940,6 +4940,81 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
 
                     END$$
 
+                    -- ------------- populate kp peer tracking-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_peer_tracking$$
+CREATE PROCEDURE sp_populate_etl_peer_tracking(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_peer_tracking(
+uuid,
+provider,
+client_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+tracing_attempted,
+tracing_not_attempted_reason,
+attempt_number,
+tracing_date,
+tracing_type,
+tracing_outcome,
+is_final_trace,
+tracing_outcome_status,
+voluntary_exit_comment,
+status_in_program,
+source_of_information,
+other_informant,
+voided
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id=165004,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as tracing_attempted,
+max(if(o.concept_id=165071,(case o.value_coded when 165078 THEN "Contact information illegible" when 165073 then "Location listed too general to make tracking possible"
+when 165072 then "Contact information missing" when 163777 then "Cohort register or peer outreach calendar reviewed and client not lost to follow up" when 5622 then "other" else "" end),null)) as tracing_not_attempted_reason,
+max(if(o.concept_id = 1639, o.value_numeric, "" )) as attempt_number,
+max(if(o.concept_id = 160753, o.value_datetime, "" )) as tracing_date,
+max(if(o.concept_id = 164966, (case o.value_coded when 1650 THEN "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type,
+max(if(o.concept_id = 160721, (case o.value_coded when 160718 THEN "KP reached" when 160717 then "KP not reached but other informant reached" when 160720 then "KP not reached" else "" end),null)) as tracing_outcome,
+max(if(o.concept_id = 163725, (case o.value_coded when 1267 THEN "Yes" when 163339 then "No" else "" end),null)) as is_final_trace,
+max(if(o.concept_id = 160433,(case o.value_coded when 160432 then "Dead" when 160415 then "Relocated" when 165219 then "Voluntary exit" when
+134236 then "Enrolled in MAT (applicable to PWIDS only)" when 165067 then "Untraceable" when 162752 then "Bedridden" when 156761 then "Imprisoned" when 162632 then "Found" else "" end),null)) as tracing_outcome_status,
+max(if(o.concept_id = 160716, o.value_text, "" )) as voluntary_exit_comment,
+max(if(o.concept_id = 161641, (case o.value_coded when 5240 THEN "Lost to follow up" when 160031 then "Defaulted" when 161636 then "Active" when 160432 then "Dead" else "" end),null)) as status_in_program,
+max(if(o.concept_id = 162568, (case o.value_coded when 164929 THEN "KP" when 165037 then "PE" when 5622 then "Other" else "" end),null)) as source_of_information,
+max(if(o.concept_id = 160632, o.value_text, "" )) as other_informant,
+e.voided as voided
+from encounter e
+inner join person p on p.person_id=e.patient_id and p.voided=0
+inner join form f on f.form_id=e.form_id and f.uuid in ("63917c60-3fea-11e9-b210-d663bd873d93")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568,160632) and o.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
+group by e.patient_id, e.encounter_id, visit_date
+order by e.patient_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                encounter_provider=VALUES(encounter_provider),
+                tracing_attempted=VALUES(tracing_attempted),
+tracing_not_attempted_reason=VALUES(tracing_not_attempted_reason),
+attempt_number=VALUES(attempt_number),
+tracing_date=VALUES(tracing_date),
+tracing_type=VALUES(tracing_type),
+tracing_outcome=VALUES(tracing_outcome),
+is_final_trace=VALUES(is_final_trace),
+tracing_outcome_status=VALUES(tracing_outcome_status),
+voluntary_exit_comment=VALUES(voluntary_exit_comment),
+status_in_program=VALUES(status_in_program),
+source_of_information=VALUES(source_of_information),
+other_informant=VALUES(other_informant),
+voided=VALUES(voided);
+
+END$$
+
 DROP PROCEDURE IF EXISTS sp_populate_etl_treatment_verification$$
 CREATE PROCEDURE sp_populate_etl_treatment_verification(IN last_update_time DATETIME)
 BEGIN
@@ -5276,6 +5351,7 @@ CALL sp_update_etl_client_enrollment(last_update_time);
 CALL sp_update_etl_clinical_visit(last_update_time);
 CALL sp_update_etl_sti_treatment(last_update_time);
 CALL sp_update_etl_peer_calendar(last_update_time);
+CALL sp_populate_etl_peer_tracking(last_update_time);
 CALL sp_populate_etl_treatment_verification(last_update_time);
 CALL sp_populate_etl_gender_based_violence(last_update_time);
 
