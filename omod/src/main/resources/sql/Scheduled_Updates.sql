@@ -4942,8 +4942,8 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
 
                     -- ------------- populate kp peer tracking-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_peer_tracking$$
-CREATE PROCEDURE sp_populate_etl_peer_tracking(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_peer_tracking$$
+CREATE PROCEDURE sp_update_etl_peer_tracking(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
 
@@ -4988,7 +4988,7 @@ max(if(o.concept_id = 160632, o.value_text, "" )) as other_informant,
 e.voided as voided
 from encounter e
 inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join form f on f.form_id=e.form_id and f.uuid in ("63917c60-3fea-11e9-b210-d663bd873d93")
+inner join form f on f.form_id=e.form_id and f.uuid in ('63917c60-3fea-11e9-b210-d663bd873d93')
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568,160632) and o.voided=0
 where e.voided=0 and e.date_created >= last_update_time
 or e.date_changed >= last_update_time
@@ -5015,8 +5015,8 @@ voided=VALUES(voided);
 
 END$$
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_treatment_verification$$
-CREATE PROCEDURE sp_populate_etl_treatment_verification(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_treatment_verification$$
+CREATE PROCEDURE sp_update_etl_treatment_verification(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing kp treatment verification form", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_treatment_verification(
@@ -5061,40 +5061,40 @@ max(if(o.concept_id = 162053, o.value_numeric, "" )) as ccc_number,
 max(if(o.concept_id=1768,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as is_pepfar_site,
 max(if(o.concept_id = 159599, o.value_datetime, "" )) as date_initiated_art,
 max(if(o.concept_id = 164515,(case o.value_coded
-       when 162565 then TDF/3TC/NVP
-       when 164505 then TDF/3TC/EFV
-       when 1652 then AZT/3TC/NVP
-       when 160124 then AZT/3TC/EFV
-       when 792 then D4T/3TC/NVP
-       when 160104 then D4T/3TC/EFV
-       when 162561 then AZT/3TC/LPV/r
-       when 164511 then AZT/3TC/ATV/r
-       when 164512 then TDF/3TC/ATV/r
-       when 162201 then TDF/3TC/LPV/r
-       when 162561 then AZT/3TC/LPV/r
-       when 164511 then AZT/3TC/ATV/r
-       when 162201 then TDF/3TC/LPV/r
-       when 164512 then TDF/3TC/ATV/r
-       when 162560 then D4T/3TC/LPV/r
-       when 162200 then ABC/3TC/LPV/r
-       when '98e38a9c-435d-4a94-9b66-5ca524159d0e' then TDF/3TC/AZT
-       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then AZT/3TC/DTG
-       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then TDF/3TC/DTG
-       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then ABC/3TC/DTG
-       when 'c421d8e7-4f43-43b4-8d2f-c7d4cfb976a4' then AZT/TDF/3TC/LPV/r
-       when '337b6cfd-9fa7-47dc-82b4-d479c39ef355' then ETR/RAL/DRV/RTV
-       when '7a6c51c4-2b68-4d5a-b5a2-7ba420dde203' then ETR/TDF/3TC/LPV/r
-       when 'dddd9cf2-2b9c-4c52-84b3-38cfe652529a' then ABC/3TC/ATV/r
-       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then AZT/3TC/DTG
-       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then TDF/3TC/DTG
-       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then ABC/3TC/DTG
-       when '5b8e4955-897a-423b-ab66-7e202b9c304c' then RAL/3TC/DRV/RTV
-       when '092604d3-e9cb-4589-824e-9e17e3cb4f5e' then RAL/3TC/DRV/RTV/AZT
-       when 'c6372744-9e06-40cf-83e5-c794c985b6bf' then RAL/3TC/DRV/RTV/TDF
-       when '1995c4a1-a625-4449-ab28-aae88d0f80e6' then ETV/3TC/DRV/RTV
-       when '5f429c76-2976-4374-a69e-d2d138dd16bf' then TDF/3TC/DTG/DRV/r
-       when '9b9817dd-4c84-4093-95c3-690d65d24b99' then TDF/3TC/RAL/DRV/r
-       when 'f2acaf9b-3da9-4d71-b0cf-fd6af1073c9e' then TDF/3TC/DTG/EFV/DRV/r else "" end),null)) as current_regimen,
+       when 162565 then 'TDF/3TC/NVP'
+       when 164505 then 'TDF/3TC/EFV'
+       when 1652 then 'AZT/3TC/NVP'
+       when 160124 then 'AZT/3TC/EFV'
+       when 792 then 'D4T/3TC/NVP'
+       when 160104 then 'D4T/3TC/EFV'
+       when 162561 then 'AZT/3TC/LPV/r'
+       when 164511 then 'AZT/3TC/ATV/r'
+       when 164512 then 'TDF/3TC/ATV/r'
+       when 162201 then 'TDF/3TC/LPV/r'
+       when 162561 then 'AZT/3TC/LPV/r'
+       when 164511 then 'AZT/3TC/ATV/r'
+       when 162201 then 'TDF/3TC/LPV/r'
+       when 164512 then 'TDF/3TC/ATV/r'
+       when 162560 then 'D4T/3TC/LPV/r'
+       when 162200 then 'ABC/3TC/LPV/r'
+       when '98e38a9c-435d-4a94-9b66-5ca524159d0e' then 'TDF/3TC/AZT'
+       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then 'AZT/3TC/DTG'
+       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then 'TDF/3TC/DTG'
+       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then 'ABC/3TC/DTG'
+       when 'c421d8e7-4f43-43b4-8d2f-c7d4cfb976a4' then 'AZT/TDF/3TC/LPV/r'
+       when '337b6cfd-9fa7-47dc-82b4-d479c39ef355' then 'ETR/RAL/DRV/RTV'
+       when '7a6c51c4-2b68-4d5a-b5a2-7ba420dde203' then 'ETR/TDF/3TC/LPV/r'
+       when 'dddd9cf2-2b9c-4c52-84b3-38cfe652529a' then 'ABC/3TC/ATV/r'
+       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then 'AZT/3TC/DTG'
+       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then 'TDF/3TC/DTG'
+       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then 'ABC/3TC/DTG'
+       when '5b8e4955-897a-423b-ab66-7e202b9c304c' then 'RAL/3TC/DRV/RTV'
+       when '092604d3-e9cb-4589-824e-9e17e3cb4f5e' then 'RAL/3TC/DRV/RTV/AZT'
+       when 'c6372744-9e06-40cf-83e5-c794c985b6bf' then 'RAL/3TC/DRV/RTV/TDF'
+       when '1995c4a1-a625-4449-ab28-aae88d0f80e6' then 'ETV/3TC/DRV/RTV'
+       when '5f429c76-2976-4374-a69e-d2d138dd16bf' then 'TDF/3TC/DTG/DRV/r'
+       when '9b9817dd-4c84-4093-95c3-690d65d24b99' then 'TDF/3TC/RAL/DRV/r'
+       when 'f2acaf9b-3da9-4d71-b0cf-fd6af1073c9e' then 'TDF/3TC/DTG/EFV/DRV/r' else '' end),null)) as current_regimen,
 max(if(o.concept_id = 162568, (case o.value_coded when 162969 THEN "SMS" when 163787 then "Verbal report"  when 1238 then "Written record" when 162189 then "Phone call" when 160526 then "EID Dashboard" when 165048 then "Appointment card" else "" end),null)) as information_source,
 max(if(o.concept_id = 160103, o.value_datetime, "" )) as cd4_test_date,
 max(if(o.concept_id = 5497, o.value_numeric, "" )) as cd4,
@@ -5117,7 +5117,7 @@ max(if(o.concept_id = 161011, o.value_datetime, "" )) as comment,
 e.voided as voided
 from openmrs.encounter e
 inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
-inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('5c64e61a-7fdc-11ea-bc55-0242ac130003')
 inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (159948,162724,162053,1768,
 159599,164515,162568,657,5497,163281,160632,163524,5616,5497,160716,161641,162568,163101,162320,162279,164947,
 165302,165137,162634,159948,160753,162868,161011) and o.voided=0
@@ -5159,8 +5159,8 @@ where e.voided=0 and e.date_created >= last_update_time
 END$$
 
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_gender_based_violence$$
-CREATE PROCEDURE sp_populate_etl_gender_based_violence(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_gender_based_violence$$
+CREATE PROCEDURE sp_update_etl_gender_based_violence(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing kp gender based violence form", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_gender_based_violence(
@@ -5253,7 +5253,7 @@ max(if(o.concept_id = 165230, o.value_text, "" )) as other_reason_for_not_report
 e.voided as voided
 from openmrs.encounter e
 inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
-inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("94eec122-83a1-11ea-bc55-0242ac130003")
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('94eec122-83a1-11ea-bc55-0242ac130003')
 inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
 where e.voided=0 and e.date_created >= last_update_time
         or e.date_changed >= last_update_time
@@ -5287,6 +5287,7 @@ where e.voided=0 and e.date_created >= last_update_time
                         reason_for_not_reporting=VALUES(reason_for_not_reporting),
                         other_reason_for_not_reporting=VALUES(other_reason_for_not_reporting),
                         voided=VALUES(voided);
+
 END$$
 		-- end of scheduled updates procedures
 
@@ -5351,9 +5352,9 @@ CALL sp_update_etl_client_enrollment(last_update_time);
 CALL sp_update_etl_clinical_visit(last_update_time);
 CALL sp_update_etl_sti_treatment(last_update_time);
 CALL sp_update_etl_peer_calendar(last_update_time);
-CALL sp_populate_etl_peer_tracking(last_update_time);
-CALL sp_populate_etl_treatment_verification(last_update_time);
-CALL sp_populate_etl_gender_based_violence(last_update_time);
+CALL sp_update_etl_peer_tracking(last_update_time);
+CALL sp_update_etl_treatment_verification(last_update_time);
+CALL sp_update_etl_gender_based_violence(last_update_time);
 
 CALL sp_update_dashboard_table();
 
