@@ -571,6 +571,7 @@ et.uuid,
 	when 'bb77c683-2144-48a5-a011-66d904d776c9' then 'IPT'
 	when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
 	when '5cf00d9e-09da-11ea-8d71-362b9e155667' then 'OVC'
+	when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
 end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
@@ -584,7 +585,7 @@ inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
-	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667')
+	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93')
 ) et on et.encounter_type_id=e.encounter_type
 where e.voided=0
 group by e.encounter_id;
@@ -4752,7 +4753,7 @@ max(if(o.concept_id = 164515,(case o.value_coded
        when '1995c4a1-a625-4449-ab28-aae88d0f80e6' then 'ETV/3TC/DRV/RTV'
        when '5f429c76-2976-4374-a69e-d2d138dd16bf' then 'TDF/3TC/DTG/DRV/r'
        when '9b9817dd-4c84-4093-95c3-690d65d24b99' then 'TDF/3TC/RAL/DRV/r'
-       when 'f2acaf9b-3da9-4d71-b0cf-fd6af1073c9e' then 'TDF/3TC/DTG/EFV/DRV/r' else '' end),null)) as current_regimen,
+       when 'f2acaf9b-3da9-4d71-b0cf-fd6af1073c9e' then 'TDF/3TC/DTG/EFV/DRV/r' else "" end),null)) as current_regimen,
 max(if(o.concept_id = 162568, (case o.value_coded when 162969 THEN "SMS" when 163787 then "Verbal report"  when 1238 then "Written record" when 162189 then "Phone call" when 160526 then "EID Dashboard" when 165048 then "Appointment card" else "" end),null)) as information_source,
 max(if(o.concept_id = 160103, o.value_datetime, "" )) as cd4_test_date,
 max(if(o.concept_id = 5497, o.value_numeric, "" )) as cd4,
@@ -4775,7 +4776,7 @@ max(if(o.concept_id = 161011, o.value_datetime, "" )) as comment,
 e.voided as voided
 from openmrs.encounter e
 inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
-inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("a70a1132-75b3-11ea-bc55-0242ac130003")
 inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (159948,162724,162053,1768,
 159599,164515,162568,657,5497,163281,160632,163524,5616,5497,160716,161641,162568,163101,162320,162279,164947,
 165302,165137,162634,159948,160753,162868,161011) and o.voided=0
@@ -4886,6 +4887,58 @@ group by e.encounter_id;
 SELECT "Completed processing gender based violence form", CONCAT("Time: ", NOW());
 
 END$$
+
+
+-- ------------- populate kp PrEP verification-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_PrEP_verification$$
+CREATE PROCEDURE sp_populate_etl_PrEP_verification()
+BEGIN
+SELECT "Processing kp PrEP verification form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_PrEP_verification(
+uuid,
+provider,
+client_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+date_enrolled,
+health_facility_accessing_PrEP,
+is_pepfar_site,
+date_initiated_PrEP,
+PrEP_regimen,
+information_source,
+PrEP_status,
+verification_date,
+discontinuation_reason,
+other_discontinuation_reason,
+appointment_date,
+voided
+)
+select
+e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+max(if(o.concept_id = 163526, o.value_datetime, "" )) as date_enrolled,
+max(if(o.concept_id = 162724, o.value_text, "" )) as health_facility_accessing_PrEP,
+max(if(o.concept_id=1768,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as is_pepfar_site,
+max(if(o.concept_id = 160555, o.value_datetime, "" )) as date_initiated_PrEP,
+max(if(o.concept_id=164515,(case o.value_coded when 161364 THEN "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end),null)) as PrEP_regimen,
+max(if(o.concept_id = 162568, (case o.value_coded when 163787 then "Verbal report" when 162969 THEN "SMS" when 1662 then "Apointment card"  when 1650 then "Phone call" when 1238 then "Written record" when 160526 then "EID Dashboard" else "" end),null)) as information_source,
+max(if(o.concept_id = 162079, o.value_datetime, "" )) as verification_date,
+max(if(o.concept_id=165109,(case o.value_coded when 1256 THEN "Start" when 1257 then "Continue" when 162904 then "Restart" when 1260 then "Discontinue" else "" end),null)) as PrEP_status,
+max(if(o.concept_id=161555,(case o.value_coded when 138571 THEN "HIV test is positive" when 1302 then "Viral suppression of HIV+ Partner" when
+159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request" when 5622 then "Other" else "" end),null)) as discontinuation_reason,
+max(if(o.concept_id = 165230, o.value_text, "" )) as other_discontinuation_reason,
+max(if(o.concept_id = 159948, o.value_datetime, "" )) as appointment_date,
+e.voided as voided
+from openmrs.encounter e
+inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
+inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
+inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (163526,162724,1768,160555,164515,162568,162079,165109,161555,165230,5096) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing PrEP verification form", CONCAT("Time: ", NOW());
+END$$
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -4946,6 +4999,7 @@ CALL sp_populate_etl_ovc_enrolment();
 CALL sp_populate_etl_cervical_cancer_screening();
 CALL sp_populate_etl_patient_contact();
 CALL sp_populate_etl_client_trace();
+CALL sp_populate_etl_client_trace();
 CALL sp_populate_etl_client_registration();
 CALL sp_populate_etl_contact();
 CALL sp_populate_etl_client_enrollment();
@@ -4955,6 +5009,7 @@ CALL sp_populate_etl_peer_calendar();
 CALL sp_populate_etl_peer_tracking();
 CALL sp_populate_etl_treatment_verification();
 CALL sp_populate_etl_gender_based_violence();
+CALL sp_populate_etl_PrEP_verification();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

@@ -77,6 +77,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2318,6 +2319,34 @@ CREATE TABLE kenyaemr_etl.etl_gender_based_violence (
   INDEX(encounter_id),
   INDEX(client_id)
 );
+
+CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
+    uuid char(38),
+    provider INT(11),
+    client_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    date_enrolled DATE,
+    health_facility_accessing_PrEP VARCHAR(100),
+    is_pepfar_site VARCHAR(11),
+    date_initiated_PrEP DATE,
+	  PrEP_regimen VARCHAR(100),
+	  information_source VARCHAR(100),
+	  PrEP_status VARCHAR(100),
+	  verification_date DATE,
+	  treatment_plan VARCHAR(100),
+	  discontinuation_reason VARCHAR(100),
+	  other_discontinuation_reason VARCHAR(100),
+	  appointment_date DATE,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(client_id)
+    );
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
