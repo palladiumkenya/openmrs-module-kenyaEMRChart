@@ -2336,7 +2336,6 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
 	  information_source VARCHAR(100),
 	  PrEP_status VARCHAR(100),
 	  verification_date DATE,
-	  treatment_plan VARCHAR(100),
 	  discontinuation_reason VARCHAR(100),
 	  other_discontinuation_reason VARCHAR(100),
 	  appointment_date DATE,

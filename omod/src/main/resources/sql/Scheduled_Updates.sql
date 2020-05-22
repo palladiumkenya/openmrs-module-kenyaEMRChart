@@ -2249,7 +2249,7 @@ or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), test_type=VALUES(test_type), population_type=VALUES(population_type),
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), test_type=VALUES(test_type), population_type=VALUES(population_type),
 key_population_type=VALUES(key_population_type), ever_tested_for_hiv=VALUES(ever_tested_for_hiv), patient_disabled=VALUES(patient_disabled),
 disability_type=VALUES(disability_type), patient_consented=VALUES(patient_consented), client_tested_as=VALUES(client_tested_as),
 test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point), test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
@@ -2314,7 +2314,7 @@ or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), tracing_type=VALUES(tracing_type), tracing_status=VALUES(tracing_status),
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), tracing_type=VALUES(tracing_type), tracing_status=VALUES(tracing_status),
 facility_linked_to=VALUES(facility_linked_to), ccc_number=VALUES(ccc_number), provider_handed_to=VALUES(provider_handed_to)
 ;
 
@@ -2407,7 +2407,7 @@ CREATE PROCEDURE sp_update_hts_referral(IN last_update_time DATETIME)
               or o.date_created >= last_update_time
               or o.date_voided >= last_update_time
       group by e.encounter_id
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), facility_referred_to=VALUES(facility_referred_to), date_to_enrol=VALUES(date_to_enrol),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), facility_referred_to=VALUES(facility_referred_to), date_to_enrol=VALUES(date_to_enrol),
       remarks=VALUES(remarks), voided=VALUES(voided);
     SELECT "Completed processing hts referrals", CONCAT("Time: ", NOW());
 
@@ -2493,6 +2493,7 @@ or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), 
+provider=VALUES(provider),
 ipt_due_date=VALUES(ipt_due_date),
 date_collected_ipt=VALUES(date_collected_ipt),
 hepatotoxity=VALUES(hepatotoxity),
@@ -2543,6 +2544,7 @@ or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+provider=VALUES(provider),
 tracing_type=VALUES(tracing_type),
 tracing_outcome=VALUES(tracing_outcome),
 attempt_number=VALUES(attempt_number),
@@ -3679,8 +3681,7 @@ CREATE PROCEDURE sp_update_etl_otz_enrollment(IN last_update_time DATETIME)
 			orientation=VALUES(orientation),leadership=VALUES(leadership),participation=VALUES(participation),
 			treatment_literacy=VALUES(treatment_literacy),transition_to_adult_care=VALUES(transition_to_adult_care),making_decision_future=VALUES(making_decision_future),
 			srh=VALUES(srh),beyond_third_ninety=VALUES(beyond_third_ninety),transfer_in=VALUES(transfer_in),
-			voided=VALUES(voided)
-		;
+			voided=VALUES(voided);
 		SELECT "Completed updating OTZ enrollment data ", CONCAT("Time: ", NOW());
 		END$$
 
@@ -3748,8 +3749,7 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
 			orientation=VALUES(orientation),leadership=VALUES(leadership),participation=VALUES(participation),
 			treatment_literacy=VALUES(treatment_literacy),transition_to_adult_care=VALUES(transition_to_adult_care),making_decision_future=VALUES(making_decision_future),
 			srh=VALUES(srh),beyond_third_ninety=VALUES(beyond_third_ninety),attended_support_group=VALUES(attended_support_group),
-			voided=VALUES(voided)
-		;
+			voided=VALUES(voided);
 		SELECT "Completed updating OTZ activity data ", CONCAT("Time: ", NOW());
 		END$$
 
@@ -3945,7 +3945,7 @@ or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
 having screening_result is not null
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), screening_method = VALUES(screening_method), screening_result = VALUES(screening_result);
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), encounter_provider=VALUES(encounter_provider),screening_method = VALUES(screening_method), screening_result = VALUES(screening_result);
 SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
 update kenyaemr_etl.etl_cervical_cancer_screening scr,
@@ -4313,7 +4313,10 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
         or o.date_voided >= last_update_time
         group by e.patient_id, e.encounter_id
         order by e.patient_id
-        ON DUPLICATE KEY UPDATE has_expereienced_sexual_violence=VALUES(has_expereienced_sexual_violence),
+        ON DUPLICATE KEY UPDATE
+        encounter_provider=VALUES(encounter_provider),
+        visit_date=VALUES(visit_date),
+        has_expereienced_sexual_violence=VALUES(has_expereienced_sexual_violence),
                                 has_expereienced_physical_violence=VALUES(has_expereienced_physical_violence),
                                 ever_tested_for_hiv=VALUES(ever_tested_for_hiv),
                                 test_type=VALUES(test_type),
@@ -4601,7 +4604,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
         or e.date_voided >= last_update_time
         or o.date_created >= last_update_time
         or o.date_voided >= last_update_time
-        group by e.patient_id, e.encounter_id, visit_date
+        group by e.patient_id, e.encounter_id
         order by e.patient_id
         ON DUPLICATE KEY UPDATE  visit_date=VALUES(visit_date),
                                  encounter_provider=VALUES(encounter_provider),
@@ -4797,7 +4800,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
         or e.date_voided >= last_update_time
         or o.date_created >= last_update_time
         or o.date_voided >= last_update_time
-        group by e.patient_id, e.encounter_id, visit_date
+        group by e.patient_id, e.encounter_id
         order by e.patient_id
         ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
                                 encounter_provider=VALUES(encounter_provider),
@@ -4911,7 +4914,7 @@ CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
         or e.date_voided >= last_update_time
         or o.date_created >= last_update_time
         or o.date_voided >= last_update_time
-        group by e.patient_id, e.encounter_id, visit_date
+        group by e.patient_id, e.encounter_id
         order by e.patient_id
         ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
                         encounter_provider=VALUES(encounter_provider),
@@ -4996,10 +4999,10 @@ or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
-group by e.patient_id, e.encounter_id, visit_date
+group by e.patient_id, e.encounter_id
 order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
-                encounter_provider=VALUES(encounter_provider),
+                provider=VALUES(provider),
                 tracing_attempted=VALUES(tracing_attempted),
 tracing_not_attempted_reason=VALUES(tracing_not_attempted_reason),
 attempt_number=VALUES(attempt_number),
@@ -5127,10 +5130,10 @@ where e.voided=0 and e.date_created >= last_update_time
         or e.date_voided >= last_update_time
         or o.date_created >= last_update_time
         or o.date_voided >= last_update_time
-        group by e.patient_id, e.encounter_id, visit_date
+        group by e.patient_id, e.encounter_id
         order by e.patient_id
         ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
-                        encounter_provider=VALUES(encounter_provider),
+                        provider=VALUES(provider),
                         date_diagnosed_with_hiv=VALUES(date_diagnosed_with_hiv),
                         art_health_facility=VALUES(art_health_facility),
                         ccc_number=VALUES(ccc_number),
@@ -5261,10 +5264,10 @@ where e.voided=0 and e.date_created >= last_update_time
         or e.date_voided >= last_update_time
         or o.date_created >= last_update_time
         or o.date_voided >= last_update_time
-        group by e.patient_id, e.encounter_id, visit_date
+        group by e.patient_id, e.encounter_id
         order by e.patient_id
         ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
-                        encounter_provider=VALUES(encounter_provider),
+                        provider=VALUES(provider),
                         is_physically_abused=VALUES(is_physically_abused),
                         physical_abuse_perpetrator=VALUES(physical_abuse_perpetrator),
                         other_physical_abuse_perpetrator=VALUES(other_physical_abuse_perpetrator),
@@ -5319,15 +5322,15 @@ appointment_date,
 voided
 )
 select
-e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
+e.uuid, e.creator as provider, e.patient_id as client_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,
 max(if(o.concept_id = 163526, o.value_datetime, "" )) as date_enrolled,
 max(if(o.concept_id = 162724, o.value_text, "" )) as health_facility_accessing_PrEP,
 max(if(o.concept_id=1768,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as is_pepfar_site,
 max(if(o.concept_id = 160555, o.value_datetime, "" )) as date_initiated_PrEP,
 max(if(o.concept_id=164515,(case o.value_coded when 161364 THEN "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end),null)) as PrEP_regimen,
 max(if(o.concept_id = 162568, (case o.value_coded when 163787 then "Verbal report" when 162969 THEN "SMS" when 1662 then "Apointment card"  when 1650 then "Phone call" when 1238 then "Written record" when 160526 then "EID Dashboard" else "" end),null)) as information_source,
-max(if(o.concept_id = 162079, o.value_datetime, "" )) as verification_date,
 max(if(o.concept_id=165109,(case o.value_coded when 1256 THEN "Start" when 1257 then "Continue" when 162904 then "Restart" when 1260 then "Discontinue" else "" end),null)) as PrEP_status,
+max(if(o.concept_id = 162079, o.value_datetime, "" )) as verification_date,
 max(if(o.concept_id=161555,(case o.value_coded when 138571 THEN "HIV test is positive" when 1302 then "Viral suppression of HIV+ Partner" when
 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request" when 5622 then "Other" else "" end),null)) as discontinuation_reason,
 max(if(o.concept_id = 165230, o.value_text, "" )) as other_discontinuation_reason,
@@ -5342,10 +5345,10 @@ or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
-group by e.patient_id, e.encounter_id, visit_date
+group by e.patient_id, e.encounter_id
 order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
-encounter_provider=VALUES(encounter_provider),
+provider=VALUES(provider),
 date_enrolled=VALUES(date_enrolled),
 health_facility_accessing_PrEP=VALUES(health_facility_accessing_PrEP),
 is_pepfar_site=VALUES(is_pepfar_site),
