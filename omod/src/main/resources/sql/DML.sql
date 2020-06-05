@@ -552,6 +552,7 @@ program_uuid,
 program_name,
 encounter_id,
 discontinuation_reason,
+effective_discontinuation_date,
 date_died,
 transfer_facility,
 transfer_date
@@ -574,12 +575,13 @@ et.uuid,
 end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
+max(if(o.concept_id=164384, o.value_datetime, null)) as effective_discontinuation_date,
 max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
 max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
 max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,1543,159495,160649)
+	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,164384,1543,159495,160649)
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
