@@ -2325,8 +2325,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_current_in_care;
 
 CREATE TABLE kenyaemr_etl.etl_current_in_care AS
 select fup.visit_date,fup.patient_id,p.dob,p.Gender, min(e.visit_date) as enroll_date,
-max(fup.visit_date) as latest_vis_date,
-mid(max(concat(fup.visit_date,fup.next_appointment_date)),11) as latest_tca,
+	greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
+	greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
 p.unique_patient_no,
 max(d.visit_date) as date_discontinued,
 d.patient_id as disc_patient,
@@ -2336,15 +2336,15 @@ join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
 join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
 left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and date(date_started) <= endDate
 left outer JOIN
-(select patient_id, visit_date from kenyaemr_etl.etl_patient_program_discontinuation
+(select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date from kenyaemr_etl.etl_patient_program_discontinuation
 where date(visit_date) <= endDate and program_name='HIV'
 group by patient_id
 ) d on d.patient_id = fup.patient_id
 where fup.visit_date <= endDate
 group by patient_id
 having (
-(date(latest_tca) > endDate and (date(latest_tca) > date(date_discontinued) or disc_patient is null )) or
-(((date(latest_tca) between startDate and endDate) and ((date(latest_vis_date) >= date(latest_tca)) or date(latest_tca) > curdate())) and (date(latest_tca) > date(date_discontinued) or disc_patient is null )) )
+(date(latest_tca) > endDate and (date(latest_tca) >= date(date_discontinued) or disc_patient is null ) and (date(latest_vis_date) >= date(date_discontinued) or disc_patient is null)) or
+(((date(latest_tca) between startDate and endDate) and ((date(latest_vis_date) >= date(latest_tca)) or date(latest_tca) > curdate())) and (date(latest_tca) >= date(date_discontinued) or disc_patient is null )) )
 ;
 
 -- ADD INDICES
