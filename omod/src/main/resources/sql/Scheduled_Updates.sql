@@ -796,7 +796,7 @@ CREATE PROCEDURE sp_update_etl_covid_quarantine_followup(IN last_update_time DAT
 				inner join
 				(
 					select form_id, uuid,name from form where
-						uuid in('37ef8f3c-6cd2-11ea-bc55-0242ac130003')
+						uuid in('33a3aab6-73ae-11ea-bc55-0242ac130003')
 				) f on f.form_id=e.form_id
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 																 and o.concept_id in (161551,165197,140238,143264,164441,162737,1788)
