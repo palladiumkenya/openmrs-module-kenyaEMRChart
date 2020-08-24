@@ -5001,7 +5001,6 @@ CALL sp_populate_etl_ovc_enrolment();
 CALL sp_populate_etl_cervical_cancer_screening();
 CALL sp_populate_etl_patient_contact();
 CALL sp_populate_etl_client_trace();
-CALL sp_populate_etl_client_trace();
 CALL sp_populate_etl_client_registration();
 CALL sp_populate_etl_contact();
 CALL sp_populate_etl_client_enrollment();
