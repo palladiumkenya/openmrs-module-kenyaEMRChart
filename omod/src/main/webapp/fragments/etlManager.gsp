@@ -48,7 +48,7 @@
                 })
                 .error(function(xhr, status, err) {
                     jq("#showStatus").hide();
-                    jq("#msg").text("There was an error refreshing ETL tables");
+                    jq("#msg").text("There was an error refreshing ETL tables. (" + err + ")");
                     jq("#refresh").prop("disabled", false);
                     jq("#recreate").prop("disabled", false);
 
@@ -144,12 +144,13 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 <hr>
 <div>
 
-    <button id="refresh" style="height:43px;width:155px">
+
+    <button id="refresh" style="height:43px;width:185px">
         <img src="${ ui.resourceLink("kenyaui", "images/glyphs/switch.png") }" width="32" height="32" /> Refresh Tables
     </button>
 
-    <button id="recreate">
-        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" /> Recreate Tables
+    <button id="recreate"  style="height:43px;width:185px">
+        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Recreate Tables
     </button>
 </div>
 <br/>

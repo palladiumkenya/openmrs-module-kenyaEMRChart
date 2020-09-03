@@ -38,12 +38,6 @@
         </comment>
         <sqlFile path="sql/DataTools.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
-    <changeSet id="${project.parent.artifactId}-20180608-1807" author="aojwang">
-        <comment>
-            Setting up sp for creating and processing drug order events
-        </comment>
-        <sqlFile path="sql/sp_drug_order_events_tmp_table.sql" endDelimiter="\$\$" stripComments="true" />
-    </changeSet>
     <changeSet id="${project.parent.artifactId}-20171106-1741" author="aojwang">
         <comment>
             Sets up ETL tables. Recreation of tables
@@ -96,10 +90,23 @@
         </insert>
     </changeSet>
 
-    <changeSet id="${project.parent.artifactId}-20180524-1533" author="aojwang">
+    <changeSet id="${project.parent.artifactId}-20181213-1358" author="aojwang">
         <comment>
-            Setting up process_regimen_switch function
+            Remove all unused db functions and procedures
         </comment>
-        <sqlFile path="sql/FnRegimenReplacement.sql" endDelimiter="\$\$" stripComments="true" />
+        <sql>
+            DROP FUNCTION IF EXISTS process_regimen_switch;
+            DROP PROCEDURE IF EXISTS sp_process_regimen_switch_list;
+            DROP PROCEDURE IF EXISTS sp_process_regimen_switch_item;
+            DROP PROCEDURE IF EXISTS sp_create_drug_order_events_tmp_table;
+            DROP PROCEDURE IF EXISTS sp_update_drug_event_regimen_details;
+        </sql>
+    </changeSet>
+    <changeSet id="${project.parent.artifactId}-20190222-1740" author="aojwang">
+        <comment>
+            Adding jarowinkler script to kenyaemr_etl
+        </comment>
+        <sqlFile path="sql/Query_DoubleMetaphone_KenyaEMR_003.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
 </databaseChangeLog>
+
