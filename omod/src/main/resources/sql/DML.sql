@@ -4041,7 +4041,7 @@ CREATE PROCEDURE sp_populate_etl_client_registration()
                e.creator,
                e.date_created,
                max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-                                                     then  "PWUD" when 105 then "PWID"  when  165108 then "Transman"  when 165107 then "Transwoman" else "" end),null)) as key_population_type,
+                                                     then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" else "" end),null)) as key_population_type,
                max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
                max(if(o.concept_id=165137,o.value_text,null)) as program_name,
                max(if(o.concept_id=165006,o.value_text,null)) as frequent_hotspot_name,
