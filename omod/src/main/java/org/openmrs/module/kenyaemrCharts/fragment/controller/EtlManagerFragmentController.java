@@ -122,7 +122,7 @@ public class EtlManagerFragmentController {
             final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
             Transaction tx = null;
             try {
-
+                Context.openSession();
                 tx = sf.getHibernateSessionFactory().getCurrentSession().beginTransaction();
                 final Transaction finalTx = tx;
                 sf.getCurrentSession().doWork(new Work() {
@@ -167,6 +167,8 @@ public class EtlManagerFragmentController {
                 });
             } catch (Exception e) {
                 throw new IllegalArgumentException("Unable to execute query", e);
+            } finally {
+                Context.closeSession();
             }
             sampleTypeObject.put("data", ret);
         } else {
@@ -207,6 +209,8 @@ public class EtlManagerFragmentController {
                     }
                 } catch (Exception e) {
                     throw new IllegalArgumentException("Unable to execute", e);
+                } finally {
+                    Context.closeSession();
                 }
             }
 
@@ -217,7 +221,7 @@ public class EtlManagerFragmentController {
 
             Transaction tx = null;
             try {
-
+                Context.openSession();
                 tx = sf.getHibernateSessionFactory().getCurrentSession().beginTransaction();
                 final Transaction finalTx = tx;
                 sf.getCurrentSession().doWork(new Work() {
@@ -263,10 +267,14 @@ public class EtlManagerFragmentController {
                 });
             } catch (Exception e) {
                 throw new IllegalArgumentException("Unable to execute query", e);
+            } finally {
+                Context.closeSession();
             }
             sampleTypeObject.put("data", ret);
         }else {
+
             return sampleTypeObject;
+
         }
 
         return sampleTypeObject;

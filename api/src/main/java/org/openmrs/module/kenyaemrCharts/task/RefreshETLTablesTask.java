@@ -70,6 +70,8 @@ public class RefreshETLTablesTask extends AbstractTask {
 		}
 		catch (Exception e) {
 			throw new IllegalArgumentException("Unable to execute query", e);
+		} finally {
+			Context.closeSession();
 		}
 	}
 	
