@@ -436,6 +436,8 @@ program_name,
 encounter_id,
 discontinuation_reason,
 effective_discontinuation_date,
+trf_out_verified,
+trf_out_verification_date,
 date_died,
 transfer_facility,
 transfer_date
@@ -459,12 +461,14 @@ end) as program_name,
 e.encounter_id,
 max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
 max(if(o.concept_id=164384, o.value_datetime, null)) as effective_discontinuation_date,
+max(if(o.concept_id=1285, o.value_coded, null)) as trf_out_verified,
+max(if(o.concept_id=164133, o.value_datetime, null)) as trf_out_verification_date,
 max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
 max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
 max(if(o.concept_id=160649, o.value_datetime, null)) as to_date
 from encounter e
 inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,164384,1543,159495,160649)
+inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,164384,1543,159495,160649,165380,1285,164133)
 inner join 
 (
 	select encounter_type_id, uuid, name from encounter_type where 
@@ -478,7 +482,8 @@ or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),discontinuation_reason=VALUES(discontinuation_reason),
-date_died=VALUES(date_died),transfer_facility=VALUES(transfer_facility),transfer_date=VALUES(transfer_date)
+date_died=VALUES(date_died),transfer_facility=VALUES(transfer_facility),transfer_date=VALUES(transfer_date),
+trf_out_verified=VALUES(trf_out_verified),trf_out_verification_date=VALUES(trf_out_verification_date)
 ;
 
 END$$
