@@ -4945,6 +4945,33 @@ where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing PrEP verification form", CONCAT("Time: ", NOW());
 END$$
+
+-- ------------- populate etl_crossborder_mobility_screening-------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_crossborder_mobility_screening$$
+CREATE PROCEDURE sp_populate_etl_crossborder_mobility_screening()
+BEGIN
+SELECT "Processing Crossborder mobility screening forms", CONCAT("Time: ", NOW());
+SELECT
+	e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
+	MAX(IF(o.concept_id = 5000008, (CASE o.value_coded WHEN 162883 THEN "Kenya" WHEN 162884 THEN "Uganda" ELSE "" END), "" )) AS country,
+	MAX(IF(o.concept_id = 5000000, (CASE o.value_coded WHEN 5000001 THEN "Busia" WHEN 5000004 THEN "Malaba" WHEN 5000007 THEN "Sio Port /Port Victoria/Majanji/Namayingo" WHEN 5000003 THEN "Sio port" WHEN 5000005 THEN "Port vitoria" WHEN 5000006 THEN "Majanji" WHEN 5000002 THEN "Namayingo"  ELSE "" END), "" )) AS site,
+	MAX(IF(o.concept_id = 164181, (CASE o.value_coded WHEN 164180 THEN "New" WHEN 160530 THEN "Continuiing" ELSE "" END), "" )) AS visit_type,
+	MAX(IF(o.concept_id = 5000023, (CASE o.value_coded WHEN 5000024 THEN "Kenyan" WHEN 5000025 THEN "Ugandan" WHEN 5000026 THEN "Rwandese" WHEN 5000027 THEN "Tanzanian" WHEN 5000028 THEN "Burundian" WHEN 5000029 THEN "S. Sudanese" WHEN 5622 THEN "Others" ELSE "" END), "" )) AS nationality,
+	MAX(IF(o.concept_id = 5000022, (CASE o.value_coded WHEN 165083 THEN "FSW" WHEN 162198 THEN "Truckers" WHEN 5000021 THEN "CFA" WHEN 159674 THEN "Fisher Folk" WHEN 160578 THEN "MSM" WHEN 5000020 THEN "VWG" WHEN 165090 THEN "PWID" WHEN 1169 THEN "PLHIV" WHEN 5622 THEN "Others" ELSE "" END), "" )) AS target_population,
+	MAX(IF(o.concept_id = 5000013, (CASE o.value_coded WHEN 1065 THEN "Yes" WHEN 1066 THEN "No" ELSE "" END), "" )) AS travelled_in_last_3_months,
+	MAX(IF(o.concept_id = 5000014, (CASE o.value_coded WHEN 1065 THEN "Yes" WHEN 1066 THEN "No" ELSE "" END), "" )) AS travelled_in_last_6_months,
+	MAX(IF(o.concept_id = 5000015, (CASE o.value_coded WHEN 1065 THEN "Yes" WHEN 1066 THEN "No" ELSE "" END), "" )) AS travelled_in_last_12_months,
+	MAX(IF(o.concept_id = 5000016, o.value_numeric, "" )) AS length_of_last_travel,
+	MAX(IF(o.concept_id = 5000018, (CASE o.value_coded WHEN 1100 THEN "Daily" WHEN 1099 THEN "Once a week" WHEN 1098 THEN "Once a month" WHEN 5000019 THEN "Once in 3 months" WHEN 1090 THEN "Never" WHEN 5622 THEN "Other" ELSE "" END), "" )) AS frequency_of_travel,
+	MAX(IF(o.concept_id = 5000030, (CASE o.value_coded WHEN 160631 THEN "HIV" WHEN 160541 THEN "TB" WHEN 5483 THEN "FP/RH" WHEN 159937 THEN "MNCH/ANC" WHEN 5000031 THEN "GBV" WHEN 160546 THEN "STI" WHEN 5000032 THEN "ART" WHEN 5622 THEN "Other" ELSE "" END), "" )) AS service
+FROM obs o 
+INNER JOIN encounter e ON e.encounter_id = o.encounter_id AND e.voided =0 
+INNER JOIN form f ON f.form_id=e.form_id AND f.uuid IN ("95ab6ce7-01ea-4a14-af12-fe4eada31081")
+WHERE o.concept_id IN (5000008, 5000000, 164181, 5000023, 5000022, 5000013, 5000014, 5000015, 5000016, 5000018, 5000030)
+GROUP BY e.encounter_id ;
+SELECT "Completed processing Crossborder mobility screening forms", CONCAT("Time: ", NOW());
+END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -5015,6 +5042,7 @@ CALL sp_populate_etl_peer_tracking();
 CALL sp_populate_etl_treatment_verification();
 CALL sp_populate_etl_gender_based_violence();
 CALL sp_populate_etl_PrEP_verification();
+CALL sp_populate_etl_crossborder_mobility_screening();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

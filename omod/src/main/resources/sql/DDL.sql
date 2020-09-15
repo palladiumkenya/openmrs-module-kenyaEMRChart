@@ -2351,6 +2351,39 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     INDEX(client_id)
     );
 
+-- ------------ create table etl_crossborder_mobility_screening -----------------------
+
+
+	SELECT "Successfully created etl_crossborder_mobility_screening table";
+
+	CREATE TABLE kenyaemr_etl.etl_crossborder_mobility_screening (
+    UUID CHAR(38),
+    provider INT(11),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    country INT(11),
+    site INT(11),
+    visit_type INT(11),
+    nationality INT(11),
+    target_population INT(11),
+    travelled_in_last_3_months INT(11),
+    travelled_in_last_6_months INT(11),
+    travelled_in_last_12_months INT(11),
+    length_of_last_travel INT(11),
+    frequency_of_travel INT(11),
+    service INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(UUID),
+    INDEX(visit_date),
+    INDEX(patient_id),
+    INDEX(visit_date, patient_id),
+    INDEX(encounter_id),
+    INDEX(country)
+    );
+
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
