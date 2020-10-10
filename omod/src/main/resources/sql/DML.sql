@@ -2329,7 +2329,7 @@ SET reportingPeriod = DATE_FORMAT(NOW() - INTERVAL 1 MONTH, '%Y-%M');
 DROP TABLE IF EXISTS kenyaemr_etl.etl_current_in_care;
 
 CREATE TABLE kenyaemr_etl.etl_current_in_care AS
-	select fup.visit_date,fup.patient_id, max(e.visit_date) as enroll_date,
+	select fup.visit_date,fup.patient_id,p.dob,p.Gender,max(e.visit_date) as enroll_date,
 																				greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
 																				greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
 																				greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
@@ -2340,16 +2340,16 @@ CREATE TABLE kenyaemr_etl.etl_current_in_care AS
 	from kenyaemr_etl.etl_patient_hiv_followup fup
 		join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
 		join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
-		left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(:endDate)
+		left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(endDate)
 		left outer JOIN
 		(select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date,max(date(effective_discontinuation_date)) as effective_disc_date from kenyaemr_etl.etl_patient_program_discontinuation
-		where date(visit_date) <= date(:endDate) and program_name='HIV'
+		where date(visit_date) <= date(endDate) and program_name='HIV'
 		group by patient_id
 		) d on d.patient_id = fup.patient_id
-	where fup.visit_date <= date(:endDate)
+	where fup.visit_date <= date(endDate)
 	group by patient_id
 	having  (
-		((timestampdiff(DAY,date(latest_tca),date(:endDate)) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and (date(d.effective_disc_date) > date(:endDate) or d.effective_disc_date is null))
+		((timestampdiff(DAY,date(latest_tca),date(endDate)) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and (date(d.effective_disc_date) > date(endDate) or d.effective_disc_date is null))
 		and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
 	);
 
