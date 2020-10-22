@@ -12,6 +12,8 @@ family_name,
 Gender,
 DOB,
 dead,
+date_created,
+date_last_modified,
 voided,
 death_date
 )
@@ -23,6 +25,8 @@ p.family_name,
 p.gender,
 p.birthdate,
 p.dead,
+p.date_created,
+p.date_last_modified,
 p.voided,
 p.death_date
 FROM (
@@ -34,6 +38,8 @@ pn.family_name,
 p.gender,
 p.birthdate,
 p.dead,
+p.date_created,
+greatest(ifnull(p.date_changed,'0000-00-00 00:00:00'),ifnull(pn.date_changed,'0000-00-00 00:00:00')) as date_last_modified,
 p.voided,
 p.death_date
 from person p 
@@ -54,7 +60,6 @@ family_name=p.family_name,
 DOB=p.birthdate, 
 dead=p.dead, voided=p.voided, death_date=p.death_date;
 
-
 -- update etl_patient_demographics with patient attributes: birthplace, citizenship, mother_name, phone number and kin's details
 update kenyaemr_etl.etl_patient_demographics d 
 inner join 
@@ -69,7 +74,8 @@ max(if(pat.uuid='342a1d39-c541-4b29-8818-930916f4c2dc', pa.value, null)) as next
 max(if(pat.uuid='d0aa9fd1-2ac5-45d8-9c5e-4317c622c8f5', pa.value, null)) as next_of_kin_relationship,
 max(if(pat.uuid='7cf22bec-d90a-46ad-9f48-035952261294', pa.value, null)) as next_of_kin_address,
 max(if(pat.uuid='830bef6d-b01f-449d-9f8d-ac0fede8dbd3', pa.value, null)) as next_of_kin_name,
-max(if(pat.uuid='b8d0b331-1d2d-4a9a-b741-1816f498bdb6', pa.value, null)) as email_address
+max(if(pat.uuid='b8d0b331-1d2d-4a9a-b741-1816f498bdb6', pa.value, null)) as email_address,
+greatest(ifnull(pa.date_changed,'0000-00-00'),pa.date_created) as latest_date
 from person_attribute pa
 inner join
 (
@@ -104,7 +110,8 @@ set d.phone_number=att.phone_number,
 	d.phone_number=att.phone_number,
 	d.birth_place = att.birthplace,
 	d.citizenship = att.citizenship,
-	d.email_address=att.email_address;
+	d.email_address=att.email_address,
+	d.date_last_modified=if(att.latest_date > ifnull(d.date_last_modified,'0000-00-00'),att.latest_date,d.date_last_modified);
 
 
 update kenyaemr_etl.etl_patient_demographics d
@@ -114,7 +121,8 @@ max(if(pit.uuid='d8ee3b8c-a8fc-4d6b-af6a-9423be5f8906',pi.identifier,null)) dist
 max(if(pit.uuid='c4e3caca-2dcc-4dc4-a8d9-513b6e63af91',pi.identifier,null)) Tb_treatment_number,
 max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Patient_clinic_number,
 max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
-max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id
+max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
+greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
 where voided=0 and
@@ -127,13 +135,15 @@ set d.unique_patient_no=pid.UPN,
 	d.patient_clinic_number=pid.Patient_clinic_number,
     d.hei_no=pid.Hei_id,
     d.Tb_no=pid.Tb_treatment_number,
-    d.district_reg_no=pid.district_reg_number
+    d.district_reg_no=pid.district_reg_number,
+    d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
 update kenyaemr_etl.etl_patient_demographics d
 inner join (select o.person_id as patient_id,
 max(if(o.concept_id in(1054),cn.name,null))  as marital_status,
-max(if(o.concept_id in(1712),cn.name,null))  as education_level
+max(if(o.concept_id in(1712),cn.name,null))  as education_level,
+max(o.date_created) as date_created
 from obs o
 join concept_name cn on cn.concept_id=o.value_coded and cn.concept_name_type='FULLY_SPECIFIED'
 and cn.locale='en'
@@ -142,7 +152,8 @@ o.date_created >= last_update_time
 or o.date_voided >= last_update_time
 group by person_id) pstatus on pstatus.patient_id=d.patient_id
 set d.marital_status=pstatus.marital_status,
-d.education_level=pstatus.education_level;
+d.education_level=pstatus.education_level,
+d.date_last_modified=if(pstatus.date_created > d.date_last_modified,pstatus.date_created,d.date_last_modified);
 
 END$$
 -- DELIMITER ;
@@ -1418,12 +1429,11 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
  BEGIN
   SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
   insert into kenyaemr_etl.etl_hei_immunization(
-
-
    patient_id,
    visit_date,
    created_by,
    date_created,
+   date_last_modified,
    encounter_id,
    BCG,
    OPV_birth,
@@ -1455,6 +1465,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
     visit_date,
     y.creator,
     y.date_created,
+    y.date_last_modified,
     y.encounter_id,
     max(if(vaccine="BCG", date_given, "")) as BCG,
     max(if(vaccine="OPV" and sequence=0, date_given, "")) as OPV_birth,
@@ -1486,6 +1497,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
         date(encounter_datetime) as visit_date,
         creator,
         date(date_created) as date_created,
+        date_last_modified,
         encounter_id,
         name as encounter_type,
         max(if(concept_id=1282 , "Vitamin A", "")) as vaccine,
@@ -1493,7 +1505,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
         max(if(concept_id=1282 , date(obs_datetime), "")) as date_given,
         obs_group_id
        from (
-           select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime
+           select o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime
            from obs o
             inner join encounter e on e.encounter_id=o.encounter_id
             inner join person p on p.person_id=o.person_id and p.voided=0
@@ -1518,6 +1530,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
          date(encounter_datetime) as visit_date,
          creator,
          date(date_created) as date_created,
+         date_last_modified,
          encounter_id,
          name as encounter_type,
          max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
@@ -1527,7 +1540,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
          max(if(concept_id=1410, date_given, "")) as date_given,
          obs_group_id
         from (
-           select o.person_id, e.encounter_datetime, e.creator, e.date_created, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
+           select o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
            from obs o
             inner join encounter e on e.encounter_id=o.encounter_id
             inner join person p on p.person_id=o.person_id and p.voided=0
@@ -2122,8 +2135,6 @@ END$$
 DROP PROCEDURE IF EXISTS sp_update_etl_laboratory_extract$$
 CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 BEGIN
-
-
 
 insert into kenyaemr_etl.etl_laboratory_extract(
 uuid,
@@ -4116,123 +4127,6 @@ where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
 SELECT "Completed processing  HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
 END$$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_client_registration$$
-CREATE PROCEDURE sp_update_etl_client_registration(IN last_update_time DATETIME)
-  BEGIN
-    -- initial set up of etl_client_registration table
-    SELECT "Processing client registration data ", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_client_registration(
-        client_id,
-        registration_date,
-        given_name,
-        middle_name,
-        family_name,
-        Gender,
-        DOB,
-        dead,
-        voided,
-        death_date)
-    select
-           p.person_id,
-           p.date_created,
-           p.given_name,
-           p.middle_name,
-           p.family_name,
-           p.gender,
-           p.birthdate,
-           p.dead,
-           p.voided,
-           p.death_date
-    FROM (
-         select
-                p.person_id,
-                p.date_created,
-                pn.given_name,
-                pn.middle_name,
-                pn.family_name,
-                p.gender,
-                p.birthdate,
-                p.dead,
-                p.voided,
-                p.death_date
-         from person p
-                left join patient pa on pa.patient_id=p.person_id
-                left join person_name pn on pn.person_id = p.person_id and pn.voided=0
-         where pn.date_created >= last_update_time
-            or pn.date_changed >= last_update_time
-            or pn.date_voided >= last_update_time
-            or p.date_created >= last_update_time
-            or p.date_changed >= last_update_time
-            or p.date_voided >= last_update_time
-         GROUP BY p.person_id
-         ) p
-    ON DUPLICATE KEY UPDATE given_name = p.given_name, middle_name=p.middle_name, family_name=p.family_name, DOB = p.birthdate;
-
-    -- update etl_client_registration with patient attributes: birthplace, citizenship, mother_name, phone number and kin's details
-    update kenyaemr_etl.etl_client_registration r
-    left outer join
-    (
-    select
-           pa.person_id,
-           max(if(pat.uuid='aec1b592-1d8a-11e9-ab14-d663bd873d93', pa.value, null)) as alias_name,
-           max(if(pat.uuid='b2c38640-2603-4629-aebd-3b54f33f1e3a', pa.value, null)) as phone_number,
-           max(if(pat.uuid='94614350-84c8-41e0-ac29-86bc107069be', pa.value, null)) as alt_phone_number,
-           max(if(pat.uuid='b8d0b331-1d2d-4a9a-b741-1816f498bdb6', pa.value, null)) as email_address
-    from person_attribute pa
-           inner join
-             (
-             select
-                    pat.person_attribute_type_id,
-                    pat.name,
-                    pat.uuid
-             from person_attribute_type pat
-             where pat.retired=0
-             ) pat on pat.person_attribute_type_id = pa.person_attribute_type_id
-                        and pat.uuid in (
-            'aec1b592-1d8a-11e9-ab14-d663bd873d93', -- alias_name
-            'b2c38640-2603-4629-aebd-3b54f33f1e3a', -- phone contact
-            '94614350-84c8-41e0-ac29-86bc107069be', -- alternative phone contact
-            'b8d0b331-1d2d-4a9a-b741-1816f498bdb6' -- email address
-
-            )
-    where pa.voided=0
-    group by pa.person_id
-    ) att on att.person_id = r.client_id
-    set r.alias_name = att.alias_name,
-        r.phone_number=att.phone_number,
-        r.alt_phone_number=att.alt_phone_number,
-        r.email_address=att.email_address;
-
-
-    update kenyaemr_etl.etl_client_registration r
-    join (select pi.patient_id,
-                 max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) national_id,
-                 max(if(pit.uuid='aec1b20e-1d8a-11e9-ab14-d663bd873d93',pi.identifier,null)) passport_number
-          from patient_identifier pi
-                 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
-          where voided=0
-          group by pi.patient_id) pid on pid.patient_id=r.client_id
-    set
-        r.national_id_number=pid.national_id,
-        r.passport_number=pid.passport_number;
-
-    update kenyaemr_etl.etl_client_registration r
-    join (select pa.person_id as client_id,
-                 pa.address1 as postal_address,
-                 pa.county_district as county,
-                 pa.state_province as sub_county,
-                 pa.address6 as location,
-                 pa.address5 as sub_location,
-                 pa.city_village as village
-          from person_address pa
-          group by person_id) pstatus on pstatus.client_id=r.client_id
-    set r.postal_address=pstatus.postal_address,
-        r.county=pstatus.county,
-        r.sub_county= pstatus.sub_county,
-        r.location= pstatus.location,
-        r.sub_location= pstatus.sub_location,
-        r.village= pstatus.village;
-
     END$$
     DROP PROCEDURE IF EXISTS sp_update_etl_contact$$
     CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
@@ -5558,7 +5452,6 @@ CALL sp_update_etl_otz_enrollment(last_update_time);
 CALL sp_update_etl_otz_activity(last_update_time);
 CALL sp_update_etl_ovc_enrolment(last_update_time);
 CALL sp_update_etl_cervical_cancer_screening(last_update_time);
-CALL sp_update_etl_client_registration(last_update_time);
 CALL sp_update_etl_contact(last_update_time);
 CALL sp_update_etl_client_enrollment(last_update_time);
 CALL sp_update_etl_clinical_visit(last_update_time);

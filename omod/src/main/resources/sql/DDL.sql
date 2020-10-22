@@ -68,7 +68,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
 
-DROP TABLE IF EXISTS kenyaemr_etl.etl_client_registration;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_client_trace;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_contact;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_client_enrollment;
@@ -106,6 +105,8 @@ education_level VARCHAR(50) DEFAULT NULL,
 dead INT(11),
 death_date DATE DEFAULT NULL,
 voided INT(11),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
 index(patient_id),
 index(Gender),
 index(unique_patient_no),
@@ -1014,6 +1015,8 @@ CREATE TABLE kenyaemr_etl.etl_patients_booked_today(
 id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
 patient_id INT(11) NOT NULL ,
 last_visit_date DATE,
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
 INDEX(patient_id)
 );
@@ -1958,41 +1961,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
   SELECT "Successfully created etl_viral_load table";
 
-    -- create table etl_client_registration
-    create table kenyaemr_etl.etl_client_registration (
-      client_id INT(11) not null primary key,
-      registration_date DATE,
-      given_name VARCHAR(255),
-      middle_name VARCHAR(255),
-      family_name VARCHAR(255),
-      Gender VARCHAR(10),
-      DOB DATE,
-      alias_name VARCHAR(255),
-      postal_address VARCHAR (255),
-      county VARCHAR (255),
-      sub_county VARCHAR (255),
-      location VARCHAR (255),
-      sub_location VARCHAR (255),
-      village VARCHAR (255),
-      phone_number VARCHAR (255)  DEFAULT NULL,
-      alt_phone_number VARCHAR (255)  DEFAULT NULL,
-      email_address VARCHAR (255)  DEFAULT NULL,
-      national_id_number VARCHAR(50),
-      passport_number VARCHAR(50)  DEFAULT NULL,
-      dead INT(11),
-      death_date DATE DEFAULT NULL,
-      date_created DATETIME NOT NULL,
-      date_last_modified DATETIME,
-      voided INT(11),
-      index(client_id),
-      index(Gender),
-      index(registration_date),
-      index(DOB)
-    );
-
-    SELECT "Successfully created etl_client_registration table";
-
-    -- create table etl_contact
+       -- create table etl_contact
     create table kenyaemr_etl.etl_contact (
       uuid char(38) ,
       unique_identifier VARCHAR(50),
@@ -2020,7 +1989,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       contact_person_phone VARCHAR(255),
 
       voided INT(11),
-      constraint foreign key(client_id) references kenyaemr_etl.etl_client_registration(client_id),
+      constraint foreign key(client_id) references kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id),
       index(unique_identifier),
@@ -2063,7 +2032,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       buddy_name VARCHAR(255),
       buddy_phone_number VARCHAR(255),
       voided INT(11),
-      constraint foreign key(client_id) references kenyaemr_etl.etl_client_registration(client_id),
+      constraint foreign key(client_id) references kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id)
     );
@@ -2194,7 +2163,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       clinical_notes VARCHAR(255),
       appointment_date DATE,
       voided INT(11),
-      constraint foreign key(client_id) references kenyaemr_etl.etl_client_registration(client_id),
+      constraint foreign key(client_id) references kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id),
       index(client_id,visit_date)
@@ -2235,7 +2204,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       health_edu  VARCHAR(10),
       remarks VARCHAR(255),
       voided INT(11),
-      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       INDEX(visit_date),
       INDEX(client_id, visit_date)
@@ -2273,7 +2242,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       provider_name VARCHAR(255),
       appointment_date DATE,
       voided INT(11),
-      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       INDEX(visit_date),
       INDEX(encounter_id),
@@ -2306,7 +2275,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       date_created DATETIME NOT NULL,
       date_last_modified DATETIME,
       voided INT(11),
-      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       INDEX(visit_date),
       INDEX(encounter_id),
@@ -2350,7 +2319,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       date_created DATETIME NOT NULL,
       date_last_modified DATETIME,
       voided INT(11),
-      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+      CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
       INDEX(visit_date),
       INDEX(encounter_id),
@@ -2390,7 +2359,7 @@ CREATE TABLE kenyaemr_etl.etl_gender_based_violence (
   date_created DATETIME NOT NULL,
   date_last_modified DATETIME,
   voided INT(11),
-  CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+  CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
   CONSTRAINT unique_uuid UNIQUE(uuid),
   INDEX(visit_date),
   INDEX(encounter_id),
@@ -2419,7 +2388,7 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
 	  date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     voided INT(11),
-    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_client_registration(client_id),
+    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
