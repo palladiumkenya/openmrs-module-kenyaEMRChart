@@ -29,7 +29,7 @@ select
        p.birthdate,
        p.dead,
        p.date_created,
-       p.date_last_modified,
+       if((p.date_last_modified='0000-00-00 00:00:00' or p.date_last_modified=p.date_created),NULL,p.date_last_modified) as date_last_modified,
        p.voided,
        p.death_date
 FROM (
@@ -4021,7 +4021,6 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
 		END$$
 
-    END$$
     DROP PROCEDURE IF EXISTS sp_populate_etl_contact$$
     CREATE PROCEDURE sp_populate_etl_contact()
       BEGIN

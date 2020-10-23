@@ -26,7 +26,7 @@ p.gender,
 p.birthdate,
 p.dead,
 p.date_created,
-p.date_last_modified,
+if((p.date_last_modified='0000-00-00 00:00:00' or p.date_last_modified=p.date_created),NULL,p.date_last_modified) as date_last_modified,
 p.voided,
 p.death_date
 FROM (
@@ -4127,7 +4127,6 @@ where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
 SELECT "Completed processing  HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
 END$$
 
-    END$$
     DROP PROCEDURE IF EXISTS sp_update_etl_contact$$
     CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
       BEGIN
