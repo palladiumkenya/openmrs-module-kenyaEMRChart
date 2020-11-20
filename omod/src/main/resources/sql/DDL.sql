@@ -287,7 +287,7 @@ visit_id INT(11),
 order_id VARCHAR(200),
 lab_test VARCHAR(180),
 urgency VARCHAR(50),
-order_reason VARCHAR(180)
+order_reason VARCHAR(180),
 test_result VARCHAR(180),
 date_test_requested DATE DEFAULT null,
 date_test_result_received DATE,

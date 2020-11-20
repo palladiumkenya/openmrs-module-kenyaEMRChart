@@ -412,7 +412,7 @@ coalesce(od.date_activated,e.encounter_datetime) as visit_date,
 e.visit_id,
 o.order_id,
 o.concept_id,
-od.urgency
+od.urgency,
 od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305) then o.value_coded
