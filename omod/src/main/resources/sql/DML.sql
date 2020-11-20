@@ -395,9 +395,10 @@ visit_id,
 order_id,
 lab_test,
 urgency,
+order_reason,
 test_result,
--- date_test_requested,
--- date_test_result_received,
+date_test_requested,
+date_test_result_received,
 -- test_requested_by,
 date_created,
 created_by
@@ -407,16 +408,17 @@ o.uuid,
 e.encounter_id,
 e.patient_id,
 e.location_id,
-e.encounter_datetime as visit_date,
+coalesce(od.date_activated,e.encounter_datetime) as visit_date,
 e.visit_id,
 o.order_id,
 o.concept_id,
-od.urgency,
+od.urgency
+od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305) then o.value_coded
 	END) AS test_result,
--- date requested,
--- date result received
+    od.date_activated as date_requested,
+  e.encounter_datetime as date_result_received,
 -- test requested by
 e.date_created,
 e.creator
