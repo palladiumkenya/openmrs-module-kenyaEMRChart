@@ -2143,31 +2143,33 @@ patient_id,
 location_id,
 visit_date,
 visit_id,
+order_id,
 lab_test,
 urgency,
 order_reason,
 test_result,
-date_requested,
-date_result_received,
+date_test_requested,
+date_test_result_received,
 date_created,
 date_last_modified,
-created_by 
+created_by
 )
-select 
+select
 o.uuid,
 e.encounter_id,
 e.patient_id,
 e.location_id,
 coalesce(od.date_activated,e.encounter_datetime) as visit_date,
 e.visit_id,
+o.order_id,
 o.concept_id,
 od.urgency,
 od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305) then o.value_coded
 	END) AS test_result,
-  od.date_activated as date_requested,
-  e.encounter_datetime as date_result_received,
+    od.date_activated as date_test_requested,
+  e.encounter_datetime as date_test_result_received,
 e.date_created,
 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
 e.creator
@@ -2184,7 +2186,7 @@ or e.date_changed >= last_update_time
 or e.date_voided >= last_update_time
 or o.date_created >= last_update_time
 or o.date_voided >= last_update_time
-ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result), date_test_requested=VALUES(date_test_requested), date_test_result_received=VALUES(date_test_result_received)
 ; 
 
 END$$
