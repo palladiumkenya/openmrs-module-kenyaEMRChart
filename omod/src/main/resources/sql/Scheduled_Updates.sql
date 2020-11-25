@@ -95,7 +95,9 @@ and pat.uuid in (
 	'd0aa9fd1-2ac5-45d8-9c5e-4317c622c8f5', -- next of kin's relationship
 	'7cf22bec-d90a-46ad-9f48-035952261294', -- next of kin's address
 	'830bef6d-b01f-449d-9f8d-ac0fede8dbd3', -- next of kin's name
-	'b8d0b331-1d2d-4a9a-b741-1816f498bdb6' -- email address
+	'848f5688-41c6-464c-b078-ea6524a3e971', -- unit
+	'96a99acd-2f11-45bb-89f7-648dbcac5ddf', -- cadre
+	'9f1f8254-20ea-4be4-a14d-19201fe217bf' -- rank
 
 	)
 where pa.date_created >= last_update_time
@@ -111,6 +113,9 @@ set d.phone_number=att.phone_number,
 	d.birth_place = att.birthplace,
 	d.citizenship = att.citizenship,
 	d.email_address=att.email_address,
+	d.unit=att.unit,
+	d.cadre=att.cadre,
+	d.rank=att.rank,
 	d.date_last_modified=if(att.latest_date > ifnull(d.date_last_modified,'0000-00-00'),att.latest_date,d.date_last_modified);
 
 
@@ -122,6 +127,7 @@ max(if(pit.uuid='c4e3caca-2dcc-4dc4-a8d9-513b6e63af91',pi.identifier,null)) Tb_t
 max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Patient_clinic_number,
 max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
 max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
+max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod_service_number,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -136,6 +142,7 @@ set d.unique_patient_no=pid.UPN,
     d.hei_no=pid.Hei_id,
     d.Tb_no=pid.Tb_treatment_number,
     d.district_reg_no=pid.district_reg_number,
+    d.kdod_service_number=pid.kdod_service_number,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
@@ -2167,6 +2174,7 @@ if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_la
 e.creator
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join patient pa on pa.patient_id = p.person_id and pa.voided = 0
 	inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
