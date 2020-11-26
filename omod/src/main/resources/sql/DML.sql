@@ -417,7 +417,6 @@ order_reason,
 test_result,
 date_test_requested,
 date_test_result_received,
--- test_requested_by,
 date_created,
 date_last_modified,
 created_by
@@ -436,8 +435,8 @@ od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305) then o.value_coded
 	END) AS test_result,
-    od.date_activated as date_requested,
-  e.encounter_datetime as date_result_received,
+    od.date_activated as date_test_requested,
+  e.encounter_datetime as date_test_result_received,
 -- test requested by
 e.date_created,
 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
