@@ -279,7 +279,7 @@ INDEX(visit_date, family_planning_method)
 SELECT "Successfully created etl_patient_hiv_followup table";
 
 -- ------- create table etl_laboratory_extract-----------------------------------------
-
+  SELECT "Creating etl_laboratory_extract table";
 CREATE TABLE kenyaemr_etl.etl_laboratory_extract (
 uuid char(38) PRIMARY KEY,
 encounter_id INT(11),
@@ -299,6 +299,7 @@ date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
 created_by INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
 INDEX(patient_id),

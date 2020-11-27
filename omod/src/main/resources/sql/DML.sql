@@ -3046,7 +3046,7 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
            max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                              when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
                                                              when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
-           max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
+           max(if(o.concept_id = 160632, o.value_text, null )) as prep_discontinue_other_reasons,
            max(if(o.concept_id = 164999, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
            max(if(o.concept_id = 160632, o.value_datetime, null )) as next_appointment,
            max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
@@ -4094,7 +4094,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=165032,o.value_numeric,null)) as year_started_drugs,
                max(if(o.concept_id=165007,o.value_numeric,null)) as avg_weekly_sex_acts,
                max(if(o.concept_id=165008,o.value_numeric,null)) as avg_weekly_anal_sex_acts,
-               max(if(o.concept_id=165009,o.value_numeric,null)) as avg_weekly_drug_injections,
+               max(if(o.concept_id=165009,o.value_numeric,null)) as avg_daily_drug_injections,
                max(if(o.concept_id=160638,o.value_text,null)) as contact_person_name,
                max(if(o.concept_id=165038,o.value_text,null)) as contact_person_alias,
                max(if(o.concept_id=160642,o.value_text,null)) as contact_person_phone,
@@ -4179,7 +4179,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
            max(if(o.concept_id=123160,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as has_expereienced_sexual_violence,
            max(if(o.concept_id=165034,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as has_expereienced_physical_violence,
            max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as ever_tested_for_hiv,
-           max(if(o.concept_id=164956,(case o.value_coded when 163722 then "Rapid HIV Testing" when 164952 THEN "Self Test" else "" end),null)) as ever_tested_for_hiv,
+           max(if(o.concept_id=164956,(case o.value_coded when 163722 then "Rapid HIV Testing" when 164952 THEN "Self Test" else "" end),null)) as test_type,
            max(if(o.concept_id=165153,(case o.value_coded when 703 then "Yes I tested positive" when 664 THEN "Yes I tested negative" when 1066 THEN "No I do not want to share" else "" end),null)) as share_test_results,
            max(if(o.concept_id=165154,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as willing_to_test,
            max(if(o.concept_id=159803,o.value_text,null)) as test_decline_reason,
