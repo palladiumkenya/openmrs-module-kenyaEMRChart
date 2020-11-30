@@ -1945,82 +1945,15 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
           when 1108 then "EH"
           else ""
           end ),null)) as regimen_name,
-        max(if(o.concept_id=1193,(
-          case o.value_coded
-          -- adult first line
-          when 162565 then "First line"
-          when 164505 then "First line"
-          when 1652 then "First line"
-          when 160124 then "First line"
-          when 792 then "First line"
-          when 160104 then "First line"
-          when 164971 then "First line"
-          when 164968 then "First line"
-          when 164969 then "First line"
-          when 164970 then "First line"
-          when 162561 then "First line"
-          when 164511 then "First line"
-          when 164512 then "First line"
-          when 162201 then "First line"
-          -- adult second line
-          when 162561 then "Second line"
-          when 164511 then "Second line"
-          when 162201 then "Second line"
-          when 164512 then "Second line"
-          when 162560 then "Second line"
-          when 164972 then "Second line"
-          when 164973 then "Second line"
-          when 164974 then "Second line"
-          when 165357 then "Second line"
-          when 164968 then "Second line"
-          when 164969 then "Second line"
-          when 164970 then "Second line"
-          -- adult third line
-          when 165375 then "Third line"
-          when 165376 then "Third line"
-          when 165379 then "Third line"
-          when 165378 then "Third line"
-          when 165369 then "Third line"
-          when 165370 then "Third line"
-          when 165371 then "Third line"
-          -- child 1st line
-          when 162200 then "First line"
-          when 162199 then "First line"
-          when 162563 then "First line"
-          when 817 then "First line"
-          when 164975 then "First line"
-          when 162562 then "First line"
-          when 162559 then "First line"
-          when 164976 then "First line"
-          when 165372 then "First line"
-          -- child second line
-          when 162561 then "Second line"
-          when 164511 then "Second line"
-          when 162200 then "Second line"
-          when 165357 then "Second line"
-          when 165373 then "Second line"
-          when 165374 then "Second line"
-          -- child third line
-          when 165375 then "Third line"
-          when 165376 then "Third line"
-          when 165377 then "Third line"
-          when 165378 then "Third line"
-          when 165373 then "Third line"
-          when 165374 then "Third line"
-          -- tb
-          when 1675 then "Adult intensive"
-          when 768 then "Adult intensive"
-          when 1674 then "Adult intensive"
-          when 164978 then "Adult intensive"
-          when 164979 then "Adult intensive"
-          when 164980 then "Adult intensive"
-          when 84360 then "Adult intensive"
-          -- child intensive
-          when 75948 then "Child intensive"
-          when 1194 then "Child intensive"
-          -- adult continuation
-          when 159851 then "Adult continuation"
-          when 1108 then "Adult continuation"
+        max(if(o.concept_id=163104,(
+          case o.value_text
+          -- patient regimen line
+          when "AF" then "Adult first line"
+          when "AS" then "Adult second line"
+          when "AT" then "Adult third line"
+          when "CF" then "Child first line"
+          when "CS" then "Child second line"
+          when "CT" then "Child third line"
           else ""
           end ),null)) as regimen_line,
         max(if(o.concept_id=1191,(case o.value_datetime when NULL then 0 else 1 end),null)) as discontinued,
