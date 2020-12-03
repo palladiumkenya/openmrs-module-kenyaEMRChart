@@ -4006,7 +4006,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                                               when 165012 then "Injecting den"
                                               when 165013 then "Uninhabitable building"
                                               when 165014 then "Public Park"
-                                              when '1536AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Homes"
+                                              when 1536 then "Homes"
                                               when 165015 then "Beach"
                                               when 165016 then "Casino"
                                               when 165017 then "Bar with lodging"
@@ -4020,7 +4020,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                                               when 165025 then "illicit brew den"
                                               when 165026 then "Barber shop/salon"
                                               when 165297 then "Virtual Space"
-                                              when '5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Other"
+                                              when 5622 then "Other"
                                               else "" end),null)) as frequent_hotspot_type,
                max(if(o.concept_id=165030,o.value_numeric,null)) as year_started_sex_work,
                max(if(o.concept_id=165031,o.value_numeric,null)) as year_started_sex_with_men,
