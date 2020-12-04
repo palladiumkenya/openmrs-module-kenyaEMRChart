@@ -2055,12 +2055,12 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 			max(if(o.concept_id=163104,(
 				case o.value_text
 				-- patient regimen line
-				when "AF" then "Adult first line"
-				when "AS" then "Adult second line"
-				when "AT" then "Adult third line"
-				when "CF" then "Child first line"
-				when "CS" then "Child second line"
-				when "CT" then "Child third line"
+				when "AF" then "First line"
+				when "AS" then "Second line"
+				when "AT" then "Third line"
+				when "CF" then "First line"
+				when "CS" then "Second line"
+				when "CT" then "Third line"
 				else ""
 				end ),null)) as regimen_line,
 			max(if(o.concept_id=1191,(case o.value_datetime when NULL then 0 else 1 end),null)) as discontinued,
