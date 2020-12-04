@@ -2074,7 +2074,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 		from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-													and o.concept_id in(1193,1252,5622,1191,1255,1268)
+													and o.concept_id in(1193,1252,5622,1191,1255,1268,163104)
 			inner join
 			(
 				select encounter_type, uuid,name from form where
