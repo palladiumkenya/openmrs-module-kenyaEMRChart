@@ -1948,12 +1948,12 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
         max(if(o.concept_id=163104,(
           case o.value_text
           -- patient regimen line
-          when "AF" then "Adult first line"
-          when "AS" then "Adult second line"
-          when "AT" then "Adult third line"
-          when "CF" then "Child first line"
-          when "CS" then "Child second line"
-          when "CT" then "Child third line"
+          when "AF" then "First line"
+          when "AS" then "Second line"
+          when "AT" then "Third line"
+          when "CF" then "First line"
+          when "CS" then "Second line"
+          when "CT" then "Third line"
           else ""
           end ),null)) as regimen_line,
         max(if(o.concept_id=1191,(case o.value_datetime when NULL then 0 else 1 end),null)) as discontinued,
@@ -1967,7 +1967,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(1193,1252,5622,1191,1255,1268)
+                            and o.concept_id in(1193,1252,5622,1191,1255,1268,163104)
         inner join
         (
           select encounter_type, uuid,name from form where
