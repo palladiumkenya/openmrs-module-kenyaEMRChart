@@ -2337,7 +2337,7 @@ SET reportingPeriod = DATE_FORMAT(NOW() - INTERVAL 1 MONTH, '%Y-%M');
 DROP TABLE IF EXISTS kenyaemr_etl.etl_current_in_care;
 
 CREATE TABLE kenyaemr_etl.etl_current_in_care AS
-	select fup.visit_date,fup.patient_id,p.dob,p.Gender,max(e.visit_date) as enroll_date,
+	select fup.visit_date,fup.patient_id as patient_id,p.dob,p.Gender,max(e.visit_date) as enroll_date,
 																				greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
 																				greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
 																				greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
@@ -2366,6 +2366,7 @@ ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(enroll_date);
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(latest_vis_date);
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(latest_tca);
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(started_on_drugs);
+ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(patient_id);
 
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_last_month_newly_enrolled_in_care;
