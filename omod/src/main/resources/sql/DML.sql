@@ -424,10 +424,10 @@ visit_id,
 order_id,
 lab_test,
 urgency,
+order_reason,
 test_result,
--- date_test_requested,
--- date_test_result_received,
--- test_requested_by,
+date_test_requested,
+date_test_result_received,
 date_created,
 date_last_modified,
 created_by
@@ -437,16 +437,17 @@ o.uuid,
 e.encounter_id,
 e.patient_id,
 e.location_id,
-e.encounter_datetime as visit_date,
+coalesce(od.date_activated,e.encounter_datetime) as visit_date,
 e.visit_id,
 o.order_id,
 o.concept_id,
 od.urgency,
+od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305) then o.value_coded
 	END) AS test_result,
--- date requested,
--- date result received
+    od.date_activated as date_test_requested,
+  e.encounter_datetime as date_test_result_received,
 -- test requested by
 e.date_created,
 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
@@ -2062,82 +2063,15 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 1108 then "EH"
 				else ""
 				end ),null)) as regimen_name,
-			max(if(o.concept_id=1193,(
-				case o.value_coded
-				-- adult first line
-				when 162565 then "First line"
-				when 164505 then "First line"
-				when 1652 then "First line"
-				when 160124 then "First line"
-				when 792 then "First line"
-				when 160104 then "First line"
-				when 164971 then "First line"
-				when 164968 then "First line"
-				when 164969 then "First line"
-				when 164970 then "First line"
-				when 162561 then "First line"
-				when 164511 then "First line"
-				when 164512 then "First line"
-				when 162201 then "First line"
-				-- adult second line
-				when 162561 then "Second line"
-				when 164511 then "Second line"
-				when 162201 then "Second line"
-				when 164512 then "Second line"
-				when 162560 then "Second line"
-				when 164972 then "Second line"
-				when 164973 then "Second line"
-				when 164974 then "Second line"
-				when 165357 then "Second line"
-				when 164968 then "Second line"
-				when 164969 then "Second line"
-				when 164970 then "Second line"
-				-- adult third line
-				when 165375 then "Third line"
-				when 165376 then "Third line"
-				when 165379 then "Third line"
-				when 165378 then "Third line"
-				when 165369 then "Third line"
-				when 165370 then "Third line"
-				when 165371 then "Third line"
-				-- child 1st line
-				when 162200 then "First line"
-				when 162199 then "First line"
-				when 162563 then "First line"
-				when 817 then "First line"
-				when 164975 then "First line"
-				when 162562 then "First line"
-				when 162559 then "First line"
-				when 164976 then "First line"
-				when 165372 then "First line"
-				-- child second line
-				when 162561 then "Second line"
-				when 164511 then "Second line"
-				when 162200 then "Second line"
-				when 165357 then "Second line"
-				when 165373 then "Second line"
-				when 165374 then "Second line"
-				-- child third line
-				when 165375 then "Third line"
-				when 165376 then "Third line"
-				when 165377 then "Third line"
-				when 165378 then "Third line"
-				when 165373 then "Third line"
-				when 165374 then "Third line"
-				-- tb
-				when 1675 then "Adult intensive"
-				when 768 then "Adult intensive"
-				when 1674 then "Adult intensive"
-				when 164978 then "Adult intensive"
-				when 164979 then "Adult intensive"
-				when 164980 then "Adult intensive"
-				when 84360 then "Adult intensive"
-				-- child intensive
-				when 75948 then "Child intensive"
-				when 1194 then "Child intensive"
-				-- adult continuation
-				when 159851 then "Adult continuation"
-				when 1108 then "Adult continuation"
+			max(if(o.concept_id=163104,(
+				case o.value_text
+				-- patient regimen line
+				when "AF" then "First line"
+				when "AS" then "Second line"
+				when "AT" then "Third line"
+				when "CF" then "First line"
+				when "CS" then "Second line"
+				when "CT" then "Third line"
 				else ""
 				end ),null)) as regimen_line,
 			max(if(o.concept_id=1191,(case o.value_datetime when NULL then 0 else 1 end),null)) as discontinued,
@@ -2151,7 +2085,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 		from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-													and o.concept_id in(1193,1252,5622,1191,1255,1268)
+													and o.concept_id in(1193,1252,5622,1191,1255,1268,163104)
 			inner join
 			(
 				select encounter_type, uuid,name from form where
@@ -2414,34 +2348,36 @@ SET reportingPeriod = DATE_FORMAT(NOW() - INTERVAL 1 MONTH, '%Y-%M');
 DROP TABLE IF EXISTS kenyaemr_etl.etl_current_in_care;
 
 CREATE TABLE kenyaemr_etl.etl_current_in_care AS
-select fup.visit_date,fup.patient_id,p.dob,p.Gender, min(e.visit_date) as enroll_date,
-	greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
-	greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
-p.unique_patient_no,
-max(d.visit_date) as date_discontinued,
-d.patient_id as disc_patient,
-de.patient_id as started_on_drugs
-from kenyaemr_etl.etl_patient_hiv_followup fup
-join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
-join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
-left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and date(date_started) <= endDate
-left outer JOIN
-(select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date from kenyaemr_etl.etl_patient_program_discontinuation
-where date(visit_date) <= endDate and program_name='HIV'
-group by patient_id
-) d on d.patient_id = fup.patient_id
-where fup.visit_date <= endDate
-group by patient_id
-having (
-(date(latest_tca) > endDate and (date(latest_tca) >= date(date_discontinued) or disc_patient is null ) and (date(latest_vis_date) >= date(date_discontinued) or disc_patient is null)) or
-(((date(latest_tca) between startDate and endDate) and ((date(latest_vis_date) >= date(latest_tca)) or date(latest_tca) > curdate())) and (date(latest_tca) >= date(date_discontinued) or disc_patient is null )) )
-;
+	select fup.visit_date,fup.patient_id as patient_id,p.dob,p.Gender,max(e.visit_date) as enroll_date,
+																				greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
+																				greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
+																				greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
+																				d.patient_id as disc_patient,
+																				d.effective_disc_date as effective_disc_date,
+																				max(d.visit_date) as date_discontinued,
+																				de.patient_id as started_on_drugs
+	from kenyaemr_etl.etl_patient_hiv_followup fup
+		join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
+		join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
+		left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(endDate)
+		left outer JOIN
+		(select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date,max(date(effective_discontinuation_date)) as effective_disc_date from kenyaemr_etl.etl_patient_program_discontinuation
+		where date(visit_date) <= date(endDate) and program_name='HIV'
+		group by patient_id
+		) d on d.patient_id = fup.patient_id
+	where fup.visit_date <= date(endDate)
+	group by patient_id
+	having  (
+		((timestampdiff(DAY,date(latest_tca),date(endDate)) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and (date(d.effective_disc_date) > date(endDate) or d.effective_disc_date is null))
+		and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
+	);
 
 -- ADD INDICES
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(enroll_date);
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(latest_vis_date);
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(latest_tca);
 ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(started_on_drugs);
+ALTER TABLE kenyaemr_etl.etl_current_in_care ADD INDEX(patient_id);
 
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_last_month_newly_enrolled_in_care;
@@ -3055,7 +2991,7 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
            max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                              when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
                                                              when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
-           max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
+           max(if(o.concept_id = 160632, o.value_text, null )) as prep_discontinue_other_reasons,
            max(if(o.concept_id = 164999, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
            max(if(o.concept_id = 160632, o.value_datetime, null )) as next_appointment,
            max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
@@ -4082,7 +4018,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                                               when 165012 then "Injecting den"
                                               when 165013 then "Uninhabitable building"
                                               when 165014 then "Public Park"
-                                              when '1536AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Homes"
+                                              when 1536 then "Homes"
                                               when 165015 then "Beach"
                                               when 165016 then "Casino"
                                               when 165017 then "Bar with lodging"
@@ -4096,14 +4032,14 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                                               when 165025 then "illicit brew den"
                                               when 165026 then "Barber shop/salon"
                                               when 165297 then "Virtual Space"
-                                              when '5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' then "Other"
+                                              when 5622 then "Other"
                                               else "" end),null)) as frequent_hotspot_type,
                max(if(o.concept_id=165030,o.value_numeric,null)) as year_started_sex_work,
                max(if(o.concept_id=165031,o.value_numeric,null)) as year_started_sex_with_men,
                max(if(o.concept_id=165032,o.value_numeric,null)) as year_started_drugs,
                max(if(o.concept_id=165007,o.value_numeric,null)) as avg_weekly_sex_acts,
                max(if(o.concept_id=165008,o.value_numeric,null)) as avg_weekly_anal_sex_acts,
-               max(if(o.concept_id=165009,o.value_numeric,null)) as avg_weekly_drug_injections,
+               max(if(o.concept_id=165009,o.value_numeric,null)) as avg_daily_drug_injections,
                max(if(o.concept_id=160638,o.value_text,null)) as contact_person_name,
                max(if(o.concept_id=165038,o.value_text,null)) as contact_person_alias,
                max(if(o.concept_id=160642,o.value_text,null)) as contact_person_phone,
@@ -4188,7 +4124,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
            max(if(o.concept_id=123160,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as has_expereienced_sexual_violence,
            max(if(o.concept_id=165034,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as has_expereienced_physical_violence,
            max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as ever_tested_for_hiv,
-           max(if(o.concept_id=164956,(case o.value_coded when 163722 then "Rapid HIV Testing" when 164952 THEN "Self Test" else "" end),null)) as ever_tested_for_hiv,
+           max(if(o.concept_id=164956,(case o.value_coded when 163722 then "Rapid HIV Testing" when 164952 THEN "Self Test" else "" end),null)) as test_type,
            max(if(o.concept_id=165153,(case o.value_coded when 703 then "Yes I tested positive" when 664 THEN "Yes I tested negative" when 1066 THEN "No I do not want to share" else "" end),null)) as share_test_results,
            max(if(o.concept_id=165154,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as willing_to_test,
            max(if(o.concept_id=159803,o.value_text,null)) as test_decline_reason,
@@ -4784,24 +4720,21 @@ max(if(o.concept_id = 164515,(case o.value_coded
        when 164512 then 'TDF/3TC/ATV/r'
        when 162560 then 'D4T/3TC/LPV/r'
        when 162200 then 'ABC/3TC/LPV/r'
-       when '98e38a9c-435d-4a94-9b66-5ca524159d0e' then 'TDF/3TC/AZT'
-       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then 'AZT/3TC/DTG'
-       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then 'TDF/3TC/DTG'
-       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then 'ABC/3TC/DTG'
-       when 'c421d8e7-4f43-43b4-8d2f-c7d4cfb976a4' then 'AZT/TDF/3TC/LPV/r'
-       when '337b6cfd-9fa7-47dc-82b4-d479c39ef355' then 'ETR/RAL/DRV/RTV'
-       when '7a6c51c4-2b68-4d5a-b5a2-7ba420dde203' then 'ETR/TDF/3TC/LPV/r'
-       when 'dddd9cf2-2b9c-4c52-84b3-38cfe652529a' then 'ABC/3TC/ATV/r'
-       when '6dec7d7d-0fda-4e8d-8295-cb6ef426878d' then 'AZT/3TC/DTG'
-       when '9fb85385-b4fb-468c-b7c1-22f75834b4b0' then 'TDF/3TC/DTG'
-       when '4dc0119b-b2a6-4565-8d90-174b97ba31db' then 'ABC/3TC/DTG'
-       when '5b8e4955-897a-423b-ab66-7e202b9c304c' then 'RAL/3TC/DRV/RTV'
-       when '092604d3-e9cb-4589-824e-9e17e3cb4f5e' then 'RAL/3TC/DRV/RTV/AZT'
-       when 'c6372744-9e06-40cf-83e5-c794c985b6bf' then 'RAL/3TC/DRV/RTV/TDF'
-       when '1995c4a1-a625-4449-ab28-aae88d0f80e6' then 'ETV/3TC/DRV/RTV'
-       when '5f429c76-2976-4374-a69e-d2d138dd16bf' then 'TDF/3TC/DTG/DRV/r'
-       when '9b9817dd-4c84-4093-95c3-690d65d24b99' then 'TDF/3TC/RAL/DRV/r'
-       when 'f2acaf9b-3da9-4d71-b0cf-fd6af1073c9e' then 'TDF/3TC/DTG/EFV/DRV/r' else "" end),null)) as current_regimen,
+       when 164971 then 'TDF/3TC/AZT'
+       when 164968 then 'AZT/3TC/DTG'
+       when 164969 then 'TDF/3TC/DTG'
+       when 164970 then 'ABC/3TC/DTG'
+       when 164972 then 'AZT/TDF/3TC/LPV/r'
+       when 164973 then 'ETR/RAL/DRV/RTV'
+       when 164974 then 'ETR/TDF/3TC/LPV/r'
+       when 165357 then 'ABC/3TC/ATV/r'
+       when 165375 then 'RAL/3TC/DRV/RTV'
+       when 165376 then 'RAL/3TC/DRV/RTV/AZT'
+       when 165379 then 'RAL/3TC/DRV/RTV/TDF'
+       when 165378 then 'ETV/3TC/DRV/RTV'
+       when 165369 then 'TDF/3TC/DTG/DRV/r'
+       when 165370 then 'TDF/3TC/RAL/DRV/r'
+       when 165371 then 'TDF/3TC/DTG/EFV/DRV/r' else "" end),null)) as current_regimen,
 max(if(o.concept_id = 162568, (case o.value_coded when 162969 THEN "SMS" when 163787 then "Verbal report"  when 1238 then "Written record" when 162189 then "Phone call" when 160526 then "EID Dashboard" when 165048 then "Appointment card" else "" end),null)) as information_source,
 max(if(o.concept_id = 160103, o.value_datetime, "" )) as cd4_test_date,
 max(if(o.concept_id = 5497, o.value_numeric, "" )) as cd4,
