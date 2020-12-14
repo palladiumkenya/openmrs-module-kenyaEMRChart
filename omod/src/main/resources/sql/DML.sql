@@ -68,6 +68,9 @@ select
        max(if(pat.uuid='7cf22bec-d90a-46ad-9f48-035952261294', pa.value, null)) as next_of_kin_address,
        max(if(pat.uuid='830bef6d-b01f-449d-9f8d-ac0fede8dbd3', pa.value, null)) as next_of_kin_name,
        max(if(pat.uuid='b8d0b331-1d2d-4a9a-b741-1816f498bdb6', pa.value, null)) as email_address,
+       max(if(pat.uuid='848f5688-41c6-464c-b078-ea6524a3e971', pa.value, null)) as unit,
+       max(if(pat.uuid='96a99acd-2f11-45bb-89f7-648dbcac5ddf', pa.value, null)) as cadre,
+       max(if(pat.uuid='9f1f8254-20ea-4be4-a14d-19201fe217bf', pa.value, null)) as rank,
       greatest(ifnull(pa.date_changed,'0000-00-00'),pa.date_created) as latest_date
 from person_attribute pa
        inner join
@@ -88,7 +91,10 @@ from person_attribute pa
         'd0aa9fd1-2ac5-45d8-9c5e-4317c622c8f5', -- next of kin's relationship
         '7cf22bec-d90a-46ad-9f48-035952261294', -- next of kin's address
         '830bef6d-b01f-449d-9f8d-ac0fede8dbd3', -- next of kin's name
-        'b8d0b331-1d2d-4a9a-b741-1816f498bdb6' -- email address
+        'b8d0b331-1d2d-4a9a-b741-1816f498bdb6', -- email address
+        '848f5688-41c6-464c-b078-ea6524a3e971', -- unit
+        '96a99acd-2f11-45bb-89f7-648dbcac5ddf', -- cadre
+        '9f1f8254-20ea-4be4-a14d-19201fe217bf' -- rank
 
         )
 where pa.voided=0
@@ -102,18 +108,22 @@ set d.phone_number=att.phone_number,
     d.birth_place = att.birthplace,
     d.citizenship = att.citizenship,
     d.email_address=att.email_address,
+    d.unit=att.unit,
+    d.cadre=att.cadre,
+    d.rank=att.rank,
     d.date_last_modified=if(att.latest_date > ifnull(d.date_last_modified,'0000-00-00'),att.latest_date,d.date_last_modified)
 ;
 
 
 update kenyaemr_etl.etl_patient_demographics d
 join (select pi.patient_id,
-             max(if(pit.uuid='05ee9cf4-7242-4a17-b4d4-00f707265c8a',pi.identifier,null)) as upn,
+             coalesce (max(if(pit.uuid='05ee9cf4-7242-4a17-b4d4-00f707265c8a',pi.identifier,null)),max(if(pit.uuid='b51ffe55-3e76-44f8-89a2-14f5eaf11079',pi.identifier,null))) as upn,
              max(if(pit.uuid='d8ee3b8c-a8fc-4d6b-af6a-9423be5f8906',pi.identifier,null)) district_reg_number,
              max(if(pit.uuid='c4e3caca-2dcc-4dc4-a8d9-513b6e63af91',pi.identifier,null)) Tb_treatment_number,
              max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Patient_clinic_number,
              max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
              max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
+             max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod_service_number,
              greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
       from patient_identifier pi
              join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -125,6 +135,7 @@ set d.unique_patient_no=pid.UPN,
     d.hei_no=pid.Hei_id,
     d.Tb_no=pid.Tb_treatment_number,
     d.district_reg_no=pid.district_reg_number,
+    d.kdod_service_number=pid.kdod_service_number,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
