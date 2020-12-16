@@ -3841,6 +3841,9 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
       caregiver_phone_number,
       client_enrolled_cpims,
       partner_offering_ovc,
+      ovc_comprehensive_program,
+      dreams_program,
+      ovc_preventive_program,
       voided
     )
       select
@@ -3859,6 +3862,9 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
         max(if(o.concept_id=160642,o.value_text,null)) as caregiver_phone_number,
         max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" else "" end),null)) as client_enrolled_cpims,
         max(if(o.concept_id=165347,o.value_text,null)) as partner_offering_ovc,
+        max(if(o.concept_id=163775 and o.value_coded=1141, "Yes",null)) as ovc_comprehensive_program,
+        max(if(o.concept_id=163775 and o.value_coded=160549,"Yes",null)) as dreams_program,
+        max(if(o.concept_id=163775 and o.value_coded=164128,"Yes",null)) as ovc_preventive_program,
         e.voided as voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
@@ -3868,7 +3874,7 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
             uuid in('5cf01528-09da-11ea-8d71-362b9e155667')
         ) f on f.form_id=e.form_id
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (163777,163258,1533,164352,160642,163766,165347)
+                                 and o.concept_id in (163777,163258,1533,164352,160642,163766,165347,163775)
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3878,7 +3884,8 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
       caregiver_enrolled_here=VALUES(caregiver_enrolled_here),caregiver_name=VALUES(caregiver_name),caregiver_gender=VALUES(caregiver_gender),
       relationship_to_client=VALUES(relationship_to_client),caregiver_phone_number=VALUES(caregiver_phone_number),client_enrolled_cpims=VALUES(client_enrolled_cpims),
-      partner_offering_ovc=VALUES(partner_offering_ovc),
+      partner_offering_ovc=VALUES(partner_offering_ovc),ovc_comprehensive_program=VALUES(ovc_comprehensive_program),
+      dreams_program=VALUES(dreams_program),ovc_preventive_program=VALUES(ovc_preventive_program),
       voided=VALUES(voided);
     SELECT "Completed updating OVC enrolment data ", CONCAT("Time: ", NOW());
     END$$
