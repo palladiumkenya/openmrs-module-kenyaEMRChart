@@ -309,6 +309,7 @@ sti_partner_notification,
 at_risk_population,
 system_review_finding,
 next_appointment_date,
+refill_date,
 next_appointment_reason,
 stability,
 differentiated_care,
@@ -388,6 +389,7 @@ max(if(o.concept_id=164935,o.value_coded,null)) as sti_partner_notification,
 max(if(o.concept_id=160581,o.value_coded,null)) as at_risk_population,
 max(if(o.concept_id=159615,o.value_coded,null)) as system_review_finding,
 max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
+max(if(o.concept_id=162549,o.value_datetime,null)) as refill_date,
 max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
 max(if(o.concept_id=1855,o.value_coded,null)) as stability,
 max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
@@ -400,7 +402,7 @@ inner join
 ) et on et.encounter_type_id=e.encounter_type
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947)
+121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549)
 where e.voided=0
 group by e.patient_id, e.encounter_id, visit_date
 ;
