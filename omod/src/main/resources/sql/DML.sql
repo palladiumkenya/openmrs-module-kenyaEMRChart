@@ -2354,6 +2354,7 @@ CREATE TABLE kenyaemr_etl.etl_current_in_care AS
 																				greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
 																				greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
 																				greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
+																				mid(max(concat(fup.visit_date,fup.stability)),11) as stability,
 																				d.patient_id as disc_patient,
 																				d.effective_disc_date as effective_disc_date,
 																				max(d.visit_date) as date_discontinued,
