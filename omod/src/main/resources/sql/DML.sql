@@ -303,6 +303,7 @@ poor_arv_adherence_reason_other,
 pwp_disclosure,
 pwp_partner_tested,
 condom_provided,
+substance_abuse_screening,
 screened_for_sti,
 cacx_screening,
 sti_partner_notification,
@@ -383,6 +384,7 @@ null as poor_arv_adherence_reason_other, -- max(if(o.concept_id=160632,trim(o.va
 max(if(o.concept_id=159423,o.value_coded,null)) as pwp_disclosure,
 max(if(o.concept_id=161557,o.value_coded,null)) as pwp_partner_tested,
 max(if(o.concept_id=159777,o.value_coded,null)) as condom_provided ,
+max(if(o.concept_id=112603,o.value_coded,null)) as substance_abuse_screening ,
 max(if(o.concept_id=161558,o.value_coded,null)) as screened_for_sti,
 max(if(o.concept_id=164934,o.value_coded,null)) as cacx_screening,
 max(if(o.concept_id=164935,o.value_coded,null)) as sti_partner_notification,
@@ -401,11 +403,10 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
 ) et on et.encounter_type_id=e.encounter_type
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549)
 where e.voided=0
-group by e.patient_id, e.encounter_id, visit_date
-;
+group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
 END$$
 
@@ -830,7 +831,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				e.patient_id,
 				e.uuid,
 				e.visit_id,
-				e.encounter_datetime,
+				date(e.encounter_datetime) as visit_date,
 				e.location_id,
 				e.encounter_id,
 				e.creator,
@@ -932,7 +933,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
     where e.voided=0
-			group by e.encounter_id;
+			group by e.patient_id,visit_date;
 		SELECT "Completed processing MCH antenatal visits ", CONCAT("Time: ", NOW());
 		END$$
 
@@ -1391,7 +1392,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 				e.uuid,
 				e.creator,
 				e.visit_id,
-				e.encounter_datetime,
+				date(e.encounter_datetime) as visit_date,
 				e.location_id,
 				e.encounter_id,
 				max(if(o.concept_id=5303,o.value_coded,null)) as child_exposed,
@@ -1448,7 +1449,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
 				) et on et.encounter_type_id=e.encounter_type
 				where e.voided=0
-			group by e.encounter_id ;
+			group by e.patient_id,visit_date ;
 		SELECT "Completed processing HEI Enrollments", CONCAT("Time: ", NOW());
 		END$$
 
@@ -1514,7 +1515,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				e.uuid,
 				e.creator,
 				e.visit_id,
-				e.encounter_datetime,
+				date(e.encounter_datetime) visit_date,
 				e.location_id,
 				e.encounter_id,
 				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
@@ -1568,7 +1569,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 						uuid in('bcc6da85-72f2-4291-b206-789b8186a021','c6d09e05-1f25-4164-8860-9f32c5a02df0')
 				) et on et.encounter_type_id=e.encounter_type
 			where e.voided=0
-			group by e.encounter_id ;
+			group by e.patient_id,visit_date;
 
 		SELECT "Completed processing HEI Followup visits", CONCAT("Time: ", NOW());
 		END$$
@@ -1906,7 +1907,7 @@ date_created,
 date_last_modified
 )
 select
-e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
+e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
 max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_tb_status,
 max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as tb_treatment_start_date,
 "" as notes, -- max(case o.concept_id when 160632 then value_text else "" end) as notes
@@ -1917,7 +1918,7 @@ from encounter e
 	inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632) and o.voided=0
 where e.voided=0
-group by e.encounter_id;
+group by e.patient_id,visit_date;
 
 SELECT "Completed processing TB Screening data ", CONCAT("Time: ", NOW());
 END$$
@@ -2464,7 +2465,7 @@ date_created,
 date_last_modified
 )
 select
-e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
+e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) visit_date, e.encounter_id, e.location_id,
 max(o.value_coded) as ipt_started,
 e.date_created as date_created,
 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
@@ -2473,7 +2474,7 @@ from encounter e
 	inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id=1265 and o.voided=0
 where e.voided=0
-group by e.encounter_id;
+group by e.patient_id, visit_date;
 
 SELECT "Completed processing IPT screening forms", CONCAT("Time: ", NOW());
 END$$
@@ -3181,7 +3182,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         voided
         )
     select
-           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
+           e.uuid, e.creator as provider,e.patient_id, e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,e.date_created,
            if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
            max(if(o.concept_id = 161558,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_screened,
            max(if(o.concept_id = 165098 and o.value_coded = 145762,"GUD",null)) as genital_ulcer_desease,
@@ -3259,7 +3260,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
             165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
             165109,159777,165055,165309,5096,165310,163042) and o.voided=0
     where e.voided=0
-    group by e.encounter_id;
+    group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
   END$$
 

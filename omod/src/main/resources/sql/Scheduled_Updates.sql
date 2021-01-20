@@ -326,6 +326,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       pwp_disclosure,
       pwp_partner_tested,
       condom_provided,
+      substance_abuse_screening,
       screened_for_sti,
       cacx_screening,
       sti_partner_notification,
@@ -406,6 +407,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=159423,o.value_coded,null)) as pwp_disclosure,
         max(if(o.concept_id=161557,o.value_coded,null)) as pwp_partner_tested,
         max(if(o.concept_id=159777,o.value_coded,null)) as condom_provided ,
+        max(if(o.concept_id=112603,o.value_coded,null)) as substance_abuse_screening,
         max(if(o.concept_id=161558,o.value_coded,null)) as screened_for_sti,
         max(if(o.concept_id=164934,o.value_coded,null)) as cacx_screening,
         max(if(o.concept_id=164935,o.value_coded,null)) as sti_partner_notification,
@@ -424,7 +426,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
                                                                                                                                                                                                                                                                                                                                                                                  121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -441,7 +443,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       has_adverse_drug_reaction=VALUES(has_adverse_drug_reaction),pregnancy_status=VALUES(pregnancy_status), wants_pregnancy=VALUES(wants_pregnancy), pregnancy_outcome=VALUES(pregnancy_outcome),anc_number=VALUES(anc_number),expected_delivery_date=VALUES(expected_delivery_date),
       last_menstrual_period=VALUES(last_menstrual_period),gravida=VALUES(gravida),parity=VALUES(parity),full_term_pregnancies=VALUES(full_term_pregnancies), abortion_miscarriages=VALUES(abortion_miscarriages),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method),reason_not_using_family_planning=VALUES(reason_not_using_family_planning),
       tb_status=VALUES(tb_status),tb_treatment_no=VALUES(tb_treatment_no),ctx_adherence=VALUES(ctx_adherence),ctx_dispensed=VALUES(ctx_dispensed),dapsone_adherence=VALUES(dapsone_adherence),dapsone_dispensed=VALUES(dapsone_dispensed),inh_dispensed=VALUES(inh_dispensed),arv_adherence=VALUES(arv_adherence),poor_arv_adherence_reason=VALUES(poor_arv_adherence_reason),
-      poor_arv_adherence_reason_other=VALUES(poor_arv_adherence_reason_other),pwp_disclosure=VALUES(pwp_disclosure),pwp_partner_tested=VALUES(pwp_partner_tested),condom_provided=VALUES(condom_provided),screened_for_sti=VALUES(screened_for_sti),cacx_screening=VALUES(cacx_screening), sti_partner_notification=VALUES(sti_partner_notification),at_risk_population=VALUES(at_risk_population),
+      poor_arv_adherence_reason_other=VALUES(poor_arv_adherence_reason_other),pwp_disclosure=VALUES(pwp_disclosure),pwp_partner_tested=VALUES(pwp_partner_tested),condom_provided=VALUES(condom_provided),substance_abuse_screening=VALUES(substance_abuse_screening),screened_for_sti=VALUES(screened_for_sti),cacx_screening=VALUES(cacx_screening), sti_partner_notification=VALUES(sti_partner_notification),at_risk_population=VALUES(at_risk_population),
       system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date), next_appointment_reason=VALUES(next_appointment_reason), differentiated_care=VALUES(differentiated_care), voided=VALUES(voided)
     ;
 
@@ -717,7 +719,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         e.patient_id,
         e.uuid,
         e.visit_id,
-        e.encounter_datetime,
+        date(e.encounter_datetime) visit_date,
         e.location_id,
         e.encounter_id,
         e.creator,
@@ -801,7 +803,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
 
-      group by e.encounter_id
+      group by e.patient_id,visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),anc_visit_number=VALUES(anc_visit_number),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),systolic_bp=VALUES(systolic_bp),diastolic_bp=VALUES(diastolic_bp),respiratory_rate=VALUES(respiratory_rate),
       oxygen_saturation=VALUES(oxygen_saturation),
       weight=VALUES(weight),height=VALUES(height),muac=VALUES(muac),hemoglobin=VALUES(hemoglobin),breast_exam_done=VALUES(breast_exam_done),pallor=VALUES(pallor),maturity=VALUES(maturity),fundal_height=VALUES(fundal_height),fetal_presentation=VALUES(fetal_presentation),lie=VALUES(lie),
@@ -1240,7 +1242,7 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
         e.uuid,
         e.creator,
         e.visit_id,
-        e.encounter_datetime,
+        date(e.encounter_datetime) as visit_date,
         e.location_id,
         e.encounter_id,
         max(if(o.concept_id=5303,o.value_coded,null)) as child_exposed,
@@ -1300,7 +1302,7 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.encounter_id
+      group by e.patient_id,visit_date
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),child_exposed=VALUES(child_exposed),spd_number=VALUES(spd_number),birth_weight=VALUES(birth_weight),gestation_at_birth=VALUES(gestation_at_birth),date_first_seen=VALUES(date_first_seen),
       birth_notification_number=VALUES(birth_notification_number),birth_certificate_number=VALUES(birth_certificate_number),need_for_special_care=VALUES(need_for_special_care),reason_for_special_care=VALUES(reason_for_special_care),referral_source=VALUES(referral_source),transfer_in=VALUES(transfer_in),transfer_in_date=VALUES(transfer_in_date),facility_transferred_from=VALUES(facility_transferred_from),
       district_transferred_from=VALUES(district_transferred_from),date_first_enrolled_in_hei_care=VALUES(date_first_enrolled_in_hei_care),mother_breastfeeding=VALUES(mother_breastfeeding),TB_contact_history_in_household=VALUES(TB_contact_history_in_household),mother_alive=VALUES(mother_alive),mother_on_pmtct_drugs=VALUES(mother_on_pmtct_drugs),
@@ -1369,7 +1371,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
         e.uuid,
         e.creator,
         e.visit_id,
-        e.encounter_datetime,
+        date(e.encounter_datetime) as visit_date,
         e.location_id,
         e.encounter_id,
         max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
@@ -1427,7 +1429,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.encounter_id
+      group by e.patient_id,visit_date
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),weight=VALUES(weight),height=VALUES(height),primary_caregiver=VALUES(primary_caregiver),infant_feeding=VALUES(infant_feeding),tb_assessment_outcome=VALUES(tb_assessment_outcome),social_smile_milestone=VALUES(social_smile_milestone),head_control_milestone=VALUES(head_control_milestone),
       response_to_sound_milestone=VALUES(response_to_sound_milestone),hand_extension_milestone=VALUES(hand_extension_milestone),sitting_milestone=VALUES(sitting_milestone),walking_milestone=VALUES(walking_milestone),standing_milestone=VALUES(standing_milestone),talking_milestone=VALUES(talking_milestone),review_of_systems_developmental=VALUES(review_of_systems_developmental),
       dna_pcr_result=VALUES(dna_pcr_result),first_antibody_result=VALUES(first_antibody_result),final_antibody_result=VALUES(final_antibody_result),
@@ -1799,7 +1801,7 @@ CREATE PROCEDURE sp_update_etl_tb_screening(IN last_update_time DATETIME)
       date_last_modified
     )
       select
-        e.patient_id, e.uuid, e.creator, e.visit_id, e.encounter_datetime, e.encounter_id, e.location_id,
+        e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
         max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_tb_status,
         max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as tb_treatment_start_date,
         max(case o.concept_id when 160632 then value_text else NULL end) as notes,
@@ -1813,7 +1815,7 @@ CREATE PROCEDURE sp_update_etl_tb_screening(IN last_update_time DATETIME)
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.encounter_id
+      group by e.patient_id,visit_date
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),
       resulting_tb_status=VALUES(resulting_tb_status), tb_treatment_start_date=VALUES(tb_treatment_start_date), notes=values(notes);
 
@@ -2470,7 +2472,7 @@ CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.encounter_id
+      group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), ipt_started=values(ipt_started);
     SELECT "Completed processing IPT screening forms", CONCAT("Time: ", NOW());
     END$$
@@ -3371,7 +3373,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.encounter_id
+      group by e.patient_id,visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
       provider=VALUES(provider),
       sti_screened=VALUES(sti_screened),
