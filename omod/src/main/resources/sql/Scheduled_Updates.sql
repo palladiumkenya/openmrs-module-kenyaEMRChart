@@ -3763,6 +3763,7 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
       uuid,
       patient_id,
       visit_date,
+      visit_id,
       location_id,
       encounter_id,
       encounter_provider,
@@ -3784,6 +3785,7 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
         e.uuid,
         e.patient_id,
         date(e.encounter_datetime) as visit_date,
+        e.visit_id,
         e.location_id,
         e.encounter_id as encounter_id,
         e.creator,
@@ -3808,14 +3810,14 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
             uuid in('3ae95d48-0464-11ea-8d71-362b9e155667')
         ) f on f.form_id=e.form_id
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,165302)
+                                 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,165302,161011)
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
       group by e.patient_id, e.encounter_id, visit_date
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),visit_id=VALUES(visit_id),encounter_provider=VALUES(encounter_provider),
       orientation=VALUES(orientation),leadership=VALUES(leadership),participation=VALUES(participation),
       treatment_literacy=VALUES(treatment_literacy),transition_to_adult_care=VALUES(transition_to_adult_care),making_decision_future=VALUES(making_decision_future),
       srh=VALUES(srh),beyond_third_ninety=VALUES(beyond_third_ninety),attended_support_group=VALUES(attended_support_group),
