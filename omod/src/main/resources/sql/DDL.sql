@@ -1766,6 +1766,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
     location_id INT(11) DEFAULT NULL,
+    visit_id INT(11),
     visit_date DATE,
     encounter_provider INT(11),
     date_created DATETIME NOT NULL,
