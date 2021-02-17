@@ -4942,6 +4942,46 @@ where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing PrEP verification form", CONCAT("Time: ", NOW());
 END$$
+
+-- ------------- populate etl_alcohol_drug_abuse_screening-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_alcohol_drug_abuse_screening$$
+CREATE PROCEDURE sp_populate_etl_alcohol_drug_abuse_screening()
+BEGIN
+SELECT "Processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT)", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_alcohol_drug_abuse_screening(
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+alcohol_drinking_frequency,
+smoking_frequency,
+drugs_use_frequency,
+date_created,
+date_last_modified,
+voided
+)
+select
+e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
+max(case o.concept_id when 159449 then o.value_coded else null end) as alcohol_drinking_frequency,
+max(case o.concept_id when 163201 then o.value_coded else null end) as smoking_frequency,
+max(case o.concept_id when 112603 then o.value_coded else null end) as drugs_use_frequency,
+e.date_created as date_created,
+if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+e.voided as voided
+from encounter e
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ('7b1ec2d5-a4ad-4ffc-a0d3-ff1ea68e293c')
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159449, 163201, 112603) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+
+SELECT "Completed processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT) data ", CONCAT("Time: ", NOW());
+END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -5011,6 +5051,7 @@ CALL sp_populate_etl_peer_tracking();
 CALL sp_populate_etl_treatment_verification();
 CALL sp_populate_etl_gender_based_violence();
 CALL sp_populate_etl_PrEP_verification();
+CALL sp_populate_etl_alcohol_drug_abuse_screening();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

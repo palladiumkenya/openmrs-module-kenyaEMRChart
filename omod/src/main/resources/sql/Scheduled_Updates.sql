@@ -4164,13 +4164,13 @@ CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
         max(if(o.concept_id=165038,o.value_text,null)) as contact_person_alias,
         max(if(o.concept_id=160642,o.value_text,null)) as contact_person_phone,
         e.voided
-      from openmrs.encounter e
+      from encounter e
         inner join
         (
-          select encounter_type_id, uuid, name from openmrs.encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
+          select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
         ) et on et.encounter_type_id=e.encounter_type
-        join openmrs.patient p on p.patient_id=e.patient_id and p.voided=0
-        left outer join openmrs.obs o on o.encounter_id=e.encounter_id and o.voided=0
+        join patient p on p.patient_id=e.patient_id and p.voided=0
+        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                          and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -4189,8 +4189,8 @@ CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
     update kenyaemr_etl.etl_contact c
       join (select pi.patient_id,
               max(if(pit.uuid='b7bfefd0-239b-11e9-ab14-d663bd873d93',pi.identifier,null)) unique_identifier
-            from openmrs.patient_identifier pi
-              join openmrs.patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
+            from patient_identifier pi
+              join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
             where voided=0
             group by pi.patient_id) pid on pid.patient_id=c.client_id
     set
@@ -5101,10 +5101,10 @@ CREATE PROCEDURE sp_update_etl_treatment_verification(IN last_update_time DATETI
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided as voided
-      from openmrs.encounter e
-        inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
-        inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('a70a1132-75b3-11ea-bc55-0242ac130003')
-        inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (159948,162724,162053,1768,
+      from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
+        inner join form f on f.form_id=e.form_id and f.uuid in ('a70a1132-75b3-11ea-bc55-0242ac130003')
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159948,162724,162053,1768,
                                                                                                 159599,164515,162568,657,5497,163281,160632,163524,5616,5497,160716,161641,162568,163101,162320,162279,164947,
                                                                                          165302,165137,162634,159948,160753,162868,161011) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
@@ -5241,10 +5241,10 @@ CREATE PROCEDURE sp_update_etl_gender_based_violence(IN last_update_time DATETIM
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided as voided
-      from openmrs.encounter e
-        inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
-        inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ('94eec122-83a1-11ea-bc55-0242ac130003')
-        inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
+      from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
+        inner join form f on f.form_id=e.form_id and f.uuid in ('94eec122-83a1-11ea-bc55-0242ac130003')
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -5326,10 +5326,10 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
                 e.date_created as date_created,
                 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
                 e.voided as voided
-      from openmrs.encounter e
-        inner join openmrs.person p on p.person_id=e.patient_id and p.voided=0
-        inner join openmrs.form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
-        inner join openmrs.obs o on o.encounter_id = e.encounter_id and o.concept_id in (163526,162724,1768,160555,164515,162568,162079,165109,161555,165230,5096) and o.voided=0
+      from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
+        inner join form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (163526,162724,1768,160555,164515,162568,162079,165109,161555,165230,5096) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -5351,6 +5351,52 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
       other_discontinuation_reason=VALUES(other_discontinuation_reason),
       appointment_date=VALUES(appointment_date),
       voided=VALUES(voided);
+    END$$
+
+    DROP PROCEDURE IF EXISTS sp_update_etl_alcohol_drug_abuse_screening$$
+    CREATE PROCEDURE sp_update_etl_alcohol_drug_abuse_screening()
+    BEGIN
+    SELECT "Processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT)", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_alcohol_drug_abuse_screening(
+    patient_id,
+    uuid,
+    provider,
+    visit_id,
+    visit_date,
+    encounter_id,
+    location_id,
+    alcohol_drinking_frequency,
+    smoking_frequency,
+    drugs_use_frequency,
+    date_created,
+    date_last_modified,
+    voided
+    )
+    select
+    e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
+    max(case o.concept_id when 159449 then o.value_coded else null end) as alcohol_drinking_frequency,
+    max(case o.concept_id when 163201 then o.value_coded else null end) as smoking_frequency,
+    max(case o.concept_id when 112603 then o.value_coded else null end) as drugs_use_frequency,
+    e.date_created as date_created,
+    if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+    e.voided as voided
+    from encounter e
+      inner join person p on p.person_id=e.patient_id and p.voided=0
+      inner join form f on f.form_id=e.form_id and f.uuid in ('7b1ec2d5-a4ad-4ffc-a0d3-ff1ea68e293c')
+    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159449, 163201, 112603) and o.voided=0
+    where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o.date_created >= last_update_time
+                or o.date_voided >= last_update_time
+    group by e.encounter_id
+    order by e.patient_id
+        ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+          provider=VALUES(provider),
+          alcohol_drinking_frequency=VALUES(alcohol_drinking_frequency),
+          smoking_frequency=VALUES(smoking_frequency),
+          drugs_use_frequency=VALUES(drugs_use_frequency),
+          voided=VALUES(voided);
     END$$
     -- end of scheduled updates procedures
 
@@ -5418,6 +5464,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_treatment_verification(last_update_time);
     CALL sp_update_etl_gender_based_violence(last_update_time);
     CALL sp_update_etl_PrEP_verification(last_update_time);
+    CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
 
     CALL sp_update_dashboard_table();
 

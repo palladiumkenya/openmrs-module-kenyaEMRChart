@@ -1042,6 +1042,30 @@ alter table kenyaemr_datatools.ipt_followup add FOREIGN KEY(patient_id) REFERENC
 CREATE TABLE  kenyaemr_datatools.default_facility_info as SELECT * from kenyaemr_etl.etl_default_facility_info;
 CREATE TABLE kenyaemr_datatools.person_address as SELECT * from kenyaemr_etl.etl_person_address;
 
+
+  -- create table triage
+create table kenyaemr_datatools.alcohol_drug_abuse_screening as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+(case alcohol_drinking_frequency when 1090 then 'Never' when 1091 then 'Monthly or less' when 1092 then '2 to 4 times a month' when 1093 then '2 to 3 times a week' when 1094 then '4 or More Times a Week' end) as alcohol_drinking_frequency,
+(case smoking_frequency when 1090 then 'Never smoked' when 156358 then 'Former cigarette smoker' when 163197 then 'Current some day smoker' when 163196 then 'Current light tobacco smoker'
+when 163195 then 'Current heavy tobacco smoker' when 163200 then 'Unknown if ever smoked' end) as smoking_frequency,
+(case drugs_use_frequency when 1090 then 'Never' when 1091 then 'Monthly or less' when 1092 then '2 to 4 times a month' when 1093 then '2 to 3 times a week' when 1094 then '4 or More Times a Week' end) as drugs_use_frequency,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_alcohol_drug_abuse_screening;
+
+ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD INDEX(visit_date);
+SELECT "Successfully created alcohol_drug_abuse_screening table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
