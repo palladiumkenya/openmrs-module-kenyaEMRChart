@@ -132,6 +132,7 @@ max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Pati
 max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
 max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
 max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod_service_number,
+max(if(pit.uuid='5065ae70-0b61-11ea-8d71-362b9e155667',pi.identifier,null)) CPIMS_unique_identifier,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -147,6 +148,7 @@ set d.unique_patient_no=pid.UPN,
     d.Tb_no=pid.Tb_treatment_number,
     d.district_reg_no=pid.district_reg_number,
     d.kdod_service_number=pid.kdod_service_number,
+    d.CPIMS_unique_identifier=pid.CPIMS_unique_identifier,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
@@ -3836,6 +3838,7 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
       patient_id,
       visit_date,
       location_id,
+      visit_id,
       encounter_id,
       encounter_provider,
       date_created,
@@ -3857,6 +3860,7 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
         e.patient_id,
         date(e.encounter_datetime) as visit_date,
         e.location_id,
+        e.visit_id,
         e.encounter_id as encounter_id,
         e.creator,
         e.date_created as date_created,
@@ -3887,7 +3891,7 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
       group by e.patient_id, e.encounter_id, visit_date
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),visit_id=VALUES(visit_id),
       caregiver_enrolled_here=VALUES(caregiver_enrolled_here),caregiver_name=VALUES(caregiver_name),caregiver_gender=VALUES(caregiver_gender),
       relationship_to_client=VALUES(relationship_to_client),caregiver_phone_number=VALUES(caregiver_phone_number),client_enrolled_cpims=VALUES(client_enrolled_cpims),
       partner_offering_ovc=VALUES(partner_offering_ovc),ovc_comprehensive_program=VALUES(ovc_comprehensive_program),
