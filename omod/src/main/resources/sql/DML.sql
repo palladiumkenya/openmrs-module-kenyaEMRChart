@@ -5031,10 +5031,9 @@ and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 
-
-
 SELECT "Completed processing gbv screening data ", CONCAT("Time: ", NOW());
 END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$

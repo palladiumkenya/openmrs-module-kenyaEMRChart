@@ -5251,7 +5251,7 @@ CREATE PROCEDURE sp_update_etl_gender_based_violence(IN last_update_time DATETIM
         e.voided as voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
-        inner join form f on f.form_id=e.form_id and f.uuid in ('94eec122-83a1-11ea-bc55-0242ac130003','"03767614-1384-4ce3-aea9-27e2f4e67d01"')
+        inner join form f on f.form_id=e.form_id and f.uuid in ('94eec122-83a1-11ea-bc55-0242ac130003')
         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -5407,7 +5407,6 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
           voided=VALUES(voided);
     END$$
 
-
     DROP PROCEDURE IF EXISTS sp_update_etl_gbv_screening$$
     CREATE PROCEDURE sp_update_etl_gbv_screening(IN last_update_time DATETIME)
     BEGIN
@@ -5442,7 +5441,7 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
     from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01')
-    inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
+    inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided,o1.date_voided
             from obs o join obs o1 on o.obs_id = o1.obs_group_id where o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id
             and o.voided=0
     where e.voided=0 and e.date_created >= last_update_time
