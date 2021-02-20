@@ -145,14 +145,16 @@ update kenyaemr_etl.etl_patient_demographics d
 join (select o.person_id as patient_id,
              max(if(o.concept_id in(1054),cn.name,null))  as marital_status,
              max(if(o.concept_id in(1712),cn.name,null))  as education_level,
+             max(if(o.concept_id in(1542),cn.name,null))  as occupation,
              max(o.date_created) as date_created
                    from obs o
              join concept_name cn on cn.concept_id=o.value_coded and cn.concept_name_type='FULLY_SPECIFIED'
                                        and cn.locale='en'
-      where o.concept_id in (1054,1712) and o.voided=0
+      where o.concept_id in (1054,1712,1542) and o.voided=0
       group by person_id) pstatus on pstatus.patient_id=d.patient_id
 set d.marital_status=pstatus.marital_status,
     d.education_level=pstatus.education_level,
+    d.occupation=pstatus.occupation,
     d.date_last_modified=if(pstatus.date_created > ifnull(d.date_last_modified,'0000-00-00'),pstatus.date_created,d.date_last_modified)
 ;
 
@@ -189,6 +191,8 @@ name_of_treatment_supporter,
 relationship_of_treatment_supporter,
 treatment_supporter_telephone,
 treatment_supporter_address,
+in_school,
+orphan,
 voided
 )
 select
@@ -215,6 +219,8 @@ max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatm
 max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
 max(if(o.concept_id=160642,left(trim(o.value_text),100),null)) as treatment_supporter_telephone ,
 max(if(o.concept_id=160641,left(trim(o.value_text),100),null)) as treatment_supporter_address,
+max(if(o.concept_id=5629,o.value_coded,null)) as in_school,
+max(if(o.concept_id=1174,o.value_coded,null)) as orphan,
 e.voided
 from encounter e
 inner join
@@ -223,7 +229,7 @@ inner join
 ) et on et.encounter_type_id=e.encounter_type
 join patient p on p.patient_id=e.patient_id and p.voided=0
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-	and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563)
+	and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
@@ -3523,6 +3529,8 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
 				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
 				when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
+				when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
+				when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
 				end) as program,
 				pp.date_enrolled,
 				pp.date_completed,
@@ -4828,16 +4836,16 @@ e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id
 max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as is_physically_abused,
 max(if(o.concept_id=159449,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 1067 then "Stranger" when 5622 then "Other" else "" end),null)) as physical_abuse_perpetrator,
 max(if(o.concept_id=165230, o.value_text, "" )) as other_physical_abuse_perpetrator,
-max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_physically_abusive_relationship,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 or 158358 THEN "Yes" when 1066 then "No" else "" end),null)) as in_physically_abusive_relationship,
 max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as in_physically_abusive_relationship_with,
 max(if(o.concept_id=165230, o.value_text, "" )) as other_physically_abusive_relationship_perpetrator,
-max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_emotionally_abusive_relationship,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 or 118688 THEN "Yes" when 1066 then "No" else "" end),null)) as in_emotionally_abusive_relationship,
 max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as emotional_abuse_perpetrator,
 max(if(o.concept_id=165230, o.value_text, "" )) as other_emotional_abuse_perpetrator,
-max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_sexually_abusive_relationship,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 or 152370 THEN "Yes" when 1066 then "No" else "" end),null)) as in_sexually_abusive_relationship,
 max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as sexual_abuse_perpetrator,
 max(if(o.concept_id=165230, o.value_text, "" )) as other_sexual_abuse_perpetrator,
-max(if(o.concept_id=160658,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as ever_abused_by_unrelated_person,
+max(if(o.concept_id=160658,(case o.value_coded when 1065 or 1582 THEN "Yes" when 1066 then "No" else "" end),null)) as ever_abused_by_unrelated_person,
 max(if(o.concept_id=164352,(case o.value_coded when 5617 THEN "Sexual Partner" when 5618 then "Boy/Girl Friend" when 5620 then "Relative" when 5622 then "Other" else "" end),null)) as unrelated_perpetrator,
 max(if(o.concept_id=165230, o.value_text, "" )) as other_unrelated_perpetrator,
 max(if(o.concept_id=162871,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as sought_help,
@@ -4986,6 +4994,50 @@ group by e.encounter_id;
 SELECT "Completed processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT) data ", CONCAT("Time: ", NOW());
 END$$
 
+      -- ------------- populate etl_gbv_screening-------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_gbv_screening$$
+CREATE PROCEDURE sp_populate_etl_gbv_screening()
+BEGIN
+SELECT "Processing gbv screening", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_gbv_screening(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+ipv,
+physical_ipv,
+emotional_ipv,
+sexual_ipv,
+ipv_relationship,
+date_created,
+date_last_modified,
+voided
+)
+select
+       e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
+       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =1065 or o.value_coded =1066),o.value_coded, "" )) as ipv,
+       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =158358 or o.value_coded =1066),o.value_coded, "" )) as physical_ipv,
+       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =118688 or o.value_coded =1066),o.value_coded, "" )) as emotional_ipv,
+       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =152370 or o.value_coded =1066),o.value_coded, "" )) as sexual_ipv,
+       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =1582 or o.value_coded =1066),o.value_coded, "" )) as ipv_relationship,
+       e.date_created as date_created,
+       if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01')
+inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
+            from obs o join obs o1 on o.obs_id = o1.obs_group_id where o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id
+and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+
+SELECT "Completed processing gbv screening data ", CONCAT("Time: ", NOW());
+END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -5056,6 +5108,7 @@ CALL sp_populate_etl_treatment_verification();
 CALL sp_populate_etl_gender_based_violence();
 CALL sp_populate_etl_PrEP_verification();
 CALL sp_populate_etl_alcohol_drug_abuse_screening();
+CALL sp_populate_etl_gbv_screening();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

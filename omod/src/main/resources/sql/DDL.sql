@@ -79,6 +79,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -99,6 +100,7 @@ phone_number VARCHAR(50) DEFAULT NULL,
 birth_place VARCHAR(50) DEFAULT NULL,
 citizenship VARCHAR(50) DEFAULT NULL,
 email_address VARCHAR(100) DEFAULT NULL,
+occupation VARCHAR(100) DEFAULT NULL,
 next_of_kin VARCHAR(255) DEFAULT NULL,
 next_of_kin_phone VARCHAR(100) DEFAULT NULL,
 next_of_kin_relationship VARCHAR(100) DEFAULT NULL,
@@ -146,6 +148,8 @@ name_of_treatment_supporter VARCHAR(255),
 relationship_of_treatment_supporter INT(11),
 treatment_supporter_telephone VARCHAR(100),
 treatment_supporter_address VARCHAR(100),
+in_school INT(11) DEFAULT NULL,
+orphan INT(11) DEFAULT NULL,
 date_of_discontinuation DATETIME,
 discontinuation_reason INT(11),
 date_created DATETIME NOT NULL,
@@ -2423,6 +2427,31 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     alcohol_drinking_frequency VARCHAR(50),
     smoking_frequency VARCHAR(50),
     drugs_use_frequency VARCHAR(50),
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id)
+    );
+
+    -- ------------ create table etl_gbv_screening-----------------------
+
+    CREATE TABLE kenyaemr_etl.etl_gbv_screening (
+    uuid char(38),
+    provider INT(11),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    ipv VARCHAR(50),
+    physical_ipv VARCHAR(50),
+    emotional_ipv VARCHAR(50),
+    sexual_ipv VARCHAR(50),
+    ipv_relationship VARCHAR(50),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     voided INT(11),

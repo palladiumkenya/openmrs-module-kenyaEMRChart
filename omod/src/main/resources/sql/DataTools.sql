@@ -30,6 +30,7 @@ phone_number,
 birth_place,
 citizenship,
 email_address,
+occupation,
 next_of_kin,
 next_of_kin_relationship,
 marital_status,
@@ -72,7 +73,9 @@ name_of_treatment_supporter,
 (case relationship_of_treatment_supporter when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" 
   when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end) as relationship_of_treatment_supporter,
 treatment_supporter_telephone,
-treatment_supporter_address
+treatment_supporter_address,
+(case in_school when 1 then 'Yes' when 2 then 'No' end) as in_school,
+(case orphan when 1 then 'Yes' when 2 then 'No' end) as orphan
 from kenyaemr_etl.etl_hiv_enrollment;
 
 
@@ -1043,7 +1046,7 @@ CREATE TABLE  kenyaemr_datatools.default_facility_info as SELECT * from kenyaemr
 CREATE TABLE kenyaemr_datatools.person_address as SELECT * from kenyaemr_etl.etl_person_address;
 
 
-  -- create table triage
+  -- create table alcohol_drug_abuse_screening
 create table kenyaemr_datatools.alcohol_drug_abuse_screening as
 select
 patient_id,
@@ -1065,6 +1068,10 @@ from kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD INDEX(visit_date);
 SELECT "Successfully created alcohol_drug_abuse_screening table";
+
+create table kenyaemr_datatools.gender_based_violence as select * from kenyaemr_etl.etl_gender_based_violence;
+alter table kenyaemr_datatools.gender_based_violence add FOREIGN KEY(client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.gender_based_violence ADD INDEX(visit_date);
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
