@@ -138,7 +138,9 @@ clinical_notes,
  when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
 anc_number,
 expected_delivery_date,
+(case ever_had_menses when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" end) as ever_had_menses,
 last_menstrual_period,
+(case menopausal when 113928 then "Yes" end) as menopausal,
 gravida,
 parity,
 full_term_pregnancies,
@@ -150,6 +152,7 @@ when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectom
 (case reason_not_using_family_planning when 160572 then "Thinks can't get pregnant" when 160573 then "Not sexually active now" when 5622 then "Other" else "" end) as reason_not_using_family_planning,
 (case tb_status when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done"  else "" end) as tb_status,
 tb_treatment_no,
+(case prophylaxis_given when 105281 then 'Cotrimoxazole' when 74250 then 'Dapsone' when 1107 then 'None' end) as prophylaxis_given,
 (case ctx_adherence when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end) as ctx_adherence,
 (case ctx_dispensed when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as ctx_dispensed,
 (case dapsone_adherence when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end) as dapsone_adherence,
@@ -1072,6 +1075,50 @@ SELECT "Successfully created alcohol_drug_abuse_screening table";
 create table kenyaemr_datatools.gender_based_violence as select * from kenyaemr_etl.etl_gender_based_violence;
 alter table kenyaemr_datatools.gender_based_violence add FOREIGN KEY(client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.gender_based_violence ADD INDEX(visit_date);
+
+-- create table gbv_screening
+create table kenyaemr_datatools.gbv_screening as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+(case ipv when 1065 then 'Yes' when 1066 then 'No' end) as ipv,
+(case physical_ipv when 158358 then 'Yes' when 1066 then 'No' end) as physical_ipv,
+(case emotional_ipv when 118688 then 'Yes' when 1066 then 'No' end) as emotional_ipv,
+(case sexual_ipv when 152370 then 'Yes' when 1066 then 'No' end) as sexual_ipv,
+(case ipv_relationship when 1582 then 'Yes' when 1066 then 'No' end) as ipv_relationship,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_gbv_screening;
+
+ALTER TABLE kenyaemr_datatools.gbv_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.gbv_screening ADD INDEX(visit_date);
+SELECT "Successfully created gbv_screening table";
+
+-- create table depression_screening
+create table kenyaemr_datatools.depression_screening as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+(case PHQ_9_rating when 1115 then 'Depression unlikely' when 157790 then 'Mild depression' when 134011 then 'Moderate depression' when 134017 then 'Moderate severe depression' when 126627 then 'Severe depression' end) as PHQ_9_rating,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_depression_screening;
+
+ALTER TABLE kenyaemr_datatools.depression_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.depression_screening ADD INDEX(visit_date);
+SELECT "Successfully created depression_screening table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

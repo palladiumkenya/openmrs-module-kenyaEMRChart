@@ -199,6 +199,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
       transfer_in_date,
       facility_transferred_from,
       district_transferred_from,
+      previous_regimen,
       date_started_art_at_transferring_facility,
       date_confirmed_hiv_positive,
       facility_confirmed_hiv_positive,
@@ -313,7 +314,9 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       pregnancy_outcome,
       anc_number,
       expected_delivery_date,
+      ever_had_menses,
       last_menstrual_period,
+      menopausal,
       gravida,
       parity,
       full_term_pregnancies,
@@ -322,7 +325,10 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       family_planning_method,
       reason_not_using_family_planning,
       tb_status,
+      started_anti_TB,
+      tb_rx_date,
       tb_treatment_no,
+      prophylaxis_given,
       ctx_adherence,
       ctx_dispensed,
       dapsone_adherence,
@@ -394,7 +400,9 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=161033,o.value_coded,null)) as pregnancy_outcome,
         max(if(o.concept_id=163530,o.value_text,null)) as anc_number,
         max(if(o.concept_id=5596,date(o.value_datetime),null)) as expected_delivery_date,
+        max(if(o.concept_id=162877,o.value_coded,null)) as ever_had_menses,
         max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
+        max(if(o.concept_id=160596,o.value_coded,null)) as menopausal,
         max(if(o.concept_id=5624,o.value_numeric,null)) as gravida,
         max(if(o.concept_id=1053,o.value_numeric,null)) as parity ,
         max(if(o.concept_id=160080,o.value_numeric,null)) as full_term_pregnancies,
@@ -403,7 +411,10 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=374,o.value_coded,null)) as family_planning_method,
         max(if(o.concept_id=160575,o.value_coded,null)) as reason_not_using_family_planning ,
         max(if(o.concept_id=1659,o.value_coded,null)) as tb_status,
+        max(if(o.concept_id=162309,o.value_coded,null)) as started_anti_TB,
+        max(if(o.concept_id=1113,o.value_datetime,null)) as tb_rx_date,
         max(if(o.concept_id=161654,trim(o.value_text),null)) as tb_treatment_no,
+        max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
         max(if(o.concept_id=161652,o.value_coded,null)) as ctx_adherence,
         max(if(o.concept_id=162229 or (o.concept_id=1282 and o.value_coded = 105281),o.value_coded,null)) as ctx_dispensed,
         max(if(o.concept_id=164941,o.value_coded,null)) as dapsone_adherence,
@@ -435,7 +446,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-                                                                                                                                                                                                                                                                                                                                                                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549)
+                                                                                                                                                                                                                                                                                                                                                                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -452,7 +463,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       last_menstrual_period=VALUES(last_menstrual_period),gravida=VALUES(gravida),parity=VALUES(parity),full_term_pregnancies=VALUES(full_term_pregnancies), abortion_miscarriages=VALUES(abortion_miscarriages),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method),reason_not_using_family_planning=VALUES(reason_not_using_family_planning),
       tb_status=VALUES(tb_status),tb_treatment_no=VALUES(tb_treatment_no),ctx_adherence=VALUES(ctx_adherence),ctx_dispensed=VALUES(ctx_dispensed),dapsone_adherence=VALUES(dapsone_adherence),dapsone_dispensed=VALUES(dapsone_dispensed),inh_dispensed=VALUES(inh_dispensed),arv_adherence=VALUES(arv_adherence),poor_arv_adherence_reason=VALUES(poor_arv_adherence_reason),
       poor_arv_adherence_reason_other=VALUES(poor_arv_adherence_reason_other),pwp_disclosure=VALUES(pwp_disclosure),pwp_partner_tested=VALUES(pwp_partner_tested),condom_provided=VALUES(condom_provided),substance_abuse_screening=VALUES(substance_abuse_screening),screened_for_sti=VALUES(screened_for_sti),cacx_screening=VALUES(cacx_screening), sti_partner_notification=VALUES(sti_partner_notification),at_risk_population=VALUES(at_risk_population),
-      system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date), next_appointment_reason=VALUES(next_appointment_reason), differentiated_care=VALUES(differentiated_care), voided=VALUES(voided)
+      system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date), next_appointment_reason=VALUES(next_appointment_reason), differentiated_care=VALUES(differentiated_care),ever_had_menses=VALUES(ever_had_menses),menopausal=VALUES(menopausal),prophylaxis_given=VALUES(prophylaxis_given),started_anti_TB=VALUES(started_anti_TB),tb_rx_date=VALUES(tb_rx_date), voided=VALUES(voided)
     ;
 
     END$$
@@ -5465,7 +5476,43 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
           voided=VALUES(voided);
     END$$
 
-    -- end of scheduled updates procedures
+  DROP PROCEDURE IF EXISTS sp_update_etl_depression_screening$$
+    CREATE PROCEDURE sp_update_etl_depression_screening(IN last_update_time DATETIME)
+    BEGIN
+    SELECT "Processing depression Screening", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_depression_screening(
+      uuid,
+      provider,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      PHQ_9_rating,
+      date_created,
+      date_last_modified,
+      voided
+)
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+       max(if(o.concept_id = 165110,o.value_coded,null)) as PHQ_9_rating,
+       e.date_created as date_created,
+       if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join form f on f.form_id=e.form_id and f.uuid in ('5fe533ee-0c40-4a1f-a071-dc4d0fbb0c17')
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165110) and o.voided=0
+where e.voided=0
+group by e.encounter_id
+order by e.patient_id
+        ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        PHQ_9_rating=VALUES(PHQ_9_rating),
+        voided=VALUES(voided);
+END$$
+
+-- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE$$
 -- ----------------------------  scheduled updates ---------------------
@@ -5533,6 +5580,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_PrEP_verification(last_update_time);
     CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
     CALL sp_update_etl_gbv_screening(last_update_time);
+    CALL sp_update_etl_depression_screening(last_update_time);
 
     CALL sp_update_dashboard_table();
 

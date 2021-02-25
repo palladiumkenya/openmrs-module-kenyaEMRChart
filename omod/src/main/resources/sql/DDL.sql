@@ -80,6 +80,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_depression_screening;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -143,6 +144,7 @@ district_transferred_from VARCHAR(255),
 date_started_art_at_transferring_facility DATE,
 date_confirmed_hiv_positive DATE,
 facility_confirmed_hiv_positive VARCHAR(255),
+previous_regimen VARCHAR(255),
 arv_status INT(11),
 name_of_treatment_supporter VARCHAR(255),
 relationship_of_treatment_supporter INT(11),
@@ -227,7 +229,9 @@ wants_pregnancy INT(11) DEFAULT NULL,
 pregnancy_outcome INT(11),
 anc_number VARCHAR(50),
 expected_delivery_date DATE,
+ever_had_menses INT(11),
 last_menstrual_period DATE,
+menopausal INT(11),
 gravida INT(11),
 parity INT(11),
 full_term_pregnancies INT(11),
@@ -236,7 +240,10 @@ family_planning_status INT(11),
 family_planning_method INT(11),
 reason_not_using_family_planning INT(11),
 tb_status INT(11),
+started_anti_TB INT(11),
+tb_rx_date DATE,
 tb_treatment_no VARCHAR(50),
+prophylaxis_given VARCHAR(50),
 ctx_adherence INT(11),
 ctx_dispensed INT(11),
 dapsone_adherence INT(11),
@@ -2452,6 +2459,27 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     emotional_ipv VARCHAR(50),
     sexual_ipv VARCHAR(50),
     ipv_relationship VARCHAR(50),
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id)
+    );
+
+    -- ------------ create table etl_depression_screening-----------------------
+
+    CREATE TABLE kenyaemr_etl.etl_depression_screening (
+    uuid char(38),
+    provider INT(11),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    PHQ_9_rating VARCHAR(255),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     voided INT(11),
