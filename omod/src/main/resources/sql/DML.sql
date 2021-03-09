@@ -2380,7 +2380,7 @@ CREATE TABLE kenyaemr_etl.etl_current_in_care AS
 	where fup.visit_date <= date(endDate)
 	group by patient_id
 	having  (
-		((timestampdiff(DAY,date(latest_tca),date(endDate)) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and ((date(d.effective_disc_date) > date(endDate)or date(enroll_date) > date(d.effective_disc_date)) or d.effective_disc_date is null))
+		((timestampdiff(DAY,date(latest_tca),date(endDate)) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and ((date(d.effective_disc_date) > date(endDate) or date(enroll_date) > date(d.effective_disc_date)) or d.effective_disc_date is null))
 		and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
 	);
 
