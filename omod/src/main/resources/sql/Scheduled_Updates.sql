@@ -210,6 +210,8 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
       treatment_supporter_address,
       in_school,
       orphan,
+      date_of_discontinuation,
+      discontinuation_reason,
       voided
     )
       select
@@ -228,6 +230,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
         max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
         max(if(o.concept_id=161551,left(trim(o.value_text),100),null)) as district_transferred_from,
+        max(if(o.concept_id=1088,o.value_coded,null)) as previous_regimen,
         max(if(o.concept_id=159599,o.value_datetime,null)) as date_started_art_at_transferring_facility,
         max(if(o.concept_id=160554,o.value_datetime,null)) as date_confirmed_hiv_positive,
         max(if(o.concept_id=160632,left(trim(o.value_text),100),null)) as facility_confirmed_hiv_positive,
@@ -238,6 +241,8 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=160641,left(trim(o.value_text),100),null)) as treatment_supporter_address,
         max(if(o.concept_id=5629,o.value_coded,null)) as in_school,
         max(if(o.concept_id=1174,o.value_coded,null)) as orphan,
+        max(if(o.concept_id=164384, o.value_datetime, null)) as date_of_discontinuation,
+        max(if(o.concept_id=161555, o.value_coded, null)) as discontinuation_reason,
         e.voided
       from encounter e
         inner join
@@ -246,7 +251,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         ) et on et.encounter_type_id=e.encounter_type
         join patient p on p.patient_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174)
+                                 and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,164384,161555)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -254,9 +259,9 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
       group by e.patient_id, e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider), patient_type=VALUES(patient_type), date_first_enrolled_in_care=VALUES(date_first_enrolled_in_care),entry_point=VALUES(entry_point),transfer_in_date=VALUES(transfer_in_date),
-      facility_transferred_from=VALUES(facility_transferred_from),district_transferred_from=VALUES(district_transferred_from),date_started_art_at_transferring_facility=VALUES(date_started_art_at_transferring_facility),date_confirmed_hiv_positive=VALUES(date_confirmed_hiv_positive),facility_confirmed_hiv_positive=VALUES(facility_confirmed_hiv_positive),
-      arv_status=VALUES(arv_status),name_of_treatment_supporter=VALUES(name_of_treatment_supporter),relationship_of_treatment_supporter=VALUES(relationship_of_treatment_supporter),treatment_supporter_telephone=VALUES(treatment_supporter_telephone),treatment_supporter_address=VALUES(treatment_supporter_address),in_school=VALUES(in_school),orphan=VALUES(orphan),voided=VALUES(voided)
-    ;
+      facility_transferred_from=VALUES(facility_transferred_from),district_transferred_from=VALUES(district_transferred_from),previous_regimen=VALUES(previous_regimen),date_started_art_at_transferring_facility=VALUES(date_started_art_at_transferring_facility),date_confirmed_hiv_positive=VALUES(date_confirmed_hiv_positive),facility_confirmed_hiv_positive=VALUES(facility_confirmed_hiv_positive),
+      arv_status=VALUES(arv_status),name_of_treatment_supporter=VALUES(name_of_treatment_supporter),relationship_of_treatment_supporter=VALUES(relationship_of_treatment_supporter),treatment_supporter_telephone=VALUES(treatment_supporter_telephone),treatment_supporter_address=VALUES(treatment_supporter_address),in_school=VALUES(in_school),orphan=VALUES(orphan),voided=VALUES(voided),
+      date_of_discontinuation=VALUES(date_of_discontinuation),discontinuation_reason=(discontinuation_reason);
 
     END$$
 -- DELIMITER ;
@@ -445,8 +450,10 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-                                                                                                                                                                                                                                                                                                                                                                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113)
+                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,
+                                 1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
+                                 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -547,8 +554,6 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
 DROP PROCEDURE IF EXISTS sp_update_etl_mch_enrollment$$
 CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
   BEGIN
-
-
 
     insert into kenyaemr_etl.etl_mch_enrollment(
       patient_id,
@@ -1860,6 +1865,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
       regimen_name,
       regimen_line,
       discontinued,
+      regimen_stopped,
       regimen_discontinued,
       date_discontinued,
       reason_discontinued,
@@ -1991,6 +1997,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
           else ""
           end ),null)) as regimen_line,
         max(if(o.concept_id=1191,(case o.value_datetime when NULL then 0 else 1 end),null)) as discontinued,
+        max(if(o.concept_id=1255 and o.value_coded=1260,o.value_coded,null)) as regimen_stopped,
         null as regimen_discontinued,
         max(if(o.concept_id=1191,o.value_datetime,null)) as date_discontinued,
         max(if(o.concept_id=1252,o.value_coded,null)) as reason_discontinued,
@@ -5456,8 +5463,8 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
     from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01')
-    inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided,o1.date_voided
-            from obs o join obs o1 on o.obs_id = o1.obs_group_id where o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id
+    inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created as date_created,o1.voided,o1.date_voided as date_voided
+            from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id
             and o.voided=0
     where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time
@@ -5503,13 +5510,215 @@ from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('5fe533ee-0c40-4a1f-a071-dc4d0fbb0c17')
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165110) and o.voided=0
-where e.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o.date_created >= last_update_time
+                or o.date_voided >= last_update_time
 group by e.encounter_id
 order by e.patient_id
         ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
         provider=VALUES(provider),
         PHQ_9_rating=VALUES(PHQ_9_rating),
         voided=VALUES(voided);
+END$$
+
+-- Update Adverse events
+DROP PROCEDURE IF EXISTS sp_update_etl_adverse_events$$
+CREATE PROCEDURE sp_update_etl_adverse_events(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing adverse events", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_adverse_events(
+uuid ,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+obs_id,
+cause,
+adverse_event,
+severity,
+start_date,
+action_taken,
+date_created,
+date_last_modified,
+voided
+)
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,o1.obs_id,
+       max(if(o1.obs_group =121760 and o1.concept_id = 1193,o1.value_coded,null)) as cause,
+       max(if(o1.obs_group =121760 and o1.concept_id = 159935,o1.value_coded,null)) as adverse_event,
+       max(if(o1.obs_group =121760 and o1.concept_id = 162760,o1.value_coded,null)) as severity,
+       max(if(o1.obs_group =121760 and o1.concept_id = 160753,date(o1.value_datetime),null)) as start_date,
+       max(if(o1.obs_group =121760 and o1.concept_id = 1255,o1.value_coded,null)) as action_taken,
+       e.date_created as date_created,
+       if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join (
+select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e')
+    ) et on et.encounter_type_id=e.encounter_type
+                          inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
+                          o1.date_created as date_created, o1.date_voided as date_voided,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
+                          and o1.concept_id in (1193,159935,162760,160753,1255) and o.concept_id = 121760)
+                          o1 on o1.encounter_id = e.encounter_id and o1.voided=0
+                where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o1.date_created >= last_update_time
+                or o1.date_voided >= last_update_time
+group by o1.obs_id
+order by e.patient_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        cause=VALUES(cause),
+        adverse_event=VALUES(adverse_event),
+        severity=VALUES(severity),
+        start_date=VALUES(start_date),
+        action_taken=VALUES(action_taken),
+        voided=VALUES(voided);
+
+SELECT "Completed processing adverse events data ", CONCAT("Time: ", NOW());
+END$$
+
+-- Update Allergy and chronic illness----
+DROP PROCEDURE IF EXISTS sp_update_etl_allergy_chronic_illness$$
+CREATE PROCEDURE sp_update_etl_allergy_chronic_illness(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing allergy and chronic illness", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_allergy_chronic_illness(
+uuid ,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+obs_id,
+chronic_illness,
+chronic_illness_onset_date,
+allergy_causative_agent,
+allergy_reaction,
+allergy_severity,
+allergy_onset_date,
+date_created,
+date_last_modified,
+voided
+)
+select
+   e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id, o1.obs_id,
+   max(if(o1.obs_group =159392 and o1.concept_id = 1284,o1.value_coded,null)) as chronic_illness,
+   max(if(o1.obs_group =159392 and o1.concept_id = 159948,date(o1.value_datetime),null)) as chronic_illness_onset_date,
+   max(if(o1.obs_group =121689 and o1.concept_id = 160643,o1.value_coded,null)) as allergy_causative_agent,
+   max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
+   max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
+   max(if(o1.obs_group =121689 and o1.concept_id = 160753,date(o1.value_datetime),null)) as allergy_onset_date,
+   e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
+   e.voided as voided
+from encounter e
+   inner join person p on p.person_id=e.patient_id and p.voided=0
+   inner join (
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e')
+              ) et on et.encounter_type_id=e.encounter_type
+                          inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.date_voided as date_voided,
+                          o1.date_created as date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
+                           and o1.concept_id in (1284,159948,160643,159935,162760,160753)
+                          and o.concept_id in (159392,121689)) o1 on o1.encounter_id = e.encounter_id and o1.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o1.date_created >= last_update_time
+                or o1.date_voided >= last_update_time
+group by o1.obs_id
+order by e.patient_id
+ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        chronic_illness=VALUES(chronic_illness),
+        chronic_illness_onset_date=VALUES(chronic_illness_onset_date),
+        allergy_causative_agent=VALUES(allergy_causative_agent),
+        allergy_reaction=VALUES(allergy_reaction),
+        allergy_severity=VALUES(allergy_severity),
+        voided=VALUES(voided);
+SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
+END$$
+
+
+-- Update IPT screening----
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening$$
+CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing IPT screening", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_ipt_screening(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+obs_id,
+cough,
+fever,
+weight_loss_poor_gain,
+night_sweats,
+contact_with_tb_case,
+lethargy,
+yellow_urine,
+numbness_bs_hands_feet,
+eyes_yellowness,
+upper_rightQ_abdomen_tenderness,
+date_created,
+date_last_modified,
+voided
+)
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id,e.encounter_id,o1.obs_id,
+       max(if(o1.obs_group =160108 and o1.concept_id = 1729 and (o1.value_coded = 159799 or o1.value_coded = 1066),o1.value_coded,null)) as cough,
+       max(if(o1.obs_group =160108 and o1.concept_id = 1729 and (o1.value_coded = 1494 or o1.value_coded = 1066),o1.value_coded,null)) as fever,
+       max(if(o1.obs_group =160108 and o1.concept_id = 1729 and (o1.value_coded = 832 or o1.value_coded = 1066),o1.value_coded,null)) as weight_loss_poor_gain,
+       max(if(o1.obs_group =160108 and o1.concept_id = 1729 and (o1.value_coded = 133027 or o1.value_coded = 1066),o1.value_coded,null)) as night_sweats,
+       max(if(o1.obs_group =160108 and o1.concept_id = 1729 and (o1.value_coded = 124068 or o1.value_coded = 1066),o1.value_coded,null)) as contact_with_tb_case,
+       max(if(o1.obs_group =160108 and o1.concept_id = 1729 and (o1.value_coded = 116334 or o1.value_coded = 1066),o1.value_coded,null)) as lethargy,
+       max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 162311 or o1.value_coded = 1066),o1.value_coded,null)) as yellow_urine,
+       max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 132652 or o1.value_coded = 1066),o1.value_coded,null)) as numbness_bs_hands_feet,
+       max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 5192 or o1.value_coded = 1066),o1.value_coded,null)) as eyes_yellowness,
+       max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 124994 or o1.value_coded = 1066),o1.value_coded,null)) as upper_rightQ_abdomen_tenderness,
+       e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join (
+                  select encounter_type_id, uuid, name from encounter_type where uuid in ('a0034eee-1940-4e35-847f-97537a35d05e', 'ed6dacc9-0827-4c82-86be-53c0d8c449be')
+                  ) et on et.encounter_type_id=e.encounter_type
+       inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
+                    o1.date_created as date_created,o1.date_voided as date_voided,o1.voided as voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
+                    and o1.concept_id =1729
+                    and o.concept_id in(160108,1727)) o1 on o1.encounter_id = e.encounter_id and o1.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o1.date_created >= last_update_time
+                or o1.date_voided >= last_update_time
+group by o1.obs_id
+order by e.patient_id
+ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        cough=VALUES(cough),
+        fever=VALUES(fever),
+        weight_loss_poor_gain=VALUES(weight_loss_poor_gain),
+        night_sweats=VALUES(night_sweats),
+        contact_with_tb_case=VALUES(contact_with_tb_case),
+        lethargy=VALUES(lethargy),
+        yellow_urine=VALUES(yellow_urine),
+        numbness_bs_hands_feet=VALUES(numbness_bs_hands_feet),
+        eyes_yellowness=VALUES(eyes_yellowness),
+        upper_rightQ_abdomen_tenderness=VALUES(upper_rightQ_abdomen_tenderness),
+        voided=VALUES(voided);
+
+SELECT "Completed processingIPT screening data ", CONCAT("Time: ", NOW());
 END$$
 
 -- end of scheduled updates procedures
@@ -5545,10 +5754,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_drug_event(last_update_time);
     CALL sp_update_etl_pharmacy_extract(last_update_time);
     -- CALL sp_update_etl_laboratory_extract(last_update_time);
-    CALL sp_update_hts_test(last_update_time);
     CALL sp_update_hts_linkage_and_referral(last_update_time);
     CALL sp_update_hts_referral(last_update_time);
-    -- CALL sp_update_etl_ipt_screening(last_update_time);
     CALL sp_update_etl_ipt_initiation(last_update_time);
     CALL sp_update_etl_ipt_outcome(last_update_time);
     CALL sp_update_etl_ipt_follow_up(last_update_time);
@@ -5581,6 +5788,9 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
     CALL sp_update_etl_gbv_screening(last_update_time);
     CALL sp_update_etl_depression_screening(last_update_time);
+    CALL sp_update_etl_adverse_events(last_update_time);
+    CALL sp_update_etl_allergy_chronic_illness(last_update_time);
+    CALL sp_update_etl_ipt_screening(last_update_time);
 
     CALL sp_update_dashboard_table();
 
