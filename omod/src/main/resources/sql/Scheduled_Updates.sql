@@ -2110,7 +2110,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         e.encounter_id,
         e.patient_id,
         e.location_id,
-        coalesce(od.date_activated,e.encounter_datetime) as visit_date,
+        coalesce(od.date_activated,o.obs_datetime) as visit_date,
         e.visit_id,
         o.order_id,
         o.concept_id,
