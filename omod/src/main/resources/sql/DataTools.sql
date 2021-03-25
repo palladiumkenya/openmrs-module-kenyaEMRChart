@@ -8,7 +8,7 @@ INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('Keny
 SET script_id = LAST_INSERT_ID();
 
 drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools;
+create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 -- -------------------------- creating patient demographics --------------------------------------
 -- populate patient_demographics table
