@@ -2605,7 +2605,7 @@ is_final_trace,
 true_status,
 cause_of_death,
 comments,
-return_to_care_date,
+booking_date,
 date_created,
 date_last_modified
 )
@@ -2618,7 +2618,7 @@ max(if(o.concept_id = 163725, o.value_coded, "" )) as is_final_trace,
 max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
 max(if(o.concept_id = 1599, o.value_coded, "" )) as cause_of_death,
 max(if(o.concept_id = 160716, o.value_text, "" )) as comments,
-max(if(o.concept_id=163526,date(o.value_datetime),null)) as return_to_care_date,
+max(if(o.concept_id=163526,date(o.value_datetime),null)) as booking_date,
 e.date_created as date_created,
 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
 from encounter e
