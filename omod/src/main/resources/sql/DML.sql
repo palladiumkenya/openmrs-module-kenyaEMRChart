@@ -709,6 +709,7 @@ insert into kenyaemr_etl.etl_mch_antenatal_visit(
     location_id,
     encounter_id,
     provider,
+    risk_stratification,
     anc_visit_number,
     temperature,
     pulse_rate,
@@ -790,6 +791,7 @@ select
     e.location_id,
     e.encounter_id,
     e.creator,
+    if(rse.risk_stratification='RISKY' OR rse2.risk_stratification ='RISKY', 'RISKY', 'NORMAL') as risk_stratification,
     max(if(o.concept_id=1425,o.value_numeric,null)) as anc_visit_number,
     max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
     max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
@@ -871,7 +873,9 @@ from encounter e
          select form_id, uuid,name from form where
                  uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843','d3ea25c7-a3e8-4f57-a6a9-e802c3565a30')
      ) f on f.form_id=e.form_id
-				left join (
+         left join risk_stratification_encounter rse on e.encounter_id = rse.encounter_id
+         left JOIN risk_stratification_encounter rse2 on rse2.patient_id = rse.patient_id and rse2.stratification_type='OBSTETRIC_HISTORY'
+         left join (
 										 select
 											 o.person_id,
 											 o.encounter_id,

@@ -435,6 +435,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     visit_date DATE,
     location_id INT(11) DEFAULT NULL,
     encounter_id INT(11) NOT NULL PRIMARY KEY,
+    risk_stratification VARCHAR (50),
     provider INT(11),
     anc_visit_number INT(11),
     temperature DOUBLE,

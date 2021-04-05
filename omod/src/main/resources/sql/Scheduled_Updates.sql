@@ -612,6 +612,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			location_id,
 			encounter_id,
 			provider,
+            risk_stratification,
 			anc_visit_number,
 			temperature,
 			pulse_rate,
@@ -693,6 +694,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             e.location_id,
             e.encounter_id,
             e.creator,
+            if(rse.risk_stratification='RISKY' OR rse2.risk_stratification ='RISKY', 'RISKY', 'NORMAL') as risk_stratification,
             max(if(o.concept_id=1425,o.value_numeric,null)) as anc_visit_number,
             max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
             max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
@@ -774,6 +776,8 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
                  select form_id, uuid,name from form where
                          uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843','d3ea25c7-a3e8-4f57-a6a9-e802c3565a30')
              ) f on f.form_id=e.form_id
+                 left join risk_stratification_encounter rse on e.encounter_id = rse.encounter_id
+                 left JOIN risk_stratification_encounter rse2 on rse2.patient_id = rse.patient_id and rse2.stratification_type='OBSTETRIC_HISTORY'
         where e.date_created >= last_update_time
 						or e.date_changed >= last_update_time
 						or e.date_voided >= last_update_time
