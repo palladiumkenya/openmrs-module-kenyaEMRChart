@@ -694,7 +694,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             e.location_id,
             e.encounter_id,
             e.creator,
-            if(rse.risk_stratification='RISKY' OR rse2.risk_stratification ='RISKY', 'RISKY', 'NORMAL') as risk_stratification,
+            if(rse.risk_stratification='HIGH_RISK' OR rse2.risk_stratification ='HIGH_RISK', 'HIGH_RISK', 'LOW_RISK') as risk_stratification,
             max(if(o.concept_id=1425,o.value_numeric,null)) as anc_visit_number,
             max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
             max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
