@@ -278,6 +278,7 @@ clinical_notes,
 on_anti_tb_drugs,
 on_ipt,
 ever_on_ipt,
+screened_for_tb,
 spatum_smear_ordered,
 chest_xray_ordered,
 genexpert_ordered,
@@ -364,9 +365,10 @@ null as clinical_notes, -- max(if(o.concept_id=160430,left(trim(o.value_text),60
 max(if(o.concept_id=164948,o.value_coded,null)) as on_anti_tb_drugs ,
 max(if(o.concept_id=164949,o.value_coded,null)) as on_ipt ,
 max(if(o.concept_id=164950,o.value_coded,null)) as ever_on_ipt ,
-max(if(o.concept_id=1271 and o.value_coded in (307,1065,1066),o.value_coded,null)) as spatum_smear_ordered ,
-max(if(o.concept_id=1271 and o.value_coded in (12 ,1065,1066),o.value_coded,null)) as chest_xray_ordered ,
-max(if(o.concept_id=1271 and o.value_coded in (162202,1065,1066),o.value_coded,null)) as genexpert_ordered ,
+max(if(o.concept_id=1729 and o.value_coded in(159799,1494,832,133027,124068,116334,1066),'Yes','No'))as screened_for_tb,
+max(if(o.concept_id=1271 and o.value_coded =307,o.value_coded,null)) as spatum_smear_ordered ,
+max(if(o.concept_id=1271 and o.value_coded =12,o.value_coded,null)) as chest_xray_ordered ,
+max(if(o.concept_id=1271 and o.value_coded = 162202,o.value_coded,null)) as genexpert_ordered ,
 max(if(o.concept_id=307,o.value_coded,null)) as spatum_smear_result ,
 max(if(o.concept_id=12,o.value_coded,null)) as chest_xray_result ,
 max(if(o.concept_id=162202,o.value_coded,null)) as genexpert_result ,
@@ -429,6 +431,8 @@ inner join
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309)
+	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,1729)
 where e.voided=0
 group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
