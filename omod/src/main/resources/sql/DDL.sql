@@ -5,10 +5,10 @@ DECLARE script_id INT(11);
 
 -- create/recreate database kenyaemr_etl
 drop database if exists kenyaemr_etl;
-create database kenyaemr_etl;
+create database kenyaemr_etl DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools;
+create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_script_status;
 CREATE TABLE kenyaemr_etl.etl_script_status(
@@ -80,6 +80,10 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_depression_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_adverse_events;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -143,6 +147,7 @@ district_transferred_from VARCHAR(255),
 date_started_art_at_transferring_facility DATE,
 date_confirmed_hiv_positive DATE,
 facility_confirmed_hiv_positive VARCHAR(255),
+previous_regimen VARCHAR(255),
 arv_status INT(11),
 name_of_treatment_supporter VARCHAR(255),
 relationship_of_treatment_supporter INT(11),
@@ -203,6 +208,13 @@ clinical_notes VARCHAR(600) DEFAULT NULL,
 on_anti_tb_drugs INT(11) DEFAULT NULL,
 on_ipt INT(11) DEFAULT NULL,
 ever_on_ipt INT(11) DEFAULT NULL,
+cough INT(11) DEFAULT -1,
+fever INT(11) DEFAULT -1,
+weight_loss_poor_gain INT(11) DEFAULT -1,
+night_sweats INT(11) DEFAULT -1,
+tb_case_contact INT(11) DEFAULT -1,
+lethargy INT(11) DEFAULT -1,
+screened_for_tb VARCHAR(50),
 spatum_smear_ordered INT(11) DEFAULT NULL,
 chest_xray_ordered INT(11) DEFAULT NULL,
 genexpert_ordered INT(11) DEFAULT NULL,
@@ -227,7 +239,9 @@ wants_pregnancy INT(11) DEFAULT NULL,
 pregnancy_outcome INT(11),
 anc_number VARCHAR(50),
 expected_delivery_date DATE,
+ever_had_menses INT(11),
 last_menstrual_period DATE,
+menopausal INT(11),
 gravida INT(11),
 parity INT(11),
 full_term_pregnancies INT(11),
@@ -236,7 +250,10 @@ family_planning_status INT(11),
 family_planning_method INT(11),
 reason_not_using_family_planning INT(11),
 tb_status INT(11),
+started_anti_TB INT(11),
+tb_rx_date DATE,
 tb_treatment_no VARCHAR(50),
+prophylaxis_given VARCHAR(50),
 ctx_adherence INT(11),
 ctx_dispensed INT(11),
 dapsone_adherence INT(11),
@@ -1066,6 +1083,7 @@ INDEX(patient_id)
     regimen_line VARCHAR(50),
     discontinued INT(11),
     regimen_discontinued VARCHAR(255),
+    regimen_stopped INT(11),
     date_discontinued DATE,
     reason_discontinued INT(11),
     reason_discontinued_other VARCHAR(100),
@@ -1186,22 +1204,27 @@ patient_id INT(11) NOT NULL ,
 visit_id INT(11),
 visit_date DATE,
 location_id INT(11) DEFAULT NULL,
-encounter_id INT(11) NOT NULL PRIMARY KEY,
+encounter_id INT(11),
+obs_id INT(11) NOT NULL PRIMARY KEY,
+cough INT(11) DEFAULT NULL,
+fever INT(11) DEFAULT NULL,
+weight_loss_poor_gain INT(11) DEFAULT NULL,
+night_sweats INT(11) DEFAULT NULL,
+contact_with_tb_case INT(11) DEFAULT NULL,
+lethargy INT(11) DEFAULT NULL,
 yellow_urine INT(11),
-numbness INT(11),
-yellow_eyes INT(11),
-abdominal_tenderness INT(11),
-ipt_started INT(11),
+numbness_bs_hands_feet INT(11),
+eyes_yellowness INT(11),
+upper_rightQ_abdomen_tenderness INT(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
-CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(patient_id),
-INDEX(visit_date, ipt_started, patient_id),
-INDEX(ipt_started, visit_date),
-INDEX(encounter_id),
-INDEX(ipt_started)
+INDEX(obs_id),
+INDEX(visit_date, patient_id),
+INDEX(encounter_id)
 );
 
 -- ------------ create table etl_ipt_follow_up -----------------------
@@ -2461,6 +2484,80 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     INDEX(encounter_id),
     INDEX(patient_id)
     );
+
+    -- ------------ create table etl_depression_screening-----------------------
+
+    CREATE TABLE kenyaemr_etl.etl_depression_screening (
+    uuid char(38),
+    provider INT(11),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    PHQ_9_rating VARCHAR(255),
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id)
+    );
+
+    -- ------------ create table etl_adverse_events-----------------------
+
+CREATE TABLE kenyaemr_etl.etl_adverse_events (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL,
+obs_id INT(11) NOT NULL PRIMARY KEY,
+cause INT(11),
+adverse_event INT(11),
+severity INT(11),
+start_date DATE,
+action_taken INT(11),
+voided int(11),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+INDEX(visit_date),
+INDEX(patient_id),
+INDEX(encounter_id),
+INDEX(obs_id)
+);
+
+-- ------------ create table etl_allergies_chronic_illnesses-----------------------
+
+CREATE TABLE kenyaemr_etl.etl_allergy_chronic_illness (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL,
+obs_id INT(11) NOT NULL PRIMARY KEY,
+chronic_illness INT(11),
+chronic_illness_onset_date DATE,
+allergy_causative_agent INT(11),
+allergy_reaction INT(11),
+allergy_severity INT(11),
+allergy_onset_date DATE,
+voided int(11),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+INDEX(visit_date),
+INDEX(patient_id),
+INDEX(encounter_id),
+INDEX(obs_id)
+);
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
