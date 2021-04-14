@@ -2619,6 +2619,7 @@ is_final_trace,
 true_status,
 cause_of_death,
 comments,
+booking_date,
 date_created,
 date_last_modified
 )
@@ -2631,12 +2632,13 @@ max(if(o.concept_id = 163725, o.value_coded, "" )) as is_final_trace,
 max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
 max(if(o.concept_id = 1599, o.value_coded, "" )) as cause_of_death,
 max(if(o.concept_id = 160716, o.value_text, "" )) as comments,
+max(if(o.concept_id=163526,date(o.value_datetime),null)) as booking_date,
 e.date_created as date_created,
 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 160721, 1639, 163725, 160433, 1599, 160716) and o.voided=0
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 160721, 1639, 163725, 160433, 1599, 160716,163526) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing CCC defaulter tracing forms", CONCAT("Time: ", NOW());
