@@ -1108,9 +1108,10 @@ ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD FOREIGN KEY (pat
 ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD INDEX(visit_date);
 SELECT "Successfully created alcohol_drug_abuse_screening table";
 
+/*Form collecting data has been discontinued
 create table kenyaemr_datatools.gender_based_violence as select * from kenyaemr_etl.etl_gender_based_violence;
 alter table kenyaemr_datatools.gender_based_violence add FOREIGN KEY(client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.gender_based_violence ADD INDEX(visit_date);
+ALTER TABLE kenyaemr_datatools.gender_based_violence ADD INDEX(visit_date);*/
 
 -- create table gbv_screening
 create table kenyaemr_datatools.gbv_screening as
@@ -1135,6 +1136,59 @@ from kenyaemr_etl.etl_gbv_screening;
 ALTER TABLE kenyaemr_datatools.gbv_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.gbv_screening ADD INDEX(visit_date);
 SELECT "Successfully created gbv_screening table";
+
+-- create table gbv_screening
+create table kenyaemr_datatools.gbv_screening_action as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+obs_id,
+location_id,
+(case help_provider when 1589 THEN "Hospital" when 165284 then "Police" when 165037 then "Peer Educator" when 1560 then "Family" when 165294 then "Peers" when 5618 then "Friends"
+                          when 165290 then "Religious Leader" when 165350 then "Dice" when 162690 then "Chief" when 5622 then "Other" else "" end) as help_provider,
+(case action_taken when 1066 then "No action taken"
+        when 165070 then "Counselling"
+        when 160570 then "Emergency pills"
+        when 1356 then "Hiv testing"
+        when 130719 then "Investigation done"
+        when 135914 then "Matter presented to court"
+        when 165228 then "P3 form issued"
+        when 165171 then "PEP given"
+        when 165192 then "Perpetrator arrested"
+        when 127910 then "Post rape care"
+        when 165203 then "PrEP given"
+        when 5618 then "Reconciliation"
+        when 165093 then "Referred back to the family"
+        when 165274 then "Referred to hospital"
+        when 165180 then "Statement taken"
+        when 165200 then "STI Prophylaxis"
+        when 165184 then "Trauma counselling done"
+        when 1185 then "Treatment"
+        when 5622 then "Other"
+        else "" end) as action_taken,
+(case reason_for_not_reporting when 1067 then "Did not know where to report"
+       when 1811 then "Distance"
+       when 140923 then "Exhaustion/Lack of energy"
+       when 163473 then "Fear shame"
+       when 159418 then "Lack of faith in system"
+       when 162951 then "Lack of knowledge"
+       when 664 then "Negative attitude of the person reported to"
+       when 143100 then "Not allowed culturally"
+       when 165161 then "Perpetrator above the law"
+       when 163475 then "Self blame"
+       else "" end) as reason_for_not_reporting,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_gbv_screening_action;
+
+ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD INDEX(visit_date);
+SELECT "Successfully created gbv_screening_action table";
+
 
 -- create table depression_screening
 create table kenyaemr_datatools.depression_screening as
