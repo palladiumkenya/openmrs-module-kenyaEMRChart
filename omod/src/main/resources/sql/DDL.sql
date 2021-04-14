@@ -75,11 +75,12 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
+--DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening_action;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_depression_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_adverse_events;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
@@ -2369,6 +2370,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(client_id)
     );
 
+/* Form collecting data has been retired
 CREATE TABLE kenyaemr_etl.etl_gender_based_violence (
   uuid char(38),
   provider INT(11),
@@ -2407,7 +2409,7 @@ CREATE TABLE kenyaemr_etl.etl_gender_based_violence (
   INDEX(visit_date),
   INDEX(encounter_id),
   INDEX(client_id)
-);
+);*/
 
 CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     uuid char(38),
@@ -2483,6 +2485,28 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
     INDEX(encounter_id),
+    INDEX(patient_id)
+    );
+
+      -- ------------ create table etl_gbv_screening_action-----------------------
+
+    CREATE TABLE kenyaemr_etl.etl_gbv_screening_action (
+    uuid char(38),
+    provider INT(11),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    obs_id INT(11) NOT NULL PRIMARY KEY,
+    help_provider VARCHAR(100),
+    action_taken VARCHAR(100),
+    reason_for_not_reporting VARCHAR(100),
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    INDEX(visit_date),
+    INDEX(obs_id),
     INDEX(patient_id)
     );
 

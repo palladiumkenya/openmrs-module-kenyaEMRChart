@@ -5503,6 +5503,55 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
           voided=VALUES(voided);
     END$$
 
+------updating etl_gbv_screening_action table-------
+ DROP PROCEDURE IF EXISTS sp_update_etl_gbv_screening_action$$
+    CREATE PROCEDURE sp_update_etl_gbv_screening_action(IN last_update_time DATETIME)
+    BEGIN
+    SELECT "Processing GBV Screening", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_gbv_screening_action(
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    obs_id,
+    help_provider,
+    action_taken,
+    reason_for_not_reporting,
+    date_created,
+    date_last_modified,
+    voided
+    )
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, o.id as obs_id,
+       max(if(o.obs_group = 1562 and o.concept_id = 162886,o.value_coded, NULL)) as help_provider,
+       max(if(o.obs_group = 159639 and o.concept_id = 162875,o.value_coded, NULL)) as action_taken,
+       max(if(o.obs_group = 1743 and o.concept_id = 6098,o.value_coded,NULL)) as reason_for_not_reporting,
+       e.date_created as date_created,
+       if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
+       inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o1.obs_id as id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
+                   from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id in (162871,162886,162875,6098) and o.concept_id in(1562,159639,1743))o on o.encounter_id = e.encounter_id and o.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o1.date_created >= last_update_time
+                or o1.date_voided >= last_update_time
+group by o.id
+order by e.patient_id
+ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+        provider=VALUES(provider),
+        help_provider=VALUES(help_provider),
+        action_taken=VALUES(action_taken),
+        reason_for_not_reporting=VALUES(reason_for_not_reporting),
+        voided=VALUES(voided);
+SELECT "Completed processing gbv screening action data ", CONCAT("Time: ", NOW());
+END$$
+
   DROP PROCEDURE IF EXISTS sp_update_etl_depression_screening$$
     CREATE PROCEDURE sp_update_etl_depression_screening(IN last_update_time DATETIME)
     BEGIN
@@ -5804,7 +5853,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_peer_calendar(last_update_time);
     CALL sp_update_etl_peer_tracking(last_update_time);
     CALL sp_update_etl_treatment_verification(last_update_time);
-    CALL sp_update_etl_gender_based_violence(last_update_time);
+    --CALL sp_update_etl_gender_based_violence(last_update_time);
     CALL sp_update_etl_PrEP_verification(last_update_time);
     CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
     CALL sp_update_etl_gbv_screening(last_update_time);

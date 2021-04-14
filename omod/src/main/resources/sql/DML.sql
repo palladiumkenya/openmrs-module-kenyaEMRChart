@@ -4935,7 +4935,7 @@ max(if(o.concept_id=162875,(case o.value_coded when 1066 then "No action taken"
         else "" end),null)) as help_outcome,
 max(if(o.concept_id = 165230, o.value_text, "" )) as other_outcome,
 max(if(o.concept_id=6098,(case o.value_coded
-       when 162951 then "Did not know where to report"
+       when 1067 then "Did not know where to report"
        when 1811 then "Distance"
        when 140923 then "Exhaustion/Lack of energy"
        when 163473 then "Fear shame"
@@ -5089,7 +5089,7 @@ select
        e.voided as voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
-       inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01')
+       inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
 inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
             from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id
 and o.voided=0
@@ -5097,6 +5097,46 @@ where e.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing gbv screening data ", CONCAT("Time: ", NOW());
+END$$
+
+      -- ------------- populate etl_gbv_screening_action-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_gbv_screening_action$$
+CREATE PROCEDURE sp_populate_etl_gbv_screening_action()
+BEGIN
+SELECT "Processing gbv screening action", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_gbv_screening_action(
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    obs_id,
+    help_provider,
+    action_taken,
+    reason_for_not_reporting,
+    date_created,
+    date_last_modified,
+    voided
+    )
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, o.id as obs_id,
+       max(if(o.obs_group = 1562 and o.concept_id = 162886,o.value_coded, NULL)) as help_provider,
+       max(if(o.obs_group = 159639 and o.concept_id = 162875,o.value_coded, NULL)) as action_taken,
+       max(if(o.obs_group = 1743 and o.concept_id = 6098,o.value_coded,NULL)) as reason_for_not_reporting,
+       e.date_created as date_created,
+       if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
+       inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o1.obs_id as id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
+                   from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id in (162871,162886,162875,6098) and o.concept_id in(1562,159639,1743))o on o.encounter_id = e.encounter_id and o.voided=0
+where e.voided=0
+group by o.id order by o.concept_id;
+
+SELECT "Completed processing gbv screening action data ", CONCAT("Time: ", NOW());
 END$$
 
 -- ------------- populate etl_depression_screening-------------------------
@@ -5296,10 +5336,11 @@ CALL sp_populate_etl_sti_treatment();
 CALL sp_populate_etl_peer_calendar();
 CALL sp_populate_etl_peer_tracking();
 CALL sp_populate_etl_treatment_verification();
-CALL sp_populate_etl_gender_based_violence();
+--CALL sp_populate_etl_gender_based_violence();
 CALL sp_populate_etl_PrEP_verification();
 CALL sp_populate_etl_alcohol_drug_abuse_screening();
 CALL sp_populate_etl_gbv_screening();
+CALL sp_populate_etl_gbv_screening_action();
 CALL sp_populate_etl_depression_screening();
 CALL sp_populate_etl_adverse_events();
 CALL sp_populate_etl_allergy_chronic_illness();
