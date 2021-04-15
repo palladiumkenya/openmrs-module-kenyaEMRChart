@@ -133,6 +133,7 @@ max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) Nati
 max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
 max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod_service_number,
 max(if(pit.uuid='5065ae70-0b61-11ea-8d71-362b9e155667',pi.identifier,null)) CPIMS_unique_identifier,
+max(if(pit.uuid='dfacd928-0370-4315-99d7-6ec1c9f7ae76',pi.identifier,null)) openmrs_id,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -149,6 +150,7 @@ set d.unique_patient_no=pid.UPN,
     d.district_reg_no=pid.district_reg_number,
     d.kdod_service_number=pid.kdod_service_number,
     d.CPIMS_unique_identifier=pid.CPIMS_unique_identifier,
+    d.openmrs_id=pid.openmrs_id,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
