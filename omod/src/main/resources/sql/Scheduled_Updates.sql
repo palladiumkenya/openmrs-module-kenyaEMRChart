@@ -1,6 +1,6 @@
-SET @OLD_SQL_MODE=@@SQL_MODE$$
+SET @OLD_SQL_MODE=@@SQL_MODE $$
 SET SQL_MODE=''$$
-DROP PROCEDURE IF EXISTS sp_update_etl_patient_demographics$$
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_demographics $$
 CREATE PROCEDURE sp_update_etl_patient_demographics(IN last_update_time DATETIME)
 
 BEGIN
@@ -170,12 +170,12 @@ d.education_level=pstatus.education_level,
 d.occupation=pstatus.occupation,
 d.date_last_modified=if(pstatus.date_created > d.date_last_modified,pstatus.date_created,d.date_last_modified);
 
-END$$
+END $$
 -- DELIMITER ;
 
 
 
-DROP PROCEDURE IF EXISTS sp_update_etl_hiv_enrollment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_hiv_enrollment $$
 CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
   BEGIN
 
@@ -255,12 +255,12 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
       facility_transferred_from=VALUES(facility_transferred_from),district_transferred_from=VALUES(district_transferred_from),date_started_art_at_transferring_facility=VALUES(date_started_art_at_transferring_facility),date_confirmed_hiv_positive=VALUES(date_confirmed_hiv_positive),facility_confirmed_hiv_positive=VALUES(facility_confirmed_hiv_positive),
       arv_status=VALUES(arv_status),name_of_treatment_supporter=VALUES(name_of_treatment_supporter),relationship_of_treatment_supporter=VALUES(relationship_of_treatment_supporter),treatment_supporter_telephone=VALUES(treatment_supporter_telephone),treatment_supporter_address=VALUES(treatment_supporter_address),in_school=VALUES(in_school),orphan=VALUES(orphan),voided=VALUES(voided)
     ;
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------- update etl_hiv_followup--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_hiv_followup$$
+DROP PROCEDURE IF EXISTS sp_update_etl_hiv_followup $$
 CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
   BEGIN
 
@@ -453,13 +453,13 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date), next_appointment_reason=VALUES(next_appointment_reason), differentiated_care=VALUES(differentiated_care), voided=VALUES(voided)
     ;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 
 -- ------------ create table etl_patient_treatment_event----------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_program_discontinuation$$
+DROP PROCEDURE IF EXISTS sp_update_etl_program_discontinuation $$
 CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_patient_program_discontinuation(
@@ -526,12 +526,12 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
       trf_out_verified=VALUES(trf_out_verified),trf_out_verification_date=VALUES(trf_out_verification_date)
     ;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------- update etl_mch_enrollment------------------------- TO BE CHECKED AGAIN
 
-DROP PROCEDURE IF EXISTS sp_update_etl_mch_enrollment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_mch_enrollment $$
 CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
   BEGIN
 
@@ -641,11 +641,11 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       urine_bile_salt_test=VALUES(urine_bile_salt_test),urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),discontinuation_reason=VALUES(discontinuation_reason)
     ;
 
-    END$$
+    END $$
 
 -- ------------- update etl_mch_antenatal_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_mch_antenatal_visit$$
+DROP PROCEDURE IF EXISTS sp_update_etl_mch_antenatal_visit $$
 CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_mch_antenatal_visit(
@@ -825,10 +825,10 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       referred_to=VALUES(referred_to),next_appointment_date=VALUES(next_appointment_date),clinical_notes=VALUES(clinical_notes)
     ;
 
-    END$$
+    END $$
 
 -- ------------- update etl_mchs_delivery-------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_mch_delivery$$
+DROP PROCEDURE IF EXISTS sp_update_etl_mch_delivery $$
 CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_mchs_delivery(
@@ -952,10 +952,10 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 
     ;
 
-    END$$
+    END $$
 -- ------------- populate etl_mchs_discharge-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_mch_discharge$$
+DROP PROCEDURE IF EXISTS sp_update_etl_mch_discharge $$
 CREATE PROCEDURE sp_update_etl_mch_discharge(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing MCH Discharge ", CONCAT("Time: ", NOW());
@@ -1020,11 +1020,11 @@ CREATE PROCEDURE sp_update_etl_mch_discharge(IN last_update_time DATETIME)
     ;
 
     SELECT "Completed processing MCH Discharge visits", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 -- ------------- update etl_mch_postnatal_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_mch_postnatal_visit$$
+DROP PROCEDURE IF EXISTS sp_update_etl_mch_postnatal_visit $$
 CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_mch_postnatal_visit(
@@ -1184,10 +1184,10 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to), clinical_notes=VALUES(clinical_notes)
     ;
 
-    END$$
+    END $$
 
 -- ------------- update etl_hei_enrollment-------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_hei_enrolment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_hei_enrolment $$
 CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
   BEGIN
 
@@ -1316,10 +1316,10 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
       date_of_birth_notification=VALUES(date_of_birth_notification),date_of_birth_registration=VALUES(date_of_birth_registration),birth_registration_place=VALUES(birth_registration_place),permanent_registration_serial=VALUES(permanent_registration_serial),mother_facility_registered=VALUES(mother_facility_registered),exit_date=VALUES(exit_date),exit_reason=VALUES(exit_reason),hiv_status_at_exit=VALUES(hiv_status_at_exit)
     ;
 
-    END$$
+    END $$
 
 -- ------------- update etl_hei_follow_up_visit-------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_hei_follow_up$$
+DROP PROCEDURE IF EXISTS sp_update_etl_hei_follow_up $$
 CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_hei_follow_up_visit(
@@ -1443,9 +1443,9 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       ,nvp_given=VALUES(nvp_given),ctx_given=VALUES(ctx_given)
     ;
 
-    END$$
+    END $$
 -- ------------- update etl_hei_immunization-------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_hei_immunization$$
+DROP PROCEDURE IF EXISTS sp_update_etl_hei_immunization $$
 CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
@@ -1588,12 +1588,12 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       Measles_6_months=VALUES(Measles_6_months), VitaminA_6_months=VALUES(VitaminA_6_months),VitaminA_1_yr=VALUES(VitaminA_1_yr),
       VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr)
     ;
-    END$$
+    END $$
 
 
 -- ------------- update etl_tb_enrollment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_tb_enrollment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_tb_enrollment $$
 CREATE PROCEDURE sp_update_etl_tb_enrollment(IN last_update_time DATETIME)
   BEGIN
 
@@ -1696,12 +1696,12 @@ CREATE PROCEDURE sp_update_etl_tb_enrollment(IN last_update_time DATETIME)
       has_extra_pulmonary_milliary=VALUES(has_extra_pulmonary_milliary),has_extra_pulmonary_lymph_node=VALUES(has_extra_pulmonary_lymph_node),has_extra_pulmonary_menengitis=VALUES(has_extra_pulmonary_menengitis),has_extra_pulmonary_skeleton=VALUES(has_extra_pulmonary_skeleton),has_extra_pulmonary_abdominal=VALUES(has_extra_pulmonary_abdominal)
     ;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------- update etl_tb_follow_up_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_tb_follow_up_visit$$
+DROP PROCEDURE IF EXISTS sp_update_etl_tb_follow_up_visit $$
 CREATE PROCEDURE sp_update_etl_tb_follow_up_visit(IN last_update_time DATETIME)
   BEGIN
 
@@ -1783,12 +1783,12 @@ CREATE PROCEDURE sp_update_etl_tb_follow_up_visit(IN last_update_time DATETIME)
       number_of_colonies=VALUES(number_of_colonies),resistant_s=VALUES(resistant_s),resistant_r=VALUES(resistant_r),resistant_inh=VALUES(resistant_inh),resistant_e=VALUES(resistant_e),sensitive_s=VALUES(sensitive_s),sensitive_r=VALUES(sensitive_r),sensitive_inh=VALUES(sensitive_inh),sensitive_e=VALUES(sensitive_e),test_date=VALUES(test_date),hiv_status=VALUES(hiv_status),next_appointment_date=VALUES(next_appointment_date)
     ;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------- update etl_tb_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_tb_screening$$
+DROP PROCEDURE IF EXISTS sp_update_etl_tb_screening $$
 CREATE PROCEDURE sp_update_etl_tb_screening(IN last_update_time DATETIME)
   BEGIN
 
@@ -1826,12 +1826,12 @@ CREATE PROCEDURE sp_update_etl_tb_screening(IN last_update_time DATETIME)
       resulting_tb_status=VALUES(resulting_tb_status), tb_treatment_start_date=VALUES(tb_treatment_start_date), notes=values(notes);
 
 
-    END$$
+    END $$
 
 -- ------------------------------ update drug event -------------------------------------
 
 
-DROP PROCEDURE IF EXISTS sp_update_drug_event$$
+DROP PROCEDURE IF EXISTS sp_update_drug_event $$
 CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
   BEGIN
 
@@ -2002,12 +2002,12 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
       date_discontinued=VALUES(date_discontinued)
     ;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------- update etl_pharmacy_extract table--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_pharmacy_extract$$
+DROP PROCEDURE IF EXISTS sp_update_etl_pharmacy_extract $$
 CREATE PROCEDURE sp_update_etl_pharmacy_extract(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_pharmacy_extract(
@@ -2076,14 +2076,14 @@ CREATE PROCEDURE sp_update_etl_pharmacy_extract(IN last_update_time DATETIME)
     set duration_in_days = if(duration_units= 'Days', duration,if(duration_units='Weeks',duration * 7,if(duration_units='Months',duration * 31,null)))
     where (duration is not null or duration <> "") and (duration_units is not null or duration_units <> "");
 
-    END$$
+    END $$
 
 -- DELIMITER ;
 
 -- ------------------------------------- laboratory updates ---------------------------
 
 
-DROP PROCEDURE IF EXISTS sp_update_etl_laboratory_extract$$
+DROP PROCEDURE IF EXISTS sp_update_etl_laboratory_extract $$
 CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
   BEGIN
 
@@ -2140,13 +2140,13 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
 
     ;
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ---------------------------- Update HTS encounters ---------------------
 
 
-DROP PROCEDURE IF EXISTS sp_update_hts_test$$
+DROP PROCEDURE IF EXISTS sp_update_hts_test $$
 CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
   BEGIN
 
@@ -2290,12 +2290,12 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       remarks=VALUES(remarks), voided=VALUES(voided)
     ;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------------------------------ POPULATE HTS LINKAGES AND REFERRALS -------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_hts_linkage_and_referral$$
+DROP PROCEDURE IF EXISTS sp_update_hts_linkage_and_referral $$
 CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME)
   BEGIN
 
@@ -2393,12 +2393,12 @@ or e.date_voided >= last_update_time
 group by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), ccc_number=VALUES(ccc_number)
 ;*/
-    END$$
+    END $$
 -- DELIMITER ;
 
 -- ------------------------ update hts referrals ------------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_hts_referral$$
+DROP PROCEDURE IF EXISTS sp_update_hts_referral $$
 CREATE PROCEDURE sp_update_hts_referral(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing hts referrals";
@@ -2445,11 +2445,11 @@ CREATE PROCEDURE sp_update_hts_referral(IN last_update_time DATETIME)
       remarks=VALUES(remarks), voided=VALUES(voided);
     SELECT "Completed processing hts referrals", CONCAT("Time: ", NOW());
 
-    END$$
+    END $$
 
 -- ------------- populate etl_ipt_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening $$
 CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
   BEGIN
 
@@ -2481,13 +2481,13 @@ CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), ipt_started=values(ipt_started);
     SELECT "Completed processing IPT screening forms", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 -- DELIMITER ;
 
 
 -- ------------- populate etl_ipt_followup-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_ipt_follow_up$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_follow_up $$
 CREATE PROCEDURE sp_update_etl_ipt_follow_up(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing IPT followup forms", CONCAT("Time: ", NOW());
@@ -2544,10 +2544,10 @@ CREATE PROCEDURE sp_update_etl_ipt_follow_up(IN last_update_time DATETIME)
       adherence=VALUES(adherence),
       action_taken=VALUES(action_taken),voided=VALUES(voided);
 
-    END$$
+    END $$
 -- DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_update_etl_ccc_defaulter_tracing$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ccc_defaulter_tracing $$
 CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing ccc defaulter tracing form", CONCAT("Time: ", NOW());
@@ -2599,9 +2599,9 @@ CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing(IN last_update_time DATETIM
       cause_of_death=VALUES(cause_of_death),
       comments=VALUES(comments);
 
-    END$$
+    END $$
 -- ------------- Update etl_ART_preparation-------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_ART_preparation$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ART_preparation $$
 CREATE PROCEDURE sp_update_etl_ART_preparation(IN last_update_time DATETIME)
   BEGIN
     insert into kenyaemr_etl.etl_ART_preparation(
@@ -2680,7 +2680,7 @@ CREATE PROCEDURE sp_update_etl_ART_preparation(IN last_update_time DATETIME)
       identified_drug_time=VALUES(identified_drug_time),treatment_supporter_engaged=VALUES(treatment_supporter_engaged),support_grp_meeting_awareness=VALUES(support_grp_meeting_awareness),
       enrolled_in_reminder_system=VALUES(enrolled_in_reminder_system),other_support_systems=VALUES(other_support_systems);
 
-    END$$
+    END $$
 
 -- ------------- update etl_enhanced_adherence-------------------------
 
@@ -2805,10 +2805,10 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
       patient_doses_missed=VALUES(patient_doses_missed),other_referrals=VALUES(other_referrals),appointments_honoured=VALUES(appointments_honoured),
       home_visit_benefit=VALUES(home_visit_benefit),next_appointment_date=VALUES(next_appointment_date);
 
-    END$$
+    END $$
 -- ------------- update etl_patient_triage-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_patient_triage$$
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_triage $$
 CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing Patient Triage ", CONCAT("Time: ", NOW());
@@ -2877,12 +2877,12 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
       oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),nutritional_status=VALUES(nutritional_status),last_menstrual_period=VALUES(last_menstrual_period),voided=VALUES(voided);
 
-    END$$
+    END $$
 
 
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_prep_behaviour_risk_assessment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_behaviour_risk_assessment $$
 CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing Behaviour risk assessment", CONCAT("Time: ", NOW());
@@ -2998,11 +2998,11 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
       recent_unprotected_sex_with_positive_partner=VALUES(recent_unprotected_sex_with_positive_partner),
       children_with_hiv_positive_partner=VALUES(children_with_hiv_positive_partner),
       voided=VALUES(voided);
-    END$$
+    END $$
 
 -- ------------- populate etl_prep_monthly_refill-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_prep_monthly_refill$$
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_monthly_refill $$
 CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing monthly refill", CONCAT("Time: ", NOW());
@@ -3089,11 +3089,11 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       next_appointment=VALUES(next_appointment),
       remarks=VALUES(remarks),
       voided=VALUES(voided);
-    END$$
+    END $$
 
 -- ------------- populate etl_prep_discontinuation-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_prep_discontinuation$$
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_discontinuation $$
 CREATE PROCEDURE sp_update_etl_prep_discontinuation(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing PrEP discontinuation", CONCAT("Time: ", NOW());
@@ -3133,11 +3133,11 @@ CREATE PROCEDURE sp_update_etl_prep_discontinuation(IN last_update_time DATETIME
       discontinue_reason=VALUES(discontinue_reason),
       care_end_date=VALUES(care_end_date),
       voided=VALUES(voided);
-    END$$
+    END $$
 
 -- ------------- populate etl_prep_enrollment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_prep_enrolment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_enrolment $$
 CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing PrEP enrolment", CONCAT("Time: ", NOW());
@@ -3223,11 +3223,11 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       buddy_alt_phone=VALUES(buddy_alt_phone),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 
 -- ------------- populate etl_prep_followup-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_prep_followup$$
+DROP PROCEDURE IF EXISTS sp_update_etl_prep_followup $$
 CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing PrEP follow-up", CONCAT("Time: ", NOW());
@@ -3437,11 +3437,11 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
       clinical_notes=VALUES(clinical_notes),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 
 -- ------------- populate etl_progress_note-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_progress_note$$
+DROP PROCEDURE IF EXISTS sp_update_etl_progress_note $$
 CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing progress", CONCAT("Time: ", NOW());
@@ -3477,12 +3477,12 @@ CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
       provider=values(provider),
       notes=values(notes),
       voided=values(voided);
-    END$$
+    END $$
 
 /*SET sql_mode=@OLD_SQL_MODE$$*/
 -- ----------------------------  scheduled updates ---------------------
 -- ------------------------------------- populate ipt initiation -----------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation $$
 CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating IPT initiations ", CONCAT("Time: ", NOW());
@@ -3526,10 +3526,10 @@ CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),ipt_indication=VALUES(ipt_indication), voided=VALUES(voided)
     ;
     SELECT "Completed Updating IPT Initiation ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 -- ------------------------------------- process ipt followup -------------------------
-/*DROP PROCEDURE IF EXISTS sp_update_etl_ipt_followup$$
+/*DROP PROCEDURE IF EXISTS sp_update_etl_ipt_followup $$
 CREATE PROCEDURE sp_update_etl_ipt_followup(IN last_update_time DATETIME)
 	BEGIN
 		SELECT "Updating IPT followup ", CONCAT("Time: ", NOW());
@@ -3587,9 +3587,9 @@ CREATE PROCEDURE sp_update_etl_ipt_followup(IN last_update_time DATETIME)
 			adherence=VALUES(adherence),action_taken=VALUES(action_taken),voided=VALUES(voided)
 		;
 		SELECT "Completed Updating IPT followup data ", CONCAT("Time: ", NOW());
-		END$$*/
+		END  $$*/
 -- ----------------------------------- process ipt outcome ---------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome $$
 CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating IPT outcome ", CONCAT("Time: ", NOW());
@@ -3634,10 +3634,10 @@ CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
       outcome=VALUES(outcome), voided=VALUES(voided)
     ;
     SELECT "Completed Updating IPT outcome ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 -- --------------------------------------- process HTS linkage tracing ------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_hts_linkage_tracing$$
+DROP PROCEDURE IF EXISTS sp_update_etl_hts_linkage_tracing $$
 CREATE PROCEDURE sp_update_etl_hts_linkage_tracing(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating HTS Linkage tracing ", CONCAT("Time: ", NOW());
@@ -3688,12 +3688,12 @@ CREATE PROCEDURE sp_update_etl_hts_linkage_tracing(IN last_update_time DATETIME)
       voided=VALUES(voided)
     ;
     SELECT "Completed updating HTS linkage tracing data ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 
 -- --------------------------------------- process OTZ Enrollment ------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_otz_enrollment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_otz_enrollment $$
 CREATE PROCEDURE sp_update_etl_otz_enrollment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating OTZ Enrollment ", CONCAT("Time: ", NOW());
@@ -3757,11 +3757,11 @@ CREATE PROCEDURE sp_update_etl_otz_enrollment(IN last_update_time DATETIME)
       srh=VALUES(srh),beyond_third_ninety=VALUES(beyond_third_ninety),transfer_in=VALUES(transfer_in),
       voided=VALUES(voided);
     SELECT "Completed updating OTZ enrollment data ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 
 -- --------------------------------------- process OTZ Activity ------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_otz_activity$$
+DROP PROCEDURE IF EXISTS sp_update_etl_otz_activity $$
 CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating OTZ Activity ", CONCAT("Time: ", NOW());
@@ -3829,11 +3829,11 @@ CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
       srh=VALUES(srh),beyond_third_ninety=VALUES(beyond_third_ninety),attended_support_group=VALUES(attended_support_group),
       voided=VALUES(voided);
     SELECT "Completed updating OTZ activity data ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 -- --------------------------------------- process OTZ Enrollment ------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_ovc_enrolment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ovc_enrolment $$
 CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating OVC Enrolment ", CONCAT("Time: ", NOW());
@@ -3902,11 +3902,11 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
       dreams_program=VALUES(dreams_program),ovc_preventive_program=VALUES(ovc_preventive_program),
       voided=VALUES(voided);
     SELECT "Completed updating OVC enrolment data ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 -- ------------------------- process patient program ------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_patient_program$$
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_program $$
 CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
   BEGIN
     SELECT "Updating patient program ", CONCAT("Time: ", NOW());
@@ -3953,11 +3953,11 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
       program=VALUES(program),outcome=VALUES(outcome),voided=VALUES(outcome),voided=VALUES(voided)
     ;
     SELECT "Completed updating patient program data ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 -- ------------------- update person address table -------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_person_address$$
+DROP PROCEDURE IF EXISTS sp_update_etl_person_address $$
 CREATE PROCEDURE sp_update_etl_person_address(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing person addresses ", CONCAT("Time: ", NOW());
@@ -3996,12 +3996,12 @@ CREATE PROCEDURE sp_update_etl_person_address(IN last_update_time DATETIME)
       land_mark=values(land_mark),voided=values(voided)
     ;
     SELECT "Completed processing person_address data ", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
 
 -- -------------Update etl_cervical_cancer_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_cervical_cancer_screening$$
+DROP PROCEDURE IF EXISTS sp_update_etl_cervical_cancer_screening $$
 CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
@@ -4096,9 +4096,9 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
     where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
 
     SELECT "Completed processing  HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
-    END$$
+    END $$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_contact$$
+DROP PROCEDURE IF EXISTS sp_update_etl_contact $$
 CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing client contact data ", CONCAT("Time: ", NOW());
@@ -4206,9 +4206,9 @@ CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
     set
       c.unique_identifier=pid.unique_identifier;
 
-    END$$
+    END $$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_client_enrollment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_client_enrollment $$
 CREATE PROCEDURE sp_update_etl_client_enrollment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing client enrollment data ", CONCAT("Time: ", NOW());
@@ -4314,12 +4314,12 @@ CREATE PROCEDURE sp_update_etl_client_enrollment(IN last_update_time DATETIME)
       buddy_name=VALUES(buddy_name),
       buddy_phone_number=VALUES(buddy_phone_number),
       voided=VALUES(voided);
-    END$$
+    END $$
 
 
 -- ------------- populate etl_clinical_visit--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_clinical_visit$$
+DROP PROCEDURE IF EXISTS sp_update_etl_clinical_visit $$
 CREATE PROCEDURE sp_update_etl_clinical_visit(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing Clinical Visit ", CONCAT("Time: ", NOW());
@@ -4704,11 +4704,11 @@ CREATE PROCEDURE sp_update_etl_clinical_visit(IN last_update_time DATETIME)
       clinical_notes=VALUES(clinical_notes),
       appointment_date=VALUES(appointment_date),
       voided=VALUES(voided);
-    END$$
+    END $$
 
 -- ------------- populate etl_sti_treatment--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_sti_treatment$$
+DROP PROCEDURE IF EXISTS sp_update_etl_sti_treatment $$
 CREATE PROCEDURE sp_update_etl_sti_treatment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing STI Treatment ", CONCAT("Time: ", NOW());
@@ -4809,10 +4809,10 @@ CREATE PROCEDURE sp_update_etl_sti_treatment(IN last_update_time DATETIME)
       appointment_date=VALUES(appointment_date),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 -- ------------- populate etl_peer_calendar--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_peer_calendar$$
+DROP PROCEDURE IF EXISTS sp_update_etl_peer_calendar $$
 CREATE PROCEDURE sp_update_etl_peer_calendar(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
@@ -4929,11 +4929,11 @@ CREATE PROCEDURE sp_update_etl_peer_calendar(IN last_update_time DATETIME)
       remarks=VALUES(remarks),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 
 -- ------------- populate kp peer tracking-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_peer_tracking$$
+DROP PROCEDURE IF EXISTS sp_update_etl_peer_tracking $$
 CREATE PROCEDURE sp_update_etl_peer_tracking(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
@@ -5008,9 +5008,9 @@ CREATE PROCEDURE sp_update_etl_peer_tracking(IN last_update_time DATETIME)
       other_informant=VALUES(other_informant),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_treatment_verification$$
+DROP PROCEDURE IF EXISTS sp_update_etl_treatment_verification $$
 CREATE PROCEDURE sp_update_etl_treatment_verification(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing kp treatment verification form", CONCAT("Time: ", NOW());
@@ -5152,10 +5152,10 @@ CREATE PROCEDURE sp_update_etl_treatment_verification(IN last_update_time DATETI
       comment=VALUES(comment),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 
 
-DROP PROCEDURE IF EXISTS sp_update_etl_gender_based_violence$$
+DROP PROCEDURE IF EXISTS sp_update_etl_gender_based_violence $$
 CREATE PROCEDURE sp_update_etl_gender_based_violence(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing kp gender based violence form", CONCAT("Time: ", NOW());
@@ -5288,11 +5288,11 @@ CREATE PROCEDURE sp_update_etl_gender_based_violence(IN last_update_time DATETIM
       other_reason_for_not_reporting=VALUES(other_reason_for_not_reporting),
       voided=VALUES(voided);
 
-    END$$
+    END $$
 
 -- ------------- Update kp PrEP verification-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_PrEP_verification$$
+DROP PROCEDURE IF EXISTS sp_update_etl_PrEP_verification $$
 CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing kp PrEP verification form", CONCAT("Time: ", NOW());
@@ -5361,9 +5361,9 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
       other_discontinuation_reason=VALUES(other_discontinuation_reason),
       appointment_date=VALUES(appointment_date),
       voided=VALUES(voided);
-    END$$
+    END $$
 
-    DROP PROCEDURE IF EXISTS sp_update_etl_alcohol_drug_abuse_screening$$
+    DROP PROCEDURE IF EXISTS sp_update_etl_alcohol_drug_abuse_screening $$
     CREATE PROCEDURE sp_update_etl_alcohol_drug_abuse_screening(IN last_update_time DATETIME)
     BEGIN
     SELECT "Processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT)", CONCAT("Time: ", NOW());
@@ -5407,9 +5407,9 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
           smoking_frequency=VALUES(smoking_frequency),
           drugs_use_frequency=VALUES(drugs_use_frequency),
           voided=VALUES(voided);
-    END$$
+    END $$
 
-    DROP PROCEDURE IF EXISTS sp_update_etl_gbv_screening$$
+    DROP PROCEDURE IF EXISTS sp_update_etl_gbv_screening $$
     CREATE PROCEDURE sp_update_etl_gbv_screening(IN last_update_time DATETIME)
     BEGIN
     SELECT "Processing GBV Screening", CONCAT("Time: ", NOW());
@@ -5461,15 +5461,15 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
           sexual_ipv=VALUES(sexual_ipv),
           ipv_relationship=VALUES(ipv_relationship),
           voided=VALUES(voided);
-    END$$
+    END $$
 
     -- end of scheduled updates procedures
 
-    SET sql_mode=@OLD_SQL_MODE$$
+    SET sql_mode=@OLD_SQL_MODE $$
 -- ----------------------------  scheduled updates ---------------------
 
 
-DROP PROCEDURE IF EXISTS sp_scheduled_updates$$
+DROP PROCEDURE IF EXISTS sp_scheduled_updates $$
 CREATE PROCEDURE sp_scheduled_updates()
   BEGIN
     DECLARE update_script_id INT(11);
@@ -5538,7 +5538,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
     SELECT update_script_id;
 
-    END$$
+    END $$
 -- DELIMITER ;
 
 
