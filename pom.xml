@@ -33,7 +33,7 @@
 	</modules>
 
 	<properties>
-		<openMRSVersion>2.1.2</openMRSVersion>
+		<openMRSVersion>2.4.0</openMRSVersion>
 		<appframeworkVersion>2.13.0</appframeworkVersion>
 		<calculationVersion>1.2</calculationVersion>
 		<htmlformentryVersion>3.9.2</htmlformentryVersion>
