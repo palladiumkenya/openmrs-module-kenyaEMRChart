@@ -324,6 +324,7 @@ SELECT "Successfully created pharmacy extract table";
       visit_date,
       location_id,
       encounter_id,
+      (case service_type when 1622 then 'ANC' when 164835 then 'Delivery' when 1623 then 'PNC' else '' end)as service_type,
       anc_number,
       first_anc_visit_date,
       gravida,
