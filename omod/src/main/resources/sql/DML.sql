@@ -691,6 +691,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			visit_date,
 			location_id,
 			encounter_id,
+			service_type,
 			anc_number,
 			first_anc_visit_date,
 			gravida,
@@ -733,6 +734,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				e.encounter_datetime,
 				e.location_id,
 				e.encounter_id,
+				max(if(o.concept_id=160478,o.value_coded,null)) as service_type,
 				max(if(o.concept_id=163530,o.value_text,null)) as anc_number,
 				max(if(o.concept_id=163547,o.value_datetime,null)) as first_anc_visit_date,
 				max(if(o.concept_id=5624,o.value_numeric,null)) as gravida,
@@ -770,7 +772,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555)
+														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where

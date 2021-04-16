@@ -423,6 +423,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     visit_date DATE,
     location_id INT(11) DEFAULT NULL,
     encounter_id INT(11) NOT NULL PRIMARY KEY,
+    service_type int(11),
     anc_number VARCHAR(50),
     first_anc_visit_date DATE,
     gravida INT(11),
