@@ -1830,37 +1830,79 @@ CREATE PROCEDURE sp_update_etl_tb_screening(IN last_update_time DATETIME)
   BEGIN
 
     insert into kenyaemr_etl.etl_tb_screening(
-      patient_id,
-      uuid,
-      provider,
-      visit_id,
-      visit_date,
-      encounter_id,
-      location_id,
-      resulting_tb_status ,
-      tb_treatment_start_date ,
-      notes,
-      date_created,
-      date_last_modified
+        patient_id,
+        uuid,
+        provider,
+        visit_id,
+        visit_date,
+        encounter_id,
+        location_id,
+        cough_for_2wks_or_more,
+        confirmed_tb_contact,
+        fever_for_2wks_or_more,
+        noticeable_weight_loss,
+        night_sweat_for_2wks_or_more,
+        lethargy,
+        spatum_smear_ordered,
+        chest_xray_ordered,
+        genexpert_ordered,
+        spatum_smear_result,
+        chest_xray_result,
+        genexpert_result,
+        referral,
+        clinical_tb_diagnosis,
+        resulting_tb_status ,
+        contact_invitation,
+        evaluated_for_ipt,
+        started_anti_TB,
+        tb_treatment_start_date,
+        tb_prophylaxis,
+        notes,
+        person_present,
+        date_created,
+        date_last_modified
     )
       select
         e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
+        max(if(o.concept_id=1729 and o.value_coded =159799,o.value_coded,null)) as cough_for_2wks_or_more,
+        max(if(o.concept_id=1729 and o.value_coded =124068,o.value_coded,null)) confirmed_tb_contact,
+        max(if(o.concept_id=1729 and o.value_coded =1494,o.value_coded,null)) fever_for_2wks_or_more,
+        max(if(o.concept_id=1729 and o.value_coded =832,o.value_coded,null)) as noticeable_weight_loss,
+        max(if(o.concept_id=1729 and o.value_coded =133027,o.value_coded,null)) as night_sweat_for_2wks_or_more,
+        max(if(o.concept_id=1729 and o.value_coded =116334,o.value_coded,null)) as lethargy,
+        max(if(o.concept_id=1271 and o.value_coded =307,o.value_coded,null)) as spatum_smear_ordered,
+        max(if(o.concept_id=1271 and o.value_coded =12,o.value_coded,null)) as chest_xray_ordered,
+        max(if(o.concept_id=1271 and o.value_coded = 162202,o.value_coded,null)) as genexpert_ordered,
+        max(if(o.concept_id=307,o.value_coded,null)) as spatum_smear_result,
+        max(if(o.concept_id=12,o.value_coded,null)) as chest_xray_result,
+        max(if(o.concept_id=162202,o.value_coded,null)) as genexpert_result,
+        max(if(o.concept_id=1272,o.value_coded,null)) as referral,
+        max(if(o.concept_id=163752,o.value_coded,null)) as clinical_tb_diagnosis,
         max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_tb_status,
+        max(if(o.concept_id=163414,o.value_coded,null)) as contact_invitation,
+        max(if(o.concept_id=162275,o.value_coded,null)) as evaluated_for_ipt,
+        max(if(o.concept_id=162309,o.value_coded,null)) as started_anti_TB,
         max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as tb_treatment_start_date,
+        max(if(o.concept_id=1109,o.value_coded,null)) as tb_prophylaxis,
         max(case o.concept_id when 160632 then value_text else NULL end) as notes,
+        max(if(o.concept_id=161643,o.value_coded,null)) as person_present,
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632,161643,1729,1271,307,12,162202,1272,163752,163414,162275,162309,1109) and o.voided=0
       where e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
       group by e.patient_id,visit_date
-    ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),
-      resulting_tb_status=VALUES(resulting_tb_status), tb_treatment_start_date=VALUES(tb_treatment_start_date), notes=values(notes);
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),cough_for_2wks_or_more=values(cough_for_2wks_or_more),confirmed_tb_contact=values(confirmed_tb_contact),
+    fever_for_2wks_or_more=values(fever_for_2wks_or_more),noticeable_weight_loss=values(noticeable_weight_loss),night_sweat_for_2wks_or_more=values(night_sweat_for_2wks_or_more),lethargy=values(lethargy),spatum_smear_ordered=values(spatum_smear_ordered),
+    chest_xray_ordered=values(chest_xray_ordered),genexpert_ordered=values(genexpert_ordered),spatum_smear_result=values(spatum_smear_result),
+    chest_xray_result=values(chest_xray_result),genexpert_result=values(genexpert_result),referral=values(referral),clinical_tb_diagnosis=values(clinical_tb_diagnosis),
+    resulting_tb_status=VALUES(resulting_tb_status), tb_treatment_start_date=VALUES(tb_treatment_start_date),contact_invitation=values(contact_invitation),evaluated_for_ipt=values(evaluated_for_ipt),started_anti_TB=values(started_anti_TB),
+    tb_prophylaxis=values(tb_prophylaxis), notes=values(notes);
 
 
     END $$
