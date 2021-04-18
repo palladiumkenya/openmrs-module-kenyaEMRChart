@@ -1878,19 +1878,19 @@ CREATE PROCEDURE sp_update_etl_tb_screening(IN last_update_time DATETIME)
         max(if(o.concept_id=162202,o.value_coded,null)) as genexpert_result,
         max(if(o.concept_id=1272,o.value_coded,null)) as referral,
         max(if(o.concept_id=163752,o.value_coded,null)) as clinical_tb_diagnosis,
-        max(case o.concept_id when 1659 then o.value_coded else null end) as resulting_tb_status,
+        max(if(o.concept_id=1659,o.value_coded,null)) as resulting_tb_status,
         max(if(o.concept_id=163414,o.value_coded,null)) as contact_invitation,
         max(if(o.concept_id=162275,o.value_coded,null)) as evaluated_for_ipt,
         max(if(o.concept_id=162309,o.value_coded,null)) as started_anti_TB,
-        max(case o.concept_id when 1113 then date(o.value_datetime)  else NULL end) as tb_treatment_start_date,
+        max(if(o.concept_id=1113,date(o.value_datetime),null)) as tb_treatment_start_date,
         max(if(o.concept_id=1109,o.value_coded,null)) as tb_prophylaxis,
-        max(case o.concept_id when 160632 then value_text else NULL end) as notes,
+        max(if(o.concept_id=160632,o.value_text,null)) as notes,
         max(if(o.concept_id=161643,o.value_coded,null)) as person_present,
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
-        inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce")
+        inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce","23b4ebbd-29ad-455e-be0e-04aa6bc30798")
         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632,161643,1729,1271,307,12,162202,1272,163752,163414,162275,162309,1109) and o.voided=0
       where e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
