@@ -1,4 +1,4 @@
-DROP PROCEDURE IF EXISTS create_datatools_tables$$
+DROP PROCEDURE IF EXISTS create_datatools_tables $$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
 DECLARE script_id INT(11);
@@ -1075,5 +1075,5 @@ ALTER TABLE kenyaemr_datatools.gender_based_violence ADD INDEX(visit_date);
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
-END$$
+END $$
 

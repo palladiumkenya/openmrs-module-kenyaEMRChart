@@ -1,4 +1,4 @@
-DROP PROCEDURE IF EXISTS create_etl_tables$$
+DROP PROCEDURE IF EXISTS create_etl_tables $$
 CREATE PROCEDURE create_etl_tables()
 BEGIN
 DECLARE script_id INT(11);
@@ -2464,4 +2464,4 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
-END$$
+END $$
