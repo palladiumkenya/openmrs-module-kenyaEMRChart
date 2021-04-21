@@ -643,6 +643,14 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			viral_load,
 			ldl,
 			arv_status,
+            test_1_kit_name,
+            test_1_kit_lot_no,
+            test_1_kit_expiry,
+            test_1_result,
+            test_2_kit_name,
+            test_2_kit_lot_no,
+            test_2_kit_expiry,
+            test_2_result,
 			final_test_result,
 			patient_given_result,
 			partner_hiv_tested,
@@ -725,6 +733,14 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
             max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
             max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
+            max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
+            max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
+            max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
+            max(if(t.test_1_result is not null, t.test_1_result, null)) as test_1_result,
+            max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
+            max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
+            max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
+            max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
             max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
             max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
             max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -778,6 +794,22 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
              ) f on f.form_id=e.form_id
                  left join risk_stratification_encounter rse on e.encounter_id = rse.encounter_id
                  left JOIN risk_stratification_encounter rse2 on rse2.patient_id = rse.patient_id and rse2.stratification_type='OBSTETRIC_HISTORY'
+                 left join (
+            select
+                o.person_id,
+                o.encounter_id,
+                o.obs_group_id,
+                max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
+                max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+                max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
+                max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
+                max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
+            from obs o
+                     inner join encounter e on e.encounter_id = o.encounter_id
+                     inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843')
+            where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+            group by e.encounter_id, o.obs_group_id
+        ) t on e.encounter_id = t.encounter_id
         where e.date_created >= last_update_time
 						or e.date_changed >= last_update_time
 						or e.date_voided >= last_update_time
