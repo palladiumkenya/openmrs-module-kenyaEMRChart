@@ -514,6 +514,10 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
       date_died,
       transfer_facility,
       transfer_date,
+      death_reason,
+      specific_death_cause,
+      natural_causes,
+      non_natural_cause,
       date_created,
       date_last_modified
     )
@@ -541,11 +545,15 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
         max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
         max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
         max(if(o.concept_id=160649, o.value_datetime, null)) as to_date,
+        max(if(o.concept_id=1599, o.value_coded, null)) as death_reason,
+        max(if(o.concept_id=1748, o.value_coded, null)) as specific_death_cause,
+        max(if(o.concept_id=162580, left(trim(o.value_text),200), null)) as natural_causes,
+        max(if(o.concept_id=160218, left(trim(o.value_text),200), null)) as non_natural_cause,
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
-        inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,164384,1543,159495,160649,165380,1285,164133)
+        inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,164384,1543,159495,160649,165380,1285,164133,1599,1748,162580,160218)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
@@ -560,7 +568,8 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),discontinuation_reason=VALUES(discontinuation_reason),
       date_died=VALUES(date_died),transfer_facility=VALUES(transfer_facility),transfer_date=VALUES(transfer_date),
-      trf_out_verified=VALUES(trf_out_verified),trf_out_verification_date=VALUES(trf_out_verification_date)
+      trf_out_verified=VALUES(trf_out_verified),trf_out_verification_date=VALUES(trf_out_verification_date),
+      death_reason=VALUES(death_reason),specific_death_cause=VALUES(specific_death_cause)
     ;
 
     END$$
