@@ -667,6 +667,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 		    amniotic_fluid,
             placental_pathology,
 		    fetal_growth,
+            urinalysis_done,
 			urine_microscopy,
 			urinary_albumin,
 			glucose_measurement,
@@ -757,6 +758,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             max(if(o.concept_id=163446,(case o.value_coded when 1115 then "Normal" when 159985 then "Scanty" when 165381 then "Excess" else null end),null)) as amniotic_fluid,
             max(if(o.concept_id=165385,(case o.value_coded when 114127 then "Placenta Praevia" when 130108 then "Placental Abruption" when 1115 then "Normal" else null end),null)) as placental_pathology,
             max(if(o.concept_id=165382,(case o.value_coded when 1115 then "Normal" when 118245 then "Fetal growth restriction" else null end),null)) as fetal_growth,
+            max(if(o.concept_id=165576,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end ),null)) as urinalysis_done,
             max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
             max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
             max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -786,7 +788,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-            and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395,1458,1325,162044,165383,120785,165384,165380,163446,165385,165382)
+            and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395,1458,1325,162044,165383,120785,165384,165380,163446,165385,165382,165576)
                  inner join
              (
                  select form_id, uuid,name from form where
@@ -825,7 +827,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			who_stage=VALUES(who_stage),cd4=VALUES(cd4),viral_load=VALUES(viral_load),ldl=VALUES(ldl),arv_status=VALUES(arv_status),final_test_result=VALUES(final_test_result),
 			patient_given_result=VALUES(patient_given_result),
 			partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),TTT=VALUES(TTT),IPT_malaria=VALUES(IPT_malaria),
-			iron_supplement=VALUES(iron_supplement),deworming=VALUES(deworming),bed_nets=VALUES(bed_nets),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),
+			iron_supplement=VALUES(iron_supplement),deworming=VALUES(deworming),bed_nets=VALUES(bed_nets),urinalysis_done=VALUES(urinalysis_done),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),
 			urine_nitrite_test=VALUES(urine_nitrite_test),
 			urine_leukocyte_esterace_test=VALUES(urine_leukocyte_esterace_test),urinary_ketone=VALUES(urinary_ketone),urine_bile_salt_test=VALUES(urine_bile_salt_test),
 			urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),syphilis_test_status=VALUES(syphilis_test_status),syphilis_treated_status=VALUES(syphilis_treated_status),

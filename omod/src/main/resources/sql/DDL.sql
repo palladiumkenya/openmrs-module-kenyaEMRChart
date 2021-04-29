@@ -491,6 +491,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     amniotic_fluid VARCHAR(50),
     fetal_growth VARCHAR(50),
     placental_pathology VARCHAR(50),
+    urinalysis_done VARCHAR (50),
     urine_microscopy VARCHAR(100),
     urinary_albumin INT(11),
     glucose_measurement INT(11),
