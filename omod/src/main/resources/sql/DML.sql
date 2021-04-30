@@ -973,7 +973,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 											 o.obs_group_id,
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
@@ -1122,7 +1122,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 											o.obs_group_id,
 											max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
 											max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										from obs o
@@ -1365,7 +1365,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 											 o.obs_group_id,
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
@@ -2218,6 +2218,8 @@ patient_disabled,
 disability_type,
 patient_consented,
 client_tested_as,
+setting,
+approach,
 test_strategy,
 hts_entry_point,
 test_1_kit_name,
@@ -2255,14 +2257,27 @@ max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 th
 max(if(o.concept_id=162558,(case o.value_coded when 120291 then "Deaf" when 147215 then "Blind" when 151342 then "Mentally Challenged" when 164538 then "Physically Challenged" when 5622 then "Other" else "" end),null)) as disability_type,
 max(if(o.concept_id=1710,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end),null)) as patient_consented,
 max(if(o.concept_id=164959,(case o.value_coded when 164957 then "Individual" when 164958 then "Couple" else "" end),null)) as client_tested_as,
+max(if(o.concept_id=165215,(
+    case o.value_coded
+    when 1537 then "Facility"
+    when 163488 then "Community"
+    else ""
+    end ),null)) as setting,
+max(if(o.concept_id=163556,(
+    case o.value_coded
+    when 164163 then "Provider Initiated Testing(PITC)"
+    when 164953 then "Client Initiated Testing (CITC)"
+    else ""
+    end ),null)) as approach,
 max(if(o.concept_id=164956,(
   case o.value_coded
-  when 164163 then "Provider Initiated Testing(PITC)"
-  when 164953 then "Non Provider Initiated Testing"
-  when 164954 then "Integrated VCT Center"
+  when 164163 then "HP:Provider Initiated Testing(PITC)"
+  when 164953 then "NP: HTS for non-patients"
+  when 164954 then "VI:Integrated VCT Center"
   when 164955 then "Stand Alone VCT Center"
   when 159938 then "Home Based Testing"
-  when 159939 then "Mobile Outreach HTS"
+  when 159939 then "MO: Mobile Outreach HTS"
+  when 161557 then "Index testing"
   when 5622 then "Other"
   else ""
   end ),null)) as test_strategy,
@@ -2280,6 +2295,10 @@ max(if(o.concept_id=164956,(
              when 159940 then "VCT"
              when 159938 then "Home Based Testing"
              when 159939 then "Mobile Outreach"
+             when 162223 then "VMMC"
+             when 160546 then "STI Clinic"
+             when 160522 then "Emergency"
+             when 163096 then "Community Testing"
              when 5622 then "Other"
              else ""
              end ),null)) as hts_entry_point,
@@ -2310,7 +2329,7 @@ inner join (
                o.obs_group_id,
                max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
                max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else "" end),null)) as kit_name ,
+               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
                max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
              from obs o
