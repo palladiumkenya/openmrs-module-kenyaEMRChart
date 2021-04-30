@@ -2257,18 +2257,8 @@ max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 th
 max(if(o.concept_id=162558,(case o.value_coded when 120291 then "Deaf" when 147215 then "Blind" when 151342 then "Mentally Challenged" when 164538 then "Physically Challenged" when 5622 then "Other" else "" end),null)) as disability_type,
 max(if(o.concept_id=1710,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end),null)) as patient_consented,
 max(if(o.concept_id=164959,(case o.value_coded when 164957 then "Individual" when 164958 then "Couple" else "" end),null)) as client_tested_as,
-max(if(o.concept_id=165215,(
-    case o.value_coded
-    when 1537 then "Facility"
-    when 163488 then "Community"
-    else ""
-    end ),null)) as setting,
-max(if(o.concept_id=163556,(
-    case o.value_coded
-    when 164163 then "Provider Initiated Testing(PITC)"
-    when 164953 then "Client Initiated Testing (CITC)"
-    else ""
-    end ),null)) as approach,
+max(if(o.concept_id=165215,(case o.value_coded when 1537 then "Facility" when 163488 then "Community" else "" end ),null)) as setting,
+max(if(o.concept_id=163556,(case o.value_coded when 164163 then "Provider Initiated Testing(PITC)" when 164953 then "Client Initiated Testing (CITC)" else "" end ),null)) as approach,
 max(if(o.concept_id=164956,(
   case o.value_coded
   when 164163 then "HP:Provider Initiated Testing(PITC)"
@@ -2321,7 +2311,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556)
 inner join (
              select
                o.person_id,
