@@ -2261,6 +2261,8 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       disability_type,
       patient_consented,
       client_tested_as,
+      setting,
+      approach,
       test_strategy,
       hts_entry_point,
       test_1_kit_name,
@@ -2298,16 +2300,19 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(o.concept_id=162558,(case o.value_coded when 120291 then "Deaf" when 147215 then "Blind" when 151342 then "Mentally Challenged" when 164538 then "Physically Challenged" when 5622 then "Other" else null end),null)) as disability_type,
         max(if(o.concept_id=1710,(case o.value_coded when 1 then "Yes" when 0 then "No" else null end),null)) as patient_consented,
         max(if(o.concept_id=164959,(case o.value_coded when 164957 then "Individual" when 164958 then "Couple" else null end),null)) as client_tested_as,
+        max(if(o.concept_id=165215,(case o.value_coded when 1537 then "Facility" when 163488 then "Community" else "" end ),null)) as setting,
+        max(if(o.concept_id=163556,(case o.value_coded when 164163 then "Provider Initiated Testing(PITC)" when 164953 then "Client Initiated Testing (CITC)" else "" end ),null)) as approach,
         max(if(o.concept_id=164956,(
           case o.value_coded
-          when 164163 then "Provider Initiated Testing(PITC)"
-          when 164953 then "Non Provider Initiated Testing"
-          when 164954 then "Integrated VCT Center"
+          when 164163 then "HP:Provider Initiated Testing(PITC)"
+          when 164953 then "NP: HTS for non-patients"
+          when 164954 then "VI:Integrated VCT Center"
           when 164955 then "Stand Alone VCT Center"
           when 159938 then "Home Based Testing"
-          when 159939 then "Mobile Outreach HTS"
+          when 159939 then "MO: Mobile Outreach HTS"
+          when 161557 then "Index testing"
           when 5622 then "Other"
-          else null
+          else ""
           end ),null)) as test_strategy,
         max(if(o.concept_id=160540,(
           case o.value_coded
@@ -2323,6 +2328,10 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
           when 159940 then "VCT"
           when 159938 then "Home Based Testing"
           when 159939 then "Mobile Outreach"
+          when 162223 then "VMMC"
+          when 160546 then "STI Clinic"
+          when 160522 then "Emergency"
+          when 163096 then "Community Testing"
           when 5622 then "Other"
           else ""
           end ),null)) as hts_entry_point,
@@ -2345,7 +2354,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
         inner join obs o on o.encounter_id = e.encounter_id and o.voided=0 and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558, 1710, 164959, 164956,
-                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813)
+                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556)
         inner join (
                      select
                        o.person_id,
@@ -2353,7 +2362,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
                        o.obs_group_id,
                        max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else null end),null)) as test_1_result ,
                        max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else null end),null)) as test_2_result ,
-                       max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" else null end),null)) as kit_name ,
+                       max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else null end),null)) as kit_name ,
                        max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                        max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
                      from obs o inner join encounter e on e.encounter_id = o.encounter_id
@@ -2374,7 +2383,8 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), test_type=VALUES(test_type), population_type=VALUES(population_type),
       key_population_type=VALUES(key_population_type), ever_tested_for_hiv=VALUES(ever_tested_for_hiv), patient_disabled=VALUES(patient_disabled),
       disability_type=VALUES(disability_type), patient_consented=VALUES(patient_consented), client_tested_as=VALUES(client_tested_as),
-      test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point), test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
+      test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point),setting=VALUES(setting),approach=VALUES(approach),
+      test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
       test_1_kit_expiry=VALUES(test_1_kit_expiry), test_1_result=VALUES(test_1_result), test_2_kit_name=VALUES(test_2_kit_name),
       test_2_kit_lot_no=VALUES(test_2_kit_lot_no), test_2_kit_expiry=VALUES(test_2_kit_expiry), test_2_result=VALUES(test_2_result),
       final_test_result=VALUES(final_test_result), patient_given_result=VALUES(patient_given_result), couple_discordant=VALUES(couple_discordant),
@@ -2421,8 +2431,8 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
         e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         e.encounter_datetime as visit_date,
-        max(if(o.concept_id=164966,(case o.value_coded when 1650 then "Phone" when 164965 then "Physical" else null end),null)) as tracing_type ,
-        max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Contacted and linked" when 1066 then "Contacted but not linked" else null end),null)) as tracing_status,
+        max(if(o.concept_id=164966,(case o.value_coded when 1650 then "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type ,
+        max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Contacted and linked" when 1066 then "Contacted but not linked" else "" end),null)) as tracing_status,
         max(if(o.concept_id=162724,trim(o.value_text),null)) as facility_linked_to,
         max(if(o.concept_id=160555,o.value_datetime,null)) as enrollment_date,
         max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_date,
@@ -2437,14 +2447,14 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
         e.voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
-        inner join form f on f.form_id = e.form_id and f.uuid = "050a7f12-5c52-4cad-8834-863695af335d"
+        inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","15ed03d2-c972-11e9-a32f-2a2ae2dbcce4")
         left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577) and o.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.encounter_id
+      group by e.patient_id,e.visit_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), tracing_type=VALUES(tracing_type), tracing_status=VALUES(tracing_status),
       facility_linked_to=VALUES(facility_linked_to), ccc_number=VALUES(ccc_number), provider_handed_to=VALUES(provider_handed_to), cadre=VALUES(cadre)
     ;
