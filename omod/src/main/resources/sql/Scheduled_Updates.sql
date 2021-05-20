@@ -2343,7 +2343,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
         max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
         max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
-        max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else null end),null)) as final_test_result,
+        max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" when 163611 then "Invalid" else null end),null)) as final_test_result,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_given_result,
         max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as couple_discordant,
         max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "Not done" when 1111 then "On TB Treatment"  else null end),null)) as tb_screening,
