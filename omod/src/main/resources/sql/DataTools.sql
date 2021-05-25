@@ -386,6 +386,7 @@ SELECT "Successfully created pharmacy extract table";
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
       next_appointment_date,
+      next_home_visit_date,
       clinical_notes
 
     from kenyaemr_etl.etl_mch_antenatal_visit;
