@@ -1030,6 +1030,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			date_of_delivery,
 			blood_loss,
 			condition_of_mother,
+			delivery_outcome,
 			apgar_score_1min,
 			apgar_score_5min,
 			apgar_score_10min,
@@ -1086,6 +1087,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=5599,o.value_datetime,null)) as date_of_delivery,
 				max(if(o.concept_id=162092,o.value_coded,null)) as blood_loss,
 				max(if(o.concept_id=1856,o.value_coded,null)) as condition_of_mother,
+				max(if(o.concept_id=159949,o.value_coded,null)) as delivery_outcome,
 				max(if(o.concept_id=159603,o.value_numeric,null)) as apgar_score_1min,
 				max(if(o.concept_id=159604,o.value_numeric,null)) as apgar_score_5min,
 				max(if(o.concept_id=159605,o.value_numeric,null)) as apgar_score_10min,
@@ -1129,7 +1131,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where
