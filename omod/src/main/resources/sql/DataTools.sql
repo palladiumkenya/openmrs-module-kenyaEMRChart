@@ -504,6 +504,7 @@ SELECT "Successfully created pharmacy extract table";
       date_of_delivery,
       (case blood_loss when 1499 then "Moderate" when 1107 then "None" when 1498 then "Mild" when 1500 then "Severe" else "" end) as blood_loss,
       (case condition_of_mother when 160429 then "Alive" when 134612 then "Dead" else "" end) as condition_of_mother,
+      (case delivery_outcome when 159913 then 'Single' when 159914 then 'Twins' when 159915 then 'Triplets' end) as delivery_outcome,
       apgar_score_1min,
       apgar_score_5min,
       apgar_score_10min,
