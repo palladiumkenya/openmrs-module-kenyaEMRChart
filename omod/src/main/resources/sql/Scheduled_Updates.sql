@@ -2424,6 +2424,7 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
       visit_date,
       tracing_type,
       tracing_status,
+      referral_facility,
       facility_linked_to,
       enrollment_date,
       art_start_date,
@@ -2444,6 +2445,7 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
         e.encounter_datetime as visit_date,
         max(if(o.concept_id=164966,(case o.value_coded when 1650 then "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type ,
         max(if(o.concept_id=159811,(case o.value_coded when 1065 then "Contacted and linked" when 1066 then "Contacted but not linked" else "" end),null)) as tracing_status,
+        max(if(o.concept_id=160481,(case o.value_coded when 163266 then "This health facility" when 164407 then "Other health facility" else "" end),null)) as referral_facility,
         max(if(o.concept_id=162724,trim(o.value_text),null)) as facility_linked_to,
         max(if(o.concept_id=160555,o.value_datetime,null)) as enrollment_date,
         max(if(o.concept_id=159599,o.value_datetime,null)) as art_start_date,
@@ -2459,7 +2461,7 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","15ed03d2-c972-11e9-a32f-2a2ae2dbcce4")
-        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577) and o.voided=0
+        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481) and o.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
