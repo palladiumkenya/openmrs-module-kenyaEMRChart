@@ -123,6 +123,7 @@ join (select pi.patient_id,
              max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Patient_clinic_number,
              max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
              max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
+             max(if(pit.uuid='1dc8b419-35f2-4316-8d68-135f0689859b',pi.identifier,null)) cwc_number,
              max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod_service_number,
              max(if(pit.uuid='5065ae70-0b61-11ea-8d71-362b9e155667',pi.identifier,null)) CPIMS_unique_identifier,
              max(if(pit.uuid='dfacd928-0370-4315-99d7-6ec1c9f7ae76',pi.identifier,null)) openmrs_id,
@@ -135,6 +136,7 @@ set d.unique_patient_no=pid.UPN,
     d.national_id_no=pid.National_id,
     d.patient_clinic_number=pid.Patient_clinic_number,
     d.hei_no=pid.Hei_id,
+    d.cwc_number=pid.cwc_number,
     d.Tb_no=pid.Tb_treatment_number,
     d.district_reg_no=pid.district_reg_number,
     d.kdod_service_number=pid.kdod_service_number,
@@ -1420,6 +1422,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 			spd_number,
 			birth_weight,
 			gestation_at_birth,
+			birth_type,
 			date_first_seen,
 			birth_notification_number,
 			birth_certificate_number,
@@ -1472,6 +1475,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 				max(if(o.concept_id=162054,o.value_text,null)) as spd_number,
 				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=1409,o.value_numeric,null)) as gestation_at_birth,
+				max(if(o.concept_id=159949,o.value_coded,null)) as birth_type,
 				max(if(o.concept_id=162140,o.value_datetime,null)) as date_first_seen,
 				max(if(o.concept_id=162051,o.value_text,null)) as birth_notification_number,
 				max(if(o.concept_id=162052,o.value_text,null)) as birth_certificate_number,
@@ -1513,7 +1517,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427)
+														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427,159949)
 
 				inner join
 				(
