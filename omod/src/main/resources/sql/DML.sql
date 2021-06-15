@@ -2585,6 +2585,55 @@ FROM kenyaemr_etl.etl_patient_hiv_followup
 WHERE date(next_appointment_date) = CURDATE()
 GROUP BY patient_id;
 
+--Viral load tracker
+DROP TABLE IF EXISTS kenyaemr_etl.etl_viral_load_tracker;
+
+CREATE TABLE kenyaemr_etl.etl_viral_load_tracker AS
+select t.patient_id,vl.vl_date,vl.vl_result,vl.urgency from (select fup.visit_date,fup.patient_id, max(e.visit_date) as enroll_date,
+	     greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
+	     greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
+	     greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
+	     d.patient_id as disc_patient,
+	     d.effective_disc_date as effective_disc_date,
+	     max(d.visit_date) as date_discontinued,
+	     de.patient_id as started_on_drugs,
+	     de.date_started
+	from kenyaemr_etl.etl_patient_hiv_followup fup
+	     join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
+	     join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
+	     left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(curdate())
+	     left outer JOIN
+	       (select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date,max(date(effective_discontinuation_date)) as effective_disc_date from kenyaemr_etl.etl_patient_program_discontinuation
+	        where date(visit_date) <= date(curdate()) and program_name='HIV'
+	        group by patient_id
+	       ) d on d.patient_id = fup.patient_id
+	where fup.visit_date <= date(curdate())
+	group by patient_id
+	having (started_on_drugs is not null and started_on_drugs <> '') and (
+	  (
+	      ((timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and ((date(d.effective_disc_date) > date(curdate()) or date(enroll_date) > date(d.effective_disc_date)) or d.effective_disc_date is null))
+	        and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
+	      )
+	  ) order by date_started desc
+	) t
+	inner join (
+	select
+	patient_id,encounter_id,
+	max(visit_date) as vl_date,
+	date_sub(curdate() , interval 12 MONTH),
+	if(mid(max(concat(visit_date,lab_test)),11) = 856, mid(max(concat(visit_date,test_result)),11), if(mid(max(concat(visit_date,lab_test)),11)=1305 and mid(max(concat(visit_date,test_result)),11) = 1302,"LDL","")) as vl_result,
+  mid(max(concat(visit_date,urgency)),11) as urgency
+  from kenyaemr_etl.etl_laboratory_extract
+  group by patient_id
+  having mid(max(concat(visit_date,lab_test)),11) in (1305,856) and max(visit_date) between
+  date_sub(curdate() , interval 12 MONTH) and date(curdate())
+  )vl
+  on t.patient_id = vl.patient_id;
+
+-- ADD INDICES
+ALTER TABLE kenyaemr_etl.etl_viral_load_tracker ADD INDEX(vl_date);
+ALTER TABLE kenyaemr_etl.etl_viral_load_tracker ADD INDEX(patient_id);
+
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
 
 END$$
