@@ -2636,6 +2636,28 @@ select t.patient_id,vl.vl_date,vl.vl_result,vl.urgency from (select fup.visit_da
 ALTER TABLE kenyaemr_etl.etl_viral_load_tracker ADD INDEX(vl_date);
 ALTER TABLE kenyaemr_etl.etl_viral_load_tracker ADD INDEX(patient_id);
 
+--Tested contacts
+DROP TABLE IF EXISTS kenyaemr_etl.etl_contacts_tested;
+
+create table kenyaemr_etl.etl_hts_contacts as
+select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,t.visit_date,t.test_type,t.test_1_result,t.test_2_result,t.final_test_result from
+kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id group by c.patient_id;
+
+ALTER TABLE kenyaemr_etl.etl_contacts_tested ADD INDEX(id);
+ALTER TABLE kenyaemr_etl.etl_contacts_tested ADD INDEX(patient_id);
+ALTER TABLE kenyaemr_etl.etl_contacts_tested ADD INDEX(visit_date);
+
+--Linked contacts
+DROP TABLE IF EXISTS kenyaemr_etl.etl_contacts_linked;
+
+create table kenyaemr_etl.etl_contacts_linked as
+select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,l.visit_date,t.final_test_result from kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id
+inner join kenyaemr_etl.etl_hts_referral_and_linkage l on c.patient_id=l.patient_id
+group by c.id;
+
+ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(id);
+ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(visit_date);
+
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
 
 END $$
