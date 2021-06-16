@@ -123,6 +123,7 @@ join (select pi.patient_id,
              max(if(pit.uuid='b4d66522-11fc-45c7-83e3-39a1af21ae0d',pi.identifier,null)) Patient_clinic_number,
              max(if(pit.uuid='49af6cdc-7968-4abb-bf46-de10d7f4859f',pi.identifier,null)) National_id,
              max(if(pit.uuid='0691f522-dd67-4eeb-92c8-af5083baf338',pi.identifier,null)) Hei_id,
+             max(if(pit.uuid='1dc8b419-35f2-4316-8d68-135f0689859b',pi.identifier,null)) cwc_number,
              max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod_service_number,
              max(if(pit.uuid='5065ae70-0b61-11ea-8d71-362b9e155667',pi.identifier,null)) CPIMS_unique_identifier,
              max(if(pit.uuid='dfacd928-0370-4315-99d7-6ec1c9f7ae76',pi.identifier,null)) openmrs_id,
@@ -135,6 +136,7 @@ set d.unique_patient_no=pid.UPN,
     d.national_id_no=pid.National_id,
     d.patient_clinic_number=pid.Patient_clinic_number,
     d.hei_no=pid.Hei_id,
+    d.cwc_number=pid.cwc_number,
     d.Tb_no=pid.Tb_treatment_number,
     d.district_reg_no=pid.district_reg_number,
     d.kdod_service_number=pid.kdod_service_number,
@@ -499,7 +501,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join
 (
-	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc')
+	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc','bcc6da85-72f2-4291-b206-789b8186a021')
 ) et on et.encounter_type_id=e.encounter_type
 inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
 left join orders od on od.order_id = o.order_id and od.voided=0
@@ -825,6 +827,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			fetal_movement,
 			who_stage,
 			cd4,
+			vl_sample_taken,
 			viral_load,
 			ldl,
 			arv_status,
@@ -841,6 +844,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			partner_hiv_tested,
 			partner_hiv_status,
 			prophylaxis_given,
+			date_given_haart,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
 			TTT,
@@ -870,6 +874,14 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			cacx_screening_method,
 			has_other_illnes,
 			counselled,
+			counselled_on_birth_plans,
+      counselled_on_danger_signs,
+      counselled_on_family_planning,
+      counselled_on_hiv,
+      counselled_on_supplimental_feeding,
+      counselled_on_breast_care,
+      counselled_on_infant_feeding,
+      counselled_on_treated_nets,
 			referred_from,
 			referred_to,
 			next_appointment_date,
@@ -906,6 +918,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=162107,o.value_coded,null)) as fetal_movement,
 				max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
 				max(if(o.concept_id=5497,o.value_numeric,null)) as cd4,
+				max(if(o.concept_id=1271,o.value_coded,null)) as vl_sample_taken,
 				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
 				max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
@@ -922,6 +935,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
+				max(if(o.concept_id=163784,o.value_datetime,null)) as date_given_haart,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
 				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
@@ -951,6 +965,14 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=163589,o.value_coded,null)) as cacx_screening_method,
 				max(if(o.concept_id=162747,o.value_coded,null)) as has_other_illnes,
 				max(if(o.concept_id=1912,o.value_coded,null)) as counselled,
+				max(if(o.concept_id=159853 and o.value_coded=159758,o.value_coded,null)) counselled_on_birth_plans,
+        max(if(o.concept_id=159853 and o.value_coded=159857,o.value_coded,null)) counselled_on_danger_signs,
+        max(if(o.concept_id=159853 and o.value_coded=156277,o.value_coded,null)) counselled_on_family_planning,
+        max(if(o.concept_id=159853 and o.value_coded=1914,o.value_coded,null)) counselled_on_hiv,
+        max(if(o.concept_id=159853 and o.value_coded=159854,o.value_coded,null)) counselled_on_supplimental_feeding,
+        max(if(o.concept_id=159853 and o.value_coded=159856,o.value_coded,null)) counselled_on_breast_care,
+        max(if(o.concept_id=159853 and o.value_coded=161651,o.value_coded,null)) counselled_on_infant_feeding,
+        max(if(o.concept_id=159853 and o.value_coded=1381,o.value_coded,null)) counselled_on_treated_nets,
 				max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
@@ -960,7 +982,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395)
+														and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395,163784,1271,159853)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1010,6 +1032,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			date_of_delivery,
 			blood_loss,
 			condition_of_mother,
+			delivery_outcome,
 			apgar_score_1min,
 			apgar_score_5min,
 			apgar_score_10min,
@@ -1066,6 +1089,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=5599,o.value_datetime,null)) as date_of_delivery,
 				max(if(o.concept_id=162092,o.value_coded,null)) as blood_loss,
 				max(if(o.concept_id=1856,o.value_coded,null)) as condition_of_mother,
+				max(if(o.concept_id=159949,o.value_coded,null)) as delivery_outcome,
 				max(if(o.concept_id=159603,o.value_numeric,null)) as apgar_score_1min,
 				max(if(o.concept_id=159604,o.value_numeric,null)) as apgar_score_5min,
 				max(if(o.concept_id=159605,o.value_numeric,null)) as apgar_score_10min,
@@ -1109,7 +1133,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1398,6 +1422,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 			spd_number,
 			birth_weight,
 			gestation_at_birth,
+			birth_type,
 			date_first_seen,
 			birth_notification_number,
 			birth_certificate_number,
@@ -1450,6 +1475,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 				max(if(o.concept_id=162054,o.value_text,null)) as spd_number,
 				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=1409,o.value_numeric,null)) as gestation_at_birth,
+				max(if(o.concept_id=159949,o.value_coded,null)) as birth_type,
 				max(if(o.concept_id=162140,o.value_datetime,null)) as date_first_seen,
 				max(if(o.concept_id=162051,o.value_text,null)) as birth_notification_number,
 				max(if(o.concept_id=162052,o.value_text,null)) as birth_certificate_number,
@@ -1491,7 +1517,7 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427)
+														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427,159949)
 
 				inner join
 				(
@@ -2558,6 +2584,77 @@ SELECT patient_id, max(visit_date)
 FROM kenyaemr_etl.etl_patient_hiv_followup
 WHERE date(next_appointment_date) = CURDATE()
 GROUP BY patient_id;
+
+--Viral load tracker
+DROP TABLE IF EXISTS kenyaemr_etl.etl_viral_load_tracker;
+
+CREATE TABLE kenyaemr_etl.etl_viral_load_tracker AS
+select t.patient_id,vl.vl_date,vl.vl_result,vl.urgency from (select fup.visit_date,fup.patient_id, max(e.visit_date) as enroll_date,
+	     greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
+	     greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
+	     greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
+	     d.patient_id as disc_patient,
+	     d.effective_disc_date as effective_disc_date,
+	     max(d.visit_date) as date_discontinued,
+	     de.patient_id as started_on_drugs,
+	     de.date_started
+	from kenyaemr_etl.etl_patient_hiv_followup fup
+	     join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
+	     join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
+	     left outer join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(curdate())
+	     left outer JOIN
+	       (select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date,max(date(effective_discontinuation_date)) as effective_disc_date from kenyaemr_etl.etl_patient_program_discontinuation
+	        where date(visit_date) <= date(curdate()) and program_name='HIV'
+	        group by patient_id
+	       ) d on d.patient_id = fup.patient_id
+	where fup.visit_date <= date(curdate())
+	group by patient_id
+	having (started_on_drugs is not null and started_on_drugs <> '') and (
+	  (
+	      ((timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and ((date(d.effective_disc_date) > date(curdate()) or date(enroll_date) > date(d.effective_disc_date)) or d.effective_disc_date is null))
+	        and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
+	      )
+	  ) order by date_started desc
+	) t
+	inner join (
+	select
+	patient_id,encounter_id,
+	max(visit_date) as vl_date,
+	date_sub(curdate() , interval 12 MONTH),
+	if(mid(max(concat(visit_date,lab_test)),11) = 856, mid(max(concat(visit_date,test_result)),11), if(mid(max(concat(visit_date,lab_test)),11)=1305 and mid(max(concat(visit_date,test_result)),11) = 1302,"LDL","")) as vl_result,
+  mid(max(concat(visit_date,urgency)),11) as urgency
+  from kenyaemr_etl.etl_laboratory_extract
+  group by patient_id
+  having mid(max(concat(visit_date,lab_test)),11) in (1305,856) and max(visit_date) between
+  date_sub(curdate() , interval 12 MONTH) and date(curdate())
+  )vl
+  on t.patient_id = vl.patient_id;
+
+-- ADD INDICES
+ALTER TABLE kenyaemr_etl.etl_viral_load_tracker ADD INDEX(vl_date);
+ALTER TABLE kenyaemr_etl.etl_viral_load_tracker ADD INDEX(patient_id);
+
+--Tested contacts
+DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_contacts;
+
+CREATE TABLE kenyaemr_etl.etl_hts_contacts AS
+select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,t.visit_date,t.test_type,t.test_1_result,t.test_2_result,t.final_test_result from
+kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id group by c.patient_id;
+
+ALTER TABLE kenyaemr_etl.etl_hts_contacts ADD INDEX(id);
+ALTER TABLE kenyaemr_etl.etl_hts_contacts ADD INDEX(patient_id);
+ALTER TABLE kenyaemr_etl.etl_hts_contacts ADD INDEX(visit_date);
+
+--Linked contacts
+DROP TABLE IF EXISTS kenyaemr_etl.etl_contacts_linked;
+
+CREATE TABLE kenyaemr_etl.etl_contacts_linked AS
+select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,l.visit_date,t.final_test_result from kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id
+inner join kenyaemr_etl.etl_hts_referral_and_linkage l on c.patient_id=l.patient_id
+group by c.id;
+
+ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(id);
+ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(visit_date);
 
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
 
@@ -5335,7 +5432,7 @@ select
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0')
               ) et on et.encounter_type_id=e.encounter_type
    inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                       o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
