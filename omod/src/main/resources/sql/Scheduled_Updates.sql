@@ -5851,7 +5851,7 @@ order by e.patient_id
         voided=VALUES(voided);
 
 SELECT "Completed processingIPT screening data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 -- end of scheduled updates procedures
 
