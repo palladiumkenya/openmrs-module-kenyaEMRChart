@@ -5615,7 +5615,7 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
           voided=VALUES(voided);
     END $$
 
-  DROP PROCEDURE IF EXISTS sp_update_etl_depression_screening$$
+  DROP PROCEDURE IF EXISTS sp_update_etl_depression_screening $$
     CREATE PROCEDURE sp_update_etl_depression_screening(IN last_update_time DATETIME)
     BEGIN
     SELECT "Processing depression Screening", CONCAT("Time: ", NOW());
@@ -5653,10 +5653,10 @@ order by e.patient_id
         provider=VALUES(provider),
         PHQ_9_rating=VALUES(PHQ_9_rating),
         voided=VALUES(voided);
-END$$
+END $$
 
 -- Update Adverse events
-DROP PROCEDURE IF EXISTS sp_update_etl_adverse_events$$
+DROP PROCEDURE IF EXISTS sp_update_etl_adverse_events $$
 CREATE PROCEDURE sp_update_etl_adverse_events(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing adverse events", CONCAT("Time: ", NOW());
@@ -5714,10 +5714,10 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
         voided=VALUES(voided);
 
 SELECT "Completed processing adverse events data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 -- Update Allergy and chronic illness----
-DROP PROCEDURE IF EXISTS sp_update_etl_allergy_chronic_illness$$
+DROP PROCEDURE IF EXISTS sp_update_etl_allergy_chronic_illness $$
 CREATE PROCEDURE sp_update_etl_allergy_chronic_illness(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing allergy and chronic illness", CONCAT("Time: ", NOW());
@@ -5775,11 +5775,11 @@ order by e.patient_id
         allergy_severity=VALUES(allergy_severity),
         voided=VALUES(voided);
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 
 -- Update IPT screening----
-DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening$$
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening $$
 CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing IPT screening", CONCAT("Time: ", NOW());
