@@ -222,7 +222,7 @@ select
        max(if(o.concept_id=159599,o.value_datetime,null)) as date_started_art_at_transferring_facility,
        max(if(o.concept_id=160554,o.value_datetime,null)) as date_confirmed_hiv_positive,
        max(if(o.concept_id=160632,left(trim(o.value_text),100),null)) as facility_confirmed_hiv_positive,
-       max(if(o.concept_id=160533,o.value_boolean,null)) as arv_status,
+       max(if(o.concept_id=160533,o.value_numeric,null)) as arv_status,
        max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
        max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
        max(if(o.concept_id=160642,left(trim(o.value_text),100),null)) as treatment_supporter_telephone ,
@@ -5276,7 +5276,7 @@ SELECT "Completed processing gbv screening data ", CONCAT("Time: ", NOW());
 END $$
 
 -- ------------- populate etl_depression_screening-------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_depression_screening$$
+DROP PROCEDURE IF EXISTS sp_populate_etl_depression_screening $$
 CREATE PROCEDURE sp_populate_etl_depression_screening()
 BEGIN
 SELECT "Processing depression screening", CONCAT("Time: ", NOW());
@@ -5307,10 +5307,10 @@ where e.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing depression screening data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 -- Populate Adverse events
-DROP PROCEDURE IF EXISTS sp_populate_etl_adverse_events$$
+DROP PROCEDURE IF EXISTS sp_populate_etl_adverse_events $$
 CREATE PROCEDURE sp_populate_etl_adverse_events()
 BEGIN
 SELECT "Processing adverse events", CONCAT("Time: ", NOW());
@@ -5355,10 +5355,10 @@ where e.voided=0
 group by o1.obs_id;
 
 SELECT "Completed processing adverse events data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 -- Populate Allergy and chronic illness----
-DROP PROCEDURE IF EXISTS sp_populate_etl_allergy_chronic_illness$$
+DROP PROCEDURE IF EXISTS sp_populate_etl_allergy_chronic_illness $$
 CREATE PROCEDURE sp_populate_etl_allergy_chronic_illness()
 BEGIN
 SELECT "Processing alergy and chronic illness", CONCAT("Time: ", NOW());
@@ -5404,7 +5404,7 @@ where e.voided=0
 group by o1.obs_id;
 
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 		-- end of dml procedures
 
