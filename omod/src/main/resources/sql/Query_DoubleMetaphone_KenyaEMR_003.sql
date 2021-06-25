@@ -1,4 +1,4 @@
-DROP FUNCTION IF EXISTS fn_getPatientNameDoubleMetaphone$$
+DROP FUNCTION IF EXISTS fn_getPatientNameDoubleMetaphone $$
 
 CREATE FUNCTION fn_getPatientNameDoubleMetaphone(st VARCHAR(55)) RETURNS varchar(128) CHARSET utf8
     NO SQL
@@ -457,5 +457,5 @@ BEGIN
 		SET pri = CONCAT(pri, ';', sec);
   END IF;
 	RETURN (pri);
-END$$
+END $$
 

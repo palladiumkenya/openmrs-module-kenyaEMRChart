@@ -1,4 +1,4 @@
-DROP PROCEDURE IF EXISTS create_datatools_tables$$
+DROP PROCEDURE IF EXISTS create_datatools_tables $$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
 DECLARE script_id INT(11);
@@ -1423,5 +1423,5 @@ SELECT "Successfully created ipt_screening table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
-END$$
+END $$
 
