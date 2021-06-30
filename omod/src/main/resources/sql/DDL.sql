@@ -519,6 +519,8 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     next_appointment_date DATE,
     next_home_visit_date DATE,
     clinical_notes VARCHAR(200) DEFAULT NULL,
+    practioner_type INT(11) DEFAULT NULL,
+    practioner_name VARCHAR(100) DEFAULT NULL,
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
