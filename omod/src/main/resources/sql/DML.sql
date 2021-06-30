@@ -1013,7 +1013,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
 				max(if(o.concept_id=159917,o.value_coded,null)) as baby_condition,
 				max(if(o.concept_id=1282 and o.value_coded = 84893,1,0)) as teo_given,
-				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
+				max(if(o.concept_id=165578,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=161543,o.value_coded,null)) as bf_within_one_hour,
 				max(if(o.concept_id=164122,o.value_coded,null)) as birth_with_deformity,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
@@ -1036,7 +1036,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,165578,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
