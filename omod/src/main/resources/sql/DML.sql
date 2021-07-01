@@ -4049,22 +4049,75 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     location_id,
     date_created,
     date_last_modified,
+    visit_type,
+    screening_type,
+    post_treatment_complication_cause,
+    post_treatment_complication_other,
     screening_method,
     screening_result,
+    treatment_method,
+    treatment_method_other,
+    referred_out,
+    referral_facility,
+    referral_reason,
+    next_appointment_date,
     encounter_type,
     voided
     )
 select
        e.uuid,  e.encounter_id,e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id,e.date_created,
        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
-       max(if(o.concept_id = 163589, (case o.value_coded when 885 then 'Pap Smear' when 162816 then 'VIA' when 164977 then 'VILI' when 5622 then 'Other' else "" end), "" )) as screening_method,
-       max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive' when 159393 then 'Presumed' when 664  then 'Negative' else NULL end), '' )) as screening_result,
+       max(if(o.concept_id = 160288, (case o.value_coded when 162080 then 'Initial visit'
+                                                         when 161236 then 'Routine visit'
+                                                         when 165381 then 'Post treatment visit'
+                                                         when 1185 then 'Treatment visit'
+                                                         when 165382 then 'Post treatment complication' else "" end), "" )) as visit_type,
+       max(if(o.concept_id = 164181, (case o.value_coded when 164180 then 'First time screening'
+                                 when 160530 then 'Rescreening'
+                                 when 165389 then 'Post treatment followup' else "" end), "" )) as screening_type,
+       max(if(o.concept_id = 165383, (case o.value_coded when 162816 then 'Cryotherapy'
+                                 when 162810 then 'LEEP'
+                                 when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
+        max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
+        max(if(o.concept_id = 163589, (case o.value_coded when 885 then 'Pap Smear'
+                                                          when 162816 then 'VIA'
+                                                          when 164805 then 'VIA'
+                                                          when 164977 then 'VILI'
+                                                          when 160705 then 'Colposcopy'
+                                                          when 159859 then 'HPV Test'
+                                                          when 5622 then 'Other' else "" end), "" )) as screening_method,
+       max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive'
+                                                         when 1116 then 'Positive'
+                                                         when 145805 then 'Positive'
+                                                         when 159393 then 'Presumed'
+                                                         when 159008 then 'Presumed'
+                                                         when 155424 then 'Presumed'
+                                                         when 5622 then 'Other'
+                                                         when 1115  then 'Negative'
+                                                         when 145808  then 'Negative'
+                                                         when 664  then 'Negative' else NULL end), '' )) as screening_result,
+       max(if(o.concept_id = 165266, (case o.value_coded when 165381 then 'Cryotherapy postponed'
+                                                       when 165386 then 'Cryotherapy performed'
+                                                       when 162810 then 'LEEP'
+                                                       when 165396 then 'Cold knife cone'
+                                                       when 165395 then 'Thermocoagulation'
+                                                       when 165385 then 'Cryotherapy performed (single Visit)'
+                                                       when 159837 then 'Hysterectomy'
+                                                       when 165391 then 'Referred for cancer treatment'
+                                                       when 5622 then 'Other' else "" end), "" )) as treatment_method,
+      max(if(o.concept_id=160632,o.value_text,null)) as treatment_method_other,
+      max(if(o.concept_id=165267,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
+      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
+      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
+                                                      when 159008 then 'Large lesion, Suspect cancer'
+                                                      when 5622 then 'Other' else "" end), "" )) as referral_reason,
+      max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
       f.name as encounter_type,
        e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259')
-  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589) and o.voided=0
+	inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','0c93b93c-bfef-4d2a-9fbe-16b59ee366e7')
+  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,5096) and o.voided=0
 where e.voided=0
 group by e.encounter_id
 having screening_result is not null;
