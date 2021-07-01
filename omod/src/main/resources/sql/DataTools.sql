@@ -190,6 +190,18 @@ when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectom
 (case reason_not_using_family_planning when 160572 then "Thinks can't get pregnant" when 160573 then "Not sexually active now" when 5622 then "Other" else "" end) as reason_not_using_family_planning,
 (case tb_status when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done"  else "" end) as tb_status,
 tb_treatment_no,
+general_examination,
+(case system_examination when 1115 then 'Normal' when 1116 then 'Abnormal' end) as system_examination,
+(case skin_findings when 150555 then 'Abscess' when 125201 then 'Swelling/Growth' when 135591 then 'Hair Loss' when 136455 then 'Itching' when 507 then 'Kaposi Sarcoma' when 1249 then 'Skin eruptions/Rashes' when 5244 then 'Oral sores' end) as skin_findings,
+(case eyes_findings when 123074 then 'Visual Disturbance' when 140940 then 'Excessive tearing' when 131040 then 'Eye pain' when 127777 then 'Eye redness' when 140827 then 'Light sensitive' when 139100 then 'Itchy eyes' end) as eyes_findings,
+(case ent_findings when 148517 then 'Apnea' when 139075 then 'Hearing disorder' when 119558 then 'Dental caries' when 118536 then 'Erythema' when 106 then 'Frequent colds' when 147230 then 'Gingival bleeding' when 135841 then 'Hairy cell leukoplakia' when 117698
+then 'Hearing loss' when 138554 then 'Hoarseness' when 507 then 'Kaposi Sarcoma' when 152228 then 'Masses' when 128055 then 'Nasal discharge' when 133499 then 'Nosebleed' when 160285 then 'Pain' when 110099 then 'Post nasal discharge' when 126423 then 'Sinus problems' when 126318 then 'Snoring' when 158843 then 'Sore throat' when 5244 then 'Oral sores' when 5334 then 'Thrush' when 123588 then 'Tinnitus'
+when 124601 then 'Toothache' when 123919 then 'Ulcers' when 111525 then 'Vertigo' end) as ent_findings,
+(case chest_findings when 146893 then 'Bronchial breathing' when 127640 then 'Crackles' when 145712 then 'Dullness' when 164440 then 'Reduced breathing' when 127639 then 'Respiratory distress' when 5209 then 'Wheezing' end) as chest_findings,
+(case cvs_findings when 140147 then 'Elevated blood pressure' when 136522 then 'Irregular heartbeat' when 562 then 'Cardiac murmur' when 130560 then 'Cardiac rub' end) as cvs_findings,
+(case abdomen_findings when 150915 then 'Abdominal distension' when 5008 then 'Hepatomegaly' when 5103 then 'Abdominal mass' when 5009 then 'Splenomegaly' when 5105 then 'Abdominal tenderness' end) as abdomen_findings,
+(case cns_findings when 118872 then 'Altered sensations' when 1836 then 'Bulging fontenelle' when 150817 then 'Abnormal reflexes' when 120345 then 'Confusion' when 157498 then 'Limb weakness' when 112721 then 'Stiff neck' when 136282 then 'Kernicterus' end) as cns_findings,
+(case genitourinary_findings when 147241 then 'Bleeding' when 154311 then 'Rectal discharge' when 123529 then 'Urethral discharge' when 123396 then 'Vaginal discharge' when 124087 then 'Ulceration' end) as genitourinary_findings,
 (case prophylaxis_given when 105281 then 'Cotrimoxazole' when 74250 then 'Dapsone' when 1107 then 'None' end) as prophylaxis_given,
 (case ctx_adherence when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end) as ctx_adherence,
 (case ctx_dispensed when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as ctx_dispensed,
@@ -592,6 +604,7 @@ SELECT "Successfully created pharmacy extract table";
       delivery_date,
       (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" else "" end) as mode_of_delivery,
       (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
+      (case delivery_outcome when 159913 then 'Single' when 159914 then 'Twins' when 159915 then 'Triplets' end) as delivery_outcome,
       temperature,
       pulse_rate,
       systolic_bp,
@@ -611,6 +624,7 @@ SELECT "Successfully created pharmacy extract table";
        when 162119 then "On exam, uterine fundus 38 weeks-term size" when 123427 then "Uterus Involuted"  else "" end) as gravid_uterus,
       (case episiotomy when 159842 then "repaired, episiotomy wound" when 159843 then "healed, episiotomy wound" when 159841 then "gap, episiotomy wound" when 113919 then "Postoperative Wound Infection" else "" end) as episiotomy,
       (case lochia when 159845 then "lochia excessive" when 159846 then "lochia foul smelling" when 159721 then "Lochia type" else "" end) as lochia,  -- recheck
+      (case counselled_on_infant_feeding when 1065 then 'Yes' when 1066 then 'No' end) as counselled_on_infant_feeding,
       (case pallor when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as pallor,
       (case pph when 1065 then "Present" when 1066 then "Absent" else "" end) as pph,
       (case mother_hiv_status when 1067 then "Unknown" when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as mother_hiv_status,
@@ -645,7 +659,8 @@ SELECT "Successfully created pharmacy extract table";
        when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
-      clinical_notes
+      clinical_notes,
+      appointment_date
 
     from kenyaemr_etl.etl_mch_postnatal_visit;
 
@@ -726,8 +741,10 @@ SELECT "Successfully created post natal visit table";
       encounter_id,
       weight,
       height,
+      (case muac when 160909 then "Green" when 160910 then "Yellow" when 127778 then "Red" else "" end) as muac,
       (case primary_caregiver when 970 then "Mother" when 973 then "Guardian" when 972 then "Guardian" when 160639 then "Guardian" when 5622 then "Guardian" else "" end) as primary_caregiver,
       (case infant_feeding when 5526 then "Exclusive Breastfeeding(EBF)" when 1595 then "Exclusive Replacement(ERF)" when 6046 then "Mixed Feeding(MF)" else "" end) as infant_feeding,
+      (case stunted when 164085 then "Yes" when 1115 then "No" else "" end) as stunted,
       (case tb_assessment_outcome when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1661 then "TB Confirmed" when 1662 then "TB Rx" when 1679 then "INH" when 160737 then "TB Screening Not Done" else "" end) as tb_assessment_outcome,
       (case social_smile_milestone when 162056 then "Social Smile" else "" end) as social_smile_milestone,
       (case head_control_milestone when 162057 then "Head Holding/Control" else "" end) as head_control_milestone,
@@ -738,12 +755,14 @@ SELECT "Successfully created post natal visit table";
       (case standing_milestone when 162062 then "Standing" else "" end) as standing_milestone,
       (case talking_milestone when 162060 then "Talking" else "" end) as talking_milestone,
       (case review_of_systems_developmental when 1115 then "Normal(N)" when 6022 then "Delayed(D)" when 6025 then "Regressed(R)" else "" end) as review_of_systems_developmental,
+      (case weight_category when 123814 then "Underweight(UW)" when 126598 then "Severely Underweight(SUW)" when 114413 then "Overweight(OW)" when 115115 then "Obese(O)" when 1115 then "Normal(N)" else "" end) as weight_category,
       dna_pcr_sample_date,
       (case dna_pcr_contextual_status when 162081 then "Repeat" when 162083 then "Final test (end of pediatric window)" when 162082 then "Confirmation" when 162080 then "Initial" else "" end) as dna_pcr_contextual_status,
       (case dna_pcr_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as dna_pcr_result,
       (case azt_given when 86663 then "Yes" else "No" end) as azt_given,
       (case nvp_given when 80586 then "Yes" else "No" end) as nvp_given,
       (case ctx_given when 105281 then "Yes" else "No" end) as ctx_given,
+      (case multi_vitamin_given when 461 then "Yes" else "No" end) as multi_vitamin_given,
       (case first_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as first_antibody_result,
       (case final_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as final_antibody_result,
       (case tetracycline_ointment_given  when 1065 then "Yes" when 1066 then "No" else "" end) as tetracycline_ointment_given,
@@ -753,6 +772,12 @@ SELECT "Successfully created post natal visit table";
       (case deworming_drug when 79413 then "Mebendazole" when 70439 then "Albendazole" else "" end) as deworming_drug,
       dosage,
       unit,
+      (case vitaminA_given when 1065 then "Yes" when 1066 then "No" else "" end) as vitaminA_given,
+      (case disability when 1065 then "Yes" when 1066 then "No" else "" end) as disability,
+      (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      (case counselled_on when 1914 then "HIV" when 1380 then "Nutrition" else "" end) as counselled_on,
+     (case mnps_supplementation when 161649 then "Yes" when 1107 then "No" else "" end) as MNPS_Supplementation,
       comments,
       next_appointment_date
     from kenyaemr_etl.etl_hei_follow_up_visit;
@@ -1420,6 +1445,122 @@ from kenyaemr_etl.etl_ipt_screening;
 ALTER TABLE kenyaemr_datatools.ipt_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.ipt_screening ADD INDEX(visit_date);
 SELECT "Successfully created ipt_screening table";
+
+-- create table pre_hiv_enrollment_ART
+create table kenyaemr_datatools.pre_hiv_enrollment_art as
+  select
+         uuid,
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         obs_id,
+         (case PMTCT when 1065 then 'Yes' else '' end) as PMTCT,
+         (case PMTCT_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as PMTCT_regimen,
+         (case PEP when 1065 then 'Yes' else '' end) as PEP,
+         (case PEP_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as PEP_regimen,
+         (case PrEP when 1065 then 'Yes' else '' end) as PrEP,
+         (case PrEP_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as PrEP_regimen,
+         (case HAART when 1185 then 'Yes' else '' end) as HAART,
+         (case HAART_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as HAART_regimen,
+         date_created,
+         date_last_modified,
+         voided
+  from kenyaemr_etl.etl_pre_hiv_enrollment_art;
+
+ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD INDEX(visit_date);
+SELECT "Successfully created pre_hiv_enrollment_art table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
