@@ -344,6 +344,16 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       started_anti_TB,
       tb_rx_date,
       tb_treatment_no,
+      general_examination,
+      system_examination,
+      skin_findings,
+      eyes_findings,
+      ent_findings,
+      chest_findings,
+      cvs_findings,
+      abdomen_findings,
+      cns_findings,
+      genitourinary_findings,
       prophylaxis_given,
       ctx_adherence,
       ctx_dispensed,
@@ -437,6 +447,27 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=162309,o.value_coded,null)) as started_anti_TB,
         max(if(o.concept_id=1113,o.value_datetime,null)) as tb_rx_date,
         max(if(o.concept_id=161654,trim(o.value_text),null)) as tb_treatment_no,
+        concat_ws(',',nullif(max(if(o.concept_id=162737 and o.value_coded =1107 ,'None','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded =136443,'Jaundice','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded =460,'Oedema','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 5334,'Oral Thrush','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 5245,'Pallor','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 140125,'Finger Clubbing','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 126952,'Lymph Node Axillary','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 143050,'Cyanosis','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 126939,'Lymph Nodes Inguinal','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 823,'Wasting','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 142630,'Dehydration','')),''),
+                 nullif(max(if(o.concept_id=162737 and o.value_coded = 116334,'Lethargic','')),'')) as general_examination,
+        max(if(o.concept_id=159615,o.value_coded,null)) as system_examination,
+        max(if(o.concept_id=1120,o.value_coded,null)) as skin_findings,
+        max(if(o.concept_id=163309,o.value_coded,null)) as eyes_findings,
+        max(if(o.concept_id=164936,o.value_coded,null)) as ent_findings,
+        max(if(o.concept_id=1123,o.value_coded,null)) as chest_findings,
+        max(if(o.concept_id=1124,o.value_coded,null)) as cvs_findings,
+        max(if(o.concept_id=1125,o.value_coded,null)) as abdomen_findings,
+        max(if(o.concept_id=164937,o.value_coded,null)) as cns_findings,
+        max(if(o.concept_id=1126,o.value_coded,null)) as genitourinary_findings,
         max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
         max(if(o.concept_id=161652,o.value_coded,null)) as ctx_adherence,
         max(if(o.concept_id=162229 or (o.concept_id=1282 and o.value_coded = 105281),o.value_coded,null)) as ctx_dispensed,
@@ -471,7 +502,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
                                  and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,
                                  1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
                                  164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729)
+                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -487,7 +518,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       evaluated_for_ipt=VALUES(evaluated_for_ipt),has_known_allergies=VALUES(has_known_allergies),has_chronic_illnesses_cormobidities=VALUES(has_chronic_illnesses_cormobidities),
       has_adverse_drug_reaction=VALUES(has_adverse_drug_reaction),pregnancy_status=VALUES(pregnancy_status), wants_pregnancy=VALUES(wants_pregnancy), pregnancy_outcome=VALUES(pregnancy_outcome),anc_number=VALUES(anc_number),expected_delivery_date=VALUES(expected_delivery_date),
       last_menstrual_period=VALUES(last_menstrual_period),gravida=VALUES(gravida),parity=VALUES(parity),full_term_pregnancies=VALUES(full_term_pregnancies), abortion_miscarriages=VALUES(abortion_miscarriages),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method),reason_not_using_family_planning=VALUES(reason_not_using_family_planning),
-      tb_status=VALUES(tb_status),tb_treatment_no=VALUES(tb_treatment_no),ctx_adherence=VALUES(ctx_adherence),ctx_dispensed=VALUES(ctx_dispensed),dapsone_adherence=VALUES(dapsone_adherence),dapsone_dispensed=VALUES(dapsone_dispensed),inh_dispensed=VALUES(inh_dispensed),arv_adherence=VALUES(arv_adherence),poor_arv_adherence_reason=VALUES(poor_arv_adherence_reason),
+      tb_status=VALUES(tb_status),tb_treatment_no=VALUES(tb_treatment_no),general_examination=VALUES(general_examination),system_examination=VALUES(system_examination),skin_findings=VALUES(skin_findings),eyes_findings=VALUES(eyes_findings),ent_findings=VALUES(ent_findings),chest_findings=VALUES(chest_findings),
+      cvs_findings=VALUES(cvs_findings),abdomen_findings=VALUES(abdomen_findings),cns_findings=VALUES(cns_findings),genitourinary_findings=VALUES(genitourinary_findings),ctx_adherence=VALUES(ctx_adherence),ctx_dispensed=VALUES(ctx_dispensed),dapsone_adherence=VALUES(dapsone_adherence),dapsone_dispensed=VALUES(dapsone_dispensed),inh_dispensed=VALUES(inh_dispensed),arv_adherence=VALUES(arv_adherence),poor_arv_adherence_reason=VALUES(poor_arv_adherence_reason),
       poor_arv_adherence_reason_other=VALUES(poor_arv_adherence_reason_other),pwp_disclosure=VALUES(pwp_disclosure),pwp_partner_tested=VALUES(pwp_partner_tested),condom_provided=VALUES(condom_provided),substance_abuse_screening=VALUES(substance_abuse_screening),screened_for_sti=VALUES(screened_for_sti),cacx_screening=VALUES(cacx_screening), sti_partner_notification=VALUES(sti_partner_notification),at_risk_population=VALUES(at_risk_population),
       system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date), next_appointment_reason=VALUES(next_appointment_reason), differentiated_care=VALUES(differentiated_care),ever_had_menses=VALUES(ever_had_menses),menopausal=VALUES(menopausal),prophylaxis_given=VALUES(prophylaxis_given),started_anti_TB=VALUES(started_anti_TB),tb_rx_date=VALUES(tb_rx_date), voided=VALUES(voided)
     ;
@@ -1111,6 +1143,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       delivery_date,
       mode_of_delivery,
       place_of_delivery,
+      delivery_outcome,
       temperature,
       pulse_rate,
       systolic_bp,
@@ -1128,6 +1161,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       gravid_uterus,
       episiotomy,
       lochia,
+      counselled_on_infant_feeding,
       pallor,
       pph,
       mother_hiv_status,
@@ -1161,6 +1195,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       referred_from,
       referred_to,
       clinical_notes,
+      appointment_date,
       date_created,
       date_last_modified
     )
@@ -1177,6 +1212,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=5599,o.value_datetime,null)) as delivery_date,
         max(if(o.concept_id=5630,o.value_coded,null)) as mode_of_delivery,
         max(if(o.concept_id=1572,o.value_coded,null)) as place_of_delivery,
+        max(if(o.concept_id=159949,o.value_coded,null)) as delivery_outcome,
         max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
         max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
         max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_bp,
@@ -1194,6 +1230,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=162110,o.value_coded,null)) as gravid_uterus,
         max(if(o.concept_id=159840,o.value_coded,null)) as episiotomy,
         max(if(o.concept_id=159844,o.value_coded,null)) as lochia,
+        max(if(o.concept_id=161651,o.value_coded,null)) as counselled_on_infant_feeding,
         max(if(o.concept_id=5245,o.value_coded,null)) as pallor,
         max(if(o.concept_id=230,o.value_coded,null)) as pph,
         max(if(o.concept_id=1396,o.value_coded,null)) as mother_hiv_status,
@@ -1227,12 +1264,13 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
         max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
         max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
+        max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,160967,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395)
+                            and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,160967,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1245,14 +1283,14 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
 
       group by e.encounter_id
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),provider=VALUES(provider),pnc_register_no=VALUES(pnc_register_no),pnc_visit_no=VALUES(pnc_visit_no),delivery_date=VALUES(delivery_date),mode_of_delivery=VALUES(mode_of_delivery),place_of_delivery=VALUES(place_of_delivery),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),systolic_bp=VALUES(systolic_bp),diastolic_bp=VALUES(diastolic_bp),respiratory_rate=VALUES(respiratory_rate),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),provider=VALUES(provider),pnc_register_no=VALUES(pnc_register_no),pnc_visit_no=VALUES(pnc_visit_no),delivery_date=VALUES(delivery_date),mode_of_delivery=VALUES(mode_of_delivery),place_of_delivery=VALUES(place_of_delivery),delivery_outcome=VALUES(delivery_outcome),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),systolic_bp=VALUES(systolic_bp),diastolic_bp=VALUES(diastolic_bp),respiratory_rate=VALUES(respiratory_rate),
       oxygen_saturation=VALUES(oxygen_saturation),weight=VALUES(weight),height=VALUES(height),muac=VALUES(muac),hemoglobin=VALUES(hemoglobin),arv_status=VALUES(arv_status),general_condition=VALUES(general_condition),breast=VALUES(breast),cs_scar=VALUES(cs_scar),gravid_uterus=VALUES(gravid_uterus),episiotomy=VALUES(episiotomy),
       lochia=VALUES(lochia),pallor=VALUES(pallor),pph=VALUES(pph),mother_hiv_status=VALUES(mother_hiv_status),condition_of_baby=VALUES(condition_of_baby),baby_feeding_method=VALUES(baby_feeding_method),umblical_cord=VALUES(umblical_cord),baby_immunization_started=VALUES(baby_immunization_started),family_planning_counseling=VALUES(family_planning_counseling),uterus_examination=VALUES(uterus_examination),
       uterus_cervix_examination=VALUES(uterus_cervix_examination),vaginal_examination=VALUES(vaginal_examination),parametrial_examination=VALUES(parametrial_examination),external_genitalia_examination=VALUES(external_genitalia_examination),ovarian_examination=VALUES(ovarian_examination),pelvic_lymph_node_exam=VALUES(pelvic_lymph_node_exam),
       final_test_result=VALUES(final_test_result),
       patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed)
       ,maternal_condition=VALUES(maternal_condition),iron_supplementation=VALUES(iron_supplementation),fistula_screening=VALUES(fistula_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method)
-      ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to), clinical_notes=VALUES(clinical_notes)
+      ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to), clinical_notes=VALUES(clinical_notes),appointment_date=VALUES(appointment_date),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding)
     ;
 
     END$$
@@ -1405,8 +1443,10 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       encounter_id,
       weight,
       height,
+      muac,
       primary_caregiver,
       infant_feeding,
+      stunted,
       tb_assessment_outcome,
       social_smile_milestone,
       head_control_milestone,
@@ -1417,12 +1457,14 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       standing_milestone,
       talking_milestone,
       review_of_systems_developmental,
+      weight_category,
       dna_pcr_sample_date,
       dna_pcr_contextual_status,
       dna_pcr_result,
       azt_given,
       nvp_given,
       ctx_given,
+      multi_vitamin_given,
       -- dna_pcr_dbs_sample_code,
       -- dna_pcr_results_date,
       -- first_antibody_sample_date,
@@ -1440,6 +1482,12 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       deworming_drug,
       dosage,
       unit,
+      vitaminA_given,
+      disability,
+      referred_from,
+      referred_to,
+      counselled_on,
+      MNPS_Supplementation,
       comments,
       next_appointment_date,
       date_created,
@@ -1455,8 +1503,10 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
         e.encounter_id,
         max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
         max(if(o.concept_id=5090,o.value_numeric,null)) as height,
+        max(if(o.concept_id=160908,o.value_coded,null)) as muac,
         max(if(o.concept_id=160640,o.value_coded,null)) as primary_caregiver,
         max(if(o.concept_id=1151,o.value_coded,null)) as infant_feeding,
+        max(if(o.concept_id=164088,o.value_coded,null)) as stunted,
         max(if(o.concept_id=1659,o.value_coded,null)) as tb_assessment_outcome,
         max(if(o.concept_id=162069 and o.value_coded=162056,o.value_coded,null)) as social_smile_milestone,
         max(if(o.concept_id=162069 and o.value_coded=162057,o.value_coded,null)) as head_control_milestone,
@@ -1467,12 +1517,14 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
         max(if(o.concept_id=162069 and o.value_coded=162062,o.value_coded,null)) as standing_milestone,
         max(if(o.concept_id=162069 and o.value_coded=162060,o.value_coded,null)) as talking_milestone,
         max(if(o.concept_id=1189,o.value_coded,null)) as review_of_systems_developmental,
+        max(if(o.concept_id=1854,o.value_coded,null)) as weight_category,
         max(if(o.concept_id=159951,o.value_datetime,null)) as dna_pcr_sample_date,
         max(if(o.concept_id=162084,o.value_coded,null)) as dna_pcr_contextual_status,
         max(if(o.concept_id=1030,o.value_coded,null)) as dna_pcr_result,
         max(if(o.concept_id=966 and o.value_coded=86663,o.value_coded,null)) as azt_given,
         max(if(o.concept_id=966 and o.value_coded=80586,o.value_coded,null)) as nvp_given,
         max(if(o.concept_id=1109,o.value_coded,null)) as ctx_given,
+        max(if(o.concept_id=1193,o.value_coded,null)) as multi_vitamin_given,
         -- max(if(o.concept_id=162086,o.value_text,null)) as dna_pcr_dbs_sample_code,
         -- max(if(o.concept_id=160082,o.value_datetime,null)) as dna_pcr_results_date,
         -- max(if(o.concept_id=159951,o.value_datetime,null)) as first_antibody_sample_date,
@@ -1490,6 +1542,12 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
         max(if(o.concept_id=1282,o.value_coded,null)) as deworming_drug,
         max(if(o.concept_id=1443,o.value_numeric,null)) as dosage,
         max(if(o.concept_id=1621,o.value_text,null)) as unit,
+        max(if(o.concept_id=161534,o.value_coded,null)) as vitaminA_given,
+        max(if(o.concept_id=162558,o.value_coded,null)) as disablity,
+        max(if(o.concept_id=163145,o.value_coded,null)) as referred_from,
+				max(if(o.concept_id=160481,o.value_coded,null)) as referred_to,
+				max(if(o.concept_id=1379,o.value_coded,null)) as counselled_on,
+				max(if(o.concept_id=5484,o.value_coded,null)) as MNPS_Supplementation,
         max(if(o.concept_id=159395,o.value_text,null)) as comments,
         max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
         e.date_created as date_created,
@@ -1497,7 +1555,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096)
+                            and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,1193,161534,162558,160481,163145,1379,5484)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
@@ -1513,7 +1571,8 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       response_to_sound_milestone=VALUES(response_to_sound_milestone),hand_extension_milestone=VALUES(hand_extension_milestone),sitting_milestone=VALUES(sitting_milestone),walking_milestone=VALUES(walking_milestone),standing_milestone=VALUES(standing_milestone),talking_milestone=VALUES(talking_milestone),review_of_systems_developmental=VALUES(review_of_systems_developmental),
       dna_pcr_result=VALUES(dna_pcr_result),first_antibody_result=VALUES(first_antibody_result),final_antibody_result=VALUES(final_antibody_result),
       tetracycline_ointment_given=VALUES(tetracycline_ointment_given),pupil_examination=VALUES(pupil_examination),sight_examination=VALUES(sight_examination),squint=VALUES(squint),deworming_drug=VALUES(deworming_drug),dosage=VALUES(dosage),unit=VALUES(unit),comments=VALUES(comments),next_appointment_date=VALUES(next_appointment_date)
-      ,nvp_given=VALUES(nvp_given),ctx_given=VALUES(ctx_given)
+      ,nvp_given=VALUES(nvp_given),ctx_given=VALUES(ctx_given),muac=VALUES(muac),weight_category=VALUES(weight_category),stunted=VALUES(stunted),multi_vitamin_given=VALUES(multi_vitamin_given),vitaminA_given=VALUES(vitaminA_given),disability=VALUES(disability),referred_from=VALUES(referred_from),
+      referred_to=VALUES(referred_to),counselled_on=VALUES(counselled_on),MNPS_Supplementation=VALUES(MNPS_Supplementation)
     ;
 
     END$$
@@ -5223,7 +5282,7 @@ CREATE PROCEDURE sp_update_etl_treatment_verification(IN last_update_time DATETI
                                       when 162561 then "AZT/3TC/LPV/r"
                                       when 164511 then "AZT/3TC/ATV/r"
                                       when 162201 then "TDF/3TC/LPV/r"
-                                      when 164512 then "TDF/3TC/ATV/r"
+                                     when 164512 then "TDF/3TC/ATV/r"
                                       when 162560 then "D4T/3TC/LPV/r"
                                       when 162200 then "ABC/3TC/LPV/r"
                                       when 164971 then "TDF/3TC/AZT"
@@ -5822,6 +5881,7 @@ order by e.patient_id
         allergy_causative_agent=VALUES(allergy_causative_agent),
         allergy_reaction=VALUES(allergy_reaction),
         allergy_severity=VALUES(allergy_severity),
+        allergy_onset_date=VALUES(allergy_onset_date),
         voided=VALUES(voided);
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
 END$$
@@ -5902,6 +5962,61 @@ order by e.patient_id
 SELECT "Completed processingIPT screening data ", CONCAT("Time: ", NOW());
 END$$
 
+--Populate etl_pre_hiv_enrollment_ART
+DROP PROCEDURE IF EXISTS sp_update_etl_pre_hiv_enrollment_art$$
+CREATE PROCEDURE sp_update_etl_pre_hiv_enrollment_art(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing pre_hiv enrollment ART", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_pre_hiv_enrollment_art(
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    obs_id,
+    PMTCT,
+    PMTCT_regimen,
+    PEP,
+    PEP_regimen,
+    PrEP,
+    PrEP_regimen,
+    HAART,
+    HAART_regimen,
+    date_created,
+    date_last_modified,
+    voided
+    )
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id,e.encounter_id,o1.obs_id,
+       max(if(o1.obs_group =160741 and o1.concept_id = 1148,o1.value_coded,null)) as PMTCT,
+       max(if(o1.obs_group =160741 and o1.concept_id = 966,o1.value_coded,null)) as PMTCT_regimen,
+       max(if(o1.obs_group =160741 and o1.concept_id = 1691,o1.value_coded,null)) as PEP,
+       max(if(o1.obs_group =160741 and o1.concept_id = 1088,o1.value_coded,null)) as PEP_regimen,
+       max(if(o1.obs_group =160741 and o1.concept_id = 165269,o1.value_coded,null)) as PrEP,
+       max(if(o1.obs_group =160741 and o1.concept_id = 1088,o1.value_coded,null)) as PrEP_regimen,
+       max(if(o1.obs_group =1085 and o1.concept_id = 1181,o1.value_coded,null)) as HAART,
+       max(if(o1.obs_group =1085 and o1.concept_id = 1088,o1.value_coded,null)) as HAART_regimen,
+       e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join (
+                  select encounter_type_id, uuid, name from encounter_type where uuid ='de78a6be-bfc5-4634-adc3-5f1a280455cc'
+                  ) et on et.encounter_type_id=e.encounter_type
+       inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
+                          o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
+                                                                                and o1.concept_id in (1148,966,1691,1088,1181,165269) and o1.voided=0
+                                                                                and o.concept_id in(160741,1085)) o1 on o1.encounter_id = e.encounter_id
+where e.voided=0 and e.date_created >= last_update_time or e.date_changed >= last_update_time or e.date_voided >= last_update_time or o1.date_created >= last_update_time
+or o1.date_voided >= last_update_time
+group by o1.obs_id order by e.patient_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),PMTCT=VALUES(PMTCT),PMTCT_regimen=VALUES(PMTCT_regimen),PEP=VALUES(PEP),PEP_regimen=VALUES(PEP_regimen),
+PrEP=VALUES(PrEP),PrEP_regimen=VALUES(PrEP_regimen),HAART=VALUES(HAART),HAART_regimen=VALUES(HAART_regimen),voided=VALUES(voided);
+SELECT "Completed processing pre_hiv enrollment ART data ", CONCAT("Time: ", NOW());
+END$$
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE$$
@@ -5973,6 +6088,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_adverse_events(last_update_time);
     CALL sp_update_etl_allergy_chronic_illness(last_update_time);
     CALL sp_update_etl_ipt_screening(last_update_time);
+    CALL sp_update_etl_pre_hiv_enrollment_art(last_update_time);
 
     CALL sp_update_dashboard_table();
 
