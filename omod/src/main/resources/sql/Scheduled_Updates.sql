@@ -4279,6 +4279,8 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
                                                                when 162810 then 'LEEP'
                                                                when 165396 then 'Cold knife cone'
                                                                when 165395 then 'Thermocoagulation'
+                                                               when 165385 then 'Cryotherapy performed (single Visit)'
+                                                               when 159837 then 'Hysterectomy'
                                                                when 165391 then 'Referred for cancer treatment'
                                                                when 5622 then 'Other' else "" end), "" )) as treatment_method,
                                 max(if(o.concept_id=160632,o.value_text,null)) as treatment_method_other,
