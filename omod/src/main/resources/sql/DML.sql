@@ -4972,6 +4972,49 @@ where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing PrEP verification form", CONCAT("Time: ", NOW());
 END$$
+
+
+-- ------------- populate anc preventive services -------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_anc_preventive_services$$
+CREATE PROCEDURE sp_populate_etl_anc_preventive_services()
+	BEGIN
+	SELECT "Processing anc preventive services ", CONCAT("Time: ", NOW());
+	insert into kenyaemr_etl.etl_anc_preventive_services(
+		uuid,
+		patient_id,
+		visit_date,
+		encounter_id,
+		preventive_service,
+		sequence,
+		date_given,
+		next_date
+	)
+		select
+			uuid,
+			person_id as patient_id,
+			date(encounter_datetime) as visit_date,
+			encounter_id,
+			max(if(concept_id=984 , value_coded, "")) as preventive_service,
+			max(if(concept_id=1418, value_numeric, "")) as sequence,
+			max(if(concept_id=1410, date_given, NULL)) as date_given,
+			max(if(concept_id=5096, date_given, NULL)) as next_date
+		from (
+			 select o.person_id, e.encounter_datetime, e.creator, e.date_created, if(o.concept_id = 984, o.uuid, '') uuid, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id
+			 from obs o
+				 inner join encounter e on e.encounter_id = o.encounter_id
+				 inner join person p on p.person_id = o.person_id and p.voided = 0
+				 inner join
+				 (
+				 select form_id, uuid,name from form where
+					 uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843')
+			 ) f on f.form_id=e.form_id
+			 where concept_id in(984,1418,1410,5096) and o.voided=0
+		 ) t
+		group by obs_group_id
+		having preventive_service != "";
+		SELECT "Completed processing anc preventive services ", CONCAT("Time: ", NOW());
+		END$$
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE$$
@@ -5042,6 +5085,7 @@ CALL sp_populate_etl_peer_tracking();
 CALL sp_populate_etl_treatment_verification();
 CALL sp_populate_etl_gender_based_violence();
 CALL sp_populate_etl_PrEP_verification();
+CALL sp_populate_etl_anc_preventive_services();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

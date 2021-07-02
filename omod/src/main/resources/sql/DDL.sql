@@ -79,6 +79,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_anc_preventive_services;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2363,6 +2364,23 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     INDEX(encounter_id),
     INDEX(client_id)
     );
+
+-- create anc preventive services table
+  CREATE TABLE kenyaemr_etl.etl_anc_preventive_services (
+    uuid char(38) NOT NULL PRIMARY KEY,
+    patient_id INT(11),
+    visit_date DATE,
+    encounter_id INT(11) NOT NULL,
+    preventive_service INT(11),
+    sequence VARCHAR(100),
+    date_given DATE,
+    next_date DATE,
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(preventive_service)
+  );
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
