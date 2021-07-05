@@ -694,7 +694,9 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			referred_to,
 			next_appointment_date,
 			next_home_visit_date,
-			clinical_notes
+			clinical_notes,
+			practioner_type,
+			practioner_name
 		)
         select
             e.patient_id,
@@ -786,11 +788,13 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
             max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
             max(if(o.concept_id=165577,o.value_datetime,null)) as next_home_visit_date,
-            max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes
+            max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
+						max(if(o.concept_id=163556,o.value_coded,null)) as practioner_type,
+						max(if(o.concept_id=1473,o.value_text,null)) as practioner_name
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-            and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395,1458,1325,162044,165383,120785,165384,165380,163446,165385,165382,165576,165577)
+            and o.concept_id in(1282,984,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,161074,1659,164934,163589,162747,1912,160481,163145,5096,159395,1458,1325,162044,165383,120785,165384,165380,163446,165385,165382,165576,165577,163556,1473)
                  inner join
              (
                  select form_id, uuid,name from form where
@@ -834,7 +838,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
 			urine_leukocyte_esterace_test=VALUES(urine_leukocyte_esterace_test),urinary_ketone=VALUES(urinary_ketone),urine_bile_salt_test=VALUES(urine_bile_salt_test),
 			urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),syphilis_test_status=VALUES(syphilis_test_status),syphilis_treated_status=VALUES(syphilis_treated_status),
 			bs_mps=VALUES(bs_mps),anc_exercises=VALUES(anc_exercises),tb_screening=VALUES(tb_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),has_other_illnes=VALUES(has_other_illnes),counselled=VALUES(counselled),referred_from=VALUES(referred_from),
-			referred_to=VALUES(referred_to),next_appointment_date=VALUES(next_appointment_date),next_home_visit_date=VALUES(next_home_visit_date),clinical_notes=VALUES(clinical_notes)
+			referred_to=VALUES(referred_to),next_appointment_date=VALUES(next_appointment_date),next_home_visit_date=VALUES(next_home_visit_date),clinical_notes=VALUES(clinical_notes),practioner_type=VALUES(practioner_type),practioner_name=VALUES(practioner_name)
 		;
 
 		END$$
@@ -925,7 +929,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
 				max(if(o.concept_id=159917,o.value_coded,null)) as baby_condition,
 				max(if(o.concept_id=1282 and o.value_coded = 84893,1,0)) as teo_given,
-				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
+				max(if(o.concept_id=165578,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=161543,o.value_coded,null)) as bf_within_one_hour,
 				max(if(o.concept_id=164122,o.value_coded,null)) as birth_with_deformity,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
@@ -940,7 +944,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1789,5630,5599,162092,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
+														and o.concept_id in(162054,1789,5630,5599,162092,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,165578,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395)
 				inner join
 				(
 					select form_id, uuid,name from form where
