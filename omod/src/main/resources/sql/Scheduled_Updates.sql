@@ -238,7 +238,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=159599,o.value_datetime,null)) as date_started_art_at_transferring_facility,
         max(if(o.concept_id=160554,o.value_datetime,null)) as date_confirmed_hiv_positive,
         max(if(o.concept_id=160632,left(trim(o.value_text),100),null)) as facility_confirmed_hiv_positive,
-        max(if(o.concept_id=160533,o.value_numeric,null)) as arv_status,
+        max(if(o.concept_id=160533,o.value_coded,null)) as arv_status,
         max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
         max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
         max(if(o.concept_id=160642,left(trim(o.value_text),100),null)) as treatment_supporter_telephone ,
@@ -6048,7 +6048,7 @@ select
        max(if(o1.obs_group =160741 and o1.concept_id = 1691,o1.value_coded,null)) as PEP,
        max(if(o1.obs_group =160741 and o1.concept_id = 1088,o1.value_coded,null)) as PEP_regimen,
        max(if(o1.obs_group =160741 and o1.concept_id = 165269,o1.value_coded,null)) as PrEP,
-       max(if(o1.obs_group =160741 and o1.concept_id = 1088,o1.value_coded,null)) as PrEP_regimen,
+       max(if(o1.obs_group =160741 and o1.concept_id = 1087,o1.value_coded,null)) as PrEP_regimen,
        max(if(o1.obs_group =1085 and o1.concept_id = 1181,o1.value_coded,null)) as HAART,
        max(if(o1.obs_group =1085 and o1.concept_id = 1088,o1.value_coded,null)) as HAART_regimen,
        e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
@@ -6060,7 +6060,7 @@ from encounter e
                   ) et on et.encounter_type_id=e.encounter_type
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                                                                                and o1.concept_id in (1148,966,1691,1088,1181,165269) and o1.voided=0
+                                                                                and o1.concept_id in (1148,966,1691,1088,1087,1181,165269) and o1.voided=0
                                                                                 and o.concept_id in(160741,1085)) o1 on o1.encounter_id = e.encounter_id
 where e.voided=0 and e.date_created >= last_update_time or e.date_changed >= last_update_time or e.date_voided >= last_update_time or o1.date_created >= last_update_time
 or o1.date_voided >= last_update_time
