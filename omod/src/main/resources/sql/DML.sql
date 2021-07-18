@@ -4985,7 +4985,7 @@ CREATE PROCEDURE sp_populate_etl_anc_preventive_services()
 	BEGIN
 	SELECT "Processing anc preventive services ", CONCAT("Time: ", NOW());
 	insert into kenyaemr_etl.etl_anc_preventive_services(
-		uuid,
+        uuid,
 		patient_id,
 		visit_date,
 		encounter_id,
@@ -4995,7 +4995,7 @@ CREATE PROCEDURE sp_populate_etl_anc_preventive_services()
 		next_date
 	)
 		select
-			uuid,
+            max(if(concept_id=984, uuid, "")),
 			person_id as patient_id,
 			date(encounter_datetime) as visit_date,
 			encounter_id,
