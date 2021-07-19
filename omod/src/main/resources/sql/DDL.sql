@@ -85,6 +85,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_depression_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_adverse_events;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
