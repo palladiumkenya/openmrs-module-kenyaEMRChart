@@ -6059,7 +6059,7 @@ from encounter e
                   select encounter_type_id, uuid, name from encounter_type where uuid ='de78a6be-bfc5-4634-adc3-5f1a280455cc'
                   ) et on et.encounter_type_id=e.encounter_type
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
-                          o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
+                          o1.date_created,o1.date_voided,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
                                                                                 and o1.concept_id in (1148,966,1691,1088,1087,1181,165269) and o1.voided=0
                                                                                 and o.concept_id in(160741,1085)) o1 on o1.encounter_id = e.encounter_id
 where e.voided=0 and e.date_created >= last_update_time or e.date_changed >= last_update_time or e.date_voided >= last_update_time or o1.date_created >= last_update_time
