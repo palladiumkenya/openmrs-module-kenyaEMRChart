@@ -5614,12 +5614,12 @@ group by o1.obs_id;
 SELECT "Completed processing pre hiv enrollment ART data ", CONCAT("Time: ", NOW());
 END$$
 
--- ------------- populate etl_covid-19_assessment-------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_covid-19_assessment $$
-CREATE PROCEDURE sp_populate_etl_covid-19_assessment()
+-- ------------- populate etl_covid_19_assessment-------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_covid_19_assessment $$
+CREATE PROCEDURE sp_populate_etl_covid_19_assessment()
 BEGIN
-SELECT "Processing covid-19_assessment", CONCAT("Time: ", NOW());
-insert into kenyaemr_etl.etl_covid-19_assessment(
+SELECT "Processing covid_19_assessment", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_covid19_assessment(
 uuid,
 provider,
 patient_id,
@@ -5643,21 +5643,12 @@ booster_vaccine_taken,
 date_taken_booster_vaccine,
 booster_dose,
 booster_dose_verified,
-ever_tested_covid-19_positive,
+ever_tested_covid_19_positive,
 symptomatic_before_first_visit,
 date_tested_positive_before_first_visit,
 admitted_before_first_visit,
 admission_unit,
-tested_covid-19_positive_since_last_visit,
-/*last_covid-19_positive_status_symptomatic,
-last_covid-19_positive_status_test_date,
-admitted_on_last_covid-19_positive_status,
-last_covid-19_positive_status_admission_date,
-last_covid-19_positive_status_discharge_date,
-last_covid-19_positive_status_isolation_status,
-last_covid-19_positive_status_icu_hdu_admission,
-last_covid-19_positive_status_supp_oxygen_given,
-last_covid-19_positive_status_on_ventilator,*/
+covid_19_management_service_offered,
 date_created,
 date_last_modified,
 voided
@@ -5679,12 +5670,12 @@ select
        max(if(o1.obs_group = 165632 and o1.concept_id = 1410,o1.value_datetime,null)) as date_taken_booster_vaccine,
        max(if(o1.obs_group = 165632 and o1.concept_id = 1418 ,o1.value_numeric,null)) as booster_dose,
        max(if(o1.obs_group = 165632 and o1.concept_id = 164464,o1.value_datetime,null)) as booster_dose_verified,
-       max(if(o1.concept_id = 166638,o1.value_coded,null)) as ever_tested_covid-19_positive,
+       max(if(o1.concept_id = 166638,o1.value_coded,null)) as ever_tested_covid_19_positive,
        max(if(o1.concept_id = 159640 ,o1.value_coded,null)) as symptomatic_before_first_visit,
        max(if(o1.concept_id = 159948,o1.value_datetime,null)) as date_tested_positive_before_first_visit,
        max(if(o1.concept_id = 162477,o1.value_coded,null)) as admitted_before_first_visit,
        max(if(o1.concept_id = 161010,o1.value_coded,null)) as admission_unit,
-       max(if(o1.concept_id = 165302,o1.value_coded,null)) as covid-19_management_service_offered,
+       max(if(o1.concept_id = 165302,o1.value_coded,null)) as covid_19_management_service_offered,
        e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
@@ -5692,14 +5683,14 @@ from encounter e
        inner join (
                   select encounter_type_id, uuid, name from encounter_type where uuid ='86709cfc-1490-11ec-82a8-0242ac130003'
                   ) et on et.encounter_type_id=e.encounter_type
-       inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
+       inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.value_numeric,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
                                                                                 and o1.concept_id in (163100,984,1418,1410,164464,164134,166063,166638,159948,162477,161010) and o1.voided=0
-                                                                                and o.concept_id in(1182,1183,165632,)) o1 on o1.encounter_id = e.encounter_id
+                                                                                and o.concept_id in(1182,1183,165632)) o1 on o1.encounter_id = e.encounter_id
 where e.voided=0
 group by o1.obs_id;
 
-SELECT "Completed processing covid-19 assessment data ", CONCAT("Time: ", NOW());
+SELECT "Completed processing covid_19 assessment data ", CONCAT("Time: ", NOW());
 END $$
 
 		-- end of dml procedures
@@ -5778,7 +5769,7 @@ CALL sp_populate_etl_adverse_events();
 CALL sp_populate_etl_allergy_chronic_illness();
 CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_pre_hiv_enrollment_art();
-CALL sp_populate_etl_covid-19_assessment();
+CALL sp_populate_etl_covid_19_assessment();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

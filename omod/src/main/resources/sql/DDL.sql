@@ -86,7 +86,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_adverse_events;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_covid_assessment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2688,9 +2688,9 @@ INDEX(encounter_id),
 INDEX(obs_id)
 );
 
-------------- create table kenyaemr_etl.etl_covid-19_assessment-----------------------
+------------- create table kenyaemr_etl.etl_covid19_assessment-----------------------
 
-CREATE TABLE kenyaemr_etl.etl_covid-19_assessment (
+CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
 uuid char(38),
 provider INT(11),
 patient_id INT(11) NOT NULL,
@@ -2714,12 +2714,12 @@ booster_vaccine_taken int(11),
 date_taken_booster_vaccine DATETIME,
 booster_dose INT(11),
 booster_dose_verified INT(11),
-ever_tested_covid-19_positive int(11),
+ever_tested_covid_19_positive int(11),
 symptomatic_before_first_visit int(11),
 date_tested_positive_before_first_visit DATETIME,
 admitted_before_first_visit int(11),
 admission_unit int(11),
-covid-19_management_service_offered int(11),
+covid_19_management_service_offered int(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
 voided int(11),
