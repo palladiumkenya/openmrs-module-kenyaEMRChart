@@ -1562,6 +1562,54 @@ ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD FOREIGN KEY (patient_i
 ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD INDEX(visit_date);
 SELECT "Successfully created pre_hiv_enrollment_art table";
 
+-- create table etl_covid_19_assessment
+create table kenyaemr_datatools.covid_19_assessment as
+select
+       uuid,
+       provider,
+       patient_id,
+       visit_id,
+       visit_date,
+       location_id,
+       encounter_id,
+       obs_id,
+       (case ever_vaccinated when 1065 then 'Yes' when 1066 then 'No' end) as ever_vaccinated,
+       (case first_vaccine_type when 166156 then 'Astrazeneca' when 166355 then 'Johnson and Johnson'
+                                when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
+           166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other' end) as first_vaccine_type,
+       (case second_vaccine_type when 166156 then 'Astrazeneca' when 166355 then 'Johnson and Johnson'
+                                 when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
+           166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other(Specify)' end) as second_vaccine_type,
+       first_dose,
+       second_dose,
+       first_dose_date,
+       second_dose_date,
+       (case first_vaccination_verified when 164134 then 'Yes' end ) as first_vaccination_verified,
+       (case second_vaccination_verified when 164134 then 'Yes' end) as second_vaccination_verified,
+       (case final_vaccination_status when 166192 then 'Partially Vaccinated' when 5585 then 'Fully Vaccinated' end) as final_vaccination_status,
+       (case ever_received_booster when 1065 then 'Yes' when 1066 then 'No' end) as ever_received_booster,
+       (case booster_vaccine_taken when 166156 then 'Astrazeneca' when 166355 then 'Johnson and Johnson'
+                                   when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
+           166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other(Specify)' end) as booster_vaccine_taken,
+       date_taken_booster_vaccine,
+       booster_dose,
+       (case booster_dose_verified when 164134 then 'Yes' end) as booster_dose_verified,
+       (case ever_tested_covid_19_positive when 703 then 'Yes' when 664 then 'No' when 1067 then 'Unknown' end) as ever_tested_covid_19_positive,
+       (case symptomatic_before_first_visit when 1068 then 'Yes' when 165912 then 'No' END) as symptomatic_before_first_visit,
+       date_tested_positive_before_first_visit,
+       (case admitted_before_first_visit when 1065 then 'Yes' when 1066 then 'No' end) as admitted_before_first_visit,
+       (case admission_unit when 165994 then 'Isolation' when 165995 then 'HDU' when 161936 then 'ICU' END) as admission_unit,
+       (case covid_19_management_service_offered when 162738 then 'Supplemental oxygen' when 165932 then 'Ventilator'
+                                                 when 1067 then 'Unknown' when 1107 then 'None' end) as covid_19_management_service_offered,
+       date_created,
+       date_last_modified,
+       voided
+from kenyaemr_etl.etl_covid19_assessment;
+
+ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD INDEX(visit_date);
+SELECT "Successfully created covid_19_assessment table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
