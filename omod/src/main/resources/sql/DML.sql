@@ -5656,20 +5656,20 @@ voided
 select
        e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id,e.encounter_id,o1.obs_id,
        max(if(o1.concept_id = 163100,o1.value_coded,null)) as ever_vaccinated,
-       max(if(o1.obs_group =1182 and o1.concept_id = 984,o1.value_coded,null)) as first_vaccine_type,
-       max(if(o1.obs_group =1183 and o1.concept_id = 984,o1.value_coded,null)) as second_vaccine_type,
-       max(if(o1.obs_group =1182 and o1.concept_id = 1418,o1.value_numeric,null)) as first_dose,
-       max(if(o1.obs_group =1182 and o1.concept_id = 1410,o1.value_datetime,null)) as first_dose_date,
-       max(if(o1.obs_group =1183 and o1.concept_id = 1410,o1.value_datetime,null)) as second_dose_date,
-       max(if(o1.obs_group =1183 and o1.concept_id = 1418,o1.value_numeric,null)) as second_dose,
-       max(if(o1.obs_group =1182 and o1.concept_id = 164464,o1.value_coded,null)) as first_vaccination_verified,
-       max(if(o1.obs_group =1183 and o1.concept_id = 164464,o1.value_coded,null)) as second_vaccination_verified,
+       max(if(o1.obs_group =1421 and o1.concept_id = 984 and o1.value_numeric = 1,o1.value_coded,null)) as first_vaccine_type,
+       max(if(o1.obs_group =1421 and o1.concept_id = 984 and o1.value_numeric = 2,o1.value_coded,null)) as second_vaccine_type,
+       max(if(o1.obs_group =1421 and o1.concept_id = 1418 and o1.value_numeric = 1,o1.value_numeric,null)) as first_dose,
+       max(if(o1.obs_group =1421 and o1.concept_id = 1410 and o1.value_numeric = 1,o1.value_datetime,null)) as first_dose_date,
+       max(if(o1.obs_group =1421 and o1.concept_id = 1410 and o1.value_numeric = 2,o1.value_datetime,null)) as second_dose_date,
+       max(if(o1.obs_group =1421 and o1.concept_id = 1418 and o1.value_numeric = 2,o1.value_numeric,null)) as second_dose,
+       max(if(o1.obs_group =1421 and o1.concept_id = 164464 and o1.value_numeric = 1,o1.value_coded,null)) as first_vaccination_verified,
+       max(if(o1.obs_group =1421 and o1.concept_id = 164464 and o1.value_numeric = 2,o1.value_coded,null)) as second_vaccination_verified,
        max(if(o1.concept_id = 164134,o1.value_coded,null)) as final_vaccination_status,
        max(if(o1.concept_id = 166063,o1.value_coded,null)) as ever_received_booster,
-       max(if(o1.obs_group = 165632 and o1.concept_id = 984,o1.value_coded,null)) as booster_vaccine_taken,
-       max(if(o1.obs_group = 165632 and o1.concept_id = 1410,o1.value_datetime,null)) as date_taken_booster_vaccine,
-       max(if(o1.obs_group = 165632 and o1.concept_id = 1418 ,o1.value_numeric,null)) as booster_dose,
-       max(if(o1.obs_group = 165632 and o1.concept_id = 164464,o1.value_datetime,null)) as booster_dose_verified,
+       max(if(o1.obs_group = 1184 and o1.concept_id = 984,o1.value_coded,null)) as booster_vaccine_taken,
+       max(if(o1.obs_group = 1184 and o1.concept_id = 1410,o1.value_datetime,null)) as date_taken_booster_vaccine,
+       max(if(o1.obs_group = 1184 and o1.concept_id = 1418 ,o1.value_numeric,null)) as booster_dose,
+       max(if(o1.obs_group = 1184 and o1.concept_id = 164464,o1.value_datetime,null)) as booster_dose_verified,
        max(if(o1.concept_id = 166638,o1.value_coded,null)) as ever_tested_covid_19_positive,
        max(if(o1.concept_id = 159640 ,o1.value_coded,null)) as symptomatic_before_first_visit,
        max(if(o1.concept_id = 159948,o1.value_datetime,null)) as date_tested_positive_before_first_visit,
@@ -5686,7 +5686,7 @@ from encounter e
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.value_numeric,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
                                                                                 and o1.concept_id in (163100,984,1418,1410,164464,164134,166063,166638,159948,162477,161010) and o1.voided=0
-                                                                                and o.concept_id in(1182,1183,165632)) o1 on o1.encounter_id = e.encounter_id
+                                                                                and o.concept_id in(1421,1184)) o1 on o1.encounter_id = e.encounter_id
 where e.voided=0
 group by o1.obs_id;
 
