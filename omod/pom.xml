@@ -16,14 +16,6 @@
     <dependencies>
 
 
-
-        <!-- Begin OpenMRS modules -->
-
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>${project.parent.artifactId}-api</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
         <!-- Begin OpenMRS modules -->
 
         <dependency>
