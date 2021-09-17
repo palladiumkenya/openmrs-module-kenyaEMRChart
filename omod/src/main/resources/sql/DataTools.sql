@@ -1592,15 +1592,15 @@ select
                                    when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
            166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other(Specify)' end) as booster_vaccine_taken,
        date_taken_booster_vaccine,
-       booster_dose,
+       booster_sequence,
        (case booster_dose_verified when 164134 then 'Yes' end) as booster_dose_verified,
        (case ever_tested_covid_19_positive when 703 then 'Yes' when 664 then 'No' when 1067 then 'Unknown' end) as ever_tested_covid_19_positive,
        (case symptomatic_before_first_visit when 1068 then 'Yes' when 165912 then 'No' END) as symptomatic_before_first_visit,
        date_tested_positive_before_first_visit,
        (case admitted_before_first_visit when 1065 then 'Yes' when 1066 then 'No' end) as admitted_before_first_visit,
-       (case admission_unit when 165994 then 'Isolation' when 165995 then 'HDU' when 161936 then 'ICU' END) as admission_unit,
-       (case covid_19_management_service_offered when 162738 then 'Supplemental oxygen' when 165932 then 'Ventilator'
-                                                 when 1067 then 'Unknown' when 1107 then 'None' end) as covid_19_management_service_offered,
+       admission_unit,
+       (case on_ventillator when 1065 then 'Yes' when 1066 then 'No' end) as on_ventillator,
+       (case on_oxygen_supplement when 1065 then 'Yes' when 1066 then 'No' end) as on_oxygen_supplement,
        date_created,
        date_last_modified,
        voided
