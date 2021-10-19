@@ -1599,7 +1599,7 @@ select
        (case ever_tested_covid_19_positive when 703 then 'Yes' when 664 then 'No' when 1067 then 'Unknown' end) as ever_tested_covid_19_positive,
        (case symptomatic when 1068 then 'Yes' when 165912 then 'No' END) as symptomatic,
        date_tested_positive,
-       (case hospital_admimission when 1065 then 'Yes' when 1066 then 'No' end) as hospital_admimission,
+       (case hospital_admission when 1065 then 'Yes' when 1066 then 'No' end) as hospital_admission,
        admission_unit,
        (case on_ventillator when 1065 then 'Yes' when 1066 then 'No' end) as on_ventillator,
        (case on_oxygen_supplement when 1065 then 'Yes' when 1066 then 'No' end) as on_oxygen_supplement,
