@@ -5656,135 +5656,148 @@ insert into kenyaemr_etl.etl_covid19_assessment (uuid,
                                                  date_created,
                                                  date_last_modified,
                                                  voided)
-
-    select y.uuid                                                                              as uuid,
-            y.creator                                                                           as provider,
-            y.patient_id                                                                        as patient_id,
-            y.visit_id                                                                          as visit_id,
-            y.visit_date                                                                        as visit_date,
-            y.location_id                                                                       as location_id,
-            y.encounter_id                                                                      as encounter_id,
-            o1.obs_group                                                                        as obs_id,
-            max(if(o3.concept_id = 163100, o3.value_coded, null))                               as ever_vaccinated,
-            max(if(dose = 1 and o1.concept_id = 984 and o1.obs_group = 1421, vaccine_type,
-                   ""))                                                                         as first_vaccine_type,
-            max(if(dose = 2 and o1.concept_id = 984 and o1.obs_group = 1421, vaccine_type,
-                   ""))                                                                         as second_vaccine_type,
-            max(if(dose = 1 and o1.concept_id = 1418 and o1.obs_group = 1421, dose, ""))        as first_dose,
-            max(if(dose = 2 and o1.concept_id = 1418 and o1.obs_group = 1421, dose, ""))        as second_dose,
-            max(if(y.dose = 1 and o1.concept_id = 1410 and y.obs_group = 1421, date(y.date_given),
-                   ""))                                                                         as first_dose_date,
-            max(if(y.dose = 2 and o1.concept_id = 1410 and y.obs_group = 1421, date(y.date_given),
-                   ""))                                                                         as second_dose_date,
-            max(if(dose = 1 and o1.concept_id = 164464 and o1.obs_group = 1421, verified,
-                   ""))                                                                         as first_vaccination_verified,
-            max(if(dose = 2 and o1.concept_id = 164464 and o1.obs_group = 1421, verified,
-                   ""))                                                                         as second_vaccination_verified,
-            max(if(o3.concept_id = 164134, o3.value_coded, null))                               as final_vaccination_status,
-            max(if(o3.concept_id = 166063, o3.value_coded, null))                               as ever_received_booster,
-            max(if(o1.concept_id = 984 and o1.obs_group = 1184, o1.value_coded, ""))            as booster_vaccine_taken,
-            max(
-              if(o1.concept_id = 1410 and o1.obs_group = 1184, date(o1.value_datetime),
-                 ""))                                                                           as date_taken_booster_vaccine,
-            max(if(o1.concept_id = 1418 and o1.obs_group = 1184, o1.value_numeric, ""))         as booster_sequence,
-            max(
-              if(o1.concept_id = 164464 and o1.obs_group = 1184, o1.value_coded, ""))           as booster_dose_verified,
-            max(if(o3.concept_id = 166638, o3.value_coded, null))                               as ever_tested_covid_19_positive,
-            max(if(o3.concept_id = 159640, o3.value_coded, null))                               as symptomatic,
-            max(if(o3.concept_id = 159948, date(o3.value_datetime), null))                      as date_tested_positive,
-            max(if(o3.concept_id = 162477, o3.value_coded, null))                               as hospital_admission,
-            concat_ws(',', max(if(o3.concept_id = 161010 and o3.value_coded = 165994, 'Isolation', null)),
-                      max(if(o3.concept_id = 161010 and o3.value_coded = 165995, 'HDU', null)),
-                      max(if(o3.concept_id = 161010 and o3.value_coded = 161936, 'ICU', null))) as admission_unit,
-            max(if(o3.concept_id = 165932, o3.value_coded, null))                               as on_ventillator,
-            max(if(o3.concept_id = 165864, o3.value_coded, null))                               as on_oxygen_supplement,
-            y.date_created                                                                      as date_created,
-            y.date_last_modified                                                                as date_last_modified,
-            y.voided                                                                            as voided
-     from ((select person_id                                       as patient_id,
-                   date(encounter_datetime)                        as visit_date,
-                   creator,
-                   obs_id,
-                   date(t.date_created)                            as date_created,
-                   t.date_last_modified                            as date_last_modified,
-                   encounter_id,
-                   name                                            as encounter_type,
-                   t.uuid,
-                   max(if(t.concept_id = 984, t.value_coded, ""))  as vaccine_type,
-                   max(if(t.concept_id = 1418, value_numeric, "")) as dose,
-                   max(if(t.concept_id = 164464, value_coded, "")) as verified,
-                   max(if(t.concept_id = 1410, date_given, ""))    as date_given,
-                   t.concept_id                                    as concept_id,
-                   t.obs_group                                     as obs_group,
-                   obs_group_id,
-                   t.visit_id,
-                   t.location_id,
-                   t.voided
-            from (select e.uuid,
-                         o2.person_id,
-                         o2.obs_id,
-                         o.concept_id as         obs_group,
-                         e.encounter_datetime,
-                         e.creator,
-                         e.date_created,
-                         if(max(o2.date_created) != min(o2.date_created), max(o2.date_created),
-                            NULL)     as         date_last_modified,
-                         o2.voided    as         voided,
-                         o2.concept_id,
-                         o2.value_coded,
-                         o2.value_numeric,
-                         date(o2.value_datetime) date_given,
-                         o2.obs_group_id,
-                         o2.encounter_id,
-                         et.name,
-                         e.visit_id,
-                         e.location_id
+select o3.uuid                                                                             as uuid,
+       o3.creator                                                                          as provider,
+       o3.person_id                                                                        as patient_id,
+       o3.visit_id                                                                         as visit_id,
+       o3.visit_date                                                                       as visit_date,
+       o3.location_id                                                                      as location_id,
+       o3.encounter_id                                                                     as encounter_id,
+       o1.obs_group                                                                        as obs_id,
+       max(if(o3.concept_id = 163100, o3.value_coded, null))                               as ever_vaccinated,
+       max(if(dose = 1 and o1.concept_id = 984 and o1.obs_group = 1421, vaccine_type,
+              ""))                                                                         as first_vaccine_type,
+       max(if(dose = 2 and o1.concept_id = 984 and o1.obs_group = 1421, vaccine_type,
+              ""))                                                                         as second_vaccine_type,
+       max(if(dose = 1 and o1.concept_id = 1418 and o1.obs_group = 1421, dose, ""))        as first_dose,
+       max(if(dose = 2 and o1.concept_id = 1418 and o1.obs_group = 1421, dose, ""))        as second_dose,
+       max(if(y.dose = 1 and o1.concept_id = 1410 and y.obs_group = 1421, date(y.date_given),
+              ""))                                                                         as first_dose_date,
+       max(if(y.dose = 2 and o1.concept_id = 1410 and y.obs_group = 1421, date(y.date_given),
+              ""))                                                                         as second_dose_date,
+       max(if(dose = 1 and o1.concept_id = 164464 and o1.obs_group = 1421, verified,
+              ""))                                                                         as first_vaccination_verified,
+       max(if(dose = 2 and o1.concept_id = 164464 and o1.obs_group = 1421, verified,
+              ""))                                                                         as second_vaccination_verified,
+       max(if(o3.concept_id = 164134, o3.value_coded, null))                               as final_vaccination_status,
+       max(if(o3.concept_id = 166063, o3.value_coded, null))                               as ever_received_booster,
+       max(if(o1.concept_id = 984 and o1.obs_group = 1184, o1.value_coded, ""))            as booster_vaccine_taken,
+       max(
+         if(o1.concept_id = 1410 and o1.obs_group = 1184, date(o1.value_datetime),
+            ""))                                                                           as date_taken_booster_vaccine,
+       max(if(o1.concept_id = 1418 and o1.obs_group = 1184, o1.value_numeric, ""))         as booster_sequence,
+       max(
+         if(o1.concept_id = 164464 and o1.obs_group = 1184, o1.value_coded, ""))           as booster_dose_verified,
+       max(if(o3.concept_id = 166638, o3.value_coded, null))                               as ever_tested_covid_19_positive,
+       max(if(o3.concept_id = 159640, o3.value_coded, null))                               as symptomatic,
+       max(if(o3.concept_id = 159948, date(o3.value_datetime), null))                      as date_tested_positive,
+       max(if(o3.concept_id = 162477, o3.value_coded, null))                               as hospital_admission,
+       concat_ws(',', max(if(o3.concept_id = 161010 and o3.value_coded = 165994, 'Isolation', null)),
+                 max(if(o3.concept_id = 161010 and o3.value_coded = 165995, 'HDU', null)),
+                 max(if(o3.concept_id = 161010 and o3.value_coded = 161936, 'ICU', null))) as admission_unit,
+       max(if(o3.concept_id = 165932, o3.value_coded, null))                               as on_ventillator,
+       max(if(o3.concept_id = 165864, o3.value_coded, null))                               as on_oxygen_supplement,
+       o3.date_created                                                                     as date_created,
+       o3.date_last_modified                                                               as date_last_modified,
+       o3.voided                                                                           as voided
+from (select e.uuid,
+             e.creator,
+             o.person_id,
+             o.encounter_id,
+             date(e.encounter_datetime) as visit_date,
+             e.visit_id,
+             e.location_id,
+             o.obs_id,
+             o.concept_id               as obs_group,
+             o.concept_id               as concept_id,
+             o.value_coded,
+             o.value_datetime,
+             o.value_numeric,
+             o.date_created,
+             if(max(o.date_created) != min(o.date_created), max(o.date_created),
+                NULL)                   as date_last_modified,
+             o.voided
+      from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join (select encounter_type_id, uuid, name
+                         from encounter_type
+                         where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
+               on et.encounter_type_id = e.encounter_type
+      where o.concept_id in
+            (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932, 159640)
+        and o.voided = 0
+      group by obs_id)o3
+       left join (select person_id                                       as patient_id,
+                         date(encounter_datetime)                        as visit_date,
+                         creator,
+                         obs_id,
+                         date(t.date_created)                            as date_created,
+                         t.date_last_modified                            as date_last_modified,
+                         encounter_id,
+                         name                                            as encounter_type,
+                         t.uuid,
+                         max(if(t.concept_id = 984, t.value_coded, ""))  as vaccine_type,
+                         max(if(t.concept_id = 1418, value_numeric, "")) as dose,
+                         max(if(t.concept_id = 164464, value_coded, "")) as verified,
+                         max(if(t.concept_id = 1410, date_given, ""))    as date_given,
+                         t.concept_id                                    as concept_id,
+                         t.obs_group                                     as obs_group,
+                         obs_group_id,
+                         t.visit_id,
+                         t.location_id,
+                         t.voided
+                  from (select e.uuid,
+                               o2.person_id,
+                               o2.obs_id,
+                               o.concept_id as         obs_group,
+                               e.encounter_datetime,
+                               e.creator,
+                               e.date_created,
+                               if(max(o2.date_created) != min(o2.date_created), max(o2.date_created),
+                                  NULL)     as         date_last_modified,
+                               o2.voided    as         voided,
+                               o2.concept_id,
+                               o2.value_coded,
+                               o2.value_numeric,
+                               date(o2.value_datetime) date_given,
+                               o2.obs_group_id,
+                               o2.encounter_id,
+                               et.name,
+                               e.visit_id,
+                               e.location_id
+                        from obs o
+                               inner join encounter e on e.encounter_id = o.encounter_id
+                               inner join person p on p.person_id = o.person_id and p.voided = 0
+                               inner join (select encounter_type_id, uuid, name
+                                           from encounter_type
+                                           where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
+                                 on et.encounter_type_id = e.encounter_type
+                               inner join obs o2 on o.obs_id = o2.obs_group_id
+                        where o2.concept_id in (984, 1418, 1410, 164464)
+                          and o2.voided = 0
+                        group by o2.obs_id) t
+                  group by obs_group_id
+                  having vaccine_type != "") y on o3.encounter_id = y.encounter_id
+       left join (select o.person_id,
+                         o1.encounter_id,
+                         o.obs_id,
+                         o.concept_id  as obs_group,
+                         o1.concept_id as concept_id,
+                         o1.value_coded,
+                         o1.value_datetime,
+                         o1.value_numeric,
+                         o1.date_created,
+                         o1.voided
                   from obs o
-                         inner join encounter e on e.encounter_id = o.encounter_id
-                         inner join person p on p.person_id = o.person_id and p.voided = 0
-                         inner join (select encounter_type_id, uuid, name
-                                     from encounter_type
-                                     where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
-                           on et.encounter_type_id = e.encounter_type
-                         inner join obs o2 on o.obs_id = o2.obs_group_id
-                  where o2.concept_id in (984, 1418, 1410, 164464)
-                    and o2.voided = 0
-                  group by o2.obs_id) t
-            group by obs_group_id
-            having vaccine_type != "")) y #left join obs o on y.encounter_id = o.encounter_id and o.concept_id = 162585 and o.voided = 0
-            inner join (select o.person_id,
-                               o1.encounter_id,
-                               o.obs_id,
-                               o.concept_id  as obs_group,
-                               o1.concept_id as concept_id,
-                               o1.value_coded,
-                               o1.value_datetime,
-                               o1.value_numeric,
-                               o1.date_created,
-                               o1.voided
-                        from obs o
-                               join obs o1 on o.obs_id = o1.obs_group_id
-                                                and o1.concept_id in
-                                                    (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932) and
-                                              o1.voided = 0
-                                                and o.concept_id in (1421, 1184)
-                        order by o1.obs_id) o1 on o1.encounter_id = y.encounter_id
-            inner join (select o.person_id,
-                               o.encounter_id,
-                               o.obs_id,
-                               o.concept_id as obs_group,
-                               o.concept_id as concept_id,
-                               o.value_coded,
-                               o.value_datetime,
-                               o.value_numeric,
-                               o.date_created,
-                               o.voided
-                        from obs o
-                        where o.concept_id in
-                              (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932, 159640)
-                          and o.voided = 0)o3 on y.encounter_id = o3.encounter_id
-     where y.voided = 0
-     group by y.visit_id;
+                         join obs o1 on o.obs_id = o1.obs_group_id
+                                          and o1.concept_id in
+                                              (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932) and
+                                        o1.voided = 0
+                                          and o.concept_id in (1421, 1184)
+                  order by o1.obs_id) o1 on o1.encounter_id = y.encounter_id
+
+where o3.voided = 0
+group by o3.visit_id;
 
 SELECT "Completed processing covid_19 assessment data ", CONCAT("Time: ", NOW());
 END $$
