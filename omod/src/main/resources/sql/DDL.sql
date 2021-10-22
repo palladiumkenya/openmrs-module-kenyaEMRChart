@@ -2727,6 +2727,7 @@ CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
   date_last_modified                      DATETIME,
   voided                                  int(11),
   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+  CONSTRAINT unique_uuid UNIQUE(uuid),
   INDEX (visit_date),
   INDEX (patient_id),
   INDEX (encounter_id)
