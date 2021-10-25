@@ -6156,7 +6156,7 @@ select o3.uuid                                                                  
        max(if(o3.concept_id = 165864, o3.value_coded, null))                               as on_oxygen_supplement,
        o3.date_created                                                                     as date_created,
        o3.date_last_modified                                                               as date_last_modified,
-       o3.voided                                                                           as voided
+       o3.enc_voided                                                                           as voided
 from (select e.uuid,
              e.creator,
              o.person_id,
@@ -6174,7 +6174,11 @@ from (select e.uuid,
              if(max(o.date_created) != min(o.date_created), max(o.date_created),
                 NULL)                   as date_last_modified,
              o.voided,
-             o.date_voided
+             o.date_voided,
+             e.date_voided as enc_voided,
+             e.date_voided as enc_voided_date,
+             e.date_changed as enc_changed_date,
+             e.date_created as enc_created_date
       from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join (select encounter_type_id, uuid, name
@@ -6184,7 +6188,7 @@ from (select e.uuid,
       where o.concept_id in
             (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932, 159640)
         and o.voided = 0
-      group by obs_id)o3
+      group by o.obs_id)o3
        left join (select person_id                                       as patient_id,
                          date(encounter_datetime)                        as visit_date,
                          creator,
@@ -6254,9 +6258,11 @@ from (select e.uuid,
                                           and o.concept_id in (1421, 1184)
                   order by o1.obs_id) o1 on o1.encounter_id = y.encounter_id
 
-where o3.voided = 0 and o3.date_created >= last_update_time
-   or o3.date_last_modified >= last_update_time
-   or o3.date_voided >= last_update_time
+where o3.enc_voided = 0 and o3.enc_created_date >= last_update_time
+or o3.enc_changed_date >=  last_update_time
+or o3.enc_voided_date >=  last_update_time
+or o3.date_created >=  last_update_time
+or o3.date_voided >=  last_update_time
 group by o3.visit_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),ever_vaccinated=VALUES(ever_vaccinated),first_vaccine_type=VALUES(first_vaccine_type),second_vaccine_type=VALUES(second_vaccine_type),
                         first_dose=VALUES(first_dose),second_dose=VALUES(second_dose),first_dose_date=VALUES(first_dose_date),second_dose_date=VALUES(second_dose_date),first_vaccination_verified=VALUES(first_vaccination_verified),
