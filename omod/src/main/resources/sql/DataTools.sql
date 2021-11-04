@@ -324,12 +324,13 @@ transfer_date,
                    when 116030 then "HIV disease resulting in cancer"
                    when 160159 then "HIV disease resulting in other infectious and parasitic diseases"
                    when 160158 then "Other HIV disease resulting in other diseases or conditions leading to death"
+                   when 145439 then "Other HIV disease resulting in other diseases or conditions leading to death"
                    when 133478 then "Other natural causes not directly related to HIV"
-                   when 145439 then "Non-communicable diseases such as Diabetes and hypertension"
                    when 123812 then "Non-natural causes"
                    when 42917 then "Unknown cause" else "" end) as death_reason,
 (case specific_death_cause
    when 165609 then "COVID-19 Complications"
+   when 145439 then "Non-communicable diseases such as Diabetes and hypertension"
    when 156673 then "HIV disease resulting in mycobacterial infection"
    when 155010 then "HIV disease resulting in Kaposis sarcoma"
    when 156667 then "HIV disease resulting in Burkitts lymphoma"
