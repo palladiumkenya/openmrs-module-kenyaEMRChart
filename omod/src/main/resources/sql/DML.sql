@@ -2359,6 +2359,7 @@ max(if(o.concept_id=164956,(
   when 159938 then "Home Based Testing"
   when 159939 then "MO: Mobile Outreach HTS"
   when 161557 then "Index testing"
+  when 166606 then "SNS - Social Networks"
   when 5622 then "Other"
   else ""
   end ),null)) as test_strategy,
