@@ -2382,7 +2382,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         e.encounter_datetime as visit_date,
         max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type ,
         max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" else null end),null)) as population_type,
-        max(if(o.concept_id=160581,(case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" else null end),null)) as key_population_type,
+        max(if(o.concept_id=160581,(case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else null end),null)) as key_population_type,
         max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as ever_tested_for_hiv,
         max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
         max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_disabled,
@@ -4409,7 +4409,7 @@ CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
         e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-          then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" else "" end),null)) as key_population_type,
+          then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
         max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
         max(if(o.concept_id=165137,o.value_text,null)) as program_name,
         max(if(o.concept_id=165006,o.value_text,null)) as frequent_hotspot_name,
