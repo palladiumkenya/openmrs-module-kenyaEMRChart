@@ -2699,7 +2699,7 @@ CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_follow_up$$
 CREATE PROCEDURE sp_update_etl_ipt_follow_up(IN last_update_time DATETIME)
   BEGIN
-    SELECT "Processing IPT followup forms", CONCAT("Time: ", NOW());
+    SELECT "Processing TPT followup forms", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ipt_follow_up(
       patient_id,
       uuid,
@@ -3700,9 +3700,10 @@ CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
 -- ----------------------------  scheduled updates ---------------------
 -- ------------------------------------- populate ipt initiation -----------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation$$
+
 CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
   BEGIN
-    SELECT "Updating IPT initiations ", CONCAT("Time: ", NOW());
+    SELECT "Updating TPT initiations ", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ipt_initiation(
       patient_id,
       uuid,
@@ -3746,70 +3747,12 @@ CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
     END$$
 
 -- ------------------------------------- process ipt followup -------------------------
-/*DROP PROCEDURE IF EXISTS sp_update_etl_ipt_followup$$
-CREATE PROCEDURE sp_update_etl_ipt_followup(IN last_update_time DATETIME)
-	BEGIN
-		SELECT "Updating IPT followup ", CONCAT("Time: ", NOW());
-		INSERT INTO kenyaemr_etl.etl_ipt_followup(
-			uuid,
-			patient_id,
-			visit_id,
-			visit_date,
-			location_id,
-			encounter_id,
-			encounter_provider,
-			date_created,
-			ipt_due_date,
-			date_collected_ipt,
-			has_hepatoxicity,
-			has_peripheral_neuropathy,
-			has_rash,
-			adherence,
-			action_taken,
-			voided
-		)
-			select
-				e.uuid,
-				e.patient_id,
-				e.visit_id,
-				date(e.encounter_datetime) as visit_date,
-				e.location_id,
-				e.encounter_id as encounter_id,
-				e.creator,
-				e.date_created as date_created,
-				max(if(o.concept_id=164073,date(o.value_datetime),null)) as ipt_due_date,
-				max(if(o.concept_id=164074,date(o.value_datetime),null)) as date_collected_ipt,
-				max(if(o.concept_id=159098,o.value_coded,null)) as has_hepatoxicity,
-				max(if(o.concept_id=118983,o.value_coded,null)) as has_peripheral_neuropathy,
-				max(if(o.concept_id=512,o.value_coded,null)) as has_rash,
-				max(if(o.concept_id=164075,o.value_coded,null)) as adherence,
-				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
-				e.voided as voided
-			from encounter e
-				inner join
-				(
-					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
-				) et on et.encounter_type_id=e.encounter_type
-				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-																 and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
-			where e.date_created >= last_update_time
-						or e.date_changed >= last_update_time
-						or e.date_voided >= last_update_time
-						or o.date_created >= last_update_time
-						or o.date_voided >= last_update_time
-			group by e.patient_id, e.encounter_id, visit_date
-		ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
-			ipt_due_date=VALUES(ipt_due_date),date_collected_ipt=VALUES(date_collected_ipt),has_hepatoxicity=VALUES(has_hepatoxicity),
-			has_peripheral_neuropathy=VALUES(has_peripheral_neuropathy),has_rash=VALUES(has_rash),
-			adherence=VALUES(adherence),action_taken=VALUES(action_taken),voided=VALUES(voided)
-		;
-		SELECT "Completed Updating IPT followup data ", CONCAT("Time: ", NOW());
-		END$$*/
--- ----------------------------------- process ipt outcome ---------------------------
-DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome$$
+
+-- ----------------------------------- process tpt outcome ---------------------------
+DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome $$
 CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
   BEGIN
-    SELECT "Updating IPT outcome ", CONCAT("Time: ", NOW());
+    SELECT "Updating TPT outcome ", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ipt_outcome(
       patient_id,
       uuid,
@@ -4148,7 +4091,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
          when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
          when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
          when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-         when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+         when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
          when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
          when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
          when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
@@ -5946,11 +5889,13 @@ SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: "
 END$$
 
 
+
 -- Update IPT screening----
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening$$
+
 CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
 BEGIN
-SELECT "Processing IPT screening", CONCAT("Time: ", NOW());
+SELECT "Processing TPT screening", CONCAT("Time: ", NOW());
 
 insert into kenyaemr_etl.etl_ipt_screening(
 uuid,

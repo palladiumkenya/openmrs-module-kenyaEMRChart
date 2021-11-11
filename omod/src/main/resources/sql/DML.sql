@@ -652,7 +652,7 @@ END$$
 DROP PROCEDURE IF EXISTS sp_populate_etl_program_discontinuation$$
 CREATE PROCEDURE sp_populate_etl_program_discontinuation()
 BEGIN
-SELECT "Processing Program (HIV, TB, MCH,IPT,OTZ,OVC ...) discontinuations ", CONCAT("Time: ", NOW());
+SELECT "Processing Program (HIV, TB, MCH,TPT,OTZ,OVC ...) discontinuations ", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_patient_program_discontinuation(
 patient_id,
 uuid,
@@ -687,7 +687,7 @@ et.uuid,
 	when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCH Child HEI'
 	when '5feee3f1-aa16-4513-8bd0-5d9b27ef1208' then 'MCH Child'
 	when '7c426cfc-3b47-4481-b55f-89860c21c7de' then 'MCH Mother'
-	when 'bb77c683-2144-48a5-a011-66d904d776c9' then 'IPT'
+	when 'bb77c683-2144-48a5-a011-66d904d776c9' then 'TPT'
 	when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
 	when '5cf00d9e-09da-11ea-8d71-362b9e155667' then 'OVC'
 	when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
@@ -2731,7 +2731,7 @@ END$$
 DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_screening$$
 CREATE PROCEDURE sp_populate_etl_ipt_screening()
 BEGIN
-SELECT "Processing IPT screening", CONCAT("Time: ", NOW());
+SELECT "Processing TPT screening", CONCAT("Time: ", NOW());
 
 insert into kenyaemr_etl.etl_ipt_screening(
 uuid,
@@ -2782,8 +2782,9 @@ from encounter e
 where e.voided=0
 group by o1.obs_id;
 
-SELECT "Completed processing IPT screening forms", CONCAT("Time: ", NOW());
-END$$
+
+SELECT "Completed processing TPT screening forms", CONCAT("Time: ", NOW());
+END $$
 
 
 
@@ -2792,7 +2793,7 @@ END$$
 DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_follow_up$$
 CREATE PROCEDURE sp_populate_etl_ipt_follow_up()
 BEGIN
-SELECT "Processing IPT followup forms", CONCAT("Time: ", NOW());
+SELECT "Processing TPT followup forms", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_ipt_follow_up(
 patient_id,
 uuid,
@@ -2835,8 +2836,8 @@ and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
 where e.voided=0
 group by e.encounter_id;
 
-SELECT "Completed processing IPT followup forms", CONCAT("Time: ", NOW());
-END$$
+SELECT "Completed processing TPT followup forms", CONCAT("Time: ", NOW());
+END $$
 
 -- ------------- populate defaulter tracing-------------------------
 
@@ -3608,12 +3609,12 @@ CREATE PROCEDURE sp_populate_etl_progress_note()
     group by e.encounter_id;
     SELECT "Completed processing progress note", CONCAT("Time: ", NOW());
 
-END$$
-		---------------------------------------- populate ipt initiation -----------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_initiation$$
+END $$
+		---------------------------------------- populate tpt initiation -----------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_initiation $$
 CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 	BEGIN
-		SELECT "Processing IPT initiations ", CONCAT("Time: ", NOW());
+		SELECT "Processing TPT initiations ", CONCAT("Time: ", NOW());
 		insert into kenyaemr_etl.etl_ipt_initiation(
 			patient_id,
 			uuid,
@@ -3649,7 +3650,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_initiation()
 				) et on et.encounter_type_id=e.encounter_type
 				where e.voided=0
 			group by e.encounter_id;
-		SELECT "Completed processing IPT Initiation ", CONCAT("Time: ", NOW());
+		SELECT "Completed processing TPT Initiation ", CONCAT("Time: ", NOW());
 
 update kenyaemr_etl.etl_ipt_initiation i
 join (select pi.patient_id,
@@ -3661,11 +3662,12 @@ group by pi.patient_id) pid on pid.patient_id=i.patient_id
 set i.sub_county_reg_number=pid.sub_county_reg_number;
 END$$
 
-	-- ------------------------------------- process ipt followup -------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_followup$$
+
+	-- ------------------------------------- process tpt followup -------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_followup $$
 CREATE PROCEDURE sp_populate_etl_ipt_followup()
 	BEGIN
-		SELECT "Processing IPT followup ", CONCAT("Time: ", NOW());
+		SELECT "Processing TPT followup ", CONCAT("Time: ", NOW());
 		INSERT INTO kenyaemr_etl.etl_ipt_follow_up(
 			uuid,
 			patient_id,
@@ -3714,13 +3716,14 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 			where e.voided=0
 			group by e.patient_id, e.encounter_id, visit_date
 		;
-		SELECT "Completed processing IPT followup data ", CONCAT("Time: ", NOW());
-		END$$
-		-- ----------------------------------- process ipt outcome ---------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_outcome$$
+
+		SELECT "Completed processing TPT followup data ", CONCAT("Time: ", NOW());
+		END $$
+		-- ----------------------------------- process tpt outcome ---------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_outcome $$
 CREATE PROCEDURE sp_populate_etl_ipt_outcome()
 	BEGIN
-		SELECT "Processing IPT outcome ", CONCAT("Time: ", NOW());
+		SELECT "Processing TPT outcome ", CONCAT("Time: ", NOW());
 		insert into kenyaemr_etl.etl_ipt_outcome(
 			patient_id,
 			uuid,
@@ -3754,8 +3757,9 @@ CREATE PROCEDURE sp_populate_etl_ipt_outcome()
 				) et on et.encounter_type_id=e.encounter_type
 				where e.voided=0
 			group by e.encounter_id;
-		SELECT "Completed processing IPT outcome ", CONCAT("Time: ", NOW());
-		END$$
+
+		SELECT "Completed processing TPT outcome ", CONCAT("Time: ", NOW());
+		END $$
 
 		-- --------------------------------------- process HTS linkage tracing ------------------------
 DROP PROCEDURE IF EXISTS sp_populate_etl_hts_linkage_tracing$$
@@ -3831,7 +3835,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
 				when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
 				when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
 				when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
 				when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
 				when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
