@@ -2689,7 +2689,7 @@ CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), ipt_started=values(ipt_started);
-    SELECT "Completed processing IPT screening forms", CONCAT("Time: ", NOW());
+    SELECT "Completed processing TPT screening forms", CONCAT("Time: ", NOW());
     END $$
 -- DELIMITER ;
 
@@ -2699,7 +2699,7 @@ CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_follow_up $$
 CREATE PROCEDURE sp_update_etl_ipt_follow_up(IN last_update_time DATETIME)
   BEGIN
-    SELECT "Processing IPT followup forms", CONCAT("Time: ", NOW());
+    SELECT "Processing TPT followup forms", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ipt_follow_up(
       patient_id,
       uuid,
@@ -3698,11 +3698,11 @@ CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
 
 /*SET sql_mode=@OLD_SQL_MODE$$*/
 -- ----------------------------  scheduled updates ---------------------
--- ------------------------------------- populate ipt initiation -----------------------------
+-- ------------------------------------- populate tpt initiation -----------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation $$
 CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
   BEGIN
-    SELECT "Updating IPT initiations ", CONCAT("Time: ", NOW());
+    SELECT "Updating TPT initiations ", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ipt_initiation(
       patient_id,
       uuid,
@@ -3742,14 +3742,14 @@ CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),ipt_indication=VALUES(ipt_indication), voided=VALUES(voided)
     ;
-    SELECT "Completed Updating IPT Initiation ", CONCAT("Time: ", NOW());
+    SELECT "Completed Updating TPT Initiation ", CONCAT("Time: ", NOW());
     END $$
 
--- ------------------------------------- process ipt followup -------------------------
+-- ------------------------------------- process tpt followup -------------------------
 /*DROP PROCEDURE IF EXISTS sp_update_etl_ipt_followup $$
 CREATE PROCEDURE sp_update_etl_ipt_followup(IN last_update_time DATETIME)
 	BEGIN
-		SELECT "Updating IPT followup ", CONCAT("Time: ", NOW());
+		SELECT "Updating TPT followup ", CONCAT("Time: ", NOW());
 		INSERT INTO kenyaemr_etl.etl_ipt_followup(
 			uuid,
 			patient_id,
@@ -3803,13 +3803,13 @@ CREATE PROCEDURE sp_update_etl_ipt_followup(IN last_update_time DATETIME)
 			has_peripheral_neuropathy=VALUES(has_peripheral_neuropathy),has_rash=VALUES(has_rash),
 			adherence=VALUES(adherence),action_taken=VALUES(action_taken),voided=VALUES(voided)
 		;
-		SELECT "Completed Updating IPT followup data ", CONCAT("Time: ", NOW());
+		SELECT "Completed Updating TPT followup data ", CONCAT("Time: ", NOW());
 		END $$*/
--- ----------------------------------- process ipt outcome ---------------------------
+-- ----------------------------------- process tpt outcome ---------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome $$
 CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
   BEGIN
-    SELECT "Updating IPT outcome ", CONCAT("Time: ", NOW());
+    SELECT "Updating TPT outcome ", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_ipt_outcome(
       patient_id,
       uuid,
@@ -3850,7 +3850,7 @@ CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
       outcome=VALUES(outcome), voided=VALUES(voided)
     ;
-    SELECT "Completed Updating IPT outcome ", CONCAT("Time: ", NOW());
+    SELECT "Completed Updating TPT outcome ", CONCAT("Time: ", NOW());
     END $$
 
 -- --------------------------------------- process HTS linkage tracing ------------------------
@@ -4148,7 +4148,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
          when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
          when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
          when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-         when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "IPT"
+         when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
          when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
          when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
          when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
@@ -5946,11 +5946,11 @@ SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: "
 END $$
 
 
--- Update IPT screening----
+-- Update TPT screening----
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening $$
 CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
 BEGIN
-SELECT "Processing IPT screening", CONCAT("Time: ", NOW());
+SELECT "Processing TPT screening", CONCAT("Time: ", NOW());
 
 insert into kenyaemr_etl.etl_ipt_screening(
 uuid,
