@@ -3191,6 +3191,8 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
         recurrent_sex_under_influence,
         inconsistent_no_condom_use,
         sharing_drug_needles,
+        other_reasons,
+        other_reason_specify,
         risk_education_offered,
         risk_reduction,
         assessment_outcome,
@@ -3225,6 +3227,8 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
            max(if(o.concept_id = 165088, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_sex_under_influence,
            max(if(o.concept_id = 165089, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as inconsistent_no_condom_use,
            max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sharing_drug_needles,
+           max(if(o.concept_id = 165241, (case o.value_coded when 1065 then "Yes" when 1066 then "No"  else "" end), "" )) as other_reasons,
+           max(if(o.concept_id = 160632, o.value_text, null )) as other_reason_specify,
            max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as risk_assessment_outcome,
            max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
            max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
@@ -3246,7 +3250,7 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
     from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
@@ -3344,8 +3348,21 @@ CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
     select
            e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
            if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
-           max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction" when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request"
-                                                             when 150506 then "Intimate partner violence"  when 978 then "Self Discontinuation"  when 160581 then "Low risk of HIV" when 5622 then "Other" else "" end), "" )) as discontinue_reason,
+           max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive"
+                                                             when 113338 then "Renal dysfunction"
+                                                             when 1302 then "Viral suppression of HIV+"
+                                                             when 159598 then "Not adherent to PrEP"
+                                                             when 164401 then "Too many HIV tests"
+                                                             when 162696 then "Client request"
+                                                             when 150506 then "Intimate partner violence"
+                                                             when 978 then "Self Discontinuation"
+                                                             when 160581 then "Low risk of HIV"
+                                                             when 121760 then "Adverse drug reaction"
+                                                             when 160034 then "Died"
+                                                             when 159492 then "Transferred Out"
+                                                             when 5240 then "Defaulters (missed drugs pick ups)"
+                                                             when 162479 then "Partner Refusal"
+                                                             when 5622 then "Other" else "" end), "" )) as discontinue_reason,
            max(if(o.concept_id = 164073, o.value_datetime, null )) as care_end_date,
            e.voided
     from encounter e

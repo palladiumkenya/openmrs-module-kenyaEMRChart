@@ -1498,6 +1498,8 @@ SELECT "Successfully created etl_ART_preparation table";
     recurrent_sex_under_influence varchar(10),
     inconsistent_no_condom_use varchar(10),
     sharing_drug_needles varchar(255),
+    other_reasons varchar(10),
+    other_reason_specify varchar(255),
     assessment_outcome varchar(255),
     risk_education_offered varchar(10),
     risk_reduction varchar(10),
