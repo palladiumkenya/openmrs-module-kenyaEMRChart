@@ -3204,6 +3204,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
       inconsistent_no_condom_use=VALUES(inconsistent_no_condom_use),
       sharing_drug_needles=VALUES(sharing_drug_needles),
       other_reasons=VALUES(other_reasons),
+      other_reason_specify=VALUES(other_reason_specify),
       risk_education_offered=VALUES(risk_education_offered),
       risk_reduction=VALUES(risk_reduction),
       willing_to_take_prep=VALUES(willing_to_take_prep),
