@@ -1567,7 +1567,7 @@ ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD FOREIGN KEY (patient_i
 ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD INDEX(visit_date);
 SELECT "Successfully created pre_hiv_enrollment_art table";
 
--- create table etl_covid_19_assessment
+-- create table covid_19_assessment
 create table kenyaemr_datatools.covid_19_assessment as
 select
        uuid,
@@ -1614,6 +1614,44 @@ from kenyaemr_etl.etl_covid19_assessment;
 ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD INDEX(visit_date);
 SELECT "Successfully created covid_19_assessment table";
+
+-- Create table prep_enrolment
+create table kenyaemr_datatools.prep_enrolment as
+  select
+         uuid,
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         date_created,
+         date_last_modified,
+         patient_type,
+         case population_type when 164928 then 'General Population' when 6096 then 'Discordant Couple' when 164929 then 'Key Population' end as population_type,
+         case kp_type when 162277 then 'People in prison and other closed settings' when 165100 then 'Transgender' when 105 then 'PWID' when 160578 then 'MSM' when 165084 then 'MSW' when 160579 then 'FSW' end as kp_type,
+         transfer_in_entry_point,
+         referred_from,
+         transit_from,
+         transfer_in_date,
+         transfer_from,
+         initial_enrolment_date,
+         date_started_prep_trf_facility,
+         previously_on_prep,
+         regimen,
+         prep_last_date,
+         case in_school when 1 then 'Yes' when 2 then 'No' end as in_school,
+         buddy_name,
+         buddy_alias,
+         buddy_relationship,
+         buddy_phone,
+         buddy_alt_phone,
+         voided
+  from kenyaemr_etl.etl_prep_enrolment;
+
+ALTER TABLE kenyaemr_datatools.prep_enrolment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.prep_enrolment ADD INDEX(visit_date);
+SELECT "Successfully created prep_enrolment table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

@@ -3390,6 +3390,8 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       date_created,
       date_last_modified,
       patient_type,
+      population_type,
+      kp_type,
       transfer_in_entry_point,
       referred_from,
       transit_from,
@@ -3412,6 +3414,8 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
         e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
                 if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
                 max(if(o.concept_id = 164932, (case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" when 164931 then "Transit" when 159833 then "Re-enrollment(Re-activation)" else "" end), "" )) as patient_type,
+                max(if(o.concept_id = 164930, o.value_coded, null )) as population_type,
+                max(if(o.concept_id = 160581, o.value_coded, null )) as kp_type,
                 max(if(o.concept_id = 160540, (case o.value_coded when 159938 then "HBTC" when 160539 then "VCT Site" when 159937 then "MCH" when 160536 then "IPD-Adult" when 160541 then "TB Clinic" when 160542 then "OPD" when 162050 then "CCC" when 160551 then "Self Test" when 5622 then "Other" else "" end), "" )) as transfer_in_entry_point,
                 max(if(o.concept_id = 162724, o.value_text, null )) as referred_from,
                 max(if(o.concept_id = 161550, o.value_text, null )) as transit_from,
@@ -3433,7 +3437,7 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3443,6 +3447,8 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
       provider=VALUES(provider),
       patient_type=VALUES(patient_type),
+      population_type=VALUES(population_type),
+      kp_type=VALUES(kp_type),
       transfer_in_entry_point=VALUES(transfer_in_entry_point),
       referred_from=VALUES(referred_from),
       transit_from=VALUES(transit_from),

@@ -1599,6 +1599,8 @@ SELECT "Successfully created etl_ART_preparation table";
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     patient_type VARCHAR(255),
+    population_type VARCHAR(255),
+    kp_type VARCHAR(255),
     transfer_in_entry_point VARCHAR(255),
     referred_from VARCHAR(255),
     transit_from VARCHAR(255),
