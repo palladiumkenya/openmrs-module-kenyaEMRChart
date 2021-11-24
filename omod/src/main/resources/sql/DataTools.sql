@@ -171,6 +171,7 @@ clinical_notes,
 (case has_chronic_illnesses_cormobidities when 1065 then "Yes" when 1066 then "No" else "" end) as has_chronic_illnesses_cormobidities,
 (case has_adverse_drug_reaction when 1 then "Yes" when 0 then "No" else "" end) as has_adverse_drug_reaction,
 (case pregnancy_status when 1065 then "Yes" when 1066 then "No" else "" end) as pregnancy_status,
+(case breastfeeding when 1065 then "Yes" when 1066 then "No" else "" end) as breastfeeding,
 (case wants_pregnancy when 1065 then "Yes" when 1066 then "No" else "" end) as wants_pregnancy,
 (case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)" 
  when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
@@ -236,6 +237,7 @@ ALTER TABLE kenyaemr_datatools.hiv_followup ADD FOREIGN KEY (patient_id) REFEREN
 
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(pregnancy_status);
+ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(breastfeeding);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(family_planning_status);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(tb_status);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ctx_dispensed);
