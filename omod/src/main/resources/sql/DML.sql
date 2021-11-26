@@ -303,6 +303,7 @@ has_known_allergies,
 has_chronic_illnesses_cormobidities,
 has_adverse_drug_reaction,
 pregnancy_status,
+breastfeeding,
 wants_pregnancy,
 pregnancy_outcome,
 anc_number,
@@ -406,6 +407,7 @@ max(if(o.concept_id=160557,o.value_coded,null)) as has_known_allergies ,
 max(if(o.concept_id=162747,o.value_coded,null)) as has_chronic_illnesses_cormobidities ,
 max(if(o.concept_id=121764,o.value_coded,null)) as has_adverse_drug_reaction ,
 max(if(o.concept_id=5272,o.value_coded,null)) as pregnancy_status,
+max(if(o.concept_id=5632,o.value_coded,null)) as breastfeeding,
 max(if(o.concept_id=164933,o.value_coded,null)) as wants_pregnancy,
 max(if(o.concept_id=161033,o.value_coded,null)) as pregnancy_outcome,
 max(if(o.concept_id=163530,o.value_text,null)) as anc_number,
@@ -476,7 +478,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','d1059fb9-a079-4feb-a749-eedd709ae542', '465a92f2-baf8-42e9-9612-53064be868e8')
 ) et on et.encounter_type_id=e.encounter_type
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126)
 where e.voided=0
 group by e.patient_id,visit_date;
@@ -3190,6 +3192,8 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
         recurrent_sex_under_influence,
         inconsistent_no_condom_use,
         sharing_drug_needles,
+        other_reasons,
+        other_reason_specify,
         risk_education_offered,
         risk_reduction,
         assessment_outcome,
@@ -3224,6 +3228,8 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
            max(if(o.concept_id = 165088, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as recurrent_sex_under_influence,
            max(if(o.concept_id = 165089, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as inconsistent_no_condom_use,
            max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sharing_drug_needles,
+           max(if(o.concept_id = 165241, (case o.value_coded when 1065 then "Yes" when 1066 then "No"  else "" end), "" )) as other_reasons,
+           max(if(o.concept_id = 160632, o.value_text, null )) as other_reason_specify,
            max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as risk_assessment_outcome,
            max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
            max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
@@ -3245,7 +3251,7 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
     from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
@@ -3343,8 +3349,21 @@ CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
     select
            e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
            if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
-           max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction" when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request"
-                                                             when 150506 then "Intimate partner violence"  when 978 then "Self Discontinuation"  when 160581 then "Low risk of HIV" when 5622 then "Other" else "" end), "" )) as discontinue_reason,
+           max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive"
+                                                             when 113338 then "Renal dysfunction"
+                                                             when 1302 then "Viral suppression of HIV+"
+                                                             when 159598 then "Not adherent to PrEP"
+                                                             when 164401 then "Too many HIV tests"
+                                                             when 162696 then "Client request"
+                                                             when 150506 then "Intimate partner violence"
+                                                             when 978 then "Self Discontinuation"
+                                                             when 160581 then "Low risk of HIV"
+                                                             when 121760 then "Adverse drug reaction"
+                                                             when 160034 then "Died"
+                                                             when 159492 then "Transferred Out"
+                                                             when 5240 then "Defaulters (missed drugs pick ups)"
+                                                             when 162479 then "Partner Refusal"
+                                                             when 5622 then "Other" else "" end), "" )) as discontinue_reason,
            max(if(o.concept_id = 164073, o.value_datetime, null )) as care_end_date,
            e.voided
     from encounter e
@@ -4752,7 +4771,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=165214,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" when 1067 then "Unknown" else "" end),null)) as hiv_self_rep_status,
                max(if(o.concept_id=165215,(case o.value_coded when 165216 then "Universal HTS" when 165217 THEN "Self-testing" when 1402 then "Never tested" else "" end),null)) as last_hiv_test_setting,
                max(if(o.concept_id=159382,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as counselled_for_hiv,
-               max(if(o.concept_id=164401,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as hiv_tested,
+               max(if(o.concept_id=164401,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" when 162570 then "Declined" when 1788 then "Referred for testing" else "" end),null)) as hiv_tested,
                max(if(o.concept_id=165218,(case o.value_coded when 162080 THEN "Initial" when 162081 then "Repeat" when 1175 then "Not Applicable" else "" end),null)) as test_frequency,
                max(if(o.concept_id=164848,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1067 then "Not Applicable" else "" end),null)) as received_results,
                max(if(o.concept_id=159427,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" when 165232 then "Inconclusive" when 138571 then "Known Positive" when 1118 then "Not done" else "" end),null)) as test_results,
