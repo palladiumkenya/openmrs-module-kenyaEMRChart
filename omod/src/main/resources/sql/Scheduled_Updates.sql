@@ -2398,40 +2398,8 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(o.concept_id=164959,(case o.value_coded when 164957 then "Individual" when 164958 then "Couple" else null end),null)) as client_tested_as,
         max(if(o.concept_id=165215,(case o.value_coded when 1537 then "Facility" when 163488 then "Community" else "" end ),null)) as setting,
         max(if(o.concept_id=163556,(case o.value_coded when 164163 then "Provider Initiated Testing(PITC)" when 164953 then "Client Initiated Testing (CITC)" else "" end ),null)) as approach,
-        max(if(o.concept_id=164956,(
-          case o.value_coded
-          when 164163 then "HP: Hospital Patient Testing"
-          when 164953 then "NP: HTS for non-patients"
-          when 164954 then "VI:Integrated VCT Center"
-          when 164955 then "Stand Alone VCT Center"
-          when 159938 then "Home Based Testing"
-          when 159939 then "MO: Mobile Outreach HTS"
-          when 161557 then "Index testing"
-          when 166606 then "SNS - Social Networks"
-          when 5622 then "Other"
-          else ""
-          end ),null)) as test_strategy,
-        max(if(o.concept_id=160540,(
-          case o.value_coded
-          when 5485 then "In Patient Department(IPD)"
-          when 160542 then "Out Patient Department(OPD)"
-          when 162181 then "Peadiatric Clinic"
-          when 160552 then "Nutrition Clinic"
-          when 160538 then "PMTCT ANC"
-          when 160456 then "PMTCT MAT"
-          when 1623 then "PMTCT PNC"
-          when 160541 then "TB"
-          when 162050 then "CCC"
-          when 159940 then "VCT"
-          when 159938 then "Home Based Testing"
-          when 159939 then "Mobile Outreach"
-          when 162223 then "VMMC"
-          when 160546 then "STI Clinic"
-          when 160522 then "Emergency"
-          when 163096 then "Community Testing"
-          when 5622 then "Other"
-          else ""
-          end ),null)) as hts_entry_point,
+        max(if(o.concept_id=164956,o.value_coded,null)) as test_strategy,
+        max(if(o.concept_id=160540,o.value_coded,null)) as hts_entry_point,
         max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
         max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
         max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
