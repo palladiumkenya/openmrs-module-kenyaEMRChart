@@ -2400,7 +2400,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(o.concept_id=163556,(case o.value_coded when 164163 then "Provider Initiated Testing(PITC)" when 164953 then "Client Initiated Testing (CITC)" else "" end ),null)) as approach,
         max(if(o.concept_id=164956,(
           case o.value_coded
-          when 164163 then "HP:Provider Initiated Testing(PITC)"
+          when 164163 then "HP: Hospital Patient Testing"
           when 164953 then "NP: HTS for non-patients"
           when 164954 then "VI:Integrated VCT Center"
           when 164955 then "Stand Alone VCT Center"
