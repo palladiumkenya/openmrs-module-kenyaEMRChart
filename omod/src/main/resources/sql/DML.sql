@@ -237,7 +237,7 @@ from encounter e
          (
          select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
          ) et on et.encounter_type_id=e.encounter_type
-       join patient p on p.patient_id=e.patient_id and p.voided=0
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                   and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164384)
 where e.voided=0
@@ -3866,7 +3866,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				pp.date_changed as date_last_modified,
 				pp.voided
 			from patient_program pp
-				inner join patient pt on pt.patient_id=pp.patient_id and pt.voided=0
+				inner join person pt on pt.person_id=pp.patient_id and pt.voided=0
 				inner join program p on p.program_id=pp.program_id and p.retired=0
         where pp.voided=0
 		;
@@ -3905,7 +3905,7 @@ CREATE PROCEDURE sp_populate_etl_person_address()
         pa.address2 land_mark,
         pa.voided voided
       from person_address pa
-        inner join patient pt on pt.patient_id=pa.person_id and pt.voided=0
+        inner join person pt on pt.person_id=pa.person_id and pt.voided=0
       where pa.voided=0
     ;
     SELECT "Completed processing person_address data ", CONCAT("Time: ", NOW());
@@ -4453,7 +4453,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                  (
                  select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
                  ) et on et.encounter_type_id=e.encounter_type
-               join patient p on p.patient_id=e.patient_id and p.voided=0
+               join person p on p.person_id=e.patient_id and p.voided=0
                left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                           and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
         where e.voided=0
@@ -4548,7 +4548,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
              (
              select encounter_type_id, uuid, name from encounter_type where uuid='c7f47a56-207b-11e9-ab14-d663bd873d93'
              ) et on et.encounter_type_id=e.encounter_type
-           join patient p on p.patient_id=e.patient_id and p.voided=0
+           join person p on p.person_id=e.patient_id and p.voided=0
            left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                       and o.concept_id in (165004,165027,165030,165031,165032,123160,165034,164401,164956,165153,165154,159803,159811,
             162724,162053,164437,163281,165036,164966,160638,160642)
