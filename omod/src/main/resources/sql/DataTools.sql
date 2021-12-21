@@ -1147,8 +1147,77 @@ SELECT "Successfully created enhanced adherence table";
 
 SELECT "creating hts_test table";
 create table kenyaemr_datatools.hts_test
-  as select t.* from kenyaemr_etl.etl_hts_test t
-                                              inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = t.patient_id and d.voided=0;
+  as select
+  t.patient_id,
+  t.visit_id,
+  t.encounter_id,
+  t.encounter_uuid,
+  t.encounter_location,
+  t.creator,
+  t.date_created,
+  t.date_last_modified,
+  t.visit_date,
+  t.test_type,
+  t.population_type,
+  t.key_population_type,
+  t.ever_tested_for_hiv,
+  t.months_since_last_test,
+  t.patient_disabled,
+  t.disability_type,
+  t.patient_consented,
+  t.client_tested_as,
+  t.setting,
+  t.approach,
+(case  t.test_strategy
+when 164163 then "HP: Hospital Patient Testing"
+when 164953 then "NP: HTS for non-patients"
+when 164954 then "VI:Integrated VCT Center"
+when 164955 then "VS:Stand Alone VCT Center"
+when 159938 then "HB:Home Based Testing"
+when 159939 then "MO: Mobile Outreach HTS"
+when 161557 then "Index testing"
+when 166606 then "SNS - Social Networks"
+when 5622 then "O:Other"
+else ""  end ) as test_strategy,
+(case  t.hts_entry_point
+when 5485 then "In Patient Department(IPD)"
+when 160542 then "Out Patient Department(OPD)"
+when 162181 then "Peadiatric Clinic"
+when 160552 then "Nutrition Clinic"
+when 160538 then "PMTCT ANC"
+when 160456 then "PMTCT MAT"
+when 1623 then "PMTCT PNC"
+when 160541 then "TB"
+when 162050 then "CCC"
+when 159940 then "VCT"
+when 159938 then "Home Based Testing"
+when 159939 then "Mobile Outreach"
+when 162223 then "VMMC"
+when 160546 then "STI Clinic"
+when 160522 then "Emergency"
+when 163096 then "Community Testing"
+when 5622 then "Other"
+else ""  end ) as hts_entry_point,
+  t.test_1_kit_name,
+  t.test_1_kit_lot_no,
+  t.test_1_kit_expiry,
+  t.test_1_result,
+  t.test_2_kit_name,
+  t.test_2_kit_lot_no,
+  t.test_2_kit_expiry,
+  t.test_2_result,
+  t.final_test_result,
+  t.patient_given_result,
+  t.couple_discordant,
+  t.referral_for,
+  t.referral_facility,
+  t.other_referral_facility,
+  t.tb_screening,
+  t.patient_had_hiv_self_test ,
+  t.remarks,
+  t.voided
+from kenyaemr_etl.etl_hts_test t
+inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = t.patient_id and d.voided=0;
 ALTER TABLE kenyaemr_datatools.hts_test ADD FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.hts_test ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(population_type);
