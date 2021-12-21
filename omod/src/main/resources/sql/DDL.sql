@@ -87,6 +87,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_cca_covid_screening;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2738,6 +2739,55 @@ CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
   INDEX (patient_id),
   INDEX (encounter_id)
 );
+
+-------------- create table etl_covid_screening-----------------------
+    CREATE TABLE kenyaemr_etl.etl_cca_covid_screening (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+      onset_symptoms_date DATE,
+      fever VARCHAR(10),
+      cough VARCHAR(10),
+      runny_nose VARCHAR(10),
+      diarrhoea VARCHAR(10),
+      headache VARCHAR(10),
+      muscular_pain VARCHAR(10),
+      abdominal_pain VARCHAR(10),
+      general_weakness VARCHAR(10),
+      sore_throat VARCHAR(10),
+      breathing_difficulty VARCHAR(10),
+      nausea_vomiting VARCHAR(10),
+      altered_mental_status VARCHAR(10),
+      chest_pain VARCHAR(10),
+      joint_pain VARCHAR(10),
+      loss_of_taste_smell varchar(10),
+      other_symptom VARCHAR(10),
+      specify_symptoms VARCHAR(255),
+      recent_travel VARCHAR(10),
+      contact_with_suspected_or_confirmed_case VARCHAR(10),
+      attended_large_gathering VARCHAR(10),
+      screening_department VARCHAR(1500),
+      hiv_status varchar(20),
+      in_tb_program varchar(10),
+      pregnant varchar(10),
+      vaccinated_for_covid varchar(10),
+      covid_vaccination_status varchar(50),
+      ever_tested_for_covid varchar(10),
+      covid_test_date date,
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
 
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

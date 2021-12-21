@@ -5794,6 +5794,110 @@ group by o3.visit_id;
 SELECT "Completed processing covid_19 assessment data ", CONCAT("Time: ", NOW());
 END $$
 
+--Populate etl covid screening: CCA
+DROP PROCEDURE IF EXISTS sp_populate_etl_cca_covid_screening$$
+CREATE PROCEDURE sp_populate_etl_cca_covid_screening()
+BEGIN
+SELECT "Processing CCA covid screening data", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_cca_covid_screening(
+uuid,
+encounter_id,
+visit_id,
+patient_id,
+location_id,
+visit_date,
+encounter_provider,
+date_created,
+onset_symptoms_date,
+fever,
+cough,
+runny_nose,
+diarrhoea,
+headache,
+muscular_pain,
+abdominal_pain,
+general_weakness,
+sore_throat,
+breathing_difficulty,
+nausea_vomiting,
+altered_mental_status,
+chest_pain,
+joint_pain,
+loss_of_taste_smell,
+other_symptom,
+specify_symptoms,
+recent_travel,
+contact_with_suspected_or_confirmed_case,
+attended_large_gathering,
+screening_department,
+hiv_status,
+in_tb_program,
+pregnant,
+vaccinated_for_covid,
+covid_vaccination_status,
+ever_tested_for_covid,
+covid_test_date,
+voided
+)
+select
+	e.uuid,
+	e.encounter_id as encounter_id,
+	e.visit_id as visit_id,
+	e.patient_id,
+	e.location_id,
+	date(e.encounter_datetime) as visit_date,
+	e.creator as encounter_provider,
+	e.date_created as date_created,
+  max(if(o.concept_id=1730,date(o.value_datetime),null)) as onset_symptoms_date,
+  max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
+  max(if(o.concept_id=143264,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as cough,
+  max(if(o.concept_id=163336,(case o.value_coded when 113224 then "Yes" when 1066 then "No" else "" end),null)) as runny_nose,
+  max(if(o.concept_id=142412,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as diarrhoea,
+  max(if(o.concept_id=5219,(case o.value_coded when 139084 then "Yes" when 1066 then "No" else "" end),null)) as headache,
+  max(if(o.concept_id=160388,(case o.value_coded when 133632 then "Yes" when 1066 then "No" else "" end),null)) as muscular_pain,
+  max(if(o.concept_id=1125,(case o.value_coded when 151 then "Yes" when 1066 then "No" else "" end),null)) as abdominal_pain,
+  max(if(o.concept_id=122943,(case o.value_coded when 5226 then "Yes" when 1066 then "No" else "" end),null)) as general_weakness,
+
+  max(if(o.concept_id=163741,(case o.value_coded when 158843 then "Yes" when 1066 then "No" else "" end),null)) as sore_throat,
+  max(if(o.concept_id=164441,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as breathing_difficulty,
+  max(if(o.concept_id=122983,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as nausea_vomiting,
+
+  max(if(o.concept_id=6023,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as altered_mental_status,
+  max(if(o.concept_id=1123,(case o.value_coded when 120749 then "Yes" when 1066 then "No" else "" end),null)) as chest_pain,
+  max(if(o.concept_id=160687,(case o.value_coded when 80 then "Yes" when 1066 then "No" else "" end),null)) as joint_pain,
+  max(if(o.concept_id=1729,(case o.value_coded when 135589 then "Yes" when 1066 then "No" else "" end),null)) as loss_of_taste_smell,
+
+  max(if(o.concept_id=1838,(case o.value_coded when 139548 then "Yes" else "" end),null)) as other_symptom,
+	max(if(o.concept_id=160632,o.value_text,null)) as specify_symptoms,
+  max(if(o.concept_id=162619,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as recent_travel,
+	max(if(o.concept_id=162633,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as contact_with_suspected_or_confirmed_case,
+  max(if(o.concept_id=165163,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as attended_large_gathering,
+  max(if(o.concept_id=164918,(case o.value_coded when 1622 then "ANC" when 1623 then "PNC" when 5483 then "FP" when 162049 then "CWC" when 160542 then "OPD" when 162050 then "CCC" when 160541 then "TB" when 160545 then "Community" else "" end),null)) as screening_department,
+  max(if(o.concept_id=1169,(case o.value_coded when 703 then "Positive" when 664 then "Negative" else "" end),null)) as hiv_status,
+  max(if(o.concept_id=162309,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as in_tb_program,
+  max(if(o.concept_id=5272,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as pregnant,
+
+  max(if(o.concept_id=163100,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as vaccinated_for_covid,
+  max(if(o.concept_id=164134,(case o.value_coded when 166192 then "Partially vaccinated" when 5585 then "Fully vaccinated" else "" end),null)) as covid_vaccination_status,
+  max(if(o.concept_id=165852,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_covid,
+  max(if(o.concept_id=159948,date(o.value_datetime),null)) as covid_test_date,
+	e.voided as voided
+from encounter e
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join
+	(
+		select form_id from form where
+			uuid in('117092aa-5355-11ec-bf63-0242ac130002')
+	) f on f.form_id=e.form_id
+	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+													 and o.concept_id in (159948,1730,1729,140238,122943,143264,163741,163336,164441,142412,122983,5219,6023,160388,
+                                                1123,1125,160687,1838,160632,5272,162619,162633,164918,1169,162309,163100,164134,159948,165163)
+where e.voided=0
+group by e.patient_id, e.encounter_id;
+
+SELECT "Completed processing CCA covid screening data ", CONCAT("Time: ", NOW());
+END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -5871,6 +5975,7 @@ CALL sp_populate_etl_allergy_chronic_illness();
 CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_pre_hiv_enrollment_art();
 CALL sp_populate_etl_covid_19_assessment();
+CALL sp_populate_etl_cca_covid_screening();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
