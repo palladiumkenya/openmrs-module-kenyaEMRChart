@@ -5898,6 +5898,73 @@ group by e.patient_id, e.encounter_id;
 SELECT "Completed processing CCA covid screening data ", CONCAT("Time: ", NOW());
 END$$
 
+
+--Populate etl covid treatment followup: CCA
+DROP PROCEDURE IF EXISTS sp_populate_etl_cca_covid_treatment_followup$$
+CREATE PROCEDURE sp_populate_etl_cca_covid_treatment_followup()
+BEGIN
+SELECT "Processing CCA covid treatment followup data", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_cca_covid_treatment_followup(
+uuid,
+encounter_id,
+visit_id,
+patient_id,
+location_id,
+visit_date,
+encounter_provider,
+date_created,
+day_of_followup,
+temp,
+fever,
+cough,
+difficulty_breathing,
+sore_throat,
+sneezing,
+headache,
+referred_to_hosp,
+case_classification,
+patient_admitted,
+admission_unit,
+treatment_received,
+voided
+)
+select
+	e.uuid,
+	e.encounter_id as encounter_id,
+	e.visit_id as visit_id,
+	e.patient_id,
+	e.location_id,
+	date(e.encounter_datetime) as visit_date,
+	e.creator as encounter_provider,
+	e.date_created as date_created,
+	max(if(o.concept_id=165416,o.value_numeric,null)) as day_of_followup,
+	max(if(o.concept_id=5088,o.value_numeric,null)) as temp,
+	max(if(o.concept_id=140238,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as fever,
+	max(if(o.concept_id=143264,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as cough,
+	max(if(o.concept_id=164441,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as diffiulty_breathing,
+	max(if(o.concept_id=162737,(case o.value_coded when 158843 then "Yes" when 1066 then "No" else "" end),null)) as sore_throat,
+  max(if(o.concept_id=163336,(case o.value_coded when 126319 then "Yes" when 1066 then "No" else "" end),null)) as sneezing,
+	max(if(o.concept_id=5219,(case o.value_coded when 139084 then "Yes" when 1066 then "No" else "" end),null)) as headache,
+	max(if(o.concept_id=1788,(case o.value_coded when 140238 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as referred_to_hosp,
+  max(if(o.concept_id=159640,(case o.value_coded when 5006 then "Asymptomatic" when 1498 then "Mild" when 1499 then "Moderate" when 1500 then "Severe" when 164830 then "Critical" else "" end),null)) as case_classification,
+	max(if(o.concept_id=162477,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_admitted,
+	max(if(o.concept_id=161010,(case o.value_coded when 165994 then "Isolation" when 165995 then "HDU" when 161936 then "ICU" else "" end),null)) as admission_unit,
+  group_concat(if(o.concept_id=159369,o.value_coded,null)) as treatment_received,  e.voided as voided
+from encounter e
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join
+	(
+		select form_id, uuid,name from form where
+			uuid in('33a3aab6-73ae-11ea-bc55-0242ac130003')
+	) f on f.form_id=e.form_id
+	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (165416,5088,140238,143264,164441,162737,163336,5219,1788,159640,162477,161010,159369)
+where e.voided=0
+group by e.patient_id, e.encounter_id;
+
+
+SELECT "Completed processing CCA covid treatment followup data ", CONCAT("Time: ", NOW());
+END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -5976,6 +6043,7 @@ CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_pre_hiv_enrollment_art();
 CALL sp_populate_etl_covid_19_assessment();
 CALL sp_populate_etl_cca_covid_screening();
+CALL sp_populate_etl_cca_covid_treatment_followup();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

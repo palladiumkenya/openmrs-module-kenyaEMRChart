@@ -2789,6 +2789,39 @@ CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
       INDEX(patient_id, visit_date)
     );
 
+    CREATE TABLE kenyaemr_etl.etl_cca_covid_treatment_followup (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      visit_id INT(11) DEFAULT NULL,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      encounter_provider INT(11),
+      date_created DATE,
+      day_of_followup int(11),
+      temp VARCHAR(10),
+      fever VARCHAR(10),
+      cough VARCHAR(10),
+      difficulty_breathing VARCHAR(10),
+      sore_throat VARCHAR(10),
+      sneezing VARCHAR(10),
+      headache VARCHAR(10),
+      referred_to_hosp VARCHAR(10),
+      case_classification VARCHAR(50),
+      patient_admitted VARCHAR(10),
+      admission_unit VARCHAR(50),
+      treatment_received VARCHAR(100),
+      voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(visit_id),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+
+
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
