@@ -142,7 +142,7 @@ oxygen_saturation,
 muac,
 (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
 (case population_type when 164928 then "General Population" when 164929 then "Key Population" else "" end) as population_type,
-(case key_population_type when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" when 165100 then "Transgender" else "" end) as key_population_type,
+(case key_population_type when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end) as key_population_type,
 IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 (case presenting_complaints when 1 then "Yes" when 0 then "No" else "" end) as presenting_complaints, 
 clinical_notes,
@@ -171,6 +171,7 @@ clinical_notes,
 (case has_chronic_illnesses_cormobidities when 1065 then "Yes" when 1066 then "No" else "" end) as has_chronic_illnesses_cormobidities,
 (case has_adverse_drug_reaction when 1 then "Yes" when 0 then "No" else "" end) as has_adverse_drug_reaction,
 (case pregnancy_status when 1065 then "Yes" when 1066 then "No" else "" end) as pregnancy_status,
+(case breastfeeding when 1065 then "Yes" when 1066 then "No" else "" end) as breastfeeding,
 (case wants_pregnancy when 1065 then "Yes" when 1066 then "No" else "" end) as wants_pregnancy,
 (case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)" 
  when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
@@ -236,6 +237,7 @@ ALTER TABLE kenyaemr_datatools.hiv_followup ADD FOREIGN KEY (patient_id) REFEREN
 
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(pregnancy_status);
+ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(breastfeeding);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(family_planning_status);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(tb_status);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ctx_dispensed);
@@ -324,12 +326,13 @@ transfer_date,
                    when 116030 then "HIV disease resulting in cancer"
                    when 160159 then "HIV disease resulting in other infectious and parasitic diseases"
                    when 160158 then "Other HIV disease resulting in other diseases or conditions leading to death"
+                   when 145439 then "Other HIV disease resulting in other diseases or conditions leading to death"
                    when 133478 then "Other natural causes not directly related to HIV"
-                   when 145439 then "Non-communicable diseases such as Diabetes and hypertension"
                    when 123812 then "Non-natural causes"
                    when 42917 then "Unknown cause" else "" end) as death_reason,
 (case specific_death_cause
    when 165609 then "COVID-19 Complications"
+   when 145439 then "Non-communicable diseases such as Diabetes and hypertension"
    when 156673 then "HIV disease resulting in mycobacterial infection"
    when 155010 then "HIV disease resulting in Kaposis sarcoma"
    when 156667 then "HIV disease resulting in Burkitts lymphoma"
@@ -1144,8 +1147,77 @@ SELECT "Successfully created enhanced adherence table";
 
 SELECT "creating hts_test table";
 create table kenyaemr_datatools.hts_test
-  as select t.* from kenyaemr_etl.etl_hts_test t
-                                              inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = t.patient_id and d.voided=0;
+  as select
+  t.patient_id,
+  t.visit_id,
+  t.encounter_id,
+  t.encounter_uuid,
+  t.encounter_location,
+  t.creator,
+  t.date_created,
+  t.date_last_modified,
+  t.visit_date,
+  t.test_type,
+  t.population_type,
+  t.key_population_type,
+  t.ever_tested_for_hiv,
+  t.months_since_last_test,
+  t.patient_disabled,
+  t.disability_type,
+  t.patient_consented,
+  t.client_tested_as,
+  t.setting,
+  t.approach,
+(case  t.test_strategy
+when 164163 then "HP: Hospital Patient Testing"
+when 164953 then "NP: HTS for non-patients"
+when 164954 then "VI:Integrated VCT Center"
+when 164955 then "VS:Stand Alone VCT Center"
+when 159938 then "HB:Home Based Testing"
+when 159939 then "MO: Mobile Outreach HTS"
+when 161557 then "Index testing"
+when 166606 then "SNS - Social Networks"
+when 5622 then "O:Other"
+else ""  end ) as test_strategy,
+(case  t.hts_entry_point
+when 5485 then "In Patient Department(IPD)"
+when 160542 then "Out Patient Department(OPD)"
+when 162181 then "Peadiatric Clinic"
+when 160552 then "Nutrition Clinic"
+when 160538 then "PMTCT ANC"
+when 160456 then "PMTCT MAT"
+when 1623 then "PMTCT PNC"
+when 160541 then "TB"
+when 162050 then "CCC"
+when 159940 then "VCT"
+when 159938 then "Home Based Testing"
+when 159939 then "Mobile Outreach"
+when 162223 then "VMMC"
+when 160546 then "STI Clinic"
+when 160522 then "Emergency"
+when 163096 then "Community Testing"
+when 5622 then "Other"
+else ""  end ) as hts_entry_point,
+  t.test_1_kit_name,
+  t.test_1_kit_lot_no,
+  t.test_1_kit_expiry,
+  t.test_1_result,
+  t.test_2_kit_name,
+  t.test_2_kit_lot_no,
+  t.test_2_kit_expiry,
+  t.test_2_result,
+  t.final_test_result,
+  t.patient_given_result,
+  t.couple_discordant,
+  t.referral_for,
+  t.referral_facility,
+  t.other_referral_facility,
+  t.tb_screening,
+  t.patient_had_hiv_self_test ,
+  t.remarks,
+  t.voided
+from kenyaemr_etl.etl_hts_test t
+inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = t.patient_id and d.voided=0;
 ALTER TABLE kenyaemr_datatools.hts_test ADD FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.hts_test ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(population_type);
@@ -1564,7 +1636,7 @@ ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD FOREIGN KEY (patient_i
 ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD INDEX(visit_date);
 SELECT "Successfully created pre_hiv_enrollment_art table";
 
--- create table etl_covid_19_assessment
+-- create table covid_19_assessment
 create table kenyaemr_datatools.covid_19_assessment as
 select
        uuid,
@@ -1611,6 +1683,44 @@ from kenyaemr_etl.etl_covid19_assessment;
 ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD INDEX(visit_date);
 SELECT "Successfully created covid_19_assessment table";
+
+-- Create table prep_enrolment
+create table kenyaemr_datatools.prep_enrolment as
+  select
+         uuid,
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         date_created,
+         date_last_modified,
+         patient_type,
+         case population_type when 164928 then 'General Population' when 6096 then 'Discordant Couple' when 164929 then 'Key Population' end as population_type,
+         case kp_type when 162277 then 'People in prison and other closed settings' when 165100 then 'Transgender' when 105 then 'PWID' when 160578 then 'MSM' when 165084 then 'MSW' when 160579 then 'FSW' end as kp_type,
+         transfer_in_entry_point,
+         referred_from,
+         transit_from,
+         transfer_in_date,
+         transfer_from,
+         initial_enrolment_date,
+         date_started_prep_trf_facility,
+         previously_on_prep,
+         regimen,
+         prep_last_date,
+         case in_school when 1 then 'Yes' when 2 then 'No' end as in_school,
+         buddy_name,
+         buddy_alias,
+         buddy_relationship,
+         buddy_phone,
+         buddy_alt_phone,
+         voided
+  from kenyaemr_etl.etl_prep_enrolment;
+
+ALTER TABLE kenyaemr_datatools.prep_enrolment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.prep_enrolment ADD INDEX(visit_date);
+SELECT "Successfully created prep_enrolment table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
