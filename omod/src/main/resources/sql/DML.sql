@@ -3826,6 +3826,7 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
 				when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
 				when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
+        when "117093ea-5355-11ec-bf63-0242ac130002" then "COVID-19 Treatment"
 				end) as program,
 				pp.date_enrolled,
 				pp.date_completed,
@@ -5837,6 +5838,7 @@ vaccinated_for_covid,
 covid_vaccination_status,
 ever_tested_for_covid,
 covid_test_date,
+eligible_for_covid_test,
 voided
 )
 select
@@ -5881,6 +5883,7 @@ select
   max(if(o.concept_id=164134,(case o.value_coded when 166192 then "Partially vaccinated" when 5585 then "Fully vaccinated" else "" end),null)) as covid_vaccination_status,
   max(if(o.concept_id=165852,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_covid,
   max(if(o.concept_id=159948,date(o.value_datetime),null)) as covid_test_date,
+  max(if(o.concept_id=165087,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as eligible_for_covid_test,
 	e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
@@ -5891,7 +5894,7 @@ from encounter e
 	) f on f.form_id=e.form_id
 	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 													 and o.concept_id in (159948,1730,1729,140238,122943,143264,163741,163336,164441,142412,122983,5219,6023,160388,
-                                                1123,1125,160687,1838,160632,5272,162619,162633,164918,1169,162309,163100,164134,159948,165163)
+                                                1123,1125,160687,1838,160632,5272,162619,162633,164918,1169,162309,163100,164134,159948,165163,165087)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
 

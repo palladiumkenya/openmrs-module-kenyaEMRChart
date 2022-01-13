@@ -4147,6 +4147,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
          when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
          when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
          when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
+         when "117093ea-5355-11ec-bf63-0242ac130002" then "COVID-19 Treatment"
          end) as program,
         pp.date_enrolled date_enrolled,
         pp.date_completed date_completed,
