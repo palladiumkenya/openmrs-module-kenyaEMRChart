@@ -4099,7 +4099,7 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 DROP PROCEDURE IF EXISTS sp_populate_etl_cervical_cancer_screening$$
 CREATE PROCEDURE sp_populate_etl_cervical_cancer_screening()
 BEGIN
-SELECT "Processing HIV Follow-up, MCH ANC and PNC forms for CAXC screening", CONCAT("Time: ", NOW());
+SELECT "Processing CAXC screening", CONCAT("Time: ", NOW());
 
 insert into kenyaemr_etl.etl_cervical_cancer_screening(
     uuid,
@@ -4123,7 +4123,6 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     referral_facility,
     referral_reason,
     next_appointment_date,
-    encounter_type,
     voided
     )
 select
@@ -4174,67 +4173,15 @@ select
                                                       when 159008 then 'Large lesion, Suspect cancer'
                                                       when 5622 then 'Other' else "" end), "" )) as referral_reason,
       max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
-      f.name as encounter_type,
        e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843','72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7','22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','0c93b93c-bfef-4d2a-9fbe-16b59ee366e7')
+	inner join form f on f.form_id=e.form_id and f.uuid ='0c93b93c-bfef-4d2a-9fbe-16b59ee366e7'
   inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,5096) and o.voided=0
 where e.voided=0
 group by e.encounter_id
 having screening_result is not null;
 
-update kenyaemr_etl.etl_cervical_cancer_screening scr,
-     (
-     SELECT
-            ThisRow.uuid,
-            ThisRow.patient_id,
-            ThisRow.visit_date,
-            ThisRow.visit_id,
-            ThisRow.screening_result currentResult,
-            PrevRow.visit_date as prevVisitDate,
-            PrevRow.screening_result previousResult,
-            @x:=IF(@same_value=ThisRow.patient_id,@x+1,1) as rowNum,
-            @same_value:=ThisRow.patient_id as dummy
-     FROM
-          kenyaemr_etl.etl_cervical_cancer_screening    AS ThisRow
-            LEFT JOIN
-              kenyaemr_etl.etl_cervical_cancer_screening    AS PrevRow
-              ON  PrevRow.patient_id   = ThisRow.patient_id
-                    AND PrevRow.visit_date = (SELECT MAX(s.visit_date)
-                                              FROM kenyaemr_etl.etl_cervical_cancer_screening s
-                                              WHERE s.patient_id  = ThisRow.patient_id
-                                                AND s.visit_date < ThisRow.visit_date) order by ThisRow.patient_id, ThisRow.visit_date
-     ) u,
-     (SELECT  @x:=0, @same_value:='') t
-set scr.previous_screening_date = u.prevVisitDate,scr.previous_screening_result = u.previousResult, scr.screening_number = u.rowNum
-where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
-
-update kenyaemr_etl.etl_cervical_cancer_screening scr,
-     (
-     SELECT
-            ThisRow.uuid,
-            ThisRow.patient_id,
-            ThisRow.visit_date,
-            ThisRow.visit_id,
-            ThisRow.screening_result currentResult,
-            PrevRow.visit_date as prevVisitDate,
-            PrevRow.screening_result previousResult,
-            @x:=IF(@same_value=ThisRow.patient_id,@x+1,1) as rowNum,
-            @same_value:=ThisRow.patient_id as dummy
-     FROM
-          kenyaemr_etl.etl_cervical_cancer_screening    AS ThisRow
-            LEFT JOIN
-              kenyaemr_etl.etl_cervical_cancer_screening    AS PrevRow
-              ON  PrevRow.patient_id   = ThisRow.patient_id
-                    AND PrevRow.visit_date = (SELECT MAX(s.visit_date)
-                                              FROM kenyaemr_etl.etl_cervical_cancer_screening s
-                                              WHERE s.patient_id  = ThisRow.patient_id
-                                                AND s.visit_date < ThisRow.visit_date) order by ThisRow.patient_id, ThisRow.visit_date
-     ) u,
-     (SELECT  @x:=0, @same_value:='') t
-set scr.previous_screening_date = u.prevVisitDate,scr.previous_screening_result = u.previousResult, scr.screening_number = u.rowNum
-where scr.patient_id = u.patient_id and scr.visit_date = u.visit_date;
 SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
 END$$
