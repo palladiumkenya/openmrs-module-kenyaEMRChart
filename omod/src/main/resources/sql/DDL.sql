@@ -1960,7 +1960,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
   SELECT "Successfully created etl_ovc_enrolment table";
 
-       -- --------------------- creating Cervical cancer screening table -------------------------------
+      -- --------------------- creating Cervical cancer screening table -------------------------------
   CREATE TABLE kenyaemr_etl.etl_cervical_cancer_screening (
     uuid CHAR(38),
     encounter_id INT(11) NOT NULL PRIMARY KEY,
@@ -1975,24 +1975,18 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     screening_type VARCHAR(255) DEFAULT NULL,
     post_treatment_complication_cause VARCHAR(255) DEFAULT NULL,
     post_treatment_complication_other VARCHAR(255) DEFAULT NULL,
-    screening_number INT(11),
     screening_method VARCHAR(255) DEFAULT NULL,
     screening_result VARCHAR(255) DEFAULT NULL,
-    previous_screening_method VARCHAR(255) DEFAULT NULL,
-    previous_screening_date DATE,
-    previous_screening_result VARCHAR(255) DEFAULT NULL,
     treatment_method VARCHAR(255) DEFAULT NULL,
     treatment_method_other VARCHAR(255) DEFAULT NULL,
     referred_out VARCHAR(100) DEFAULT NULL,
     referral_facility VARCHAR(100) DEFAULT NULL,
     referral_reason VARCHAR(255) DEFAULT NULL,
     next_appointment_date DATETIME,
-    encounter_type VARCHAR(255),
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
-    INDEX(screening_number),
     INDEX(patient_id),
     INDEX(patient_id, visit_date)
   );
