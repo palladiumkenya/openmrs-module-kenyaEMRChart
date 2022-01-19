@@ -1722,6 +1722,423 @@ ALTER TABLE kenyaemr_datatools.prep_enrolment ADD FOREIGN KEY (patient_id) REFER
 ALTER TABLE kenyaemr_datatools.prep_enrolment ADD INDEX(visit_date);
 SELECT "Successfully created prep_enrolment table";
 
+-- Create table cervical_cancer_screening
+create table kenyaemr_datatools.cervical_cancer_screening as
+  select
+      uuid,
+      encounter_id,
+      encounter_provider,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      date_created,
+      date_last_modified,
+      visit_type,
+      screening_type,
+      post_treatment_complication_cause,
+      post_treatment_complication_other,
+      screening_method,
+      screening_result,
+      treatment_method,
+      treatment_method_other,
+      referred_out,
+      referral_facility,
+      referral_reason,
+      next_appointment_date,
+      voided
+  from kenyaemr_etl.etl_cervical_cancer_screening;
+
+ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD INDEX(visit_date);
+SELECT "Successfully created cervical_cancer_screening table";
+
+-- Create table contact
+create table kenyaemr_datatools.contact as
+select
+     uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    date_last_modified,
+    key_population_type,
+    contacted_by_peducator,
+    program_name,
+    frequent_hotspot_name,
+    frequent_hotspot_type,
+    year_started_sex_work,
+    year_started_sex_with_men,
+    year_started_drugs,
+    avg_weekly_sex_acts,
+    avg_weekly_anal_sex_acts,
+    avg_daily_drug_injections,
+    contact_person_name,
+    contact_person_alias,
+    contact_person_phone,
+    voided
+ from kenyaemr_etl.etl_contact;
+
+ALTER TABLE kenyaemr_datatools.contact ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.contact ADD INDEX(visit_date);
+SELECT "Successfully created contact table";
+
+-- Create table client_enrollment
+create table kenyaemr_datatools.client_enrollment as
+select
+  uuid,
+  client_id,
+  visit_id,
+  visit_date,
+  location_id,
+  encounter_id,
+  encounter_provider,
+  date_created,
+  date_last_modified,
+  contacted_for_prevention,
+  has_regular_free_sex_partner,
+  year_started_sex_work,
+  year_started_sex_with_men,
+  year_started_drugs,
+  has_expereienced_sexual_violence,
+  has_expereienced_physical_violence,
+  ever_tested_for_hiv,
+  test_type,
+  share_test_results,
+  willing_to_test,
+  test_decline_reason,
+  receiving_hiv_care,
+  care_facility_name,
+  ccc_number,
+  vl_test_done,
+  vl_results_date,
+  contact_for_appointment,
+  contact_method,
+  buddy_name,
+  buddy_phone_number,
+  voided
+ from kenyaemr_etl.etl_client_enrollment;
+
+ALTER TABLE kenyaemr_datatools.client_enrollment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.client_enrollment ADD INDEX(visit_date);
+SELECT "Successfully created client_enrollment table";
+
+-- Create table clinical_visit
+create table kenyaemr_datatools.clinical_visit as
+select
+    uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    date_last_modified,
+    implementing_partner,
+    type_of_visit,
+    visit_reason,
+    service_delivery_model,
+    sti_screened,
+    sti_results,
+    sti_treated,
+    sti_referred,
+    sti_referred_text,
+    tb_screened,
+    tb_results,
+    tb_treated,
+    tb_referred,
+    tb_referred_text,
+    hepatitisB_screened,
+    hepatitisB_results,
+    hepatitisB_treated,
+    hepatitisB_referred,
+    hepatitisB_text,
+    hepatitisC_screened,
+    hepatitisC_results,
+    hepatitisC_treated,
+    hepatitisC_referred,
+    hepatitisC_text,
+    overdose_screened,
+    overdose_results,
+    overdose_treated,
+    received_naloxone,
+    overdose_referred,
+    overdose_text,
+    abscess_screened,
+    abscess_results,
+    abscess_treated,
+    abscess_referred,
+    abscess_text,
+    alcohol_screened,
+    alcohol_results,
+    alcohol_treated,
+    alcohol_referred,
+    alcohol_text,
+    cerv_cancer_screened,
+    cerv_cancer_results,
+    cerv_cancer_treated,
+    cerv_cancer_referred,
+    cerv_cancer_text,
+    prep_screened,
+    prep_results,
+    prep_treated,
+    prep_referred,
+    prep_text,
+    violence_screened,
+    violence_results,
+    violence_treated,
+    violence_referred,
+    violence_text,
+    risk_red_counselling_screened,
+    risk_red_counselling_eligibility,
+    risk_red_counselling_support,
+    risk_red_counselling_ebi_provided,
+    risk_red_counselling_text,
+    fp_screened,
+    fp_eligibility,
+    fp_treated,
+    fp_referred,
+    fp_text,
+    mental_health_screened,
+    mental_health_results,
+    mental_health_support,
+    mental_health_referred,
+    mental_health_text,
+    hiv_self_rep_status,
+    last_hiv_test_setting,
+    counselled_for_hiv,
+    hiv_tested,
+    test_frequency,
+    received_results,
+    test_results,
+    linked_to_art,
+    facility_linked_to,
+    self_test_education,
+    self_test_kits_given,
+    self_use_kits,
+    distribution_kits,
+    self_tested,
+    self_test_date,
+    self_test_frequency,
+    self_test_results,
+    test_confirmatory_results,
+    confirmatory_facility,
+    offsite_confirmatory_facility,
+    self_test_linked_art,
+    self_test_link_facility,
+    hiv_care_facility,
+    other_hiv_care_facility,
+    initiated_art_this_month,
+    active_art,
+    eligible_vl,
+    vl_test_done,
+    vl_results,
+    received_vl_results,
+    condom_use_education,
+    post_abortal_care,
+    linked_to_psychosocial,
+    male_condoms_no,
+    female_condoms_no,
+    lubes_no,
+    syringes_needles_no,
+    pep_eligible,
+    exposure_type,
+    other_exposure_type,
+    clinical_notes,
+    appointment_date,
+    voided
+ from kenyaemr_etl.etl_clinical_visit;
+
+ALTER TABLE kenyaemr_datatools.clinical_visit ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.clinical_visit ADD INDEX(visit_date);
+SELECT "Successfully created clinical_visit table";
+
+-- Create table peer_calendar
+create table kenyaemr_datatools.peer_calendar as
+select
+    uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    date_last_modified,
+    hotspot_name,
+    typology,
+    other_hotspots,
+    weekly_sex_acts,
+    monthly_condoms_required,
+    weekly_anal_sex_acts,
+    monthly_lubes_required,
+    daily_injections,
+    monthly_syringes_required,
+    years_in_sexwork_drugs,
+    experienced_violence,
+    service_provided_within_last_month,
+    monthly_n_and_s_distributed,
+    monthly_male_condoms_distributed,
+    monthly_lubes_distributed,
+    monthly_female_condoms_distributed,
+    monthly_self_test_kits_distributed,
+    received_clinical_service,
+    violence_reported,
+    referred,
+    health_edu,
+    remarks,
+    voided
+ from kenyaemr_etl.etl_peer_calendar;
+
+ALTER TABLE kenyaemr_datatools.peer_calendar ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.peer_calendar ADD INDEX(visit_date);
+SELECT "Successfully created peer_calendar table";
+
+-- Create table sti_treatment
+create table kenyaemr_datatools.sti_treatment as
+select
+  uuid,
+	client_id,
+	visit_id,
+	visit_date,
+	location_id,
+	encounter_id,
+	encounter_provider,
+	date_created,
+	date_last_modified,
+	visit_reason,
+	syndrome,
+	other_syndrome,
+	drug_prescription,
+	other_drug_prescription,
+	genital_exam_done,
+	lab_referral,
+	lab_form_number,
+	referred_to_facility,
+	facility_name,
+	partner_referral_done,
+	given_lubes,
+	no_of_lubes,
+	given_condoms,
+	no_of_condoms,
+	provider_comments,
+	provider_name,
+	appointment_date,
+	voided
+ from kenyaemr_etl.etl_sti_treatment;
+
+ALTER TABLE kenyaemr_datatools.sti_treatment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.sti_treatment ADD INDEX(visit_date);
+SELECT "Successfully created sti_treatment table";
+
+-- Create table peer_tracking
+create table kenyaemr_datatools.peer_tracking as
+select
+  uuid,
+  provider,
+  client_id,
+  visit_id,
+  visit_date,
+  location_id,
+  encounter_id,
+  tracing_attempted,
+  tracing_not_attempted_reason,
+  attempt_number,
+  tracing_date,
+  tracing_type,
+  tracing_outcome,
+  is_final_trace,
+  tracing_outcome_status,
+  voluntary_exit_comment,
+  status_in_program,
+  source_of_information,
+  other_informant,
+  date_created,
+  date_last_modified,
+  voided
+ from kenyaemr_etl.etl_peer_tracking;
+
+ALTER TABLE kenyaemr_datatools.peer_tracking ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.peer_tracking ADD INDEX(visit_date);
+SELECT "Successfully created peer_tracking table";
+
+-- Create table treatment_verification
+create table kenyaemr_datatools.treatment_verification as
+select
+  uuid,
+  provider,
+  client_id,
+  visit_id,
+  visit_date,
+  location_id,
+  encounter_id,
+  date_diagnosed_with_hiv,
+  art_health_facility,
+  ccc_number,
+  is_pepfar_site,
+  date_initiated_art,
+  current_regimen,
+  information_source,
+  cd4_test_date,
+  cd4,
+  vl_test_date,
+  viral_load,
+  disclosed_status,
+  person_disclosed_to,
+  other_person_disclosed_to,
+  IPT_start_date,
+  IPT_completion_date,
+  on_diff_care,
+  in_support_group,
+  support_group_name,
+  opportunistic_infection,
+  oi_diagnosis_date,
+  oi_treatment_start_date,
+  oi_treatment_end_date,
+  comment,
+  date_created,
+  date_last_modified,
+  voided
+ from kenyaemr_etl.etl_treatment_verification;
+
+ALTER TABLE kenyaemr_datatools.treatment_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.treatment_verification ADD INDEX(visit_date);
+SELECT "Successfully created treatment_verification table";
+
+-- Create table PrEP_verification
+create table kenyaemr_datatools.PrEP_verification as
+select
+    uuid,
+    provider,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    date_enrolled,
+    health_facility_accessing_PrEP,
+    is_pepfar_site,
+    date_initiated_PrEP,
+    PrEP_regimen,
+    information_source,
+    PrEP_status,
+    verification_date,
+    discontinuation_reason,
+    other_discontinuation_reason,
+    appointment_date,
+    date_created,
+    date_last_modified,
+    voided
+ from kenyaemr_etl.etl_PrEP_verification;
+
+ALTER TABLE kenyaemr_datatools.PrEP_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.PrEP_verification ADD INDEX(visit_date);
+SELECT "Successfully created PrEP_verification table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
