@@ -5961,7 +5961,7 @@ from encounter e
 			uuid in('33a3aab6-73ae-11ea-bc55-0242ac130003')
 	) f on f.form_id=e.form_id
 	left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (165416,5088,140238,143264,164441,162737,163336,5219,1788,159640,162477,161010,159369)
-where e.voided=0
+where e.voided=0 
 group by e.patient_id, e.encounter_id;
 
 
