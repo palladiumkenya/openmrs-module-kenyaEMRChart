@@ -318,7 +318,7 @@ program_uuid,
 program_name,
 encounter_id,
 (case discontinuation_reason when 159492 then "Transferred Out" when 160034 then "Died" when 5240 then "Lost to Follow" when 819 then "Cannot afford Treatment"  
-  when 5622 then "Other" when 1067 then "Unknown" else "" end) as discontinuation_reason,
+  when 5622 then "Other" when 1067 then "Unknown" when 164349 then "Stopped Treatment" else "" end) as discontinuation_reason,
 date_died,
 transfer_facility,
 transfer_date,
