@@ -3122,7 +3122,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
-					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e')
+					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
