@@ -3126,7 +3126,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
 			where e.voided=0
-			group by e.patient_id, e.encounter_id, visit_date
+			group by e.patient_id, visit_date
 		;
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END $$
