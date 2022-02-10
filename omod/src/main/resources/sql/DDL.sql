@@ -318,8 +318,10 @@ INDEX(ever_on_ipt),
 INDEX(differentiated_care),
 INDEX(visit_date, patient_id),
 INDEX(visit_date, condom_provided),
-INDEX(visit_date, family_planning_method)
-
+INDEX(visit_date, family_planning_method),
+INDEX(nutritional_status),
+INDEX(next_appointment_date),
+INDEX(visit_date, next_appointment_date)
 );
 
 SELECT "Successfully created etl_patient_hiv_followup table";
