@@ -38,7 +38,7 @@
         </comment>
         <sqlFile path="sql/DataTools.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
-    <changeSet id="${project.parent.artifactId}-20171106-1741" author="aojwang">
+    <!--<changeSet id="${project.parent.artifactId}-20171106-1741" author="aojwang">
         <comment>
             Sets up ETL tables. Recreation of tables
         </comment>
@@ -56,7 +56,7 @@
             CALL sp_update_dashboard_table();
         </sql>
     </changeSet>
-<!-- consider removing this changeset if not necessary. data tool could be setup separately-->
+&lt;!&ndash; consider removing this changeset if not necessary. data tool could be setup separately&ndash;&gt;
     <changeSet id="${project.parent.artifactId}-20171106-1743" author="aojwang">
         <comment>
             Sets up data tool tables
@@ -64,7 +64,7 @@
         <sql>
             CALL create_datatools_tables();
         </sql>
-    </changeSet>
+    </changeSet>-->
     <!--Adding scheduled task to periodically refresh ETL tables-->
     <changeSet id="${project.parent.artifactId}-20171212-1744" author="aojwang">
         <preConditions onFail="MARK_RAN">
