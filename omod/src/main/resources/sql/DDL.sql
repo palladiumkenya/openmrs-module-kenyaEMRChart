@@ -75,7 +75,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
---DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
+-- DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
@@ -1493,8 +1493,12 @@ SELECT "Successfully created etl_ART_preparation table";
     date_last_modified DATETIME,
     sexual_partner_hiv_status varchar(255),
     sexual_partner_on_art varchar(10),
-    risk varchar(255),
-    high_risk_partner varchar(10),
+    VL_level varchar(255),
+    duration_on_ART varchar(255),
+    attempting_pregnancy varchar(255),
+    poor_adherence varchar(255),
+    high_risk_partner varchar(50),
+    adherence varchar(10),
     sex_with_multiple_partners varchar(10),
     ipv_gbv varchar(10),
     transactional_sex varchar(10),
@@ -1509,7 +1513,12 @@ SELECT "Successfully created etl_ART_preparation table";
     risk_education_offered varchar(10),
     risk_reduction varchar(10),
     willing_to_take_prep varchar(10),
-    reason_not_willing varchar(255),
+    decline_reason_none varchar(255),
+    decline_reason_side_effects varchar(255),
+    decline_reason_stigma varchar(255),
+    decline_reason_pill_burden varchar(255),
+    decline_reason_many_HIV_tests varchar(255),
+    decline_reason_long_pills_intake varchar(255),
     risk_edu_offered varchar(10),
     risk_education varchar(255),
     referral_for_prevention_services varchar(255),
@@ -1519,6 +1528,7 @@ SELECT "Successfully created etl_ART_preparation table";
     partner_ccc_number varchar(255),
     partner_art_start_date DATE,
     serodiscordant_confirmation_date DATE,
+    HIV_serodiscordant_duration_months int(11),
     recent_unprotected_sex_with_positive_partner varchar(10),
     children_with_hiv_positive_partner varchar(255),
     voided INT(11),
