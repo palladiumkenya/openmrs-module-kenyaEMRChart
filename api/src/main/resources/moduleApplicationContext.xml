@@ -35,6 +35,9 @@
 	</bean>
 
 	<bean id="kenyaemr.core.etl.routines" class="org.openmrs.module.kenyacore.etl.ETLConfiguration">
+		<property name="sourceModule">
+			<value>1</value>
+		</property>
 		<property name="ddlProcedures">
 			<set>
 				<value>create_etl_tables</value>
