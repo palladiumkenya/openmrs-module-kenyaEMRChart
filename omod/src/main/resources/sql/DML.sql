@@ -3179,6 +3179,7 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
         partner_ccc_number,
         partner_art_start_date,
         serodiscordant_confirmation_date,
+        HIV_serodiscordant_duration_months,
         recent_unprotected_sex_with_positive_partner,
         children_with_hiv_positive_partner,
         voided
@@ -3188,8 +3189,10 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
            if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
            max(if(o.concept_id = 1436, (case o.value_coded when 703 then "HIV Positive" when 664 then "HIV Negative" when 1067 then "Unknown" else "" end), "" )) as sexual_partner_hiv_status,
            max(if(o.concept_id = 160119, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sexual_partner_on_art,
-           max(if(o.concept_id = 163310, (case o.value_coded when 162185 then "Detectable viral load" when 160119 then "On ART for less than 6 months"
-                                                             when 160571 then "Couple is trying to concieve" when 159598 then "Suspected poor adherence" else "" end), "" )) as risk,
+           CONCAT_WS(',',max(if(o.concept_id = 163310 and o.value_coded = 162185,  "Detectable viral load",NULL)),
+                     max(if(o.concept_id = 163310 and o.value_coded = 160119,  "On ART for less than 6 months",NULL)),
+                     max(if(o.concept_id = 163310 and o.value_coded = 160571,  "Couple is trying to concieve",NULL)),
+                     max(if(o.concept_id = 163310 and o.value_coded = 159598,  "Suspected poor adherence",NULL))) as risk,
            max(if(o.concept_id = 160581, (case o.value_coded when 1065 then "High risk partner" else "" end), "" )) as high_risk_partner,
            max(if(o.concept_id = 159385, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sex_with_multiple_partners,
            max(if(o.concept_id = 141814, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as ipv_gbv,
@@ -3201,11 +3204,16 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
            max(if(o.concept_id = 165090, (case o.value_coded when 1065 then "Yes" else "" end), "" )) as sharing_drug_needles,
            max(if(o.concept_id = 165241, (case o.value_coded when 1065 then "Yes" when 1066 then "No"  else "" end), "" )) as other_reasons,
            max(if(o.concept_id = 160632, o.value_text, null )) as other_reason_specify,
-           max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as risk_assessment_outcome,
            max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
            max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
+           max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as assessment_outcome,
            max(if(o.concept_id = 165094, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as willing_to_take_prep,
-           max(if(o.concept_id = 1743, (case o.value_coded when 1107 then "None" when 159935 then "Side effects(ADR)" when 159935 then "Side effects(ADR)" when 164997 then "Stigma" when 160588 then "Pill burden" when 164401 then "Too many HIV tests" when 161888 then "Taking pills for a long time" else "" end), "" )) as reason_not_willing,
+           CONCAT_WS(',',max(if(o.concept_id = 1743 and o.value_coded = 1107,  "None",NULL)),
+                     max(if(o.concept_id = 1743 and o.value_coded = 159935,  "Side effects(ADR)",NULL)),
+                     max(if(o.concept_id = 1743 and o.value_coded = 164997,  "Stigma",NULL)),
+                     max(if(o.concept_id = 1743 and o.value_coded = 160588,  "Pill burden",NULL)),
+                     max(if(o.concept_id = 1743 and o.value_coded = 164401,  "Too many HIV tests",NULL)),
+                     max(if(o.concept_id = 1743 and o.value_coded = 161888,  "Taking pills for a long time",NULL))) as reason_not_willing,
            max(if(o.concept_id = 161595, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_edu_offered,
            max(if(o.concept_id = 161011, o.value_text, null )) as risk_education,
            max(if(o.concept_id = 165093, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as referral_for_prevention_services,
@@ -3215,14 +3223,15 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
            max(if(o.concept_id = 162053, o.value_numeric, null )) as partner_ccc_number,
            max(if(o.concept_id = 159599, o.value_datetime, null )) as partner_art_start_date,
            max(if(o.concept_id = 165096, o.value_datetime, null )) as serodiscordant_confirmation_date,
+           max(if(o.concept_id = 164393, o.value_numeric * 12, null )) + max(if(o.concept_id = 165356, o.value_numeric, null )) as HIV_serodiscordant_duration_months,
            max(if(o.concept_id = 165097, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as recent_unprotected_sex_with_positive_partner,
            max(if(o.concept_id = 1825, o.value_numeric, null )) as children_with_hiv_positive_partner,
            e.voided as voided
 
     from encounter e
-			inner join person p on p.person_id=e.patient_id and p.voided=0
-			inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825) and o.voided=0
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825,164393,165356) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
