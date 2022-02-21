@@ -2316,7 +2316,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.patient_id, e.encounter_id
+      group by o.obs_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
 
     ;
@@ -3493,6 +3493,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         has_chronic_illness,
         adverse_reactions,
         known_allergies,
+        hepatitisB_vaccinated,
+        hepatitisB_treated,
+        hepatitisC_vaccinated,
+        hepatitisC_treated,
         hiv_signs,
         adherence_counselled,
         adherence_outcome,
@@ -3544,6 +3548,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         max(if(o.concept_id = 162747, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_chronic_illness,
         max(if(o.concept_id = 121764, o.value_coded, null )) as adverse_reactions,
         max(if(o.concept_id = 160557, o.value_coded, null )) as known_allergies,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisB_vaccinated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisB_treated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisC_vaccinated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisC_treated,
         max(if(o.concept_id = 165101, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hiv_signs,
         max(if(o.concept_id = 165104, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselled,
         max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair" when 159407 then 'Poor' else "" end), "" )) as adherence_outcome,
@@ -3605,6 +3613,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
       has_chronic_illness=VALUES(has_chronic_illness),
       adverse_reactions=VALUES(adverse_reactions),
       known_allergies=VALUES(known_allergies),
+      hepatitisB_vaccinated=VALUES(hepatitisB_vaccinated),
+      hepatitisB_treated=VALUES(hepatitisB_treated),
+      hepatitisC_vaccinated=VALUES(hepatitisC_vaccinated),
+      hepatitisC_treated=VALUES(hepatitisC_treated),
       hiv_signs=VALUES(hiv_signs),
       adherence_counselled=VALUES(adherence_counselled),
       adherence_outcome=VALUES(adherence_outcome),
