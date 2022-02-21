@@ -47,11 +47,15 @@
 
 		<!-- Begin OpenMRS core -->
 
-		<dependency>
-			<groupId>org.openmrs.api</groupId>
-			<artifactId>openmrs-api</artifactId>
-			<type>jar</type>
-		</dependency>
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>legacyui-omod</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>kenyacore-api</artifactId>
+        </dependency>
+        <!-- End OpenMRS modules -->
 
 		<dependency>
 			<groupId>org.openmrs.web</groupId>
