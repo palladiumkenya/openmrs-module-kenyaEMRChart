@@ -541,7 +541,7 @@ from encounter e
 inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472)
 left join orders od on od.order_id = o.order_id and od.voided=0
 where e.voided=0
-group by e.encounter_id;
+group by o.obs_id;
 
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
@@ -3469,6 +3469,10 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         has_chronic_illness,
         adverse_reactions,
         known_allergies,
+        hepatitisB_vaccinated,
+        hepatitisB_treated,
+        hepatitisC_vaccinated,
+        hepatitisC_treated,
         hiv_signs,
         adherence_counselled,
         adherence_outcome,
@@ -3520,6 +3524,10 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         max(if(o.concept_id = 162747, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_chronic_illness,
         max(if(o.concept_id = 121764, o.value_coded, null )) as adverse_reactions,
         max(if(o.concept_id = 160557, o.value_coded, null )) as known_allergies,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisB_vaccinated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisB_treated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisC_vaccinated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisC_treated,
         max(if(o.concept_id = 165101, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hiv_signs,
         max(if(o.concept_id = 165104, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselled,
         max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair" when 159407 then 'Poor' else "" end), "" )) as adherence_outcome,
