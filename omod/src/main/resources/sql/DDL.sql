@@ -87,6 +87,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_initiation;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -1580,6 +1581,7 @@ SELECT "Successfully created etl_ART_preparation table";
     date_last_modified DATETIME,
     discontinue_reason VARCHAR(255),
     care_end_date DATE,
+    last_prep_dose_date DATE,
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
