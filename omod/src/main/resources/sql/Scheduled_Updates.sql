@@ -2297,7 +2297,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         od.urgency,
         od.order_reason,
         (case when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-         when o.concept_id in(1030,1305) then o.value_coded END) AS test_result,
+         when o.concept_id in(1030,1305,1325,159430,161472) then o.value_coded END) AS test_result,
         od.date_activated as date_test_requested,
         e.encounter_datetime as date_test_result_received,
         e.date_created,
@@ -2309,14 +2309,14 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
         ) et on et.encounter_type_id=e.encounter_type
-        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305)
+        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472)
         left join orders od on od.order_id = o.order_id and od.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
-      group by e.patient_id, e.encounter_id
+      group by o.obs_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
 
     ;
@@ -3493,6 +3493,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         has_chronic_illness,
         adverse_reactions,
         known_allergies,
+        hepatitisB_vaccinated,
+        hepatitisB_treated,
+        hepatitisC_vaccinated,
+        hepatitisC_treated,
         hiv_signs,
         adherence_counselled,
         adherence_outcome,
@@ -3544,6 +3548,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         max(if(o.concept_id = 162747, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_chronic_illness,
         max(if(o.concept_id = 121764, o.value_coded, null )) as adverse_reactions,
         max(if(o.concept_id = 160557, o.value_coded, null )) as known_allergies,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisB_vaccinated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisB_treated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisC_vaccinated,
+        max(if(o.concept_id = 1272, o.value_coded, null )) as hepatitisC_treated,
         max(if(o.concept_id = 165101, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hiv_signs,
         max(if(o.concept_id = 165104, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselled,
         max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair" when 159407 then 'Poor' else "" end), "" )) as adherence_outcome,
@@ -3605,6 +3613,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
       has_chronic_illness=VALUES(has_chronic_illness),
       adverse_reactions=VALUES(adverse_reactions),
       known_allergies=VALUES(known_allergies),
+      hepatitisB_vaccinated=VALUES(hepatitisB_vaccinated),
+      hepatitisB_treated=VALUES(hepatitisB_treated),
+      hepatitisC_vaccinated=VALUES(hepatitisC_vaccinated),
+      hepatitisC_treated=VALUES(hepatitisC_treated),
       hiv_signs=VALUES(hiv_signs),
       adherence_counselled=VALUES(adherence_counselled),
       adherence_outcome=VALUES(adherence_outcome),
@@ -5770,7 +5782,7 @@ select
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join (
-select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e')
+select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3')
     ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created as date_created, o1.date_voided as date_voided,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
@@ -5832,7 +5844,7 @@ select
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3')
               ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.date_voided as date_voided,
                           o1.date_created as date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
