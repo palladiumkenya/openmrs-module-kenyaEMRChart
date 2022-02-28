@@ -1580,6 +1580,7 @@ SELECT "Successfully created etl_ART_preparation table";
     date_last_modified DATETIME,
     discontinue_reason VARCHAR(255),
     care_end_date DATE,
+    last_prep_dose_date DATE,
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),

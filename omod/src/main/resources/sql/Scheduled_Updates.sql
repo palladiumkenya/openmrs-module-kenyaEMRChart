@@ -3314,6 +3314,7 @@ CREATE PROCEDURE sp_update_etl_prep_discontinuation(IN last_update_time DATETIME
       date_last_modified,
       discontinue_reason,
       care_end_date,
+      last_prep_dose_date,
       voided
     )
       select
@@ -3335,11 +3336,12 @@ CREATE PROCEDURE sp_update_etl_prep_discontinuation(IN last_update_time DATETIME
                                        when 162479 then "Partner Refusal"
                                        when 5622 then "Other" else "" end), "" )) as discontinue_reason,
                 max(if(o.concept_id = 164073, o.value_datetime, null )) as care_end_date,
+                max(if(o.concept_id = 162549, o.value_datetime, null )) as last_prep_dose_date,
         e.voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("467c4cc3-25eb-4330-9cf6-e41b9b14cc10")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073,162549) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
