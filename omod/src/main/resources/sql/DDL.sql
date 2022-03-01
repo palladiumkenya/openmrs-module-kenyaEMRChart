@@ -1512,7 +1512,7 @@ SELECT "Successfully created etl_ART_preparation table";
     reason_not_willing varchar(255),
     risk_edu_offered varchar(10),
     risk_education varchar(255),
-    referral_for_prevention_services varchar(255),
+    referral_for_prevention_services varchar(500),
     referral_facility VARCHAR(255),
     time_partner_hiv_positive_known varchar(255),
     partner_enrolled_ccc varchar(255),
