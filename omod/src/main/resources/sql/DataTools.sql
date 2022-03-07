@@ -1754,7 +1754,7 @@ ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD INDEX(visit_date);
 SELECT "Successfully created cervical_cancer_screening table";
 
 -- Create table contact
-create table kenyaemr_datatools.contact as
+create table kenyaemr_datatools.kp_contact as
 select
      uuid,
     client_id,
@@ -1780,14 +1780,14 @@ select
     contact_person_alias,
     contact_person_phone,
     voided
- from kenyaemr_etl.etl_contact;
+ from kenyaemr_etl.etl_kp_contact;
 
-ALTER TABLE kenyaemr_datatools.contact ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.contact ADD INDEX(visit_date);
-SELECT "Successfully created contact table";
+ALTER TABLE kenyaemr_datatools.kp_contact ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_contact ADD INDEX(visit_date);
+SELECT "Successfully created kp_contact table";
 
--- Create table client_enrollment
-create table kenyaemr_datatools.client_enrollment as
+-- Create table kp_client_enrollment
+create table kenyaemr_datatools.kp_client_enrollment as
 select
   uuid,
   client_id,
@@ -1820,14 +1820,14 @@ select
   buddy_name,
   buddy_phone_number,
   voided
- from kenyaemr_etl.etl_client_enrollment;
+ from kenyaemr_etl.etl_kp_client_enrollment;
 
-ALTER TABLE kenyaemr_datatools.client_enrollment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.client_enrollment ADD INDEX(visit_date);
-SELECT "Successfully created client_enrollment table";
+ALTER TABLE kenyaemr_datatools.kp_client_enrollment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_client_enrollment ADD INDEX(visit_date);
+SELECT "Successfully created kp_client_enrollment table";
 
--- Create table clinical_visit
-create table kenyaemr_datatools.clinical_visit as
+-- Create table kp_clinical_visit
+create table kenyaemr_datatools.kp_clinical_visit as
 select
     uuid,
     client_id,
@@ -1951,14 +1951,14 @@ select
     clinical_notes,
     appointment_date,
     voided
- from kenyaemr_etl.etl_clinical_visit;
+ from kenyaemr_etl.etl_kp_clinical_visit;
 
-ALTER TABLE kenyaemr_datatools.clinical_visit ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.clinical_visit ADD INDEX(visit_date);
-SELECT "Successfully created clinical_visit table";
+ALTER TABLE kenyaemr_datatools.kp_clinical_visit ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_clinical_visit ADD INDEX(visit_date);
+SELECT "Successfully created kp_clinical_visit table";
 
--- Create table peer_calendar
-create table kenyaemr_datatools.peer_calendar as
+-- Create table kp_peer_calendar
+create table kenyaemr_datatools.kp_peer_calendar as
 select
     uuid,
     client_id,
@@ -1992,14 +1992,14 @@ select
     health_edu,
     remarks,
     voided
- from kenyaemr_etl.etl_peer_calendar;
+ from kenyaemr_etl.etl_kp_peer_calendar;
 
-ALTER TABLE kenyaemr_datatools.peer_calendar ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.peer_calendar ADD INDEX(visit_date);
-SELECT "Successfully created peer_calendar table";
+ALTER TABLE kenyaemr_datatools.kp_peer_calendar ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_peer_calendar ADD INDEX(visit_date);
+SELECT "Successfully created kp_peer_calendar table";
 
--- Create table sti_treatment
-create table kenyaemr_datatools.sti_treatment as
+-- Create table kp_sti_treatment
+create table kenyaemr_datatools.kp_sti_treatment as
 select
   uuid,
 	client_id,
@@ -2029,14 +2029,14 @@ select
 	provider_name,
 	appointment_date,
 	voided
- from kenyaemr_etl.etl_sti_treatment;
+ from kenyaemr_etl.etl_kp_sti_treatment;
 
-ALTER TABLE kenyaemr_datatools.sti_treatment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.sti_treatment ADD INDEX(visit_date);
-SELECT "Successfully created sti_treatment table";
+ALTER TABLE kenyaemr_datatools.kp_sti_treatment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_sti_treatment ADD INDEX(visit_date);
+SELECT "Successfully created kp_sti_treatment table";
 
--- Create table peer_tracking
-create table kenyaemr_datatools.peer_tracking as
+-- Create table kp_peer_tracking
+create table kenyaemr_datatools.kp_peer_tracking as
 select
   uuid,
   provider,
@@ -2060,14 +2060,14 @@ select
   date_created,
   date_last_modified,
   voided
- from kenyaemr_etl.etl_peer_tracking;
+ from kenyaemr_etl.etl_kp_peer_tracking;
 
-ALTER TABLE kenyaemr_datatools.peer_tracking ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.peer_tracking ADD INDEX(visit_date);
-SELECT "Successfully created peer_tracking table";
+ALTER TABLE kenyaemr_datatools.kp_peer_tracking ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_peer_tracking ADD INDEX(visit_date);
+SELECT "Successfully created kp_peer_tracking table";
 
--- Create table treatment_verification
-create table kenyaemr_datatools.treatment_verification as
+-- Create table kp_treatment_verification
+create table kenyaemr_datatools.kp_treatment_verification as
 select
   uuid,
   provider,
@@ -2103,11 +2103,11 @@ select
   date_created,
   date_last_modified,
   voided
- from kenyaemr_etl.etl_treatment_verification;
+ from kenyaemr_etl.etl_kp_treatment_verification;
 
-ALTER TABLE kenyaemr_datatools.treatment_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.treatment_verification ADD INDEX(visit_date);
-SELECT "Successfully created treatment_verification table";
+ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD INDEX(visit_date);
+SELECT "Successfully created kp_treatment_verification table";
 
 -- Create table PrEP_verification
 create table kenyaemr_datatools.PrEP_verification as
