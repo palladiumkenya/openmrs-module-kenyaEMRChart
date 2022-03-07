@@ -4293,11 +4293,11 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
 		END$$
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_contact$$
-    CREATE PROCEDURE sp_populate_etl_contact()
+    DROP PROCEDURE IF EXISTS sp_populate_etl_kp_contact $$
+    CREATE PROCEDURE sp_populate_etl_kp_contact()
       BEGIN
         SELECT "Processing client contact data ", CONCAT("Time: ", NOW());
-        insert into kenyaemr_etl.etl_contact (
+        insert into kenyaemr_etl.etl_kp_contact (
             uuid,
             client_id,
             visit_id,
@@ -4382,7 +4382,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
         SELECT "Completed processing KP contact data", CONCAT("Time: ", NOW());
 
-        update kenyaemr_etl.etl_contact c
+        update kenyaemr_etl.etl_kp_contact c
         join (select pi.patient_id,
                      max(if(pit.uuid='b7bfefd0-239b-11e9-ab14-d663bd873d93',pi.identifier,null)) unique_identifier
               from patient_identifier pi
@@ -4394,11 +4394,11 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
         END$$
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_client_enrollment$$
-    CREATE PROCEDURE sp_populate_etl_client_enrollment()
+    DROP PROCEDURE IF EXISTS sp_populate_etl_kp_client_enrollment $$
+    CREATE PROCEDURE sp_populate_etl_kp_client_enrollment()
     BEGIN
     SELECT "Processing client enrollment data ", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_client_enrollment (
+    insert into kenyaemr_etl.etl_kp_client_enrollment (
         uuid,
         client_id,
         visit_id,
@@ -4479,13 +4479,13 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
     END$$
 
 
-    -- ------------- populate etl_clinical_visit--------------------------------
+    -- ------------- populate etl_kp_clinical_visit--------------------------------
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_clinical_visit$$
-    CREATE PROCEDURE sp_populate_etl_clinical_visit()
+    DROP PROCEDURE IF EXISTS sp_populate_etl_kp_clinical_visit $$
+    CREATE PROCEDURE sp_populate_etl_kp_clinical_visit()
       BEGIN
         SELECT "Processing Clinical Visit ", CONCAT("Time: ", NOW());
-        INSERT INTO kenyaemr_etl.etl_clinical_visit(
+        INSERT INTO kenyaemr_etl.etl_kp_clinical_visit(
             uuid,
             client_id,
             visit_id,
@@ -4749,13 +4749,13 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
         SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
         END$$
 
-    -- ------------- populate etl_sti_treatment--------------------------------
+    -- ------------- populate etl_kp_sti_treatment--------------------------------
 
-        DROP PROCEDURE IF EXISTS sp_populate_etl_sti_treatment$$
-        CREATE PROCEDURE sp_populate_etl_sti_treatment()
+        DROP PROCEDURE IF EXISTS sp_populate_etl_kp_sti_treatment $$
+        CREATE PROCEDURE sp_populate_etl_kp_sti_treatment()
           BEGIN
             SELECT "Processing STI Treatment ", CONCAT("Time: ", NOW());
-            INSERT INTO kenyaemr_etl.etl_sti_treatment(
+            INSERT INTO kenyaemr_etl.etl_kp_sti_treatment(
                 uuid,
                 client_id,
                 visit_id,
@@ -4827,14 +4827,14 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
             group by e.patient_id, e.encounter_id, visit_date;
             SELECT "Completed processing STI Treatment data ", CONCAT("Time: ", NOW());
 
-    END$$
-    -- ------------- populate etl_peer_calendar--------------------------------
+    END $$
+    -- ------------- populate etl_kp_peer_calendar--------------------------------
 
-        DROP PROCEDURE IF EXISTS sp_populate_etl_peer_calendar$$
-        CREATE PROCEDURE sp_populate_etl_peer_calendar()
+        DROP PROCEDURE IF EXISTS sp_populate_etl_kp_peer_calendar $$
+        CREATE PROCEDURE sp_populate_etl_kp_peer_calendar()
           BEGIN
             SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
-            INSERT INTO  kenyaemr_etl.etl_peer_calendar(
+            INSERT INTO  kenyaemr_etl.etl_kp_peer_calendar(
                 uuid,
                 client_id,
                 visit_id,
@@ -4922,12 +4922,12 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
 -- ------------- populate kp peer tracking-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_peer_tracking$$
-CREATE PROCEDURE sp_populate_etl_peer_tracking()
+DROP PROCEDURE IF EXISTS sp_populate_etl_kp_peer_tracking $$
+CREATE PROCEDURE sp_populate_etl_kp_peer_tracking()
 BEGIN
 SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
 
-insert into kenyaemr_etl.etl_peer_tracking(
+insert into kenyaemr_etl.etl_kp_peer_tracking(
 uuid,
 provider,
 client_id,
@@ -4981,11 +4981,11 @@ END$$
 
 -- ------------- populate kp treatment verification-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_treatment_verification$$
-CREATE PROCEDURE sp_populate_etl_treatment_verification()
+DROP PROCEDURE IF EXISTS sp_populate_etl_kp_treatment_verification $$
+CREATE PROCEDURE sp_populate_etl_kp_treatment_verification()
 BEGIN
 SELECT "Processing kp treatment verification form", CONCAT("Time: ", NOW());
-insert into kenyaemr_etl.etl_treatment_verification(
+insert into kenyaemr_etl.etl_kp_treatment_verification(
 uuid,
 provider,
 client_id,
@@ -5806,13 +5806,13 @@ CALL sp_populate_etl_ovc_enrolment();
 CALL sp_populate_etl_cervical_cancer_screening();
 CALL sp_populate_etl_patient_contact();
 CALL sp_populate_etl_client_trace();
-CALL sp_populate_etl_contact();
-CALL sp_populate_etl_client_enrollment();
-CALL sp_populate_etl_clinical_visit();
-CALL sp_populate_etl_sti_treatment();
-CALL sp_populate_etl_peer_calendar();
-CALL sp_populate_etl_peer_tracking();
-CALL sp_populate_etl_treatment_verification();
+CALL sp_populate_etl_kp_contact();
+CALL sp_populate_etl_kp_client_enrollment();
+CALL sp_populate_etl_kp_clinical_visit();
+CALL sp_populate_etl_kp_sti_treatment();
+CALL sp_populate_etl_kp_peer_calendar();
+CALL sp_populate_etl_kp_peer_tracking();
+CALL sp_populate_etl_kp_treatment_verification();
 --CALL sp_populate_etl_gender_based_violence();
 CALL sp_populate_etl_PrEP_verification();
 CALL sp_populate_etl_alcohol_drug_abuse_screening();
