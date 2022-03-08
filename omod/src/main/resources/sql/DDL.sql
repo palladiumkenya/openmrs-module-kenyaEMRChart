@@ -69,14 +69,14 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_client_trace;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_contact;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_client_enrollment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_visit;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_calendar;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_contact;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_client_enrollment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_clinical_visit;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_peer_calendar;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_sti_treatment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_peer_tracking;
 --DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
@@ -2081,7 +2081,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
   SELECT "Successfully created etl_viral_load table";
 
        -- create table etl_contact
-    create table kenyaemr_etl.etl_contact (
+    create table kenyaemr_etl.etl_kp_contact (
       uuid char(38) ,
       unique_identifier VARCHAR(50),
       client_id INT(11) NOT NULL,
@@ -2119,7 +2119,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
     -- create table etl_client_enrollment
 
-    create table kenyaemr_etl.etl_client_enrollment (
+    create table kenyaemr_etl.etl_kp_client_enrollment (
       uuid char(38) ,
       client_id INT(11) NOT NULL,
       visit_id INT(11) DEFAULT NULL,
@@ -2157,9 +2157,9 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     );
     SELECT "Successfully created etl_client_enrollment table";
 
-    -- create table etl_clinical_visit
+    -- create table etl_kp_clinical_visit
 
-    create table kenyaemr_etl.etl_clinical_visit (
+    create table kenyaemr_etl.etl_kp_clinical_visit (
       uuid char(38) ,
       client_id INT(11) NOT NULL,
       visit_id INT(11) DEFAULT NULL,
@@ -2287,10 +2287,10 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       index(client_id),
       index(client_id,visit_date)
     );
-    SELECT "Successfully created etl_clinical_visit table";
+    SELECT "Successfully created etl_kp_clinical_visit table";
 
-    -- ------------ create table etl_peer_calendar-----------------------
-    CREATE TABLE kenyaemr_etl.etl_peer_calendar (
+    -- ------------ create table etl_kp_peer_calendar-----------------------
+    CREATE TABLE kenyaemr_etl.etl_kp_peer_calendar (
       uuid CHAR(38),
       encounter_id INT(11) NOT NULL PRIMARY KEY,
       client_id INT(11) NOT NULL ,
@@ -2329,10 +2329,10 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(client_id, visit_date)
     );
 
-    SELECT "Successfully created etl_peer_calendar table";
+    SELECT "Successfully created etl_kp_peer_calendar table";
 
-        -- ------------ create table etl_sti_treatment-----------------------
-    CREATE TABLE kenyaemr_etl.etl_sti_treatment (
+        -- ------------ create table etl_kp_sti_treatment-----------------------
+    CREATE TABLE kenyaemr_etl.etl_kp_sti_treatment (
       uuid CHAR(38),
       encounter_id INT(11) NOT NULL PRIMARY KEY,
       client_id INT(11) NOT NULL ,
@@ -2371,7 +2371,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(given_condoms)
     );
 
-  CREATE TABLE kenyaemr_etl.etl_peer_tracking (
+  CREATE TABLE kenyaemr_etl.etl_kp_peer_tracking (
       uuid char(38),
       provider INT(11),
       client_id INT(11) NOT NULL ,
@@ -2403,7 +2403,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(tracing_type)
     );
 
-    CREATE TABLE kenyaemr_etl.etl_treatment_verification (
+    CREATE TABLE kenyaemr_etl.etl_kp_treatment_verification (
       uuid char(38),
       provider INT(11),
       client_id INT(11) NOT NULL ,

@@ -4304,11 +4304,11 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
     SELECT "Completed processing CAXC screening", CONCAT("Time: ", NOW());
     END $$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_contact $$
-CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_contact $$
+CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing client contact data ", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_contact (
+    insert into kenyaemr_etl.etl_kp_contact (
       uuid,
       client_id,
       visit_id,
@@ -4402,7 +4402,7 @@ CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
 
     SELECT "Completed processing KP contact data", CONCAT("Time: ", NOW());
 
-    update kenyaemr_etl.etl_contact c
+    update kenyaemr_etl.etl_kp_contact c
       join (select pi.patient_id,
               max(if(pit.uuid='b7bfefd0-239b-11e9-ab14-d663bd873d93',pi.identifier,null)) unique_identifier
             from patient_identifier pi
@@ -4414,11 +4414,11 @@ CREATE PROCEDURE sp_update_etl_contact(IN last_update_time DATETIME)
 
     END $$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_client_enrollment $$
-CREATE PROCEDURE sp_update_etl_client_enrollment(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_client_enrollment $$
+CREATE PROCEDURE sp_update_etl_kp_client_enrollment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing client enrollment data ", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_client_enrollment (
+    insert into kenyaemr_etl.etl_kp_client_enrollment (
       uuid,
       client_id,
       visit_id,
@@ -4523,13 +4523,13 @@ CREATE PROCEDURE sp_update_etl_client_enrollment(IN last_update_time DATETIME)
     END $$
 
 
--- ------------- populate etl_clinical_visit--------------------------------
+-- ------------- populate etl_kp_clinical_visit--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_clinical_visit $$
-CREATE PROCEDURE sp_update_etl_clinical_visit(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_clinical_visit $$
+CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing Clinical Visit ", CONCAT("Time: ", NOW());
-    INSERT INTO kenyaemr_etl.etl_clinical_visit(
+    INSERT INTO kenyaemr_etl.etl_kp_clinical_visit(
       uuid,
       client_id,
       visit_id,
@@ -4912,13 +4912,13 @@ CREATE PROCEDURE sp_update_etl_clinical_visit(IN last_update_time DATETIME)
       voided=VALUES(voided);
     END $$
 
--- ------------- populate etl_sti_treatment--------------------------------
+-- ------------- populate etl_kp_sti_treatment--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_sti_treatment $$
-CREATE PROCEDURE sp_update_etl_sti_treatment(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_sti_treatment $$
+CREATE PROCEDURE sp_update_etl_kp_sti_treatment(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing STI Treatment ", CONCAT("Time: ", NOW());
-    INSERT INTO kenyaemr_etl.etl_sti_treatment(
+    INSERT INTO kenyaemr_etl.etl_kp_sti_treatment(
       uuid,
       client_id,
       visit_id,
@@ -5016,13 +5016,13 @@ CREATE PROCEDURE sp_update_etl_sti_treatment(IN last_update_time DATETIME)
       voided=VALUES(voided);
 
     END $$
--- ------------- populate etl_peer_calendar--------------------------------
+-- ------------- populate etl_kp_peer_calendar--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_peer_calendar $$
-CREATE PROCEDURE sp_update_etl_peer_calendar(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_peer_calendar $$
+CREATE PROCEDURE sp_update_etl_kp_peer_calendar(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
-    INSERT INTO  kenyaemr_etl.etl_peer_calendar(
+    INSERT INTO  kenyaemr_etl.etl_kp_peer_calendar(
       uuid,
       client_id,
       visit_id,
@@ -5139,12 +5139,12 @@ CREATE PROCEDURE sp_update_etl_peer_calendar(IN last_update_time DATETIME)
 
 -- ------------- populate kp peer tracking-------------------------
 
-DROP PROCEDURE IF EXISTS sp_update_etl_peer_tracking $$
-CREATE PROCEDURE sp_update_etl_peer_tracking(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_peer_tracking $$
+CREATE PROCEDURE sp_update_etl_kp_peer_tracking(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
 
-    insert into kenyaemr_etl.etl_peer_tracking(
+    insert into kenyaemr_etl.etl_kp_peer_tracking(
       uuid,
       provider,
       client_id,
@@ -5216,11 +5216,11 @@ CREATE PROCEDURE sp_update_etl_peer_tracking(IN last_update_time DATETIME)
 
     END $$
 
-DROP PROCEDURE IF EXISTS sp_update_etl_treatment_verification $$
-CREATE PROCEDURE sp_update_etl_treatment_verification(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_kp_treatment_verification $$
+CREATE PROCEDURE sp_update_etl_kp_treatment_verification(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing kp treatment verification form", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_treatment_verification(
+    insert into kenyaemr_etl.etl_kp_treatment_verification(
       uuid,
       provider,
       client_id,
@@ -6266,13 +6266,13 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_otz_activity(last_update_time);
     CALL sp_update_etl_ovc_enrolment(last_update_time);
     CALL sp_update_etl_cervical_cancer_screening(last_update_time);
-    CALL sp_update_etl_contact(last_update_time);
-    CALL sp_update_etl_client_enrollment(last_update_time);
-    CALL sp_update_etl_clinical_visit(last_update_time);
-    CALL sp_update_etl_sti_treatment(last_update_time);
-    CALL sp_update_etl_peer_calendar(last_update_time);
-    CALL sp_update_etl_peer_tracking(last_update_time);
-    CALL sp_update_etl_treatment_verification(last_update_time);
+    CALL sp_update_etl_kp_contact(last_update_time);
+    CALL sp_update_etl_kp_client_enrollment(last_update_time);
+    CALL sp_update_etl_kp_clinical_visit(last_update_time);
+    CALL sp_update_etl_kp_sti_treatment(last_update_time);
+    CALL sp_update_etl_kp_peer_calendar(last_update_time);
+    CALL sp_update_etl_kp_peer_tracking(last_update_time);
+    CALL sp_update_etl_kp_treatment_verification(last_update_time);
     --CALL sp_update_etl_gender_based_violence(last_update_time);
     CALL sp_update_etl_PrEP_verification(last_update_time);
     CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
