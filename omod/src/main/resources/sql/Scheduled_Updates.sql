@@ -6155,6 +6155,63 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),
                         on_ventillator=VALUES(on_ventillator),on_oxygen_supplement=VALUES(on_oxygen_supplement),voided=VALUES(voided);
 SELECT "Completed processing covid assessment data", CONCAT("Time: ", NOW());
 END $$
+
+-- Update TPT screening----
+DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_enrolment $$
+CREATE PROCEDURE sp_update_etl_vmmc_enrolment(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing VMMC enrolment", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_vmmc_enrolment(
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    referee,
+    other_referee,
+    source_of_vmmc_info,
+    other_source_of_vmmc_info,
+    county_of_origin,
+    date_created,
+    date_last_modified,
+    voided
+)
+select
+    e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+    max(if(o.concept_id = 160482,o.value_coded,null)) as referee,
+    max(if(o.concept_id = 165143,o.value_text,null)) as other_referee,
+    max(if(o.concept_id = 162568,o.value_coded,null)) as source_of_vmmc_info,
+    max(if(o.concept_id = 160632,o.value_text,null)) as other_source_of_vmmc_info,
+    max(if(o.concept_id = 161564,o.value_text,null)) as county_of_origin,
+    e.date_created as date_created,
+    if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+    e.voided as voided
+from encounter e
+    inner join person p on p.person_id=e.patient_id and p.voided=0
+    inner join form f on f.form_id=e.form_id and f.uuid in ('a74e3e4a-9e2a-41fb-8e64-4ba8a71ff984')
+    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,162568,160632,161564) and o.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+   or e.date_changed >= last_update_time
+   or e.date_voided >= last_update_time
+   or o.date_created >= last_update_time
+   or o.date_voided >= last_update_time
+group by e.patient_id,date(e.encounter_datetime);
+order by e.patient_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+    provider=VALUES(provider),
+    referee=VALUES(referee),
+    other_referee=VALUES(other_referee),
+    source_of_vmmc_info=VALUES(source_of_vmmc_info),
+    other_source_of_vmmc_info=VALUES(other_source_of_vmmc_info),
+    county_of_origin=VALUES(county_of_origin),
+    voided=VALUES(voided);
+
+SELECT "Completed processing VMMC enrolment data ", CONCAT("Time: ", NOW());
+END $$
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE$$
@@ -6228,6 +6285,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_ipt_screening(last_update_time);
     CALL sp_update_etl_pre_hiv_enrollment_art(last_update_time);
     CALL sp_update_etl_covid_19_assessment(last_update_time);
+    CALL sp_update_etl_vmmc_enrolment(last_update_time);
 
     CALL sp_update_dashboard_table();
 
