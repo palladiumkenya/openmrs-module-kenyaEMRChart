@@ -2109,35 +2109,29 @@ ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD FOREIGN KEY (client
 ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD INDEX(visit_date);
 SELECT "Successfully created kp_treatment_verification table";
 
--- Create table PrEP_verification
-create table kenyaemr_datatools.PrEP_verification as
+-- Create table vmmc_enrolment
+create table kenyaemr_datatools.vmmc_enrolment as
 select
     uuid,
     provider,
-    client_id,
+    patient_id,
     visit_id,
     visit_date,
     location_id,
     encounter_id,
-    date_enrolled,
-    health_facility_accessing_PrEP,
-    is_pepfar_site,
-    date_initiated_PrEP,
-    PrEP_regimen,
-    information_source,
-    PrEP_status,
-    verification_date,
-    discontinuation_reason,
-    other_discontinuation_reason,
-    appointment_date,
+    (case referee when 165650 then 'Self referral' when 1577 then 'Nurse' when 1555 then 'Community Health Worker' when 5622 then 'Other' end) as referee,
+    other_referee,
+    (case source_of_vmmc_info when 159388 then 'Radio/Tv' when 1565 then 'Print Media' when 163121 then 'Road Show' when 1555 then 'Mobilizer CHW' when 160542 then 'OPD/MCH/HT' when 5486 then 'Social Media' when 5622 then 'Other' end) as source_of_vmmc_info,
+    other_source_of_vmmc_info,
+    county_of_origin,
     date_created,
     date_last_modified,
     voided
- from kenyaemr_etl.etl_PrEP_verification;
+ from kenyaemr_etl.etl_vmmc_enrolment;
 
-ALTER TABLE kenyaemr_datatools.PrEP_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.PrEP_verification ADD INDEX(visit_date);
-SELECT "Successfully created PrEP_verification table";
+ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_enrolment table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

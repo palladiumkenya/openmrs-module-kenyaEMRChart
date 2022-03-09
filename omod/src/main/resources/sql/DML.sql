@@ -5743,6 +5743,48 @@ group by o3.visit_id;
 SELECT "Completed processing covid_19 assessment data ", CONCAT("Time: ", NOW());
 END $$
 
+--Populate etl_vmmc_enrolment
+DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_enrolment$$
+CREATE PROCEDURE sp_populate_etl_vmmc_enrolment()
+BEGIN
+    SELECT "Processing vmmc enrolment", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_vmmc_enrolment(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        referee,
+        other_referee,
+        source_of_vmmc_info,
+        other_source_of_vmmc_info,
+        county_of_origin,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+        max(if(o.concept_id = 160482,o.value_coded,null)) as referee,
+        max(if(o.concept_id = 165143,o.value_text,null)) as other_referee,
+        max(if(o.concept_id = 162568,o.value_coded,null)) as source_of_vmmc_info,
+        max(if(o.concept_id = 160632,o.value_text,null)) as other_source_of_vmmc_info,
+        max(if(o.concept_id = 161564,o.value_text,null)) as county_of_origin,
+        e.date_created as date_created,
+        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided as voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ('a74e3e4a-9e2a-41fb-8e64-4ba8a71ff984')
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,162568,160632,161564) and o.voided=0
+    where e.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+
+    SELECT "Completed processing vmmc enrolment data ", CONCAT("Time: ", NOW());
+    END$$
+
 		-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -5820,6 +5862,8 @@ CALL sp_populate_etl_allergy_chronic_illness();
 CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_pre_hiv_enrollment_art();
 CALL sp_populate_etl_covid_19_assessment();
+CALL sp_populate_etl_vmmc_enrolment();
+
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

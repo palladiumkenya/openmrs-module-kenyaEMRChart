@@ -87,6 +87,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_enrolment;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2731,6 +2732,32 @@ CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
   INDEX (encounter_id)
 );
 
+ ----- Create table kenyaemr_etl.etl_vmmc_enrolment -----
+CREATE TABLE kenyaemr_etl.etl_vmmc_enrolment
+(
+    uuid                      char(38),
+    provider                  INT(11),
+    patient_id                INT(11)  NOT NULL,
+    visit_id                  INT(11),
+    visit_date                DATE,
+    location_id               INT(11) DEFAULT NULL,
+    encounter_id              INT(11)  NOT NULL,
+    referee                   INT(11),
+    other_referee             varchar(100),
+    source_of_vmmc_info       INT(11),
+    other_source_of_vmmc_info varchar(100),
+    county_of_origin          varchar(100),
+    date_created              DATETIME NOT NULL,
+    date_last_modified        DATETIME,
+    voided                    INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date),
+    INDEX (patient_id),
+    INDEX (encounter_id),
+    INDEX (source_of_vmmc_info),
+    INDEX (county_of_origin)
+);
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
