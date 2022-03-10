@@ -88,6 +88,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_enrolment;
+DROP TABLE IF EXISTS  kenyaemr_etl.etl_vmmc_circumcision_procedure;
+DROP TABLE IF EXISTS  kenyaemr_etl.etl_vmmc_medical_history_examination;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -285,7 +287,7 @@ pwp_partner_tested INT(11),
 condom_provided INT(11),
 substance_abuse_screening INT(11),
 screened_for_sti INT(11),
-cacx_screening INT(11), 
+cacx_screening INT(11),
 sti_partner_notification INT(11),
 at_risk_population INT(11),
 system_review_finding INT(11),
@@ -2732,7 +2734,8 @@ CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
   INDEX (encounter_id)
 );
 
- ----- Create table kenyaemr_etl.etl_vmmc_enrolment -----
+ ---- Create table kenyaemr_etl.etl_vmmc_enrolment -----
+
 CREATE TABLE kenyaemr_etl.etl_vmmc_enrolment
 (
     uuid                      char(38),
@@ -2757,6 +2760,115 @@ CREATE TABLE kenyaemr_etl.etl_vmmc_enrolment
     INDEX (encounter_id),
     INDEX (source_of_vmmc_info),
     INDEX (county_of_origin)
+);
+
+ ---- Create table kenyaemr_etl.etl_vmmc_circumcision_procedure -----
+
+CREATE TABLE kenyaemr_etl.etl_vmmc_circumcision_procedure
+(
+    uuid                           char(38),
+    provider                       INT(11),
+    patient_id                     INT(11)  NOT NULL,
+    visit_id                       INT(11),
+    visit_date                     DATE,
+    location_id                    INT(11) DEFAULT NULL,
+    encounter_id                   INT(11)  NOT NULL,
+    circumcision_method            INT(11),
+    surgical_circumcision_method   INT(11),
+    reason_circumcision_ineligible varchar(100),
+    circumcision_device            INT(11),
+    specific_other_device          varchar(100),
+    device_size                    varchar(100),
+    anaesthesia_used               INT(11),
+    anaesthesia_concentration      INT(11),
+    anaesthesia_volume             INT(11),
+    time_of_first_placement_cut    DATETIME,
+    time_of_last_device_closure    DATETIME,
+    has_adverse_event              INT(11),
+    adverse_event                  varchar(255),
+    severity                       varchar(100),
+    adverse_event_management       varchar(255),
+    clinician_name                 varchar(100),
+    clinician_cadre                INT(11),
+    assist_clinician_name          varchar(100),
+    assist_clinician_cadre         INT(11),
+    theatre_number                 INT(11),
+    date_created                   DATETIME NOT NULL,
+    date_last_modified             DATETIME,
+    voided                         INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date),
+    INDEX (patient_id),
+    INDEX (encounter_id),
+    INDEX (circumcision_method),
+    INDEX (has_adverse_event)
+);
+
+ ----- Create table kenyaemr_etl.etl_vmmc_medical_history_examination -----
+
+CREATE TABLE kenyaemr_etl.etl_vmmc_medical_history_examination
+(
+    uuid                          char(38),
+    provider                      INT(11),
+    patient_id                    INT(11)  NOT NULL,
+    visit_id                      INT(11),
+    visit_date                    DATE,
+    location_id                   INT(11) DEFAULT NULL,
+    encounter_id                  INT(11)  NOT NULL,
+    assent_given                  INT(11),
+    hiv_status                    INT(11),
+    hiv_test_date                 DATE,
+    art_start_date                DATE,
+    ccc_number                    varchar(100),
+    current_regimen               varchar(100),
+    adherence_to_drugs            INT(11),
+    next_appointment_date         DATE,
+    hiv_care_facility             INT(11),
+    hiv_care_facility_name        varchar(100),
+    vl                            varchar(50),
+    cd4_count                     varchar(50),
+    chronic_disorder              varchar(255),
+    client_presenting_complaints  varchar(255),
+    other_complaints              varchar(255),
+    ongoing_treatment             varchar(255),
+    other_ongoing_treatment       varchar(255),
+    hb_level                      INT(11),
+    sugar_level                   INT(11),
+    has_known_allergies           INT(11),
+    ever_had_surgical_operation   INT(11),
+    specific_surgical_operation   varchar(255),
+    ever_received_tetanus_booster INT(11),
+    date_received_tetanus_booster DATE,
+    blood_pressure                varchar(50),
+    pulse_rate                    INT(11),
+    temperature                   varchar(50),
+    in_good_health                INT(11),
+    counselled                    INT(11),
+    consented                     INT(11),
+    reason_ineligible             varchar(100),
+    clinician_cadre               INT(11),
+    circumcision_method_chosen    varchar(100),
+    conventional_method_chosen    INT(11),
+    device_name                   INT(11),
+    device_size                   INT(11),
+    other_services_referral       INT(11),
+    sti_tx_referred               varchar(100),
+    prep_referred                 varchar(100),
+    condom_dispensing_referred    varchar(100),
+    sti_referral                  INT(11),
+    sti_services_referred         varchar(100),
+    date_created                  DATETIME NOT NULL,
+    date_last_modified            DATETIME,
+    voided                        INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date),
+    INDEX (patient_id),
+    INDEX (encounter_id),
+    INDEX (sti_tx_referred),
+    INDEX (prep_referred),
+    INDEX (consented)
 );
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

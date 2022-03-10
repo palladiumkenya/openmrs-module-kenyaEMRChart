@@ -2133,6 +2133,45 @@ ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD FOREIGN KEY (patient_id) REFER
 ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD INDEX(visit_date);
 SELECT "Successfully created vmmc_enrolment table";
 
+-- Create table vmmc_enrolment
+create table kenyaemr_datatools.vmmc_circumcision_procedure as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    (case circumcision_method when 159619 then 'Conventional Surgical' when 164204 then 'Device Circumcision' end) as circumcision_method,
+    (case surgical_circumcision_method when 164029 then 'Sleeve resection' when 1933 then 'Dorsal Slit' when 157783 then 'Forceps Guide' when 5622 then 'Other' end) as surgical_circumcision_method,
+    reason_circumcision_ineligible,
+    (case circumcision_device when 165396 then 'Shangring' when 5622 then 'Other' end) as circumcision_device,
+    specific_other_device,
+    device_size,
+    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
+    anaesthesia_concentration,
+    anaesthesia_volume,
+    time_of_first_placement_cut,
+    time_of_last_device_closure,
+    (case has_adverse_event when 1065 then 'Yes' when 1066 then 'No' end) as has_adverse_event,
+    adverse_event,
+    severity,
+    adverse_event_management,
+    clinician_name,
+    (case clinician_cadre when 162592 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end ) as clinician_cadre,
+    assist_clinician_name,
+    (case assist_clinician_cadre when 162592 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end) as assist_clinician_cadre,
+    theatre_number,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_circumcision_procedure;
+
+ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_circumcision_procedure table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
