@@ -2109,35 +2109,68 @@ ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD FOREIGN KEY (client
 ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD INDEX(visit_date);
 SELECT "Successfully created kp_treatment_verification table";
 
--- Create table PrEP_verification
-create table kenyaemr_datatools.PrEP_verification as
+-- Create table vmmc_enrolment
+create table kenyaemr_datatools.vmmc_enrolment as
 select
     uuid,
     provider,
-    client_id,
+    patient_id,
     visit_id,
     visit_date,
     location_id,
     encounter_id,
-    date_enrolled,
-    health_facility_accessing_PrEP,
-    is_pepfar_site,
-    date_initiated_PrEP,
-    PrEP_regimen,
-    information_source,
-    PrEP_status,
-    verification_date,
-    discontinuation_reason,
-    other_discontinuation_reason,
-    appointment_date,
+    (case referee when 165650 then 'Self referral' when 1577 then 'Nurse' when 1555 then 'Community Health Worker' when 5622 then 'Other' end) as referee,
+    other_referee,
+    (case source_of_vmmc_info when 159388 then 'Radio/Tv' when 1565 then 'Print Media' when 163121 then 'Road Show' when 1555 then 'Mobilizer CHW' when 160542 then 'OPD/MCH/HT' when 5486 then 'Social Media' when 5622 then 'Other' end) as source_of_vmmc_info,
+    other_source_of_vmmc_info,
+    county_of_origin,
     date_created,
     date_last_modified,
     voided
- from kenyaemr_etl.etl_PrEP_verification;
+ from kenyaemr_etl.etl_vmmc_enrolment;
 
-ALTER TABLE kenyaemr_datatools.PrEP_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.PrEP_verification ADD INDEX(visit_date);
-SELECT "Successfully created PrEP_verification table";
+ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_enrolment table";
+
+-- Create table vmmc_enrolment
+create table kenyaemr_datatools.vmmc_circumcision_procedure as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    (case circumcision_method when 159619 then 'Conventional Surgical' when 164204 then 'Device Circumcision' end) as circumcision_method,
+    (case surgical_circumcision_method when 164029 then 'Sleeve resection' when 1933 then 'Dorsal Slit' when 157783 then 'Forceps Guide' when 5622 then 'Other' end) as surgical_circumcision_method,
+    reason_circumcision_ineligible,
+    (case circumcision_device when 165396 then 'Shangring' when 5622 then 'Other' end) as circumcision_device,
+    specific_other_device,
+    device_size,
+    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
+    anaesthesia_concentration,
+    anaesthesia_volume,
+    time_of_first_placement_cut,
+    time_of_last_device_closure,
+    (case has_adverse_event when 1065 then 'Yes' when 1066 then 'No' end) as has_adverse_event,
+    adverse_event,
+    severity,
+    adverse_event_management,
+    clinician_name,
+    (case clinician_cadre when 162592 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end ) as clinician_cadre,
+    assist_clinician_name,
+    (case assist_clinician_cadre when 162592 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end) as assist_clinician_cadre,
+    theatre_number,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_circumcision_procedure;
+
+ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_circumcision_procedure table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
