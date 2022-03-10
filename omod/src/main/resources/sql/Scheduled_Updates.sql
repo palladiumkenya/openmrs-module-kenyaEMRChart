@@ -6156,7 +6156,7 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),
 SELECT "Completed processing covid assessment data", CONCAT("Time: ", NOW());
 END $$
 
--- Update TPT screening----
+-- Update VMMC enrolment ----
 DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_enrolment $$
 CREATE PROCEDURE sp_update_etl_vmmc_enrolment(IN last_update_time DATETIME)
 BEGIN
@@ -6198,7 +6198,7 @@ where e.voided=0 and e.date_created >= last_update_time
    or e.date_voided >= last_update_time
    or o.date_created >= last_update_time
    or o.date_voided >= last_update_time
-group by e.patient_id,date(e.encounter_datetime);
+group by e.patient_id,date(e.encounter_datetime)
 order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
     provider=VALUES(provider),
@@ -6207,9 +6207,120 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
     source_of_vmmc_info=VALUES(source_of_vmmc_info),
     other_source_of_vmmc_info=VALUES(other_source_of_vmmc_info),
     county_of_origin=VALUES(county_of_origin),
+    date_created=VALUES(date_created),
+    date_last_modified=VALUES(date_last_modified),
     voided=VALUES(voided);
 
 SELECT "Completed processing VMMC enrolment data ", CONCAT("Time: ", NOW());
+END $$
+
+-- Update VMMC circumcision procedure ----
+DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_circumcision_procedure $$
+CREATE PROCEDURE sp_update_etl_vmmc_circumcision_procedure(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing VMMC circumcision procedure", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_vmmc_circumcision_procedure(
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    circumcision_method,
+    surgical_circumcision_method,
+    reason_circumcision_ineligible,
+    circumcision_device,
+    specific_other_device,
+    device_size,
+    anaesthesia_used,
+    anaesthesia_concentration,
+    anaesthesia_volume,
+    time_of_first_placement_cut,
+    time_of_last_device_closure,
+    has_adverse_event,
+    adverse_event,
+    severity,
+    adverse_event_management,
+    clinician_name,
+    clinician_cadre,
+    assist_clinician_name,
+    assist_clinician_cadre,
+    theatre_number,
+    date_created,
+    date_last_modified,
+    voided
+)
+select
+    e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+    max(if(o.concept_id = 1651,o.value_coded,null)) as circumcision_method,
+    max(if(o.concept_id = 164258,o.value_coded,null)) as surgical_circumcision_method,
+    max(if(o.concept_id = 163042,o.value_text,null)) as reason_circumcision_ineligible,
+    max(if(o.concept_id = 164204,o.value_coded,null)) as circumcision_device,
+    max(if(o.concept_id = 163042,o.value_text,null)) as specific_other_device,
+    max(if(o.concept_id = 163049,o.value_text,null)) as device_size,
+    max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_used,
+    max(if(o.concept_id = 160047,o.value_numeric,null)) as anaesthesia_concentration,
+    max(if(o.concept_id = 166650,o.value_numeric,null)) as anaesthesia_volume,
+    max(if(o.concept_id = 163138,o.value_datetime,null)) as time_of_first_placement_cut,
+    max(if(o.concept_id = 163137,o.value_datetime,null)) as time_of_last_device_closure,
+    max(if(o.concept_id = 162871,o.value_coded,null)) as has_adverse_event,
+    concat_ws(',', max(if(o.concept_id = 162875 and o.value_coded = 147241, 'Bleeding', null)),
+    max(if(o.concept_id = 162875 and o.value_coded = 135693, 'Anaesthetic Reaction', null)),
+    max(if(o.concept_id = 162875 and o.value_coded = 110094, 'Excessive skin removed', null)),
+    max(if(o.concept_id = 162875 and o.value_coded = 156911, 'Damage to the penis', null)),
+    max(if(o.concept_id = 162875 and o.value_coded = 114403, 'Pain', null)))  as adverse_event,
+    concat_ws(',', max(if(o.concept_id = 162760 and o.value_coded = 1500, 'Severe', null)),
+    max(if(o.concept_id = 162760 and o.value_coded = 1499, 'Moderate', null)),
+    max(if(o.concept_id = 162760 and o.value_coded = 1498, 'Mild', null))) as severity,
+    max(if(o.concept_id = 162749,o.value_text,null)) as adverse_event_management,
+    max(if(o.concept_id = 1473,o.value_text,null)) as clinician_name,
+    max(if(o.concept_id = 1542,o.value_coded,null)) as clinician_cadre,
+    max(if(o.concept_id = 164141,o.value_text,null)) as assist_clinician_name,
+    max(if(o.concept_id = 1542,o.value_coded,null)) as assist_clinician_cadre,
+    max(if(o.concept_id = 165416,o.value_numeric,null)) as theatre_number,
+    e.date_created as date_created,
+    if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+    e.voided as voided
+from encounter e
+    inner join person p on p.person_id=e.patient_id and p.voided=0
+    inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
+    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1651,164258,163042,164204,163042,163049,164254,160047,166650,163138,163137,162871,162875,162760,162749,1473,1542,164141,165416) and o.voided=0
+where e.voided=0
+and e.date_created >= last_update_time
+   or e.date_changed >= last_update_time
+   or e.date_voided >= last_update_time
+   or o.date_created >= last_update_time
+   or o.date_voided >= last_update_time
+group by e.patient_id,date(e.encounter_datetime)
+order by e.patient_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+    provider=VALUES(provider),
+    circumcision_method=VALUES(circumcision_method),
+    surgical_circumcision_method=VALUES(surgical_circumcision_method),
+     reason_circumcision_ineligible=VALUES(surgical_circumcision_method),
+     circumcision_device=VALUES(surgical_circumcision_method),
+     specific_other_device=VALUES(surgical_circumcision_method),
+     device_size=VALUES(surgical_circumcision_method),
+     anaesthesia_used=VALUES(surgical_circumcision_method),
+     anaesthesia_concentration=VALUES(surgical_circumcision_method),
+     anaesthesia_volume=VALUES(surgical_circumcision_method),
+     time_of_first_placement_cut=VALUES(surgical_circumcision_method),
+     time_of_last_device_closure=VALUES(surgical_circumcision_method),
+     has_adverse_event=VALUES(surgical_circumcision_method),
+     adverse_event=VALUES(surgical_circumcision_method),
+     severity=VALUES(surgical_circumcision_method),
+     adverse_event_management=VALUES(surgical_circumcision_method),
+     clinician_name=VALUES(surgical_circumcision_method),
+     clinician_cadre=VALUES(surgical_circumcision_method),
+     assist_clinician_name=VALUES(surgical_circumcision_method),
+     assist_clinician_cadre=VALUES(surgical_circumcision_method),
+     theatre_number=VALUES(surgical_circumcision_method),
+     date_created=VALUES(surgical_circumcision_method),
+     date_last_modified=VALUES(surgical_circumcision_method),
+     voided=VALUES(voided);
+
+SELECT "Completed processing VMMC circumcision procedure data ", CONCAT("Time: ", NOW());
 END $$
 
 -- end of scheduled updates procedures
@@ -6286,6 +6397,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_pre_hiv_enrollment_art(last_update_time);
     CALL sp_update_etl_covid_19_assessment(last_update_time);
     CALL sp_update_etl_vmmc_enrolment(last_update_time);
+    CALL sp_update_etl_vmmc_circumcision_procedure(last_update_time);
 
     CALL sp_update_dashboard_table();
 
