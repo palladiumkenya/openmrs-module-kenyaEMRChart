@@ -6378,6 +6378,91 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
 SELECT "Completed processing VMMC circumcision procedure data ", CONCAT("Time: ", NOW());
 END $$
 
+-- Update VMMC client followup  ----
+DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_client_followup $$
+CREATE PROCEDURE sp_update_etl_vmmc_client_followup(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing VMMC client followup", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_vmmc_client_followup(
+      uuid,
+      provider,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      visit_type,
+      has_adverse_event,
+      adverse_event,
+      severity,
+      adverse_event_management,
+      medications_given,
+      other_medications_given,
+      clinician_name,
+      clinician_cadre,
+      clinician_notes,
+      date_created,
+      date_last_modified,
+      voided
+    )
+      select
+        e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+                                                  max(if(o.concept_id = 164181,o.value_coded,null)) as visit_type,
+                                                  max(if(o.concept_id = 162871,o.value_coded,null)) as has_adverse_event,
+                                                  concat_ws(',', max(if(o.concept_id = 162875 and o.value_coded = 114403, 'Pain', null)),
+                                                            max(if(o.concept_id = 162875 and o.value_coded = 147241, 'Bleeding', null)),
+                                                            max(if(o.concept_id = 162875 and o.value_coded = 152045, 'Problems with appearance', null)),
+                                                            max(if(o.concept_id = 162875 and o.value_coded = 156567, 'Hematoma', null)),
+                                                            max(if(o.concept_id = 162875 and o.value_coded = 139510, 'Infection', null)),
+                                                            max(if(o.concept_id = 162875 and o.value_coded = 118771, 'Difficulty urinating', null)),
+                                                            max(if(o.concept_id = 162875 and o.value_coded = 163799, 'Wound disruption', null)))  as adverse_event,
+                                                  concat_ws(',', max(if(o.concept_id = 162760 and o.value_coded = 1500, 'Severe', null)),
+                                                            max(if(o.concept_id = 162760 and o.value_coded = 1499, 'Moderate', null)),
+                                                            max(if(o.concept_id = 162760 and o.value_coded = 1498, 'Mild', null))) as severity,
+                                                  max(if(o.concept_id = 162749,o.value_text,null)) as adverse_event_management,
+                                                  concat_ws(',', max(if(o.concept_id = 159369 and o.value_coded = 1107, 'None', null)),
+                                                            max(if(o.concept_id = 159369 and o.value_coded = 103294, 'Analgesic', null)),
+                                                            max(if(o.concept_id = 159369 and o.value_coded = 1195, 'Antibiotics', null)),
+                                                            max(if(o.concept_id = 159369 and o.value_coded = 84879, 'TTCV', null)),
+                                                            max(if(o.concept_id = 159369 and o.value_coded = 5622, 'Other', null)))  as medications_given,
+                                                  max(if(o.concept_id = 161011,o.value_text,null)) as other_medications_given,
+                                                  max(if(o.concept_id = 1473,o.value_text,null)) as clinician_name,
+                                                  max(if(o.concept_id = 1542,o.value_coded,null)) as clinician_cadre,
+                                                  max(if(o.concept_id = 160632,o.value_text,null)) as clinician_notes,
+                                                  e.date_created as date_created,
+                                                  if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+                                                  e.voided as voided
+      from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
+        inner join form f on f.form_id=e.form_id and f.uuid in ('08873f91-7161-4f90-931d-65b131f2b12b')
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,162871,162875,162760,162749,159369,161011,1473,1542,160632) and o.voided=0
+      where e.voided=0
+            and e.date_created >= last_update_time
+            or e.date_changed >= last_update_time
+            or e.date_voided >= last_update_time
+            or o.date_created >= last_update_time
+            or o.date_voided >= last_update_time
+      group by e.patient_id,date(e.encounter_datetime)
+      order by e.patient_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+      provider=VALUES(provider),
+      visit_type=VALUES(visit_type),
+      has_adverse_event=VALUES(has_adverse_event),
+      adverse_event=VALUES(adverse_event),
+      severity=VALUES(severity),
+      adverse_event_management=VALUES(adverse_event_management),
+      medications_given=VALUES(medications_given),
+      other_medications_given=VALUES(other_medications_given),
+      clinician_name=VALUES(clinician_name),
+      clinician_cadre=VALUES(clinician_cadre),
+      clinician_notes=VALUES(clinician_notes),
+      date_created=VALUES(surgical_circumcision_method),
+      date_last_modified=VALUES(surgical_circumcision_method),
+      voided=VALUES(voided);
+
+    SELECT "Completed processing VMMC client followup data ", CONCAT("Time: ", NOW());
+  END $$
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -6453,6 +6538,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_covid_19_assessment(last_update_time);
     CALL sp_update_etl_vmmc_enrolment(last_update_time);
     CALL sp_update_etl_vmmc_circumcision_procedure(last_update_time);
+    CALL sp_update_etl_vmmc_client_followup(last_update_time);
 
     CALL sp_update_dashboard_table();
 
