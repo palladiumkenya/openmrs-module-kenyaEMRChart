@@ -90,6 +90,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_enrolment;
 DROP TABLE IF EXISTS  kenyaemr_etl.etl_vmmc_circumcision_procedure;
 DROP TABLE IF EXISTS  kenyaemr_etl.etl_vmmc_medical_history_examination;
+DROP TABLE IF EXISTS  kenyaemr_etl.etl_vmmc_client_followup;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2870,6 +2871,40 @@ CREATE TABLE kenyaemr_etl.etl_vmmc_medical_history_examination
     INDEX (prep_referred),
     INDEX (consented)
 );
+
+----- Create table kenyaemr_etl.etl_vmmc_client_followup -----
+
+CREATE TABLE kenyaemr_etl.etl_vmmc_client_followup
+(
+  uuid                          char(38),
+  provider                      INT(11),
+  patient_id                    INT(11)  NOT NULL,
+  visit_id                      INT(11),
+  visit_date                    DATE,
+  location_id                   INT(11) DEFAULT NULL,
+  encounter_id                  INT(11)  NOT NULL,
+  visit_type                    INT(11),
+  has_adverse_event             INT(11),
+  adverse_event                 varchar(255),
+  severity                      varchar(100),
+  adverse_event_management      varchar(255),
+  medications_given             varchar(255),
+  other_medications_given       varchar(255),
+  clinician_name                varchar(255),
+  clinician_cadre               INT(11),
+  clinician_notes               varchar(255),
+  date_created                  DATETIME NOT NULL,
+  date_last_modified            DATETIME,
+  voided                        INT(11),
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+  CONSTRAINT unique_uuid UNIQUE (uuid),
+  INDEX (visit_date),
+  INDEX (patient_id),
+  INDEX (encounter_id),
+  INDEX (visit_type),
+  INDEX (has_adverse_event)
+);
+
   UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$

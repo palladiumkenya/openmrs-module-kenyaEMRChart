@@ -2168,6 +2168,31 @@ select
     voided
 from kenyaemr_etl.etl_vmmc_circumcision_procedure;
 
+  -- Create table vmmc_client_followup
+  create table kenyaemr_datatools.vmmc_client_followup as
+    select
+      uuid,
+      provider,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      (case visit_type when 1246 then 'Scheduled' when 160101 then 'Unscheduled' end) as visit_type,
+      (case has_adverse_event when 1065 then 'Yes' when 1066 then 'No' end) as has_adverse_event,
+      adverse_event,
+      severity,
+      adverse_event_management,
+      medications_given,
+      other_medications_given,
+      clinician_name,
+      (case clinician_cadre when 162592 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end ) as clinician_cadre,
+      clinician_notes,
+      date_created,
+      date_last_modified,
+      voided
+    from kenyaemr_etl.etl_vmmc_client_followup;
+
 ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD INDEX(visit_date);
 SELECT "Successfully created vmmc_circumcision_procedure table";
