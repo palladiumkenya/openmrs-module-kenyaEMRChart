@@ -5799,7 +5799,7 @@ select
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b')
               ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.date_voided as date_voided,
                           o1.date_created as date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
@@ -5903,7 +5903,7 @@ SELECT "Completed processingIPT screening data ", CONCAT("Time: ", NOW());
 END$$
 
 --Populate etl_pre_hiv_enrollment_ART
-DROP PROCEDURE IF EXISTS sp_update_etl_pre_hiv_enrollment_art$$
+DROP PROCEDURE IF EXISTS sp_update_etl_pre_hiv_enrollment_art $$
 CREATE PROCEDURE sp_update_etl_pre_hiv_enrollment_art(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing pre_hiv enrollment ART", CONCAT("Time: ", NOW());
@@ -5955,7 +5955,7 @@ group by o1.obs_id order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),PMTCT=VALUES(PMTCT),PMTCT_regimen=VALUES(PMTCT_regimen),PEP=VALUES(PEP),PEP_regimen=VALUES(PEP_regimen),
 PrEP=VALUES(PrEP),PrEP_regimen=VALUES(PrEP_regimen),HAART=VALUES(HAART),HAART_regimen=VALUES(HAART_regimen),voided=VALUES(voided);
 SELECT "Completed processing pre_hiv enrollment ART data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 --Update etl_covid_19_assessment
 DROP PROCEDURE IF EXISTS sp_update_etl_covid_19_assessment $$
@@ -6298,26 +6298,26 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
     provider=VALUES(provider),
     circumcision_method=VALUES(circumcision_method),
     surgical_circumcision_method=VALUES(surgical_circumcision_method),
-     reason_circumcision_ineligible=VALUES(surgical_circumcision_method),
-     circumcision_device=VALUES(surgical_circumcision_method),
-     specific_other_device=VALUES(surgical_circumcision_method),
-     device_size=VALUES(surgical_circumcision_method),
-     anaesthesia_used=VALUES(surgical_circumcision_method),
-     anaesthesia_concentration=VALUES(surgical_circumcision_method),
-     anaesthesia_volume=VALUES(surgical_circumcision_method),
-     time_of_first_placement_cut=VALUES(surgical_circumcision_method),
-     time_of_last_device_closure=VALUES(surgical_circumcision_method),
-     has_adverse_event=VALUES(surgical_circumcision_method),
-     adverse_event=VALUES(surgical_circumcision_method),
-     severity=VALUES(surgical_circumcision_method),
-     adverse_event_management=VALUES(surgical_circumcision_method),
-     clinician_name=VALUES(surgical_circumcision_method),
-     clinician_cadre=VALUES(surgical_circumcision_method),
-     assist_clinician_name=VALUES(surgical_circumcision_method),
-     assist_clinician_cadre=VALUES(surgical_circumcision_method),
-     theatre_number=VALUES(surgical_circumcision_method),
-     date_created=VALUES(surgical_circumcision_method),
-     date_last_modified=VALUES(surgical_circumcision_method),
+     reason_circumcision_ineligible=VALUES(reason_circumcision_ineligible),
+     circumcision_device=VALUES(circumcision_device),
+     specific_other_device=VALUES(specific_other_device),
+     device_size=VALUES(device_size),
+     anaesthesia_used=VALUES(anaesthesia_used),
+     anaesthesia_concentration=VALUES(anaesthesia_concentration),
+     anaesthesia_volume=VALUES(anaesthesia_volume),
+     time_of_first_placement_cut=VALUES(time_of_first_placement_cut),
+     time_of_last_device_closure=VALUES(time_of_last_device_closure),
+     has_adverse_event=VALUES(has_adverse_event),
+     adverse_event=VALUES(adverse_event),
+     severity=VALUES(severity),
+     adverse_event_management=VALUES(adverse_event_management),
+     clinician_name=VALUES(clinician_name),
+     clinician_cadre=VALUES(clinician_cadre),
+     assist_clinician_name=VALUES(assist_clinician_name),
+     assist_clinician_cadre=VALUES(assist_clinician_cadre),
+     theatre_number=VALUES(theatre_number),
+     date_created=VALUES(date_created),
+     date_last_modified=VALUES(date_last_modified),
      voided=VALUES(voided);
 
 SELECT "Completed processing VMMC circumcision procedure data ", CONCAT("Time: ", NOW());
@@ -6401,12 +6401,279 @@ CREATE PROCEDURE sp_update_etl_vmmc_client_followup(IN last_update_time DATETIME
       clinician_name=VALUES(clinician_name),
       clinician_cadre=VALUES(clinician_cadre),
       clinician_notes=VALUES(clinician_notes),
-      date_created=VALUES(surgical_circumcision_method),
-      date_last_modified=VALUES(surgical_circumcision_method),
+      date_created=VALUES(date_created),
+      date_last_modified=VALUES(date_last_modified),
       voided=VALUES(voided);
 
     SELECT "Completed processing VMMC client followup data ", CONCAT("Time: ", NOW());
   END $$
+
+-- Update VMMC medical history examination ----
+
+DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_medical_history $$
+CREATE PROCEDURE sp_update_etl_vmmc_medical_history(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing VMMC medical history examination", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_vmmc_medical_history(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        assent_given,
+        consent_given,
+        hiv_status,
+        hiv_test_date,
+        art_start_date,
+        current_regimen,
+        ccc_number,
+        next_appointment_date,
+        hiv_care_facility,
+        hiv_care_facility_name,
+        vl,
+        cd4_count,
+        bleeding_disorder,
+        diabetes,
+        client_presenting_complaints,
+        other_complaints,
+        ongoing_treatment,
+        other_ongoing_treatment,
+        hb_level,
+        sugar_level,
+        has_known_allergies,
+        ever_had_surgical_operation,
+        specific_surgical_operation,
+        proven_tetanus_booster,
+        ever_received_tetanus_booster,
+        date_received_tetanus_booster,
+        blood_pressure,
+        pulse_rate,
+        temperature,
+        in_good_health,
+        counselled,
+        reason_ineligible,
+        circumcision_method_chosen,
+        conventional_method_chosen,
+        device_name,
+        device_size,
+        other_conventional_method_device_chosen,
+        services_referral,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+        max(if(o.concept_id = 162696,o.value_coded,null)) as assent_given,
+        max(if(o.concept_id = 1710,o.value_coded,null)) as consent_given,
+        max(if(o.concept_id = 159427,o.value_text,null)) as hiv_status,
+        max(if(o.concept_id = 160554,o.value_datetime,null)) as hiv_test_date,
+        max(if(o.concept_id = 159599,o.value_datetime,null)) as art_start_date,
+        max(if(o.concept_id = 164855,o.value_coded,null)) as current_regimen,
+        max(if(o.concept_id = 162053,o.value_text,null)) as ccc_number,
+        max(if(o.concept_id = 5096,o.value_datetime,null)) as next_appointment_date,
+        max(if(o.concept_id = 165239,o.value_coded,null)) as hiv_care_facility,
+        max(if(o.concept_id = 161550,o.value_text,null)) as hiv_care_facility_name,
+        max(if(o.concept_id = 856,o.value_coded,null)) as vl,
+        max(if(o.concept_id = 5497,o.value_numeric,null)) as cd4_count,
+        max(if(o.concept_id = 1628 and o.value_coded = 147241,o.value_coded,null)) as bleeding_disorder,
+        max(if(o.concept_id = 1628 and o.value_coded = 119481,o.value_coded,null)) as diabetes,
+        concat_ws(',', max(if(o.concept_id = 1728 and o.value_coded = 123529, 'Urethral Discharge', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 118990, 'Genital Sore', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 163606, 'Pain on Urination', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 125203, 'Swelling of the scrotum', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 163831, 'Difficulty in retracting foreskin', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 130845, 'Difficulty in returning foreskin to normal', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 116123, 'Concerns about erection/sexual function', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 163813, 'Epispadia', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 138010, 'Hypospadia', null)),
+                  max(if(o.concept_id = 1728 and o.value_coded = 5622, 'Other', null))) as client_presenting_complaints,
+        max(if(o.concept_id = 163047,o.value_text,null)) as other_complaints,
+        concat_ws(',', max(if(o.concept_id = 1794 and o.value_coded = 121629, 'Anaemia', null)),
+                  max(if(o.concept_id = 1794 and o.value_coded = 142484, 'Diabetes', null)),
+                  max(if(o.concept_id = 1794 and o.value_coded = 138571, 'HIV/AIDS', null)),
+                  max(if(o.concept_id = 1794 and o.value_coded = 5622, 'Other', null))) as ongoing_treatment,
+        max(if(o.concept_id = 163104,o.value_text,null)) as other_ongoing_treatment,
+        max(if(o.concept_id = 21,o.value_numeric,null)) as hb_level,
+        max(if(o.concept_id = 887,o.value_numeric,null)) as sugar_level,
+        max(if(o.concept_id = 160557,o.value_coded,null)) as has_known_allergies,
+        max(if(o.concept_id = 164896,o.value_coded,null)) as ever_had_surgical_operation,
+        max(if(o.concept_id = 163393,o.value_text,null)) as specific_surgical_operation,
+        max(if(o.concept_id = 54,o.value_coded,null)) as proven_tetanus_booster,
+        max(if(o.concept_id = 161536,o.value_coded,null)) as ever_received_tetanus_booster,
+        max(if(o.concept_id = 1410,o.value_datetime,null)) as date_received_tetanus_booster,
+        concat_ws('/',max(if(o.concept_id = 5085,o.value_numeric,null)),
+                  max(if(o.concept_id = 5086,o.value_numeric,null))) as blood_pressure,
+        max(if(o.concept_id = 5242,o.value_numeric,null)) as pulse_rate,
+        max(if(o.concept_id = 5088,o.value_numeric,null)) as temperature,
+        max(if(o.concept_id = 1855,o.value_coded,null)) as in_good_health,
+        max(if(o.concept_id = 165070,o.value_coded,null)) as counselled,
+        max(if(o.concept_id = 162169,o.value_text,null)) as reason_ineligible,
+        max(if(o.concept_id = 1651,o.value_coded,null)) as circumcision_method_chosen,
+        max(if(o.concept_id = 164258,o.value_coded,null)) as conventional_method_chosen,
+        max(if(o.concept_id = 164204,o.value_coded,null)) as device_name,
+        max(if(o.concept_id = 163049,o.value_text,null)) as device_size,
+        max(if(o.concept_id = 163042,o.value_text,null)) as other_conventional_method_device_chosen,
+        concat_ws(',',max(if(o.concept_id = 1272 and o.value_coded = 165200,'STI Treatment',null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 165270,'PrEP Services',null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 190,'Condom dispensing',null))) as services_referral,
+        e.date_created as date_created,
+        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided as voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ('d42aeb3d-d5d2-4338-a154-f75ddac78b59')
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162696,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
+                                                                                      5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
+                                                                                      1410,5085,5086,5242,5088,1855,165070,162169,1651,164258,164204,163049,163042,1272) and o.voided=0
+    where e.voided=0
+        and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id,date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                            provider=VALUES(provider),
+                            assent_given=VALUES(assent_given),
+                            consent_given=VALUES(consent_given),
+                            hiv_status=VALUES(hiv_status),
+                            hiv_test_date=VALUES(hiv_test_date),
+                            art_start_date=VALUES(art_start_date),
+                            current_regimen=VALUES(current_regimen),
+                            ccc_number=VALUES(ccc_number),
+                            next_appointment_date=VALUES(next_appointment_date),
+                            hiv_care_facility=VALUES(hiv_care_facility),
+                            hiv_care_facility_name=VALUES(hiv_care_facility_name),
+                            vl=VALUES(vl),
+                            cd4_count=VALUES(cd4_count),
+                            bleeding_disorder=VALUES(bleeding_disorder),
+                            diabetes=VALUES(diabetes),
+                            client_presenting_complaints=VALUES(client_presenting_complaints),
+                            other_complaints=VALUES(other_complaints),
+                            ongoing_treatment=VALUES(ongoing_treatment),
+                            other_ongoing_treatment=VALUES(other_ongoing_treatment),
+                            hb_level=VALUES(hb_level),
+                            sugar_level=VALUES(sugar_level),
+                            has_known_allergies=VALUES(has_known_allergies),
+                            ever_had_surgical_operation=VALUES(ever_had_surgical_operation),
+                            specific_surgical_operation=VALUES(specific_surgical_operation),
+                            proven_tetanus_booster=VALUES(proven_tetanus_booster),
+                            ever_received_tetanus_booster=VALUES(ever_received_tetanus_booster),
+                            date_received_tetanus_booster=VALUES(date_received_tetanus_booster),
+                            blood_pressure=VALUES(blood_pressure),
+                            pulse_rate=VALUES(pulse_rate),
+                            temperature=VALUES(temperature),
+                            in_good_health=VALUES(in_good_health),
+                            counselled=VALUES(counselled),
+                            reason_ineligible=VALUES(reason_ineligible),
+                            circumcision_method_chosen=VALUES(circumcision_method_chosen),
+                            conventional_method_chosen=VALUES(conventional_method_chosen),
+                            device_name=VALUES(device_name),
+                            device_size=VALUES(device_size),
+                            other_conventional_method_device_chosen=VALUES(other_conventional_method_device_chosen),
+                            services_referral=VALUES(services_referral),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided =VALUES(voided);
+
+    SELECT "Completed processing VMMC medical examination data ", CONCAT("Time: ", NOW());
+END $$
+
+-- Update VMMC post operation assessment ----
+
+DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_post_operation_assessment $$
+CREATE PROCEDURE sp_update_etl_vmmc_post_operation_assessment(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing post vmmc operation assessment", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_vmmc_post_operation_assessment(uuid,
+            provider,
+            patient_id,
+            visit_id,
+            visit_date,
+            location_id,
+            encounter_id,
+            blood_pressure,
+            pulse_rate,
+            temperature,
+            penis_elevated,
+            given_post_procedure_instruction,
+            post_procedure_instructions,
+            given_post_operation_medication,
+            medication_given,
+            other_medication_given,
+            removal_date,
+            next_appointment_date,
+            discharged_by,
+            cadre,
+            date_created,
+            date_last_modified,
+            voided)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime) as visit_date,
+           e.location_id,
+           e.encounter_id,
+           concat_ws('/', max(if(o.concept_id = 5085, o.value_numeric, null)),
+                     max(if(o.concept_id = 5086, o.value_numeric, null)))                    as blood_pressure,
+           max(if(o.concept_id = 5087, o.value_numeric, null))                               as pulse_rate,
+           max(if(o.concept_id = 5088, o.value_numeric, null))                               as temperature,
+           max(if(o.concept_id = 162871, o.value_coded, null))                               as penis_elevated,
+           max(if(o.concept_id = 166639, o.value_coded, null))                               as given_post_procedure_instruction,
+           max(if(o.concept_id = 160632, o.value_text, null))                                as post_procedure_instructions,
+           max(if(o.concept_id = 159369 and o.value_coded=1107,o.value_coded, null))     as given_post_operation_medication,
+           concat_ws(',', max(if(o.concept_id = 159369 and o.value_coded = 103294, 'Analgesic', null)),
+                     max(if(o.concept_id = 159369 and o.value_coded = 1195, 'Antibiotics', null)),
+                     max(if(o.concept_id = 159369 and o.value_coded = 84879, 'TTCV', null)),
+                     max(if(o.concept_id = 159369 and o.value_coded = 5622, 'Other', null))) as medication_given,
+           max(if(o.concept_id = 161011, o.value_text, null)) as other_medication_given,
+           max(if(o.concept_id = 160753, o.value_datetime, null))                            as removal_date,
+           max(if(o.concept_id = 5096, o.value_datetime, null))                              as next_appointment_date,
+           max(if(o.concept_id = 1473, o.value_text, null))                                  as discharged_by,
+           max(if(o.concept_id = 1542, o.value_coded, null))                                 as cadre,
+           e.date_created                                                                    as date_created,
+           if(max(o.date_created) != min(o.date_created), max(o.date_created),NULL) as date_last_modified,
+           e.voided                                                                          as voided
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f
+                        on f.form_id = e.form_id and f.uuid in ('620b3404-9ae5-11ec-b909-0242ac120002')
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                     (5085, 5086, 5087, 5088, 162871,
+                                                                      160632, 159369, 161011, 160753, 5096,
+                                                                      1473, 1542) and o.voided = 0
+    where e.voided = 0
+        and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id,date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                            provider=VALUES(provider),
+                            blood_pressure=VALUES(blood_pressure),
+                            pulse_rate=VALUES(pulse_rate),
+                            temperature=VALUES(temperature),
+                            penis_elevated=VALUES(penis_elevated),
+                            given_post_procedure_instruction=VALUES(given_post_procedure_instruction),
+                            post_procedure_instructions=VALUES(post_procedure_instructions),
+                            given_post_operation_medication=VALUES(given_post_operation_medication),
+                            medication_given=VALUES(medication_given),
+                            other_medication_given=VALUES(other_medication_given),
+                            removal_date=VALUES(removal_date),
+                            next_appointment_date=VALUES(next_appointment_date),
+                            discharged_by=VALUES(discharged_by),
+                            cadre=VALUES(cadre),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided =VALUES(voided);
+
+    SELECT "Completed processing VMMC post operation assessment data ", CONCAT("Time: ", NOW());
+END $$
 
 -- end of scheduled updates procedures
 
@@ -6484,6 +6751,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_vmmc_enrolment(last_update_time);
     CALL sp_update_etl_vmmc_circumcision_procedure(last_update_time);
     CALL sp_update_etl_vmmc_client_followup(last_update_time);
+    CALL sp_update_etl_vmmc_post_operation_assessment(last_update_time);
 
     CALL sp_update_dashboard_table();
 
