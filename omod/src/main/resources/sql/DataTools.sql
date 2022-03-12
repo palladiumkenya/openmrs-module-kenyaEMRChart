@@ -2197,6 +2197,117 @@ ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD FOREIGN KEY (pati
 ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD INDEX(visit_date);
 SELECT "Successfully created vmmc_circumcision_procedure table";
 
+-- Create table vmmc_medical_history
+create table kenyaemr_datatools.vmmc_medical_history as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    case assent_given when 1065 then 'Yes' when 1066 then 'No' end as assent_given,
+    case consent_given when 1 then 'Yes' when 0 then 'No' end as consent_given,
+    case hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' end as hiv_status,
+    hiv_test_date,
+    art_start_date,
+    case current_regimen when 164968 then 'AZT/3TC/DTG'
+                         when 164969 then 'TDF/3TC/DTG'
+                         when 164970 then 'ABC/3TC/DTG'
+                         when 164505 then 'TDF-3TC-EFV'
+                         when 792 then 'D4T/3TC/NVP'
+                         when 160124 then 'AZT/3TC/EFV'
+                         when 160104 then 'D4T/3TC/EFV'
+                         when 1652 then '3TC/NVP/AZT'
+                         when 161361 then 'EDF/3TC/EFV'
+                         when 104565 then 'EFV/FTC/TDF'
+                         when 162201 then '3TC/LPV/TDF/r'
+                         when 817 then 'ABC/3TC/AZT'
+                         when 162199 then 'ABC/NVP/3TC'
+                         when 162200 then '3TC/ABC/LPV/r'
+                         when 162565 then '3TC/NVP/TDF'
+                         when 1652 then '3TC/NVP/AZT'
+                         when 162561 then '3TC/AZT/LPV/r'
+                         when 164511 then 'AZT-3TC-ATV/r'
+                         when 164512 then 'TDF-3TC-ATV/r'
+                         when 162560 then '3TC/D4T/LPV/r'
+                         when 162563 then '3TC/ABC/EFV'
+                         when 162562 then 'ABC/LPV/R/TDF'
+                         when 162559 then 'ABC/DDI/LPV/r' end as bcurrent_regimen,
+    ccc_number,
+    next_appointment_date,
+    case hiv_care_facility when 163266 then 'This health facility' when 164407 then 'Other health facility' end as hiv_care_facility,
+    hiv_care_facility_name,
+    vl,
+    cd4_count,
+    case bleeding_disorder when 147241 then 'Yes' end as bleeding_disorder,
+    case diabetes when 119481 then 'Yes' end as diabetes,
+    client_presenting_complaints,
+    other_complaints,
+    ongoing_treatment,
+    other_ongoing_treatment,
+    hb_level,
+    sugar_level,
+    case has_known_allergies when 1 then 'Yes' when 0 then 'No' end as has_known_allergies,
+    case ever_had_surgical_operation when 1065 then 'Yes' when 1066 then 'No' end as ever_had_surgical_operation,
+    specific_surgical_operation,
+    case proven_tetanus_booster when 1065 then 'Yes' when 1066 then 'No' end as proven_tetanus_booster,
+    case ever_received_tetanus_booster when 1065 then 'Yes' when 1066 then 'No' end as ever_received_tetanus_booster,
+    date_received_tetanus_booster,
+    blood_pressure,
+    pulse_rate,
+    temperature,
+    case in_good_health when 1 then 'Yes' when 0 then 'No'end as in_good_health,
+    case counselled when 1065 then 'Yes' when 1066 then 'No' end as counselled,
+    reason_ineligible,
+    case circumcision_method_chosen when 159619 then 'Conventional Surgical' when 164204 then 'Device Circumcision' end as circumcision_method_chosen,
+    case conventional_method_chosen  when 164029 then 'Sleeve resection' when 1933 then 'Dorsal Slit' when 157783 then 'Forceps Guide' when 5622 then 'Other' end as conventional_method_chosen,
+    device_name,
+    device_size,
+    other_conventional_method_device_chosen,
+    services_referral,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_medical_history;
+
+ALTER TABLE kenyaemr_datatools.vmmc_medical_history ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_medical_history ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_medical_history table";
+
+-- Create table vmmc_post_operation_assessment
+
+create table kenyaemr_datatools.vmmc_post_operation_assessment as
+select
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    blood_pressure,
+    pulse_rate,
+    temperature,
+    case penis_elevated when 1065 then 'Yes' when 1066 then 'No' end as penis_elevated,
+    case given_post_procedure_instruction when 1065 then 'Yes' when 1066 then 'No' end as given_post_procedure_instruction,
+    post_procedure_instructions,
+    case given_post_operation_medication when 1107 then 'Yes' end as given_post_operation_medication,
+    medication_given,
+    other_medication_given,
+    removal_date,
+    next_appointment_date,
+    discharged_by,
+    case cadre when 162591 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end as cadre,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_post_operation_assessment;
+
+ALTER TABLE kenyaemr_datatools.vmmc_post_operation_assessment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_post_operation_assessment ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_post_operation_assessment table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
