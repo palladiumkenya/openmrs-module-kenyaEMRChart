@@ -6468,7 +6468,7 @@ BEGIN
         e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
         max(if(o.concept_id = 162696,o.value_coded,null)) as assent_given,
         max(if(o.concept_id = 1710,o.value_coded,null)) as consent_given,
-        max(if(o.concept_id = 159427,o.value_text,null)) as hiv_status,
+        max(if(o.concept_id = 159427,o.value_coded,null)) as hiv_status,
         max(if(o.concept_id = 160554,o.value_datetime,null)) as hiv_test_date,
         max(if(o.concept_id = 159599,o.value_datetime,null)) as art_start_date,
         max(if(o.concept_id = 164855,o.value_coded,null)) as current_regimen,
