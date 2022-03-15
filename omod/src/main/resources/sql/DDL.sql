@@ -2785,6 +2785,8 @@ CREATE TABLE kenyaemr_etl.etl_covid19_assessment (
       ever_tested_for_covid varchar(10),
       covid_test_date date,
       eligible_for_covid_test varchar(10),
+      consented_for_covid_test varchar(10),
+      decline_reason varchar(255),
       voided INT(11),
       CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
