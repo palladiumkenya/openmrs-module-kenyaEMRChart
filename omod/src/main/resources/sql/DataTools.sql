@@ -1387,7 +1387,8 @@ obs_id,
 when 162170 then 'Sulfonamides' when 84795 then 'Tenofovir' when 84893 then 'Tetracycline' when 86663 then 'Zidovudine' when 5622 then 'Other' end) as cause,
 (case adverse_event when 1067 then 'Unknown' when  121629  then 'Anaemia' when 148888 then 'Anaphylaxis' when 148787 then 'Angioedema' when 120148 then 'Arrhythmia' when 108 then 'Bronchospasm' when 143264 then 'Cough' when 142412 then 'Diarrhea' when 118773 then 'Dystonia' when 140238 then 'Fever'
 when 140039 then 'Flushing' when 139581 then 'GI upset' when 139084 then 'Headache' when 159098 then 'Hepatotoxicity' when 111061 then 'Hives' when 117399 then 'Hypertension' when 879 then 'Itching' when 121677 then 'Mental status change' when 159347 then 'Musculoskeletal pain'
-when 121 then 'Myalgia' when 512 then 'Rash' when 5622 then 'Other' end ) as adverse_event,
+when 121 then 'Myalgia' when 512 then 'Rash' when 114403 then 'Pain' when 147241 then 'Bleeding' when 135693 then 'Anaesthetic Reaction' when 110094 then 'Excessive skin removed' when 156911 then 'Damage to the penis' when 152045 then 'Problems with appearance' when 156567 then 'Hematoma/Swelling'
+when 139510 then 'Infection/Swelling' when 118771 then 'Difficulty or pain when urinating' when 163799 then 'Wound disruption (without signs of hematoma or infection)' when 5622 then 'Other' end ) as adverse_event,
 (case severity when 1498 then 'Mild' when 1499 then 'Moderate' when 1500 then 'Severe' when 162819 then 'Fatal' when 1067 then 'Unknown' end) as severity,
 start_date,
 (case action_taken when 1257 then 'CONTINUE REGIMEN' when 1259 then 'SWITCHED REGIMEN'  when 981 then 'CHANGED DOSE'  when 1258 then 'SUBSTITUTED DRUG' when 1107 then 'NONE' when 1260 then 'STOP' when 5622 then 'Other' end) as action_taken,

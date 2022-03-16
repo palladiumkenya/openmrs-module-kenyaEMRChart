@@ -5765,6 +5765,7 @@ BEGIN
 SELECT "Processing adverse events", CONCAT("Time: ", NOW());
 insert into kenyaemr_etl.etl_adverse_events(
 uuid ,
+form,
 provider,
 patient_id,
 visit_id,
@@ -5782,9 +5783,17 @@ date_last_modified,
 voided
 )
 select
-       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,o1.obs_id,
+       e.uuid,
+      (case f.uuid
+       when '22c68f86-bbf0-49ba-b2d1-23fa7ccf0259' then 'greencard'
+       when '1bfb09fc-56d7-4108-bd59-b2765fd312b8' then 'prep-initial'
+       when 'ee3e2017-52c0-4a54-99ab-ebb542fb8984' then 'prep-consultation'
+       when '5ee93f48-960b-11ec-b909-0242ac120002' then 'vmmc-procedure'
+       when '08873f91-7161-4f90-931d-65b131f2b12b' then 'vmmc-followup'
+       end) as form,
+       e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,o1.obs_id,
        max(if(o1.obs_group =121760 and o1.concept_id = 1193,o1.value_coded,null)) as cause,
-       max(if(o1.obs_group =121760 and o1.concept_id = 159935,o1.value_coded,null)) as adverse_event,
+       max(if(o1.obs_group =121760 and o1.concept_id in (159935,162875),o1.value_coded,null)) as adverse_event,
        max(if(o1.obs_group =121760 and o1.concept_id = 162760,o1.value_coded,null)) as severity,
        max(if(o1.obs_group =121760 and o1.concept_id = 160753,date(o1.value_datetime),null)) as start_date,
        max(if(o1.obs_group =121760 and o1.concept_id = 1255,o1.value_coded,null)) as action_taken,
@@ -5793,12 +5802,17 @@ select
        e.voided as voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join openmrs.form f on f.form_id=e.form_id and f.retired=0
        inner join (
-select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3')
+                    select encounter_type_id, uuid, name from openmrs.encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e',
+                                                                                                   'c4a2be28-6673-4c36-b886-ea89b0a42116',
+                                                                                                   '706a8b12-c4ce-40e4-aec3-258b989bf6d3',
+                                                                                                   '35c6fcc2-960b-11ec-b909-0242ac120002',
+                                                                                                   '2504e865-638e-4a63-bf08-7e8f03a376f3')
     ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created as date_created, o1.date_voided as date_voided,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                          and o1.concept_id in (1193,159935,162760,160753,1255) and o.concept_id = 121760)
+                          and o1.concept_id in (1193,159935,162875,162760,160753,1255) and o.concept_id = 121760)
                           o1 on o1.encounter_id = e.encounter_id and o1.voided=0
                 where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time

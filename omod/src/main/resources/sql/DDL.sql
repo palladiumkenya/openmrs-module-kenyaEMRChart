@@ -2615,6 +2615,7 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
 
 CREATE TABLE kenyaemr_etl.etl_adverse_events (
 uuid char(38),
+form VARCHAR(50),
 provider INT(11),
 patient_id INT(11) NOT NULL ,
 visit_id INT(11),
@@ -2634,6 +2635,7 @@ CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demograp
 INDEX(visit_date),
 INDEX(patient_id),
 INDEX(encounter_id),
+INDEX(form),
 INDEX(obs_id)
 );
 
