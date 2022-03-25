@@ -2120,12 +2120,7 @@ select
     visit_date,
     location_id,
     encounter_id,
-    (case referee when 165650 then 'Self referral'
-                   when 5619 then 'Health Care Worker'
-                   when 1555 then 'Community Health Worker'
-                   when 163488 then 'Community Health Volunteer'
-                   when 1370 then 'HTS Counsellors'
-                   when 5622 then 'Other' end) as referee,
+    (case referee when 165650 then 'Self referral' when 1577 then 'Nurse' when 1555 then 'Community Health Worker' when 5622 then 'Other' end) as referee,
     other_referee,
     (case source_of_vmmc_info when 167095 then 'Radio/Tv' when 167096 then 'Print Media' when 167098 then 'Road Show' when 1555 then 'Mobilizer CHW' when 160542 then 'OPD/MCH/HT' when 167097 then 'Social Media' when 5622 then 'Other' end) as source_of_vmmc_info,
     other_source_of_vmmc_info,
@@ -2216,7 +2211,6 @@ select
     case assent_given when 1065 then 'Yes' when 1066 then 'No' end as assent_given,
     case consent_given when 1 then 'Yes' when 0 then 'No' end as consent_given,
     case hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' end as hiv_status,
-    hiv_unknown_reason,
     hiv_test_date,
     art_start_date,
     case current_regimen when 164968 then 'AZT/3TC/DTG'
