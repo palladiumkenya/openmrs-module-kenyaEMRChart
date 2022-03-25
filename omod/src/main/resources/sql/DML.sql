@@ -5785,16 +5785,16 @@ BEGIN
         e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
         max(if(o.concept_id = 160482,o.value_coded,null)) as referee,
         max(if(o.concept_id = 165143,o.value_text,null)) as other_referee,
-        max(if(o.concept_id = 162568,o.value_coded,null)) as source_of_vmmc_info,
+        max(if(o.concept_id = 167094,o.value_coded,null)) as source_of_vmmc_info,
         max(if(o.concept_id = 160632,o.value_text,null)) as other_source_of_vmmc_info,
-        max(if(o.concept_id = 161564,o.value_text,null)) as county_of_origin,
+        max(if(o.concept_id = 167131,o.value_text,null)) as county_of_origin,
         e.date_created as date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided as voided
     from encounter e
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ('a74e3e4a-9e2a-41fb-8e64-4ba8a71ff984')
-             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,162568,160632,161564) and o.voided=0
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,167094,160632,167131) and o.voided=0
     where e.voided=0
     group by e.patient_id,date(e.encounter_datetime);
 
@@ -5840,21 +5840,21 @@ BEGIN
         )
         select
             e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
-            max(if(o.concept_id = 1651,o.value_coded,null)) as circumcision_method,
-            max(if(o.concept_id = 164258,o.value_coded,null)) as surgical_circumcision_method,
+            max(if(o.concept_id = 167118,o.value_coded,null)) as circumcision_method,
+            max(if(o.concept_id = 167119,o.value_coded,null)) as surgical_circumcision_method,
             max(if(o.concept_id = 163042,o.value_text,null)) as reason_circumcision_ineligible,
-            max(if(o.concept_id = 164204,o.value_coded,null)) as circumcision_device,
+            max(if(o.concept_id = 167120,o.value_coded,null)) as circumcision_device,
             max(if(o.concept_id = 163042,o.value_text,null)) as specific_other_device,
             max(if(o.concept_id = 163049,o.value_text,null)) as device_size,
             max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_used,
-            max(if(o.concept_id = 1444,o.value_text,null)) as anaesthesia_concentration,
+            max(if(o.concept_id = 160047,o.value_numeric,null)) as anaesthesia_concentration,
             max(if(o.concept_id = 166650,o.value_numeric,null)) as anaesthesia_volume,
-            max(if(o.concept_id = 160715,o.value_datetime,null)) as time_of_first_placement_cut,
-            max(if(o.concept_id = 163137,o.value_datetime,null)) as time_of_last_device_closure,
+            max(if(o.concept_id = 163138,o.value_datetime,null)) as time_of_first_placement_cut,
+            max(if(o.concept_id = 167132,o.value_datetime,null)) as time_of_last_device_closure,
             max(if(o.concept_id = 162871,o.value_coded,null)) as has_adverse_event,
             concat_ws(',', max(if(o.concept_id = 162875 and o.value_coded = 147241, 'Bleeding', null)),
                       max(if(o.concept_id = 162875 and o.value_coded = 135693, 'Anaesthetic Reaction', null)),
-                      max(if(o.concept_id = 162875 and o.value_coded = 110094, 'Excessive skin removed', null)),
+                      max(if(o.concept_id = 162875 and o.value_coded = 167126, 'Excessive skin removed', null)),
                       max(if(o.concept_id = 162875 and o.value_coded = 156911, 'Damage to the penis', null)),
                       max(if(o.concept_id = 162875 and o.value_coded = 114403, 'Pain', null)))  as adverse_event,
             concat_ws(',', max(if(o.concept_id = 162760 and o.value_coded = 1500, 'Severe', null)),
@@ -5865,14 +5865,14 @@ BEGIN
             max(if(o.concept_id = 1542,o.value_coded,null)) as clinician_cadre,
             max(if(o.concept_id = 164141,o.value_text,null)) as assist_clinician_name,
             max(if(o.concept_id = 1542,o.value_coded,null)) as assist_clinician_cadre,
-            max(if(o.concept_id = 1646,o.value_numeric,null)) as theatre_number,
+            max(if(o.concept_id = 167133,o.value_text,null)) as theatre_number,
             e.date_created as date_created,
             if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
             e.voided as voided
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
-                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1651,164258,163042,164204,163042,163049,164254,1444,166650,160715,163137,162871,162875,162760,162749,1473,1542,164141,1646) and o.voided=0
+                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164254,160047,166650,163138,167132,162871,162875,162760,162749,1473,1542,164141,167133) and o.voided=0
         where e.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
@@ -5960,7 +5960,6 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
             assent_given,
             consent_given,
             hiv_status,
-            hiv_unknown_reason,
             hiv_test_date,
             art_start_date,
             current_regimen,
@@ -6002,10 +6001,9 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
         )
         select
             e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
-            max(if(o.concept_id = 162696,o.value_coded,null)) as assent_given,
+            max(if(o.concept_id = 167093,o.value_coded,null)) as assent_given,
             max(if(o.concept_id = 1710,o.value_coded,null)) as consent_given,
             max(if(o.concept_id = 159427,o.value_coded,null)) as hiv_status,
-            max(if(o.concept_id = 165435,o.value_text,null)) as hiv_unknown_reason,
             max(if(o.concept_id = 160554,o.value_datetime,null)) as hiv_test_date,
             max(if(o.concept_id = 159599,o.value_datetime,null)) as art_start_date,
             max(if(o.concept_id = 164855,o.value_coded,null)) as current_regimen,
@@ -6048,27 +6046,23 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
             max(if(o.concept_id = 1855,o.value_coded,null)) as in_good_health,
             max(if(o.concept_id = 165070,o.value_coded,null)) as counselled,
             max(if(o.concept_id = 162169,o.value_text,null)) as reason_ineligible,
-            max(if(o.concept_id = 1651,o.value_coded,null)) as circumcision_method_chosen,
-            max(if(o.concept_id = 164258,o.value_coded,null)) as conventional_method_chosen,
-            max(if(o.concept_id = 164204,o.value_coded,null)) as device_name,
+            max(if(o.concept_id = 167118,o.value_coded,null)) as circumcision_method_chosen,
+            max(if(o.concept_id = 167119,o.value_coded,null)) as conventional_method_chosen,
+            max(if(o.concept_id = 167120,o.value_coded,null)) as device_name,
             max(if(o.concept_id = 163049,o.value_text,null)) as device_size,
             max(if(o.concept_id = 163042,o.value_text,null)) as other_conventional_method_device_chosen,
-            concat_ws(',',max(if(o.concept_id = 1272 and o.value_coded = 165200,'STI Treatment',null)),
-                      max(if(o.concept_id = 1272 and o.value_coded = 165270,'PrEP Services',null)),
-                      max(if(o.concept_id = 1272 and o.value_coded = 190,'Condom Promotion',null)),
-                      max(if(o.concept_id = 1272 and o.value_coded = 141814,'GBV Counselling',null)),
-                      max(if(o.concept_id = 1272 and o.value_coded = 159612,'Reproductive Health',null)),
-                      max(if(o.concept_id = 1272 and o.value_coded = 118855,'Drug Abuse',null)),
-                      max(if(o.concept_id = 1272 and o.value_coded = 5622,'Other',null))) as services_referral,
+            concat_ws(',',max(if(o.concept_id = 1272 and o.value_coded = 167125,'STI Treatment',null)),
+                      max(if(o.concept_id = 1272 and o.value_coded = 166536,'PrEP Services',null)),
+                      max(if(o.concept_id = 1272 and o.value_coded = 190,'Condom dispensing',null))) as services_referral,
             e.date_created as date_created,
             if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
             e.voided as voided
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('d42aeb3d-d5d2-4338-a154-f75ddac78b59')
-                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162696,1710,159427,165435,160554,164855,159599,162053,5096,165239,161550,856,
+                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
                                                                                           5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
-                                                                                          1410,5085,5086,5242,5088,1855,165070,162169,1651,164258,164204,163049,163042,1272) and o.voided=0
+                                                                                          1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272) and o.voided=0
         where e.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
