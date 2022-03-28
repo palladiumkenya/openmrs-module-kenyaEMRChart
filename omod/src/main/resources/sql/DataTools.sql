@@ -1387,7 +1387,7 @@ obs_id,
 when 162170 then 'Sulfonamides' when 84795 then 'Tenofovir' when 84893 then 'Tetracycline' when 86663 then 'Zidovudine' when 5622 then 'Other' end) as cause,
 (case adverse_event when 1067 then 'Unknown' when  121629  then 'Anaemia' when 148888 then 'Anaphylaxis' when 148787 then 'Angioedema' when 120148 then 'Arrhythmia' when 108 then 'Bronchospasm' when 143264 then 'Cough' when 142412 then 'Diarrhea' when 118773 then 'Dystonia' when 140238 then 'Fever'
 when 140039 then 'Flushing' when 139581 then 'GI upset' when 139084 then 'Headache' when 159098 then 'Hepatotoxicity' when 111061 then 'Hives' when 117399 then 'Hypertension' when 879 then 'Itching' when 121677 then 'Mental status change' when 159347 then 'Musculoskeletal pain'
-when 121 then 'Myalgia' when 512 then 'Rash' when 114403 then 'Pain' when 147241 then 'Bleeding' when 135693 then 'Anaesthetic Reaction' when 110094 then 'Excessive skin removed' when 156911 then 'Damage to the penis' when 152045 then 'Problems with appearance' when 156567 then 'Hematoma/Swelling'
+when 121 then 'Myalgia' when 512 then 'Rash' when 114403 then 'Pain' when 147241 then 'Bleeding' when 135693 then 'Anaesthetic Reaction' when 167126 then 'Excessive skin removed' when 156911 then 'Damage to the penis' when 152045 then 'Problems with appearance' when 156567 then 'Hematoma/Swelling'
 when 139510 then 'Infection/Swelling' when 118771 then 'Difficulty or pain when urinating' when 163799 then 'Wound disruption (without signs of hematoma or infection)' when 5622 then 'Other' end ) as adverse_event,
 (case severity when 1498 then 'Mild' when 1499 then 'Moderate' when 1500 then 'Severe' when 162819 then 'Fatal' when 1067 then 'Unknown' end) as severity,
 start_date,
@@ -2120,14 +2120,9 @@ select
     visit_date,
     location_id,
     encounter_id,
-    (case referee when 165650 then 'Self referral'
-                   when 5619 then 'Health Care Worker'
-                   when 1555 then 'Community Health Worker'
-                   when 163488 then 'Community Health Volunteer'
-                   when 1370 then 'HTS Counsellors'
-                   when 5622 then 'Other' end) as referee,
+    (case referee when 165650 then 'Self referral' when 1577 then 'Nurse' when 1555 then 'Community Health Worker' when 5622 then 'Other' end) as referee,
     other_referee,
-    (case source_of_vmmc_info when 159388 then 'Radio/Tv' when 1565 then 'Print Media' when 163121 then 'Road Show' when 1555 then 'Mobilizer CHW' when 160542 then 'OPD/MCH/HT' when 5486 then 'Social Media' when 5622 then 'Other' end) as source_of_vmmc_info,
+    (case source_of_vmmc_info when 167095 then 'Radio/Tv' when 167096 then 'Print Media' when 167098 then 'Road Show' when 1555 then 'Mobilizer CHW' when 160542 then 'OPD/MCH/HT' when 167097 then 'Social Media' when 5622 then 'Other' end) as source_of_vmmc_info,
     other_source_of_vmmc_info,
     county_of_origin,
     date_created,
@@ -2149,10 +2144,10 @@ select
     visit_date,
     location_id,
     encounter_id,
-    (case circumcision_method when 159619 then 'Conventional Surgical' when 164204 then 'Device Circumcision' end) as circumcision_method,
-    (case surgical_circumcision_method when 164029 then 'Sleeve resection' when 1933 then 'Dorsal Slit' when 5622 then 'Other' end) as surgical_circumcision_method,
+    (case circumcision_method when 167119 then 'Conventional Surgical' when 167120 then 'Device Circumcision' end) as circumcision_method,
+    (case surgical_circumcision_method when 167121 then 'Sleeve resection' when 167122 then 'Dorsal Slit' when 167123 then 'Forceps Guide' when 5622 then 'Other' end) as surgical_circumcision_method,
     reason_circumcision_ineligible,
-    (case circumcision_device when 165396 then 'Shangring' when 5622 then 'Other' end) as circumcision_device,
+    (case circumcision_device when 167124 then 'Shangring' when 5622 then 'Other' end) as circumcision_device,
     specific_other_device,
     device_size,
     (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
@@ -2216,7 +2211,6 @@ select
     case assent_given when 1065 then 'Yes' when 1066 then 'No' end as assent_given,
     case consent_given when 1 then 'Yes' when 0 then 'No' end as consent_given,
     case hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' end as hiv_status,
-    hiv_unknown_reason,
     hiv_test_date,
     art_start_date,
     case current_regimen when 164968 then 'AZT/3TC/DTG'
@@ -2268,8 +2262,8 @@ select
     case in_good_health when 1 then 'Yes' when 0 then 'No'end as in_good_health,
     case counselled when 1065 then 'Yes' when 1066 then 'No' end as counselled,
     reason_ineligible,
-    case circumcision_method_chosen when 159619 then 'Conventional Surgical' when 164204 then 'Device Circumcision' end as circumcision_method_chosen,
-    case conventional_method_chosen  when 164029 then 'Sleeve resection' when 1933 then 'Dorsal Slit' when 157783 then 'Forceps Guide' when 5622 then 'Other' end as conventional_method_chosen,
+    case circumcision_method_chosen when 167119 then 'Conventional Surgical' when 167120 then 'Device Circumcision' end as circumcision_method_chosen,
+    case conventional_method_chosen  when 167121 then 'Sleeve resection' when 167122 then 'Dorsal Slit' when 167123 then 'Forceps Guide' when 5622 then 'Other' end as conventional_method_chosen,
     device_name,
     device_size,
     other_conventional_method_device_chosen,
