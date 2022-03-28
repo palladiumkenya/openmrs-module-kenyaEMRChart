@@ -5849,7 +5849,7 @@ BEGIN
             max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_used,
             max(if(o.concept_id = 160047,o.value_numeric,null)) as anaesthesia_concentration,
             max(if(o.concept_id = 166650,o.value_numeric,null)) as anaesthesia_volume,
-            max(if(o.concept_id = 163138,o.value_datetime,null)) as time_of_first_placement_cut,
+            max(if(o.concept_id = 160715,o.value_datetime,null)) as time_of_first_placement_cut,
             max(if(o.concept_id = 167132,o.value_datetime,null)) as time_of_last_device_closure,
             max(if(o.concept_id = 162871,o.value_coded,null)) as has_adverse_event,
             concat_ws(',', max(if(o.concept_id = 162875 and o.value_coded = 147241, 'Bleeding', null)),
