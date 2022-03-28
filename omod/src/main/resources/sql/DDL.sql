@@ -2796,7 +2796,7 @@ CREATE TABLE kenyaemr_etl.etl_vmmc_circumcision_procedure
     clinician_cadre                INT(11),
     assist_clinician_name          varchar(100),
     assist_clinician_cadre         INT(11),
-    theatre_number                 INT(11),
+    theatre_number                 varchar(100),
     date_created                   DATETIME NOT NULL,
     date_last_modified             DATETIME,
     voided                         INT(11),
