@@ -5863,8 +5863,8 @@ BEGIN
                 max(if(o.concept_id = 162749,o.value_text,null)) as adverse_event_management,
             max(if(o.concept_id = 1473,o.value_text,null)) as clinician_name,
             max(if(o.concept_id = 163556,o.value_coded,null)) as clinician_cadre,
-            max(if(o.concept_id = 1473,o.value_text,null)) as assist_clinician_name,
-            max(if(o.concept_id = 163556,o.value_coded,null)) as assist_clinician_cadre,
+            max(if(o.concept_id = 164141,o.value_text,null)) as assist_clinician_name,
+            max(if(o.concept_id = 166014,o.value_coded,null)) as assist_clinician_cadre,
             max(if(o.concept_id = 167133,o.value_text,null)) as theatre_number,
             e.date_created as date_created,
             if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
@@ -5872,7 +5872,7 @@ BEGIN
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
-                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164254,160047,166650,163138,167132,162871,162875,162760,162749,1473,1542,164141,167133) and o.voided=0
+                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133) and o.voided=0
         where e.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
