@@ -6276,7 +6276,7 @@ select
   max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_used,
   max(if(o.concept_id = 160047,o.value_numeric,null)) as anaesthesia_concentration,
   max(if(o.concept_id = 166650,o.value_numeric,null)) as anaesthesia_volume,
-  max(if(o.concept_id = 163138,o.value_datetime,null)) as time_of_first_placement_cut,
+  max(if(o.concept_id = 160715,o.value_datetime,null)) as time_of_first_placement_cut,
   max(if(o.concept_id = 167132,o.value_datetime,null)) as time_of_last_device_closure,
   max(if(o.concept_id = 162871,o.value_coded,null)) as has_adverse_event,
   concat_ws(',', max(if(o.concept_id = 162875 and o.value_coded = 147241, 'Bleeding', null)),
@@ -6289,9 +6289,9 @@ select
             max(if(o.concept_id = 162760 and o.value_coded = 1498, 'Mild', null))) as severity,
   max(if(o.concept_id = 162749,o.value_text,null)) as adverse_event_management,
   max(if(o.concept_id = 1473,o.value_text,null)) as clinician_name,
-  max(if(o.concept_id = 1542,o.value_coded,null)) as clinician_cadre,
+  max(if(o.concept_id = 163556,o.value_coded,null)) as clinician_cadre,
   max(if(o.concept_id = 164141,o.value_text,null)) as assist_clinician_name,
-  max(if(o.concept_id = 1542,o.value_coded,null)) as assist_clinician_cadre,
+  max(if(o.concept_id = 166014,o.value_coded,null)) as assist_clinician_cadre,
   max(if(o.concept_id = 167133,o.value_text,null)) as theatre_number,
     e.date_created as date_created,
     if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
@@ -6299,7 +6299,7 @@ select
 from encounter e
     inner join person p on p.person_id=e.patient_id and p.voided=0
     inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
-    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164254,160047,166650,163138,167132,162871,162875,162760,162749,1473,1542,164141,167133) and o.voided=0
+    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133) and o.voided=0
 where e.voided=0
 and e.date_created >= last_update_time
    or e.date_changed >= last_update_time
