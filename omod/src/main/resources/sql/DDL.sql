@@ -3012,4 +3012,6 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
+UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+
 END$$
