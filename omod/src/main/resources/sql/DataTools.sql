@@ -2309,6 +2309,74 @@ ALTER TABLE kenyaemr_datatools.vmmc_post_operation_assessment ADD FOREIGN KEY (p
 ALTER TABLE kenyaemr_datatools.vmmc_post_operation_assessment ADD INDEX(visit_date);
 SELECT "Successfully created vmmc_post_operation_assessment table";
 
+  -- --------------------------- populate hts_eligibility screening table ---------------------------------------------
+  create table kenyaemr_datatools.hts_eligibility_screening as
+    select
+      patient_id,
+      visit_id,
+      encounter_id,
+      uuid,
+      location_id,
+      provider,
+      visit_date,
+      case population_type when 164928 then 'General Population' when 164929 then 'Key Population' when 138643 then 'Priority Population' end as population_type,
+      key_population_type,
+      priority_population_type,
+      case department when 160542 then 'OPD:Out-patient department' when 5485 then 'IPD:In-patient department' when 160473 then 'Emergency' when 160538 then 'PMTCT' when 159940 then 'VCT' end as department,
+      case patient_type when 164163 then 'HP:Hospital Patient' when 164953 then 'NP:Non-Hospital Patient' end as patient_type,
+      case is_health_worker when 1065 then 'Yes' when 1066 then 'No' end as is_health_worker,
+      relationship_with_contact,
+      case tested_hiv_before when 1065 then 'Yes' when 1066 then 'No' end as tested_hiv_before,
+      case who_performed_test when 5619 then 'HTS Provider' when 164952 then 'Self Tested' end as who_performed_test,
+      (case test_results when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' else '' end) as test_results,
+      date_tested,
+      case started_on_art when 1065 then 'Yes' when 1066 then 'No' end as started_on_art,
+      upn_number,
+      case ever_had_sex when 1 then 'Yes' when 0 then 'No' end as ever_had_sex,
+      case sexually_active when 1065 then 'Yes' when 1066 then 'No' end as sexually_active,
+      case new_partner when 1065 then 'Yes' when 1066 then 'No' end as new_partner,
+      (case partner_hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' else '' end) as partner_hiv_status,
+      case couple_discordant when 1065 then 'Yes' when 1066 then 'No' end as couple_discordant,
+      case multiple_partners when 1 then 'Yes' when 0 then 'No' end as multiple_partners,
+      number_partners,
+      case alcohol_sex when 1066 then 'Not at all' when 1385 then 'Sometimes' when 165027 then 'Always' end as alcohol_sex,
+      case money_sex when 1065 then 'Yes' when 1066 then 'No' end as money_sex,
+      case condom_burst when 1065 then 'Yes' when 1066 then 'No' end as condom_burst,
+      case unknown_status_partner when 1065 then 'Yes' when 1066 then 'No' end as unknown_status_partner,
+      case known_status_partner when 163289 then 'Yes' when 1066 then 'No' end as known_status_partner,
+      case experienced_gbv when 1065 then 'Yes' when 1066 then 'No' end as experienced_gbv,
+      case physical_violence when 1065 then 'Yes' when 1066 then 'No' end as physical_violence,
+      case sexual_violence when 1065 then 'Yes' when 1066 then 'No' end as sexual_violence,
+      case ever_on_prep when 1065 then 'Yes' when 1066 then 'No' end as ever_on_prep,
+      case currently_on_prep when 1065 then 'Yes' when 1066 then 'No' end as currently_on_prep,
+      case ever_on_pep when 1065 then 'Yes' when 1066 then 'No' end as ever_on_pep,
+      case currently_on_pep when 1 then 'Yes' when 0 then 'No' end as currently_on_pep,
+      case ever_had_sti when 1065 then 'Yes' when 1066 then 'No' end as ever_had_sti,
+      case currently_has_sti when 1065 then 'Yes' when 1066 then 'No' end as currently_has_sti,
+      case ever_had_tb when 1065 then 'Yes' when 1066 then 'No' end as ever_had_tb,
+      case currently_has_tb when 1065 then 'Yes' when 1066 then 'No' end as currently_has_tb,
+      case shared_needle when 1065 then 'Yes' when 1066 then 'No' end as shared_needle,
+      case needle_stick_injuries when 153574 then 'Yes' when 1066 then 'No' end as needle_stick_injuries,
+      case traditional_procedures when 1065 then 'Yes' when 1066 then 'No' end as traditional_procedures,
+      child_reasons_for_ineligibility,
+      case pregnant when 1065 then 'Yes' when 1066 then 'No' end as pregnant,
+      case breastfeeding_mother when 1065 then 'Yes' when 1066 then 'No' end as breastfeeding_mother,
+      case eligible_for_test when 1065 then 'Yes' when 1066 then 'No' end as eligible_for_test,
+      reasons_for_ineligibility,
+      specific_reason_for_ineligibility,
+      date_created,
+      date_last_modified,
+      voided
+    from kenyaemr_etl.etl_hts_eligibility_screening;
+
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(patient_id);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(visit_id);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(department);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(population_type);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(eligible_for_test);
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$
