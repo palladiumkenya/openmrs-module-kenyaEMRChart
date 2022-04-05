@@ -36,7 +36,7 @@
 
 	<globalProperty>
 		<property>kenyaemr.reacreate_etls_on_startup</property>
-		<defaultValue>no</defaultValue>
+		<defaultValue>yes</defaultValue>
 		<description>
 			A property that controls whether the reporting ETL and datatools tables should be recreated on system startup.
 			Please use yes or no to indicate preference. The default value is no
