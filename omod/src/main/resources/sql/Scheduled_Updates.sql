@@ -2416,17 +2416,17 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
         max(if(o.concept_id=160481,(case o.value_coded when 163266 then "This health facility" when 164407 then "Other health facility" else "" end),null)) as referral_facility,
         max(if(o.concept_id=161550,trim(o.value_text),null)) as other_referral_facility,
-        max(if(o.concept_id=1272,(case o.value_coded when 165276 then "Risk reduction counselling"
-                                  when 159612 then "Safer sex practices"
-                                  when 162223 then "VMMC"
-                                  when 161594 then "Condom use counselling"
-                                  when 1691 then "Post-exposure prophylaxis"
-                                  when 163559 then "Prevention and treatment of STIs"
-                                  when 165151 then "Substance abuse and mental health treatment"
-                                  when 165273 then "Prevention of GBV"
-                                  when 1370 then "HIV testing and re-testing"
-                                  when 166536 then "Pre-Exposure Prophylaxis"
-                                  when 5622 then "Other" else "" end),null)) as neg_referral_for,
+        concat_ws(',', max(if(o.concept_id = 1272 and o.value_coded = 165276, 'Risk reduction counselling', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 159612, 'Safer sex practices', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 162223, 'VMMC', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 190, 'Condom use counselling', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 1691, 'Post-exposure prophylaxis', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 167125, 'Prevention and treatment of STIs', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 118855, 'Substance abuse and mental health treatment', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of GBV', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 1370, 'HIV testing and re-testing', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 166536, 'Pre-Exposure Prophylaxis', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 5622, 'Other', null))) as neg_referral_for,
         max(if(o.concept_id=164359,trim(o.value_text),null)) as neg_referral_specify,
         max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "Not done" when 1111 then "On TB Treatment"  else null end),null)) as tb_screening,
         max(if(o.concept_id=164952,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_had_hiv_self_test,
