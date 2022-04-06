@@ -2321,6 +2321,8 @@ couple_discordant,
 referral_for,
 referral_facility,
 other_referral_facility,
+neg_referral_for,
+neg_referral_specify,
 tb_screening,
 patient_had_hiv_self_test ,
 remarks,
@@ -2368,6 +2370,18 @@ max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then
 max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
 max(if(o.concept_id=160481,(case o.value_coded when 163266 then "This health facility" when 164407 then "Other health facility" else "" end),null)) as referral_facility,
 max(if(o.concept_id=161550,trim(o.value_text),null)) as other_referral_facility,
+max(if(o.concept_id=1272,(case o.value_coded when 165276 then "Risk reduction counselling"
+                            when 159612 then "Safer sex practices"
+                            when 162223 then "VMMC"
+                            when 161594 then "Condom use counselling"
+                            when 1691 then "Post-exposure prophylaxis"
+                            when 163559 then "Prevention and treatment of STIs"
+                            when 165151 then "Substance abuse and mental health treatment"
+                            when 165273 then "Prevention of GBV"
+                            when 1370 then "HIV testing and re-testing"
+                            when 166536 then "Pre-Exposure Prophylaxis"
+                            when 5622 then "Other" else "" end),null)) as neg_referral_for,
+max(if(o.concept_id=164359,trim(o.value_text),null)) as neg_referral_specify,
 max(if(o.concept_id=1659,(case o.value_coded when 1660 then "No TB signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "Not done" when 1111 then "On TB Treatment"  else "" end),null)) as tb_screening,
 max(if(o.concept_id=164952,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_had_hiv_self_test,
 max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
@@ -2376,7 +2390,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,160481)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481)
 inner join (
              select
                o.person_id,
