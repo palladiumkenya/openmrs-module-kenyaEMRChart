@@ -92,6 +92,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_circumcision_procedure;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_medical_history;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_client_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2936,6 +2937,73 @@ CREATE TABLE kenyaemr_etl.etl_vmmc_post_operation_assessment
     INDEX (patient_id),
     INDEX (encounter_id)
 );
-  UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+-- Create etl_hts_screening table --
+create table kenyaemr_etl.etl_hts_eligibility_screening (
+  patient_id                       INT(11) not null,
+  visit_id                         INT(11) DEFAULT NULL,
+  encounter_id                     INT(11) NOT NULL primary key,
+  uuid                             CHAR(38) NOT NULL,
+  location_id                      INT(11) NOT NULL,
+  provider                         INT(11) NOT NULL,
+  visit_date                       DATE,
+  population_type                  VARCHAR(100),
+  key_population_type              VARCHAR(100),
+  priority_population_type         VARCHAR(100),
+  department                       INT(11),
+  patient_type                     INT(11),
+  is_health_worker                 INT(11),
+  relationship_with_contact        VARCHAR(100),
+  tested_hiv_before                INT(11),
+  who_performed_test               INT(11),
+  test_results                     INT(11),
+  date_tested                      DATE,
+  started_on_art                   INT(11),
+  upn_number                       varchar(80),
+  ever_had_sex                     INT(11),
+  sexually_active                  INT(11),
+  new_partner                      INT(11),
+  partner_hiv_status               INT(11),
+  couple_discordant                INT(11),
+  multiple_partners                INT(11),
+  number_partners                  INT(11),
+  alcohol_sex                      INT(11),
+  money_sex                        INT(11),
+  condom_burst                     INT(11),
+  unknown_status_partner           INT(11),
+  known_status_partner             INT(11),
+  experienced_gbv                  INT(11),
+  physical_violence                INT(11),
+  sexual_violence                  INT(11),
+  ever_on_prep                     INT(11),
+  currently_on_prep                INT(11),
+  ever_on_pep                      INT(11),
+  currently_on_pep                 INT(11),
+  ever_had_sti                     INT(11),
+  currently_has_sti                INT(11),
+  ever_had_tb                      INT(11),
+  currently_has_tb                 INT(11),
+  shared_needle                    INT(11),
+  needle_stick_injuries            INT(11),
+  traditional_procedures           INT(11),
+  child_reasons_for_ineligibility  varchar(100),
+  pregnant                        INT(11),
+  breastfeeding_mother            INT(11),
+  eligible_for_test               INT(11),
+  reasons_for_ineligibility       varchar(100),
+  specific_reason_for_ineligibility varchar(255),
+  date_created                   DATETIME NOT NULL,
+  date_last_modified             DATETIME,
+  voided INT(11),
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+  CONSTRAINT unique_uuid UNIQUE (uuid),
+  index(patient_id),
+  index(visit_id),
+  index(visit_date),
+  index(department),
+  index(population_type),
+  index(eligible_for_test)
+);
+
+UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
