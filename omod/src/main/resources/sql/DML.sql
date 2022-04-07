@@ -192,6 +192,10 @@ insert into kenyaemr_etl.etl_hiv_enrollment (
     date_confirmed_hiv_positive,
     facility_confirmed_hiv_positive,
     arv_status,
+    ever_on_pmtct,
+    ever_on_pep,
+    ever_on_prep,
+    ever_on_haart,
     name_of_treatment_supporter,
     relationship_of_treatment_supporter,
     treatment_supporter_telephone,
@@ -218,11 +222,15 @@ select
        max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
        max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_tcingfrom,
        max(if(o.concept_id=161551,left(trim(o.value_text),100),null)) as district_transferred_from,
-       max(if(o.concept_id=1088,o.value_coded,null)) as previous_regimen,
+       max(if(o.concept_id=164855,o.value_coded,null)) as previous_regimen,
        max(if(o.concept_id=159599,o.value_datetime,null)) as date_started_art_at_transferring_facility,
        max(if(o.concept_id=160554,o.value_datetime,null)) as date_confirmed_hiv_positive,
        max(if(o.concept_id=160632,left(trim(o.value_text),100),null)) as facility_confirmed_hiv_positive,
        max(if(o.concept_id=160533,o.value_coded,null)) as arv_status,
+       max(if(o.concept_id=1148,o.value_coded,null)) as ever_on_pmtct,
+       max(if(o.concept_id=1691,o.value_coded,null)) as ever_on_pep,
+       max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
+       max(if(o.concept_id=1181,o.value_coded,null)) as ever_on_haart,
        max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
        max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
        max(if(o.concept_id=160642,left(trim(o.value_text),100),null)) as treatment_supporter_telephone ,
@@ -239,7 +247,7 @@ from encounter e
          ) et on et.encounter_type_id=e.encounter_type
        inner join person p on p.person_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164384)
+                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
