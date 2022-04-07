@@ -2628,10 +2628,8 @@ TRUNCATE TABLE kenyaemr_etl.etl_patients_booked_today;
 ALTER TABLE kenyaemr_etl.etl_patients_booked_today AUTO_INCREMENT = 1;
 
 INSERT INTO kenyaemr_etl.etl_patients_booked_today(patient_id, last_visit_date)
-SELECT patient_id, max(visit_date)
-FROM kenyaemr_etl.etl_patient_hiv_followup
-WHERE date(next_appointment_date) = CURDATE()
-GROUP BY patient_id;
+SELECT patient_id, visit_date FROM kenyaemr_etl.etl_patient_hiv_followup
+GROUP BY patient_id HAVING max(date(next_appointment_date)) = CURDATE();
 
 --Viral load tracker
 DROP TABLE IF EXISTS kenyaemr_etl.etl_viral_load_tracker;
