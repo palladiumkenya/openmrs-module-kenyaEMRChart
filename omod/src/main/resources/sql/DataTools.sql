@@ -2156,6 +2156,7 @@ select
     (case circumcision_device when 167124 then 'Shangring' when 5622 then 'Other' end) as circumcision_device,
     specific_other_device,
     device_size,
+    lot_number,
     (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
     anaesthesia_concentration,
     anaesthesia_volume,
