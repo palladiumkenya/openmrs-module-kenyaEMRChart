@@ -2,24 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.openmrs.module</groupId>
-	<artifactId>kenyaemrCharts</artifactId>
-	<version>1.1.7</version>
-	<packaging>pom</packaging>
-	<name>KenyaEMR ETL Management</name>
-	<description>dhoc charts</description>
-	<url>https://wiki.openmrs.org/display/docs/KenyaEMR+Adhoc+Charts+Module+Module</url>
-	
-	<developers>
-		<developer>
-			<name>kenyaEMR Developers</name>
-		</developer>
-	</developers>
-	
-	<organization>
-		<name>OpenMRS</name>
-		<url>http://openmrs.org</url>
-	</organization>
+    <groupId>org.openmrs.module</groupId>
+    <artifactId>kenyaemrCharts</artifactId>
+    <version>1.2.4</version>
+    <packaging>pom</packaging>
+    <name>KenyaEMR ETL Management</name>
+    <description>dhoc charts</description>
+    <url>https://wiki.openmrs.org/display/docs/KenyaEMR+Adhoc+Charts+Module+Module</url>
 
 	<scm>
 		<connection>scm:svn:https://svn.openmrs.org/openmrs-modules/kenyaemrCharts/trunk/</connection>

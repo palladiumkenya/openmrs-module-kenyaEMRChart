@@ -2,11 +2,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.openmrs.module</groupId>
-		<artifactId>kenyaemrCharts</artifactId>
-		<version>1.1.7</version>
-	</parent>
+    <parent>
+        <groupId>org.openmrs.module</groupId>
+        <artifactId>kenyaemrCharts</artifactId>
+        <version>1.2.4</version>
+    </parent>
 
 	<artifactId>kenyaemrCharts-omod</artifactId>
 	<packaging>jar</packaging>
