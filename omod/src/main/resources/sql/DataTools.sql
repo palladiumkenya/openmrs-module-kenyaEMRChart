@@ -267,10 +267,13 @@ visit_id,
 (case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
   when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,
 urgency,
-(case order_reason when 843 then "Regimen failure" when 1259 then "CHANGE REGIMEN" when 1434 then "PREGNANCY"
-when 159882 then "breastfeeding" when 160566 then "Immunologic failure" when 160569 then "Virologic failure"
-when 161236 then "Routine" when 162080 then "Baseline" when 162081 then "Repeat" when 163523 then "Clinical failure"
-else"" end) as order_reason,
+(case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
+    when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
+    when 161236 then 'Routine' when 162080 then 'Baseline VL (for infants diagnosed through EID)' when 162081 then 'Repeat' when 163523 then 'Clinical failure'
+    when 160032 then 'Confirmation of persistent low level Viremia (PLLV)' when 1040 then 'Initial PCR (6week or first contact)' when 1326 then '2nd PCR (6 months)' when 164860 then '3rd PCR (12months)'
+    when 162082 then 'Confirmatory PCR and Baseline VL' when 164460 then 'Ab test 6 weeks after cessation of breastfeeding'
+    when 164860 then 'Ab test at 18 months (1.5 years)'
+    else '' end) as order_reason,
 if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
 if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
 if(lab_test=302, (case test_result when 1115 then "Normal" when 1116 then "Abnormal" when 1067 then "Unknown" end), 
