@@ -6105,6 +6105,7 @@ from (select e.uuid,
              e.date_created as enc_created_date
       from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
+             inner join person p on p.person_id = o.person_id and p.voided = 0
              inner join (select encounter_type_id, uuid, name
                          from encounter_type
                          where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
@@ -6175,6 +6176,7 @@ from (select e.uuid,
                          o1.date_created,
                          o1.voided
                   from obs o
+                         inner join person p on p.person_id = o.person_id and p.voided = 0
                          join obs o1 on o.obs_id = o1.obs_group_id
                                           and o1.concept_id in
                                               (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932) and
