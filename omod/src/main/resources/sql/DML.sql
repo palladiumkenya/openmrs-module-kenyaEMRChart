@@ -1051,6 +1051,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
+                                             inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843')
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
@@ -1202,6 +1203,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
+                                             inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
@@ -1451,6 +1453,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
+                                             inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
@@ -2965,6 +2968,7 @@ date_last_modified
     o.obs_group_id
      from obs o
     inner join encounter e on e.encounter_id = o.encounter_id
+    inner join person p on p.person_id = o.person_id and p.voided=0
     inner join form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
      where o.voided=0
      group by e.encounter_id, o.obs_group_id
@@ -3337,6 +3341,7 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
            max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
            e.voided as voided
     from encounter e
+           inner join person p on p.person_id=e.patient_id and p.voided=0
            inner join form f on f.form_id=e.form_id and f.uuid in ("291c0828-a216-11e9-a2a3-2a2ae2dbcce4")
            inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,164425,161641,1417,164515,164433,161555,160632,164999,161011) and o.voided=0
     where e.voided=0
@@ -4315,6 +4320,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
         ct.appointment_date,
         ct.voided
 			from kenyaemr_hiv_testing_client_trace ct
+                inner join person p on p.person_id = ct.client_id and p.voided=0
 				inner join kenyaemr_etl.etl_patient_contact pc on pc.id=ct.client_id and ct.voided=0
         where pc.voided=0
 		;
@@ -4761,6 +4767,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
                e.voided as voided
         from encounter e
+               inner join person p on p.person_id=e.patient_id and p.voided=0
                inner join
                  (
                  select encounter_type_id, uuid, name from encounter_type where uuid in('92e03f22-9686-11e9-bc42-526af7764f64')
@@ -4844,6 +4851,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                    max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
                    e.voided as voided
             from encounter e
+                   inner join person p on p.person_id=e.patient_id and p.voided=0
                    inner join
                      (
                      select encounter_type_id, uuid, name from encounter_type where uuid in('2cc8c535-bbfa-4668-98c7-b12e3550ee7b')
@@ -4935,6 +4943,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                    max(if(o.concept_id=160632,o.value_text,null)) as remarks,
                    e.voided as voided
             from encounter e
+                   inner join person p on p.person_id=e.patient_id and p.voided=0
                    inner join
                      (
                      select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')

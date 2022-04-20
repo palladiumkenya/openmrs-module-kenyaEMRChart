@@ -4352,6 +4352,7 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         max(if(o.concept_id=160642,o.value_text,null)) as contact_person_phone,
         e.voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
@@ -4456,6 +4457,7 @@ CREATE PROCEDURE sp_update_etl_kp_client_enrollment(IN last_update_time DATETIME
         max(if(o.concept_id=160642,o.value_text,null)) as buddy_phone_number,
         e.voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='c7f47a56-207b-11e9-ab14-d663bd873d93'
@@ -4748,6 +4750,7 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.voided as voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('92e03f22-9686-11e9-bc42-526af7764f64')
@@ -4950,6 +4953,7 @@ CREATE PROCEDURE sp_update_etl_kp_sti_treatment(IN last_update_time DATETIME)
         max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.voided as voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('2cc8c535-bbfa-4668-98c7-b12e3550ee7b')
@@ -5066,6 +5070,7 @@ CREATE PROCEDURE sp_update_etl_kp_peer_calendar(IN last_update_time DATETIME)
         max(if(o.concept_id=160632,o.value_text,null)) as remarks,
         e.voided as voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
