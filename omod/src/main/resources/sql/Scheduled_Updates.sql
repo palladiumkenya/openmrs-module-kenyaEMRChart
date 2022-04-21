@@ -4357,7 +4357,6 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
         ) et on et.encounter_type_id=e.encounter_type
-        join patient p on p.patient_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                          and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
       where e.voided=0 and e.date_created >= last_update_time
@@ -4462,7 +4461,6 @@ CREATE PROCEDURE sp_update_etl_kp_client_enrollment(IN last_update_time DATETIME
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='c7f47a56-207b-11e9-ab14-d663bd873d93'
         ) et on et.encounter_type_id=e.encounter_type
-        join patient p on p.patient_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (165004,165027,165030,165031,165032,123160,165034,164401,164956,165153,165154,159803,159811,
                                                                                                                                    162724,162053,164437,163281,165036,164966,160638,160642)
