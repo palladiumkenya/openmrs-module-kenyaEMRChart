@@ -131,12 +131,14 @@ join (select pi.patient_id,
              max(if(pit.uuid='5065ae70-0b61-11ea-8d71-362b9e155667',pi.identifier,null)) CPIMS_unique_identifier,
              max(if(pit.uuid='dfacd928-0370-4315-99d7-6ec1c9f7ae76',pi.identifier,null)) openmrs_id,
              max(if(pit.uuid='ac64e5cb-e3e2-4efa-9060-0dd715a843a1',pi.identifier,null)) unique_prep_number,
+             max(if(pit.uuid='1c7d0e5b-2068-4816-a643-8de83ab65fbf',pi.identifier,null)) alien_no,
+             max(if(pit.uuid='ca125004-e8af-445d-9436-a43684150f8b',pi.identifier,null)) driving_license_no,
              greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
       from patient_identifier pi
              join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
       where voided=0
       group by pi.patient_id) pid on pid.patient_id=d.patient_id
-set d.unique_patient_no=pid.UPN,
+set d.unique_patient_no=pid.upn,
     d.national_id_no=pid.National_id,
     d.huduma_no=pid.Huduma_number,
     d.passport_no=pid.Passport_number,
@@ -150,6 +152,8 @@ set d.unique_patient_no=pid.UPN,
     d.CPIMS_unique_identifier=pid.CPIMS_unique_identifier,
     d.openmrs_id=pid.openmrs_id,
     d.unique_prep_number=pid.unique_prep_number,
+    d.alien_no=pid.alien_no,
+    d.driving_license_no=pid.driving_license_no,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
