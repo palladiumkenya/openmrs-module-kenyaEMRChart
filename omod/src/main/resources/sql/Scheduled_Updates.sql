@@ -139,6 +139,8 @@ max(if(pit.uuid='f2b0c94f-7b2b-4ab0-aded-0d970f88c063',pi.identifier,null)) kdod
 max(if(pit.uuid='5065ae70-0b61-11ea-8d71-362b9e155667',pi.identifier,null)) CPIMS_unique_identifier,
 max(if(pit.uuid='dfacd928-0370-4315-99d7-6ec1c9f7ae76',pi.identifier,null)) openmrs_id,
 max(if(pit.uuid='ac64e5cb-e3e2-4efa-9060-0dd715a843a1',pi.identifier,null)) unique_prep_number,
+max(if(pit.uuid='1c7d0e5b-2068-4816-a643-8de83ab65fbf',pi.identifier,null)) alien_no,
+max(if(pit.uuid='ca125004-e8af-445d-9436-a43684150f8b',pi.identifier,null)) driving_license_no,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -161,6 +163,8 @@ set d.unique_patient_no=pid.UPN,
     d.CPIMS_unique_identifier=pid.CPIMS_unique_identifier,
     d.openmrs_id=pid.openmrs_id,
     d.unique_prep_number=pid.unique_prep_number,
+    d.alien_no=pid.alien_no,
+    d.driving_license_no=pid.driving_license_no,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
@@ -4409,11 +4413,11 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         max(if(o.concept_id=160642,o.value_text,null)) as contact_person_phone,
         e.voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
         ) et on et.encounter_type_id=e.encounter_type
-        join patient p on p.patient_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                          and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
       where e.voided=0 and e.date_created >= last_update_time
@@ -4513,11 +4517,11 @@ CREATE PROCEDURE sp_update_etl_kp_client_enrollment(IN last_update_time DATETIME
         max(if(o.concept_id=160642,o.value_text,null)) as buddy_phone_number,
         e.voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='c7f47a56-207b-11e9-ab14-d663bd873d93'
         ) et on et.encounter_type_id=e.encounter_type
-        join patient p on p.patient_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (165004,165027,165030,165031,165032,123160,165034,164401,164956,165153,165154,159803,159811,
                                                                                                                                    162724,162053,164437,163281,165036,164966,160638,160642)
@@ -4805,6 +4809,7 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.voided as voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('92e03f22-9686-11e9-bc42-526af7764f64')
@@ -5007,6 +5012,7 @@ CREATE PROCEDURE sp_update_etl_kp_sti_treatment(IN last_update_time DATETIME)
         max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.voided as voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('2cc8c535-bbfa-4668-98c7-b12e3550ee7b')
@@ -5123,6 +5129,7 @@ CREATE PROCEDURE sp_update_etl_kp_peer_calendar(IN last_update_time DATETIME)
         max(if(o.concept_id=160632,o.value_text,null)) as remarks,
         e.voided as voided
       from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
@@ -6160,6 +6167,7 @@ from (select e.uuid,
              e.date_created as enc_created_date
       from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
+             inner join person p on p.person_id = o.person_id and p.voided = 0
              inner join (select encounter_type_id, uuid, name
                          from encounter_type
                          where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
@@ -6230,6 +6238,7 @@ from (select e.uuid,
                          o1.date_created,
                          o1.voided
                   from obs o
+                         inner join person p on p.person_id = o.person_id and p.voided = 0
                          join obs o1 on o.obs_id = o1.obs_group_id
                                           and o1.concept_id in
                                               (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932) and
