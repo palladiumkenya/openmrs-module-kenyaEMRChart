@@ -1,7 +1,7 @@
 name: deploy to prod 8600
 on:
   push:
-    branches: [ cicd ]
+    branches: [ v1.2.4 ]
 jobs:
 
   build:
