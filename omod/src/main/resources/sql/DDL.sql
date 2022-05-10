@@ -3013,6 +3013,47 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
   index(population_type),
   index(eligible_for_test)
 );
+-- create table etl_drug_orders
+
+CREATE TABLE kenyaemr_etl.etl_drug_orders (
+  uuid CHAR(38),
+  encounter_id INT(11) NOT NULL PRIMARY KEY,
+  order_group_id INT(11),
+  patient_id INT(11) NOT NULL ,
+  location_id INT(11) DEFAULT NULL,
+  visit_date DATE,
+  visit_id INT(11),
+  provider INT(11),
+  order_id INT(11),
+  urgency VARCHAR(50),
+  drug_concept_id VARCHAR(50),
+  drug_short_name VARCHAR(50),
+  drug_name VARCHAR(255),
+  frequency VARCHAR(50),
+  enc_name VARCHAR(100),
+  dose VARCHAR(50),
+  dose_units VARCHAR(100),
+  quantity VARCHAR(50),
+  quantity_units VARCHAR(100),
+  dosing_instructions VARCHAR(100),
+  duration INT(11),
+  duration_units VARCHAR(10),
+  instructions VARCHAR(255),
+  route VARCHAR(255),
+  voided INT(11),
+  date_voided DATE,
+  date_created DATETIME NOT NULL,
+  date_last_modified DATETIME,
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  CONSTRAINT unique_uuid UNIQUE(uuid),
+  INDEX(visit_date),
+  INDEX(encounter_id),
+  INDEX(patient_id),
+  INDEX(patient_id, visit_date),
+  INDEX(order_id)
+);
+
+SELECT "Successfully created etl_drug_orders table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
