@@ -2392,6 +2392,10 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
   ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(population_type);
   ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(eligible_for_test);
 
+-- Creating drug_orders table --
+create table kenyaemr_datatools.drug_orders as select * from kenyaemr_etl.etl_drug_orders;
+ALTER TABLE kenyaemr_datatools.drug_orders add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END$$

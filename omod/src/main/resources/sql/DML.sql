@@ -6341,6 +6341,96 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
     SELECT "Completed processing hts eligibility  screening";
   END $$
 
+-- Populating etl_drug_orders
+DROP PROCEDURE IF EXISTS sp_populate_etl_drug_orders $$
+CREATE PROCEDURE sp_populate_etl_drug_orders()
+BEGIN
+    INSERT INTO kenyaemr_etl.etl_drug_orders (
+        uuid,
+        encounter_id,
+        order_group_id,
+        patient_id,
+        location_id,
+        visit_date,
+        visit_id,
+        provider,
+        order_id,
+        urgency,
+        drug_concept_id,
+        drug_short_name,
+        drug_name,
+        frequency,
+        enc_name,
+        dose,
+        dose_units,
+        quantity,
+        quantity_units,
+        dosing_instructions,
+        duration,
+        duration_units,
+        instructions,
+        route,
+        voided,
+        date_voided,
+        date_created,
+        date_last_modified)
+    select e.uuid,
+           e.encounter_id,
+           o.order_group_id,
+           e.patient_id,
+           e.location_id,
+           date(e.encounter_datetime)                                                as visit_date,
+           e.visit_id,
+           e.creator                                                                 as provider,
+           do.order_id,
+           o.urgency,
+           group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
+           group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
+           group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
+           group_concat(do.frequency SEPARATOR '|')                                  as frequency,
+           et.name                                                                   as enc_name,
+           group_concat(do.dose SEPARATOR '|')                                       as dose,
+           group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
+           group_concat(do.quantity SEPARATOR '|')                                   as quantity,
+           group_concat(left(cn2.name, 255) SEPARATOR '|')                           as quantity_units,
+           do.dosing_instructions,
+           do.duration,
+           (case do.duration_units
+                when 1072 then 'DAYS'
+                when 1073 then 'WEEKS'
+                when 1074
+                    then 'MONTHS' end)                                               as duration_units,
+           o.instructions,
+           group_concat(left(cn3.name, 255) SEPARATOR '|')    as route,
+           o.voided,
+           o.date_voided,
+           e.date_created,
+           e.date_changed as date_last_modified
+    from orders o
+             inner join drug_order do on o.order_id = do.order_id
+             inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             left outer join encounter_type et on et.encounter_type_id = e.encounter_type
+             left outer join concept_name cn0
+                             on o.concept_id = cn0.concept_id and cn0.locale = 'en' and cn0.concept_name_type = 'SHORT'
+             left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale = 'en' and
+                                                cn.concept_name_type = 'FULLY_SPECIFIED'
+             left outer join concept_name cn1 on do.dose_units = cn1.concept_id and cn1.locale = 'en' and
+                                                 cn1.concept_name_type = 'FULLY_SPECIFIED'
+             left outer join concept_name cn2 on do.quantity_units = cn2.concept_id and cn2.locale = 'en' and
+                                                 cn2.concept_name_type = 'FULLY_SPECIFIED'
+             left outer join concept_name cn3 on do.route = cn3.concept_id and cn3.locale = 'en' and
+                                                 cn3.concept_name_type = 'FULLY_SPECIFIED'
+             left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
+    where o.voided = 0
+      and o.order_type_id = 2
+      and o.order_action = 'NEW'
+      and o.date_stopped is not null
+      and e.voided = 0
+    group by o.order_group_id,o.patient_id, o.encounter_id;
+
+    SELECT 'Completed processing drug orders';
+END $$
     -- end of dml procedures
 
 -- Populate etl_vmmc_post_operation_assessment
@@ -6582,6 +6672,7 @@ CALL sp_populate_etl_vmmc_client_followup();
 CALL sp_populate_etl_vmmc_medical_history();
 CALL sp_populate_etl_vmmc_post_operation_assessment();
 CALL sp_populate_etl_hts_eligibility_screening();
+CALL sp_populate_etl_drug_orders();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
