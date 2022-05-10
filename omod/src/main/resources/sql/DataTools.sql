@@ -1790,7 +1790,7 @@ select
     contact_person_alias,
     contact_person_phone,
     voided
- from kenyaemr_etl.etl_kp_contact;
+ from kenyaemr_etl.etl_contact;
 
 ALTER TABLE kenyaemr_datatools.kp_contact ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_contact ADD INDEX(visit_date);
@@ -1830,7 +1830,7 @@ select
   buddy_name,
   buddy_phone_number,
   voided
- from kenyaemr_etl.etl_kp_client_enrollment;
+ from kenyaemr_etl.etl_client_enrollment;
 
 ALTER TABLE kenyaemr_datatools.kp_client_enrollment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_client_enrollment ADD INDEX(visit_date);
@@ -1961,7 +1961,7 @@ select
     clinical_notes,
     appointment_date,
     voided
- from kenyaemr_etl.etl_kp_clinical_visit;
+ from kenyaemr_etl.etl_clinical_visit;
 
 ALTER TABLE kenyaemr_datatools.kp_clinical_visit ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_clinical_visit ADD INDEX(visit_date);
@@ -2002,7 +2002,7 @@ select
     health_edu,
     remarks,
     voided
- from kenyaemr_etl.etl_kp_peer_calendar;
+ from kenyaemr_etl.etl_peer_calendar;
 
 ALTER TABLE kenyaemr_datatools.kp_peer_calendar ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_peer_calendar ADD INDEX(visit_date);
@@ -2039,7 +2039,7 @@ select
 	provider_name,
 	appointment_date,
 	voided
- from kenyaemr_etl.etl_kp_sti_treatment;
+ from kenyaemr_etl.etl_sti_treatment;
 
 ALTER TABLE kenyaemr_datatools.kp_sti_treatment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_sti_treatment ADD INDEX(visit_date);
@@ -2070,7 +2070,7 @@ select
   date_created,
   date_last_modified,
   voided
- from kenyaemr_etl.etl_kp_peer_tracking;
+ from kenyaemr_etl.etl_peer_tracking;
 
 ALTER TABLE kenyaemr_datatools.kp_peer_tracking ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_peer_tracking ADD INDEX(visit_date);
@@ -2113,7 +2113,7 @@ select
   date_created,
   date_last_modified,
   voided
- from kenyaemr_etl.etl_kp_treatment_verification;
+ from kenyaemr_etl.etl_treatment_verification;
 
 ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD INDEX(visit_date);
