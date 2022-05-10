@@ -6996,6 +6996,110 @@ CREATE PROCEDURE sp_update_etl_hts_eligibility_screening(IN last_update_time DAT
     SELECT "Completed processing hts eligibility screening data ", CONCAT("Time: ", NOW());
   END $$
 
+   --- sp_update_etl_drug_orders ---
+
+DROP PROCEDURE IF EXISTS sp_update_etl_drug_orders $$
+CREATE PROCEDURE sp_update_etl_drug_orders(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing Drug orders", CONCAT("Time: ", NOW());
+
+INSERT INTO kenyaemr_etl.etl_drug_orders (
+    uuid,
+    encounter_id,
+    order_group_id,
+    patient_id,
+    location_id,
+    visit_date,
+    visit_id,
+    provider,
+    order_id,
+    urgency,
+    drug_concept_id,
+    drug_short_name,
+    drug_name,
+    frequency,
+    enc_name,
+    dose,
+    dose_units,
+    quantity,
+    quantity_units,
+    dosing_instructions,
+    duration,
+    duration_units,
+    instructions,
+    route,
+    voided,
+    date_voided,
+    date_created,
+    date_last_modified)
+select e.uuid,
+    e.encounter_id,
+    o.order_group_id,
+    e.patient_id,
+    e.location_id,
+    date(e.encounter_datetime)                                                as visit_date,
+    e.visit_id,
+    e.creator                                                                 as provider,
+    do.order_id,
+    o.urgency,
+    group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
+    group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
+    group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
+    group_concat(do.frequency SEPARATOR '|')                                  as frequency,
+    et.name                                                                   as enc_name,
+    group_concat(do.dose SEPARATOR '|')                                       as dose,
+    group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
+    group_concat(do.quantity SEPARATOR '|')                                   as quantity,
+    group_concat(left(cn2.name, 255) SEPARATOR '|')                           as quantity_units,
+    do.dosing_instructions,
+    do.duration,
+    (case do.duration_units
+    when 1072 then 'DAYS'
+    when 1073 then 'WEEKS'
+    when 1074
+    then 'MONTHS' end)                                               as duration_units,
+    o.instructions,
+    group_concat(left(cn3.name, 255) SEPARATOR '|')    as route,
+    o.voided,
+    o.date_voided,
+    e.date_created,
+    e.date_changed as date_last_modified
+from orders o
+    inner join drug_order do on o.order_id = do.order_id
+    inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0
+    inner join person p on p.person_id = e.patient_id and p.voided = 0
+    left outer join encounter_type et on et.encounter_type_id = e.encounter_type
+    left outer join concept_name cn0
+    on o.concept_id = cn0.concept_id and cn0.locale = 'en' and cn0.concept_name_type = 'SHORT'
+    left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale = 'en' and
+    cn.concept_name_type = 'FULLY_SPECIFIED'
+    left outer join concept_name cn1 on do.dose_units = cn1.concept_id and cn1.locale = 'en' and
+    cn1.concept_name_type = 'FULLY_SPECIFIED'
+    left outer join concept_name cn2 on do.quantity_units = cn2.concept_id and cn2.locale = 'en' and
+    cn2.concept_name_type = 'FULLY_SPECIFIED'
+    left outer join concept_name cn3 on do.route = cn3.concept_id and cn3.locale = 'en' and
+    cn3.concept_name_type = 'FULLY_SPECIFIED'
+    left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
+where o.voided = 0
+  and o.order_type_id = 2
+  and o.order_action = 'NEW'
+  and o.date_stopped is not null
+  and e.voided = 0
+  and e.date_created >= last_update_time
+   or e.date_changed >= last_update_time
+   or e.date_voided >= last_update_time
+   or o.date_created >= last_update_time
+   or o.date_voided >= last_update_time
+group by o.order_group_id,o.patient_id, o.encounter_id
+order by e.patient_id
+ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),order_id=VALUES(order_id),urgency=VALUES(urgency),
+    drug_concept_id=VALUES(drug_concept_id),drug_short_name=VALUES(drug_short_name),drug_name=VALUES(drug_name),frequency=VALUES(frequency),
+                     enc_name=VALUES(enc_name),dose=VALUES(dose),dose_units=VALUES(dose_units),quantity=VALUES(quantity),
+                     quantity_units=VALUES(quantity_units),dosing_instructions=VALUES(dosing_instructions),duration=VALUES(duration),duration_units=VALUES(duration_units),
+                     instructions=VALUES(instructions),route=VALUES(route),voided=VALUES(voided);
+
+SELECT "Completed processing drug orders data ", CONCAT("Time: ", NOW());
+END $$
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -7074,6 +7178,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_vmmc_client_followup(last_update_time);
     CALL sp_update_etl_vmmc_post_operation_assessment(last_update_time);
     CALL sp_update_etl_hts_eligibility_screening(last_update_time);
+    CALL sp_update_etl_drug_orders(last_update_time);
 
     CALL sp_update_dashboard_table();
 
