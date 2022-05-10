@@ -93,6 +93,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_medical_history;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_client_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_orders;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
