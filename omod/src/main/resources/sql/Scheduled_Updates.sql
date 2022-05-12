@@ -6941,14 +6941,14 @@ CREATE PROCEDURE sp_update_etl_hts_eligibility_screening(IN last_update_time DAT
     SELECT "Completed processing hts eligibility screening data ", CONCAT("Time: ", NOW());
   END $$
 
-   --- sp_update_etl_drug_orders ---
+   --- sp_update_etl_drug_order ---
 
-DROP PROCEDURE IF EXISTS sp_update_etl_drug_orders $$
-CREATE PROCEDURE sp_update_etl_drug_orders(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_drug_order $$
+CREATE PROCEDURE sp_update_etl_drug_order(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing Drug orders", CONCAT("Time: ", NOW());
 
-INSERT INTO kenyaemr_etl.etl_drug_orders (
+INSERT INTO kenyaemr_etl.etl_drug_order (
     uuid,
     encounter_id,
     order_group_id,
@@ -7027,8 +7027,7 @@ from orders o
     left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
 where o.voided = 0
   and o.order_type_id = 2
-  and o.order_action = 'NEW'
-  and o.date_stopped is not null
+  and ((o.order_action = 'NEW' and o.date_stopped is not null) or (o.order_reason_non_coded = 'previously existing orders'))
   and e.voided = 0
   and e.date_created >= last_update_time
    or e.date_changed >= last_update_time
@@ -7123,7 +7122,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_vmmc_client_followup(last_update_time);
     CALL sp_update_etl_vmmc_post_operation_assessment(last_update_time);
     CALL sp_update_etl_hts_eligibility_screening(last_update_time);
-    CALL sp_update_etl_drug_orders(last_update_time);
+    CALL sp_update_etl_drug_order(last_update_time);
 
     CALL sp_update_dashboard_table();
 

@@ -6341,11 +6341,11 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
     SELECT "Completed processing hts eligibility  screening";
   END $$
 
--- Populating etl_drug_orders
-DROP PROCEDURE IF EXISTS sp_populate_etl_drug_orders $$
-CREATE PROCEDURE sp_populate_etl_drug_orders()
+-- Populating etl_drug_order
+DROP PROCEDURE IF EXISTS sp_populate_etl_drug_order $$
+CREATE PROCEDURE sp_populate_etl_drug_order()
 BEGIN
-    INSERT INTO kenyaemr_etl.etl_drug_orders (
+    INSERT INTO kenyaemr_etl.etl_drug_order (
         uuid,
         encounter_id,
         order_group_id,
@@ -6424,8 +6424,7 @@ BEGIN
              left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
     where o.voided = 0
       and o.order_type_id = 2
-      and o.order_action = 'NEW'
-      and o.date_stopped is not null
+      and ((o.order_action = 'NEW' and o.date_stopped is not null) or (o.order_reason_non_coded = 'previously existing orders'))
       and e.voided = 0
     group by o.order_group_id,o.patient_id, o.encounter_id;
 
@@ -6672,7 +6671,7 @@ CALL sp_populate_etl_vmmc_client_followup();
 CALL sp_populate_etl_vmmc_medical_history();
 CALL sp_populate_etl_vmmc_post_operation_assessment();
 CALL sp_populate_etl_hts_eligibility_screening();
-CALL sp_populate_etl_drug_orders();
+CALL sp_populate_etl_drug_order();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
