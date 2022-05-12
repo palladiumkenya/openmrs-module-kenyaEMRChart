@@ -93,7 +93,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_medical_history;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_client_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_orders;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_order;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -3018,7 +3018,7 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
 );
 -- create table etl_drug_orders
 
-CREATE TABLE kenyaemr_etl.etl_drug_orders (
+CREATE TABLE kenyaemr_etl.etl_drug_order (
   uuid CHAR(38),
   encounter_id INT(11) NOT NULL PRIMARY KEY,
   order_group_id INT(11),
