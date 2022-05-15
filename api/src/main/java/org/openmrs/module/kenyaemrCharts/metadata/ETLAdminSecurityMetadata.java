@@ -28,10 +28,9 @@ public class ETLAdminSecurityMetadata extends AbstractMetadataBundle{
     public void install() {
 
         install(privilege(_Privilege.APP_ETL_ADMIN, "Able to refresh and/or recreate ETL tables"));
-        install(role(_Role.APPLICATION_ETL_ADMIN, "Can access ETL Admin app", idSet(
-                org.openmrs.module.kenyaemr.metadata.SecurityMetadata._Role.API_PRIVILEGES_VIEW_AND_EDIT
-        ), idSet(
-                _Privilege.APP_ETL_ADMIN
+        install(role(_Role.APPLICATION_ETL_ADMIN, "Can access ETL Admin app",
+                idSet(org.openmrs.module.kenyaemr.metadata.SecurityMetadata._Role.API_PRIVILEGES_VIEW_AND_EDIT),
+                idSet( _Privilege.APP_ETL_ADMIN
         )));
     }
 }
