@@ -69,14 +69,14 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_client_trace;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_contact;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_client_enrollment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_clinical_visit;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_peer_calendar;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_sti_treatment;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_peer_tracking;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_contact;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_client_enrollment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_visit;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_calendar;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
 --DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_kp_treatment_verification;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
@@ -93,6 +93,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_medical_history;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_client_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_order;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -2098,7 +2099,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
   SELECT "Successfully created etl_viral_load table";
 
        -- create table etl_contact
-    create table kenyaemr_etl.etl_kp_contact (
+    create table kenyaemr_etl.etl_contact (
       uuid char(38) ,
       unique_identifier VARCHAR(50),
       client_id INT(11) NOT NULL,
@@ -2136,7 +2137,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
     -- create table etl_client_enrollment
 
-    create table kenyaemr_etl.etl_kp_client_enrollment (
+    create table kenyaemr_etl.etl_client_enrollment (
       uuid char(38) ,
       client_id INT(11) NOT NULL,
       visit_id INT(11) DEFAULT NULL,
@@ -2176,7 +2177,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
 
     -- create table etl_kp_clinical_visit
 
-    create table kenyaemr_etl.etl_kp_clinical_visit (
+    create table kenyaemr_etl.etl_clinical_visit (
       uuid char(38) ,
       client_id INT(11) NOT NULL,
       visit_id INT(11) DEFAULT NULL,
@@ -2304,10 +2305,10 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       index(client_id),
       index(client_id,visit_date)
     );
-    SELECT "Successfully created etl_kp_clinical_visit table";
+    SELECT "Successfully created etl_clinical_visit table";
 
     -- ------------ create table etl_kp_peer_calendar-----------------------
-    CREATE TABLE kenyaemr_etl.etl_kp_peer_calendar (
+    CREATE TABLE kenyaemr_etl.etl_peer_calendar (
       uuid CHAR(38),
       encounter_id INT(11) NOT NULL PRIMARY KEY,
       client_id INT(11) NOT NULL ,
@@ -2346,10 +2347,10 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(client_id, visit_date)
     );
 
-    SELECT "Successfully created etl_kp_peer_calendar table";
+    SELECT "Successfully created etl_peer_calendar table";
 
         -- ------------ create table etl_kp_sti_treatment-----------------------
-    CREATE TABLE kenyaemr_etl.etl_kp_sti_treatment (
+    CREATE TABLE kenyaemr_etl.etl_sti_treatment (
       uuid CHAR(38),
       encounter_id INT(11) NOT NULL PRIMARY KEY,
       client_id INT(11) NOT NULL ,
@@ -2388,7 +2389,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(given_condoms)
     );
 
-  CREATE TABLE kenyaemr_etl.etl_kp_peer_tracking (
+  CREATE TABLE kenyaemr_etl.etl_peer_tracking (
       uuid char(38),
       provider INT(11),
       client_id INT(11) NOT NULL ,
@@ -2420,7 +2421,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       INDEX(tracing_type)
     );
 
-    CREATE TABLE kenyaemr_etl.etl_kp_treatment_verification (
+    CREATE TABLE kenyaemr_etl.etl_treatment_verification (
       uuid char(38),
       provider INT(11),
       client_id INT(11) NOT NULL ,
@@ -3015,6 +3016,47 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
   index(population_type),
   index(eligible_for_test)
 );
+-- create table etl_drug_orders
+
+CREATE TABLE kenyaemr_etl.etl_drug_order (
+  uuid CHAR(38),
+  encounter_id INT(11) NOT NULL PRIMARY KEY,
+  order_group_id INT(11),
+  patient_id INT(11) NOT NULL ,
+  location_id INT(11) DEFAULT NULL,
+  visit_date DATE,
+  visit_id INT(11),
+  provider INT(11),
+  order_id INT(11),
+  urgency VARCHAR(50),
+  drug_concept_id VARCHAR(50),
+  drug_short_name VARCHAR(50),
+  drug_name VARCHAR(255),
+  frequency VARCHAR(50),
+  enc_name VARCHAR(100),
+  dose VARCHAR(50),
+  dose_units VARCHAR(100),
+  quantity VARCHAR(50),
+  quantity_units VARCHAR(100),
+  dosing_instructions VARCHAR(100),
+  duration INT(11),
+  duration_units VARCHAR(10),
+  instructions VARCHAR(255),
+  route VARCHAR(255),
+  voided INT(11),
+  date_voided DATE,
+  date_created DATETIME NOT NULL,
+  date_last_modified DATETIME,
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  CONSTRAINT unique_uuid UNIQUE(uuid),
+  INDEX(visit_date),
+  INDEX(encounter_id),
+  INDEX(patient_id),
+  INDEX(patient_id, visit_date),
+  INDEX(order_id)
+);
+
+SELECT "Successfully created etl_drug_orders table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
