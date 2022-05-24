@@ -48,7 +48,7 @@
                 })
                 .error(function(xhr, status, err) {
                     jq("#showStatus").hide();
-                    jq("#msg").text("There was an error refreshing ETL tables");
+                    jq("#msg").text("There was an error refreshing ETL tables. (" + err + ")");
                     jq("#refresh").prop("disabled", false);
                     jq("#recreate").prop("disabled", false);
 

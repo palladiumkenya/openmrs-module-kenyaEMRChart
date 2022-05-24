@@ -1,4 +1,4 @@
-DROP PROCEDURE IF EXISTS create_datatools_tables$$
+DROP PROCEDURE IF EXISTS create_datatools_tables $$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
 DECLARE script_id INT(11);
@@ -8,9 +8,10 @@ INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('Keny
 SET script_id = LAST_INSERT_ID();
 
 drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools;
+create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
--- populate patient_hiv_enrollment table
+-- -------------------------- creating patient demographics --------------------------------------
+-- populate patient_demographics table
 create table kenyaemr_datatools.patient_demographics as
 select 
 patient_id,
@@ -20,15 +21,25 @@ family_name,
 Gender,
 DOB,
 national_id_no,
+huduma_no,
+passport_no,
+birth_certificate_no,
 unique_patient_no,
+alien_no,
+driving_license_no,
+national_unique_patient_identifier,
 patient_clinic_number,
 Tb_no,
+CPIMS_unique_identifier,
+openmrs_id,
 district_reg_no,
 hei_no,
+cwc_number,
 phone_number,
 birth_place,
 citizenship,
 email_address,
+occupation,
 next_of_kin,
 next_of_kin_relationship,
 marital_status,
@@ -40,12 +51,11 @@ from kenyaemr_etl.etl_patient_demographics;
 
 -- ADD INDICES
 
-ALTER TABLE kenyaemr_datatools.patient_demographics ADD PRIMARY KEY(patient_id); 
-
+ALTER TABLE kenyaemr_datatools.patient_demographics ADD PRIMARY KEY(patient_id);
 ALTER TABLE kenyaemr_datatools.patient_demographics ADD INDEX(Gender);
-ALTER TABLE kenyaemr_datatools.patient_demographics ADD INDEX(DOB);
+SELECT "Successfully created demographics table";
 
--- populate patient_hiv_enrollment table
+-- --------------------------- populate patient_hiv_enrollment table ---------------------------------------------
 create table kenyaemr_datatools.hiv_enrollment as
 select 
 patient_id,
@@ -56,6 +66,7 @@ location_id,
 encounter_id,
 encounter_provider,
 date_created,
+date_last_modified,
 patient_type,
 date_first_enrolled_in_care,
 (case entry_point when 159938 then "HBTC" when 160539 then "VCT Site" when 159937 then "MCH" when 160536 then "IPD-Adult" 
@@ -64,32 +75,61 @@ date_first_enrolled_in_care,
 transfer_in_date,
 facility_transferred_from,
 district_transferred_from,
+(case previous_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as previous_regimen,
 date_started_art_at_transferring_facility,
 date_confirmed_hiv_positive,
 facility_confirmed_hiv_positive,
 (case arv_status when 1 then "Yes" when 0 then "No" else "" end) as arv_status,
+(case ever_on_pmtct when 1065 then "Yes" else "" end) as ever_on_pmtct,
+(case ever_on_pep when 1 then "Yes" else "" end) as ever_on_pep,
+(case ever_on_prep when 1065 then "Yes" else "" end) as ever_on_prep,
+(case ever_on_haart when 1185 then "Yes" else "" end) as ever_on_haart,
 name_of_treatment_supporter,
 (case relationship_of_treatment_supporter when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" 
   when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end) as relationship_of_treatment_supporter,
 treatment_supporter_telephone,
-treatment_supporter_address
+treatment_supporter_address,
+(case in_school when 1 then 'Yes' when 2 then 'No' end) as in_school,
+(case orphan when 1 then 'Yes' when 2 then 'No' end) as orphan,
+date_of_discontinuation,
+(case discontinuation_reason when 159492 then "Transferred Out" when 160034 then "Died" when 5240 then "Lost to Follow" when 819 then "Cannot afford Treatment"
+  when 5622 then "Other" when 1067 then "Unknown" else "" end) as discontinuation_reason,
+voided
 from kenyaemr_etl.etl_hiv_enrollment;
 
 
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(visit_id);
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(date_started_art_at_transferring_facility);
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(arv_status);
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(date_confirmed_hiv_positive);
 ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(entry_point);
-ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(transfer_in_date);
-ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(date_first_enrolled_in_care);
-ALTER TABLE kenyaemr_datatools.hiv_enrollment ADD INDEX(transfer_in_date);
 
+SELECT "Successfully created hiv enrollment table";
 
--- create table hiv_followup
+-- ----------------------------------- create table hiv_followup ----------------------------------------------
 create table kenyaemr_datatools.hiv_followup as
 select 
 patient_id,
@@ -99,7 +139,7 @@ location_id,
 encounter_id,
 encounter_provider,
 date_created,
-(case visit_scheduled when 1246 then "visit_scheduled" else "" end )as visit_scheduled,
+(case visit_scheduled when 1 then "scheduled" when 2 then 'unscheduled' else "" end )as visit_scheduled,
 (case person_present when 978 then "Self (SF)" when 161642 then "Treatment supporter (TS)" when 5622 then "Other" else "" end) as person_present,
 weight,
 systolic_pressure,
@@ -112,16 +152,23 @@ oxygen_saturation,
 muac,
 (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
 (case population_type when 164928 then "General Population" when 164929 then "Key Population" else "" end) as population_type,
-(case key_population_type when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" else "" end) as key_population_type,
-IF(who_stage in (1204,1204),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
+(case key_population_type when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end) as key_population_type,
+IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 (case presenting_complaints when 1 then "Yes" when 0 then "No" else "" end) as presenting_complaints, 
 clinical_notes,
 (case on_anti_tb_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as on_anti_tb_drugs,
 (case on_ipt when 1065 then "Yes" when 1066 then "No" else "" end) as on_ipt,
 (case ever_on_ipt when 1065 then "Yes" when 1066 then "No" else "" end) as ever_on_ipt,
-(case spatum_smear_ordered when 1065 then "Yes" when 1066 then "No" else "" end) as spatum_smear_ordered,
-(case chest_xray_ordered when 1065 then "Yes" when 1066 then "No" else "" end) as chest_xray_ordered,
-(case genexpert_ordered when 1065 then "Yes" when 1066 then "No" else "" end) as genexpert_ordered,
+(case cough when 159799 then "Yes" else "" end) as cough,
+(case fever when 1494 then "Yes" else "" end) as fever,
+(case weight_loss_poor_gain when 832 then "Yes" else "" end) as weight_loss_poor_gain,
+(case night_sweats when 133027 then "Yes" else "" end) as night_sweats,
+(case tb_case_contact when 124068 then "Yes" else "" end) as tb_case_contact,
+(case lethargy when 116334 then "Yes"  else "" end) as lethargy,
+ screened_for_tb,
+(case spatum_smear_ordered when 307 then "Yes" when 1066 then "No" else "" end) as spatum_smear_ordered,
+(case chest_xray_ordered when 12 then "Yes" when 1066 then "No" else "" end) as chest_xray_ordered,
+(case genexpert_ordered when 162202 then "Yes" when 1066 then "No" else "" end) as genexpert_ordered,
 (case spatum_smear_result when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as spatum_smear_result,
 (case chest_xray_result when 1115 then "NORMAL" when 152526 then "ABNORMAL" else "" end) as chest_xray_result,
 (case genexpert_result when 664 then "NEGATIVE" when 162203 then "Mycobacterium tuberculosis detected with rifampin resistance" when 162204 then "Mycobacterium tuberculosis detected without rifampin resistance" 
@@ -134,12 +181,15 @@ clinical_notes,
 (case has_chronic_illnesses_cormobidities when 1065 then "Yes" when 1066 then "No" else "" end) as has_chronic_illnesses_cormobidities,
 (case has_adverse_drug_reaction when 1 then "Yes" when 0 then "No" else "" end) as has_adverse_drug_reaction,
 (case pregnancy_status when 1065 then "Yes" when 1066 then "No" else "" end) as pregnancy_status,
+(case breastfeeding when 1065 then "Yes" when 1066 then "No" else "" end) as breastfeeding,
 (case wants_pregnancy when 1065 then "Yes" when 1066 then "No" else "" end) as wants_pregnancy,
 (case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)" 
  when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
 anc_number,
 expected_delivery_date,
+(case ever_had_menses when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" end) as ever_had_menses,
 last_menstrual_period,
+(case menopausal when 113928 then "Yes" end) as menopausal,
 gravida,
 parity,
 full_term_pregnancies,
@@ -151,6 +201,19 @@ when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectom
 (case reason_not_using_family_planning when 160572 then "Thinks can't get pregnant" when 160573 then "Not sexually active now" when 5622 then "Other" else "" end) as reason_not_using_family_planning,
 (case tb_status when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done"  else "" end) as tb_status,
 tb_treatment_no,
+general_examination,
+(case system_examination when 1115 then 'Normal' when 1116 then 'Abnormal' end) as system_examination,
+(case skin_findings when 150555 then 'Abscess' when 125201 then 'Swelling/Growth' when 135591 then 'Hair Loss' when 136455 then 'Itching' when 507 then 'Kaposi Sarcoma' when 1249 then 'Skin eruptions/Rashes' when 5244 then 'Oral sores' end) as skin_findings,
+(case eyes_findings when 123074 then 'Visual Disturbance' when 140940 then 'Excessive tearing' when 131040 then 'Eye pain' when 127777 then 'Eye redness' when 140827 then 'Light sensitive' when 139100 then 'Itchy eyes' end) as eyes_findings,
+(case ent_findings when 148517 then 'Apnea' when 139075 then 'Hearing disorder' when 119558 then 'Dental caries' when 118536 then 'Erythema' when 106 then 'Frequent colds' when 147230 then 'Gingival bleeding' when 135841 then 'Hairy cell leukoplakia' when 117698
+then 'Hearing loss' when 138554 then 'Hoarseness' when 507 then 'Kaposi Sarcoma' when 152228 then 'Masses' when 128055 then 'Nasal discharge' when 133499 then 'Nosebleed' when 160285 then 'Pain' when 110099 then 'Post nasal discharge' when 126423 then 'Sinus problems' when 126318 then 'Snoring' when 158843 then 'Sore throat' when 5244 then 'Oral sores' when 5334 then 'Thrush' when 123588 then 'Tinnitus'
+when 124601 then 'Toothache' when 123919 then 'Ulcers' when 111525 then 'Vertigo' end) as ent_findings,
+(case chest_findings when 146893 then 'Bronchial breathing' when 127640 then 'Crackles' when 145712 then 'Dullness' when 164440 then 'Reduced breathing' when 127639 then 'Respiratory distress' when 5209 then 'Wheezing' end) as chest_findings,
+(case cvs_findings when 140147 then 'Elevated blood pressure' when 136522 then 'Irregular heartbeat' when 562 then 'Cardiac murmur' when 130560 then 'Cardiac rub' end) as cvs_findings,
+(case abdomen_findings when 150915 then 'Abdominal distension' when 5008 then 'Hepatomegaly' when 5103 then 'Abdominal mass' when 5009 then 'Splenomegaly' when 5105 then 'Abdominal tenderness' end) as abdomen_findings,
+(case cns_findings when 118872 then 'Altered sensations' when 1836 then 'Bulging fontenelle' when 150817 then 'Abnormal reflexes' when 120345 then 'Confusion' when 157498 then 'Limb weakness' when 112721 then 'Stiff neck' when 136282 then 'Kernicterus' end) as cns_findings,
+(case genitourinary_findings when 147241 then 'Bleeding' when 154311 then 'Rectal discharge' when 123529 then 'Urethral discharge' when 123396 then 'Vaginal discharge' when 124087 then 'Ulceration' end) as genitourinary_findings,
+(case prophylaxis_given when 105281 then 'Cotrimoxazole' when 74250 then 'Dapsone' when 1107 then 'None' end) as prophylaxis_given,
 (case ctx_adherence when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end) as ctx_adherence,
 (case ctx_dispensed when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as ctx_dispensed,
 (case dapsone_adherence when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end) as dapsone_adherence,
@@ -166,13 +229,16 @@ poor_arv_adherence_reason_other,
 (case pwp_disclosure when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_disclosure,
 (case pwp_partner_tested when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_partner_tested,
 (case condom_provided when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as condom_provided,
+(case substance_abuse_screening when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as substance_abuse_screening,
 (case screened_for_sti when 703 then "POSITIVE" when 664 then "NEGATIVE" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as screened_for_sti,
 (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
 (case sti_partner_notification when 1065 then "Yes" when 1066 then "No" else "" end) as sti_partner_notification,
 (case at_risk_population when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" else "" end) as at_risk_population,
 (case system_review_finding when 1115 then "NORMAL" when 1116 then "ABNORMAL" else "" end) as system_review_finding,
 next_appointment_date,
+refill_date,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
+(case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
 when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care
 from kenyaemr_etl.etl_patient_hiv_followup;
@@ -180,29 +246,19 @@ from kenyaemr_etl.etl_patient_hiv_followup;
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(encounter_id);
--- ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(patient_id,visit_date);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(who_stage);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(pregnancy_status);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(pregnancy_outcome);
+ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(breastfeeding);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(family_planning_status);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(family_planning_method);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(tb_status);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(condom_provided);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ctx_dispensed);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(inh_dispensed);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(at_risk_population);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(population_type);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(key_population_type);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_anti_tb_drugs);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(on_ipt);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(ever_on_ipt);
+ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(stability);
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(differentiated_care);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,patient_id);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,condom_provided);
-ALTER TABLE kenyaemr_datatools.hiv_followup ADD INDEX(visit_date,family_planning_method);
 
--- create table laboratory_extract
+SELECT "Successfully created hiv followup table";
+
+-- -------------------------------- create table laboratory_extract ------------------------------------------
 create table kenyaemr_datatools.laboratory_extract as
 select 
 uuid,
@@ -211,8 +267,16 @@ patient_id,
 location_id,
 visit_date,
 visit_id,
-(case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then " 	SERUM GLUTAMIC-PYRUVIC TRANSAMINASE (ALT)" when 790 then "Serum creatinine (umol/L)"  
-  when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,   
+(case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
+  when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,
+urgency,
+(case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
+    when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
+    when 161236 then 'Routine' when 162080 then 'Baseline VL (for infants diagnosed through EID)' when 162081 then 'Repeat' when 163523 then 'Clinical failure'
+    when 160032 then 'Confirmation of persistent low level Viremia (PLLV)' when 1040 then 'Initial PCR (6week or first contact)' when 1326 then '2nd PCR (6 months)' when 164860 then '3rd PCR (12months)'
+    when 162082 then 'Confirmatory PCR and Baseline VL' when 164460 then 'Ab test 6 weeks after cessation of breastfeeding'
+    when 164860 then 'Ab test at 18 months (1.5 years)'
+    else '' end) as order_reason,
 if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
 if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
 if(lab_test=302, (case test_result when 1115 then "Normal" when 1116 then "Abnormal" when 1067 then "Unknown" end), 
@@ -226,9 +290,10 @@ from kenyaemr_etl.etl_laboratory_extract;
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(lab_test);
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD INDEX(test_result);
+
+SELECT "Successfully created lab extract table";
 
 -- create table pharmacy_extract
 create table kenyaemr_datatools.pharmacy_extract as
@@ -255,10 +320,6 @@ from kenyaemr_etl.etl_pharmacy_extract;
 
 ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD INDEX(encounter_id);
-ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD INDEX(drug_name);
-
 -- create table patient_program_discontinuation
 create table kenyaemr_datatools.patient_program_discontinuation as
 select 
@@ -270,21 +331,51 @@ program_uuid,
 program_name,
 encounter_id,
 (case discontinuation_reason when 159492 then "Transferred Out" when 160034 then "Died" when 5240 then "Lost to Follow" when 819 then "Cannot afford Treatment"  
-  when 5622 then "Other" when 1067 then "Unknown" else "" end) as discontinuation_reason,
+  when 5622 then "Other" when 1067 then "Unknown" when 164349 then "Stopped Treatment" else "" end) as discontinuation_reason,
 date_died,
 transfer_facility,
-transfer_date
+transfer_date,
+(case death_reason when 163324 then "HIV disease resulting in TB"
+                   when 116030 then "HIV disease resulting in cancer"
+                   when 160159 then "HIV disease resulting in other infectious and parasitic diseases"
+                   when 160158 then "Other HIV disease resulting in other diseases or conditions leading to death"
+                   when 145439 then "Other HIV disease resulting in other diseases or conditions leading to death"
+                   when 133478 then "Other natural causes not directly related to HIV"
+                   when 123812 then "Non-natural causes"
+                   when 42917 then "Unknown cause" else "" end) as death_reason,
+(case specific_death_cause
+   when 165609 then "COVID-19 Complications"
+   when 145439 then "Non-communicable diseases such as Diabetes and hypertension"
+   when 156673 then "HIV disease resulting in mycobacterial infection"
+   when 155010 then "HIV disease resulting in Kaposis sarcoma"
+   when 156667 then "HIV disease resulting in Burkitts lymphoma"
+   when 115195 then "HIV disease resulting in other types of non-Hodgkin lymphoma"
+   when 157593 then "HIV disease resulting in other malignant neoplasms of lymphoid and haematopoietic and related tissue"
+   when 156672 then "HIV disease resulting in multiple malignant neoplasms"
+   when 159988 then "HIV disease resulting in other malignant neoplasms"
+   when 5333 then "HIV disease resulting in other bacterial infections"
+   when 116031 then "HIV disease resulting in unspecified malignant neoplasms"
+   when 123122 then "HIV disease resulting in other viral infections"
+   when 156669 then "HIV disease resulting in cytomegaloviral disease"
+   when 156668 then "HIV disease resulting in candidiasis"
+   when 5350 then "HIV disease resulting in other mycoses"
+   when 882 then "HIV disease resulting in Pneumocystis jirovecii pneumonia - HIV disease resulting in Pneumocystis carinii pneumonia"
+   when 156671 then "HIV disease resulting in multiple infections"
+   when 160159 then "HIV disease resulting in other infectious and parasitic diseases"
+   when 171 then "HIV disease resulting in unspecified infectious or parasitic disease - HIV disease resulting in infection NOS"
+   when 156670 then "HIV disease resulting in other specified diseases including encephalopathy or lymphoid interstitial pneumonitis or wasting syndrome and others"
+   when 160160 then "HIV disease resulting in other conditions including acute HIV infection syndrome or persistent generalized lymphadenopathy or hematological and immunological abnormalities and others"
+   when 161548 then "HIV disease resulting in Unspecified HIV disease"
+ else "" end) as specific_death_cause,
+natural_causes,
+non_natural_cause
 from kenyaemr_etl.etl_patient_program_discontinuation;
 
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(visit_date,program_name);
-ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(visit_date,patient_id);
-ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(discontinuation_reason);
-ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(date_died);
-ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfer_date);
+SELECT "Successfully created pharmacy extract table";
 
   -- create table mch_enrollment
   create table kenyaemr_datatools.mch_enrollment as
@@ -295,6 +386,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       visit_date,
       location_id,
       encounter_id,
+      (case service_type when 1622 then 'ANC' when 164835 then 'Delivery' when 1623 then 'PNC' else '' end)as service_type,
       anc_number,
       first_anc_visit_date,
       gravida,
@@ -330,15 +422,8 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
     from kenyaemr_etl.etl_mch_enrollment;
 
   ALTER TABLE kenyaemr_datatools.mch_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
   ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(tb_screening);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_status);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(hiv_test_date);
-  ALTER TABLE kenyaemr_datatools.mch_enrollment ADD INDEX(partner_hiv_status);
-
-  SELECT "Successfully created mch_enrollment table";
+  SELECT "Successfully created mch enrollment table";
 
   -- create table mch_antenatal_visit
   create table kenyaemr_datatools.mch_antenatal_visit as
@@ -373,6 +458,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case fetal_movement when 162090 then "Increased fetal movements" when 113377 then "Decreased fetal movements" when 1452 then "No fetal movements" when 162108 then "Fetal movements present" else "" end) as fetal_movement,
       (case who_stage when 1204 then "WHO Stage1" when 1205 then "WHO Stage2" when 1206 then "WHO Stage3" when 1207 then "WHO Stage4" else "" end) as who_stage,
       cd4,
+      (case vl_sample_taken when 856 then 'Yes' when 1066 then 'No' end) as vl_sample_taken,
       viral_load,
       (case ldl when 1302 then "LDL"  else "" end) as ldl,
       (case arv_status when 1148 then "ARV Prophylaxis" when 1149 then "HAART" when 1175 then "NA" else "" end) as arv_status,
@@ -381,6 +467,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
+      date_given_haart,
       (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
       (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
       TTT,
@@ -410,6 +497,14 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case cacx_screening_method when 885 then "PAP Smear" when 162816 then "VIA" when 5622 then "Other" else "" end) as cacx_screening_method,
       (case has_other_illnes  when 1065 then "Yes" when 1066 then "No" else "" end) as has_other_illnes,
       (case counselled  when 1065 then "Yes" when 1066 then "No" else "" end) as counselled,
+      (case counselled_on_birth_plans when 159758 then 'Yes' end) as counselled_on_birth_plans,
+      (case counselled_on_danger_signs when 159857 then 'Yes' end) as counselled_on_danger_signs,
+      (case counselled_on_family_planning when 156277 then 'Yes' end) as counselled_on_family_planning,
+      (case counselled_on_hiv when 1914 then 'Yes' end) as counselled_on_hiv,
+      (case counselled_on_supplimental_feeding when 159854 then 'Yes' end) as counselled_on_supplimental_feeding,
+      (case counselled_on_breast_care when 159856 then 'Yes' end) as counselled_on_breast_care,
+      (case counselled_on_infant_feeding when 161651 then 'Yes' end) as counselled_on_infant_feeding,
+      (case counselled_on_treated_nets when 1381 then 'Yes' end) as counselled_on_treated_nets,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
       next_appointment_date,
@@ -418,19 +513,10 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
     from kenyaemr_etl.etl_mch_antenatal_visit;
 
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
   ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(who_stage);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(arv_status);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(final_test_result);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(tb_screening);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(syphilis_test_status);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(cacx_screening);
-  ALTER TABLE kenyaemr_datatools.mch_antenatal_visit ADD INDEX(next_appointment_date);
+  SELECT "Successfully created mch antenatal visit table";
 
-  SELECT "Successfully created mch_antenatal_visit table";
-  -- create table mch_delivery table
+-- create table mch_delivery table
   create table kenyaemr_datatools.mch_delivery as
     select
       patient_id,
@@ -449,6 +535,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       date_of_delivery,
       (case blood_loss when 1499 then "Moderate" when 1107 then "None" when 1498 then "Mild" when 1500 then "Severe" else "" end) as blood_loss,
       (case condition_of_mother when 160429 then "Alive" when 134612 then "Dead" else "" end) as condition_of_mother,
+      (case delivery_outcome when 159913 then 'Single' when 159914 then 'Twins' when 159915 then 'Triplets' end) as delivery_outcome,
       apgar_score_1min,
       apgar_score_5min,
       apgar_score_10min,
@@ -490,14 +577,10 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
     from kenyaemr_etl.etl_mchs_delivery;
 
   ALTER TABLE kenyaemr_datatools.mch_delivery ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
   ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(final_test_result);
-  ALTER TABLE kenyaemr_datatools.mch_delivery ADD INDEX(baby_sex);
+  SELECT "Successfully created mchs delivery table";
 
-  SELECT "Successfully created mchs_delivery table";
-  -- create table mch_discharge table
+-- create table mch_discharge table
   create table kenyaemr_datatools.mch_discharge as
     select
       patient_id,
@@ -519,13 +602,8 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       clinical_notes
 
     from kenyaemr_etl.etl_mchs_discharge;
-
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
   ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(baby_status);
-  ALTER TABLE kenyaemr_datatools.mch_discharge ADD INDEX(discharge_date);
 
   SELECT "Successfully created mch_discharge table";
 
@@ -544,6 +622,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       delivery_date,
       (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" else "" end) as mode_of_delivery,
       (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
+      (case delivery_outcome when 159913 then 'Single' when 159914 then 'Twins' when 159915 then 'Triplets' end) as delivery_outcome,
       temperature,
       pulse_rate,
       systolic_bp,
@@ -563,6 +642,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
        when 162119 then "On exam, uterine fundus 38 weeks-term size" when 123427 then "Uterus Involuted"  else "" end) as gravid_uterus,
       (case episiotomy when 159842 then "repaired, episiotomy wound" when 159843 then "healed, episiotomy wound" when 159841 then "gap, episiotomy wound" when 113919 then "Postoperative Wound Infection" else "" end) as episiotomy,
       (case lochia when 159845 then "lochia excessive" when 159846 then "lochia foul smelling" when 159721 then "Lochia type" else "" end) as lochia,  -- recheck
+      (case counselled_on_infant_feeding when 1065 then 'Yes' when 1066 then 'No' end) as counselled_on_infant_feeding,
       (case pallor when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as pallor,
       (case pph when 1065 then "Present" when 1066 then "Absent" else "" end) as pph,
       (case mother_hiv_status when 1067 then "Unknown" when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as mother_hiv_status,
@@ -597,17 +677,14 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
        when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
-      clinical_notes
+      clinical_notes,
+      appointment_date
 
     from kenyaemr_etl.etl_mch_postnatal_visit;
 
   ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
   ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(mother_hiv_status);
-  ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD INDEX(arv_status);
+SELECT "Successfully created post natal visit table";
 
   -- create table hei_enrollment
   create table kenyaemr_datatools.hei_enrollment as
@@ -624,6 +701,7 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       spd_number,
       birth_weight,
       gestation_at_birth,
+      (case birth_type when 159913 then 'Single' when 159914 then 'Twins' when 159915 then 'Triplets' when 113450 then 'Quadruplets' when 113440 then 'Quintuplets' end) as birth_type,
       date_first_seen,
       birth_notification_number,
       birth_certificate_number,
@@ -659,17 +737,14 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       date_of_birth_registration,
       birth_registration_place,
       permanent_registration_serial,
-      mother_facility_registered
-
+      mother_facility_registered,
+      exit_date,
+     (case exit_reason when 1403 then "HIV Neg age greater 18 months" when 138571 then "Confirmed HIV Positive" when 5240 then "Lost" when 160432 then "Dead" when 159492 then "Transfer Out" else "" end) as exit_reason,
+     hiv_status_at_exit
     from kenyaemr_etl.etl_hei_enrollment;
 
   ALTER TABLE kenyaemr_datatools.hei_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
   ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(transfer_in);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(child_exposed);
-  ALTER TABLE kenyaemr_datatools.hei_enrollment ADD INDEX(referral_source);
   SELECT "Successfully created hei_enrollment";
 
   -- create table hei_follow_up_visit
@@ -684,8 +759,10 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       encounter_id,
       weight,
       height,
+      (case muac when 160909 then "Green" when 160910 then "Yellow" when 127778 then "Red" else "" end) as muac,
       (case primary_caregiver when 970 then "Mother" when 973 then "Guardian" when 972 then "Guardian" when 160639 then "Guardian" when 5622 then "Guardian" else "" end) as primary_caregiver,
       (case infant_feeding when 5526 then "Exclusive Breastfeeding(EBF)" when 1595 then "Exclusive Replacement(ERF)" when 6046 then "Mixed Feeding(MF)" else "" end) as infant_feeding,
+      (case stunted when 164085 then "Yes" when 1115 then "No" else "" end) as stunted,
       (case tb_assessment_outcome when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1661 then "TB Confirmed" when 1662 then "TB Rx" when 1679 then "INH" when 160737 then "TB Screening Not Done" else "" end) as tb_assessment_outcome,
       (case social_smile_milestone when 162056 then "Social Smile" else "" end) as social_smile_milestone,
       (case head_control_milestone when 162057 then "Head Holding/Control" else "" end) as head_control_milestone,
@@ -696,12 +773,14 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case standing_milestone when 162062 then "Standing" else "" end) as standing_milestone,
       (case talking_milestone when 162060 then "Talking" else "" end) as talking_milestone,
       (case review_of_systems_developmental when 1115 then "Normal(N)" when 6022 then "Delayed(D)" when 6025 then "Regressed(R)" else "" end) as review_of_systems_developmental,
+      (case weight_category when 123814 then "Underweight(UW)" when 126598 then "Severely Underweight(SUW)" when 114413 then "Overweight(OW)" when 115115 then "Obese(O)" when 1115 then "Normal(N)" else "" end) as weight_category,
       dna_pcr_sample_date,
       (case dna_pcr_contextual_status when 162081 then "Repeat" when 162083 then "Final test (end of pediatric window)" when 162082 then "Confirmation" when 162080 then "Initial" else "" end) as dna_pcr_contextual_status,
       (case dna_pcr_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as dna_pcr_result,
       (case azt_given when 86663 then "Yes" else "No" end) as azt_given,
       (case nvp_given when 80586 then "Yes" else "No" end) as nvp_given,
       (case ctx_given when 105281 then "Yes" else "No" end) as ctx_given,
+      (case multi_vitamin_given when 461 then "Yes" else "No" end) as multi_vitamin_given,
       (case first_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as first_antibody_result,
       (case final_antibody_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" else "" end) as final_antibody_result,
       (case tetracycline_ointment_given  when 1065 then "Yes" when 1066 then "No" else "" end) as tetracycline_ointment_given,
@@ -711,6 +790,12 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
       (case deworming_drug when 79413 then "Mebendazole" when 70439 then "Albendazole" else "" end) as deworming_drug,
       dosage,
       unit,
+      (case vitaminA_given when 1065 then "Yes" when 1066 then "No" else "" end) as vitaminA_given,
+      (case disability when 1065 then "Yes" when 1066 then "No" else "" end) as disability,
+      (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      (case counselled_on when 1914 then "HIV" when 1380 then "Nutrition" else "" end) as counselled_on,
+     (case mnps_supplementation when 161649 then "Yes" when 1107 then "No" else "" end) as MNPS_Supplementation,
       comments,
       next_appointment_date
     from kenyaemr_etl.etl_hei_follow_up_visit;
@@ -718,7 +803,6 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
   ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(encounter_id);
   ALTER TABLE kenyaemr_datatools.hei_follow_up_visit ADD INDEX(infant_feeding);
 
   SELECT "Successfully created hei_follow_up_visit";
@@ -727,33 +811,40 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   create table kenyaemr_datatools.hei_immunization as
     select
       patient_id,
-      visit_date,
-      encounter_id,
-      date_created,
-      created_by,
-      BCG,
-      OPV_birth,
-      OPV_1,
-      OPV_2,
-      OPV_3,
-      IPV,
-      DPT_Hep_B_Hib_1,
-      DPT_Hep_B_Hib_2,
-      DPT_Hep_B_Hib_3,
-      PCV_10_1,
-      PCV_10_2,
-      PCV_10_3,
-      ROTA_1,
-      ROTA_2,
-      Measles_rubella_1,
-      Measles_rubella_2
-      #(case Yellow_fever when 5864 then "Yes" else "" end) as Yellow_fever,
-      #(case Measles_6_months when 36 then "Yes" else "" end) as Measles_6_months
-
+			visit_date,
+			created_by,
+			date_created,
+			encounter_id,
+			BCG,
+			OPV_birth,
+			OPV_1,
+			OPV_2,
+			OPV_3,
+			IPV,
+			DPT_Hep_B_Hib_1,
+			DPT_Hep_B_Hib_2,
+			DPT_Hep_B_Hib_3,
+			PCV_10_1,
+			PCV_10_2,
+			PCV_10_3,
+			ROTA_1,
+			ROTA_2,
+			Measles_rubella_1,
+			Measles_rubella_2,
+			Yellow_fever,
+			Measles_6_months,
+			VitaminA_6_months,
+			VitaminA_1_yr,
+			VitaminA_1_and_half_yr,
+			VitaminA_2_yr ,
+			VitaminA_2_to_5_yr,
+			fully_immunized
     from kenyaemr_etl.etl_hei_immunization;
 
   ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
   SELECT "Successfully created hei_immunization table";
+
+
   -- create table tb_enrollment
   create table kenyaemr_datatools.tb_enrollment as
     select
@@ -796,11 +887,8 @@ ALTER TABLE kenyaemr_datatools.patient_program_discontinuation ADD INDEX(transfe
   ALTER TABLE kenyaemr_datatools.tb_enrollment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
   ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(visit_date);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(encounter_id);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(disease_classification);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(patient_classification);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(pulmonary_smear_result);
-  ALTER TABLE kenyaemr_datatools.tb_enrollment ADD INDEX(date_first_enrolled_in_tb_care);
+SELECT "Successfully created tb enrollment table";
+
 -- create table tb_follow_up_visit
 create table kenyaemr_datatools.tb_follow_up_visit as
 select 
@@ -834,8 +922,9 @@ from kenyaemr_etl.etl_tb_follow_up_visit;
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(encounter_id);
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(hiv_status);
+SELECT "Successfully created tb followup table";
+
 
 -- create table tb_screening
 create table kenyaemr_datatools.tb_screening as
@@ -852,45 +941,1463 @@ location_id,
 (case fever_for_2wks_or_more when 1494 then "Yes" when 1066 then "No" else "" end) as fever_for_2wks_or_more,
 (case noticeable_weight_loss when 832 then "Yes" when 1066 then "No" else "" end) as noticeable_weight_loss,
 (case night_sweat_for_2wks_or_more when 133027 then "Yes" when 1066 then "No" else "" end) as night_sweat_for_2wks_or_more,
+(case lethargy when 116334 then "Yes"  else "" end) as lethargy,
+(case spatum_smear_ordered when 307 then "Yes" when 1066 then "No" else "" end) as spatum_smear_ordered,
+(case chest_xray_ordered when 12 then "Yes" when 1066 then "No" else "" end) as chest_xray_ordered,
+(case genexpert_ordered when 162202 then "Yes" when 1066 then "No" else "" end) as genexpert_ordered,
+(case spatum_smear_result when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as spatum_smear_result,
+(case chest_xray_result when 1115 then "NORMAL" when 152526 then "ABNORMAL" else "" end) as chest_xray_result,
+(case genexpert_result when 664 then "NEGATIVE" when 162203 then "Mycobacterium tuberculosis detected with rifampin resistance" when 162204 then "Mycobacterium tuberculosis detected without rifampin resistance"
+  when 164104 then "Mycobacterium tuberculosis detected with indeterminate rifampin resistance"  when 163611 then "Invalid" when 1138 then "INDETERMINATE" else "" end) as genexpert_result,
+(case referral when 1065 then "Yes" when 1066 then "No" else "" end) as referral,
+(case clinical_tb_diagnosis when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as clinical_tb_diagnosis,
+(case contact_invitation when 1065 then "Yes" when 1066 then "No" else "" end) as contact_invitation,
+(case evaluated_for_ipt when 1065 then "Yes" when 1066 then "No" else "" end) as evaluated_for_ipt,
 (case resulting_tb_status when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done" else "" end) as resulting_tb_status,
 tb_treatment_start_date,
-notes
+(case tb_prophylaxis when 105281 then 'Cotrimoxazole' when 74250 then 'Dapsone' when 1107 then 'None' end) as tb_prophylaxis,
+notes,
+(case person_present when 978 then 'Yes' else 'No' end) as person_present
 from kenyaemr_etl.etl_tb_screening;
 
 ALTER TABLE kenyaemr_datatools.tb_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
 ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(visit_date);
-ALTER TABLE kenyaemr_datatools.tb_screening ADD INDEX(encounter_id);
+SELECT "Successfully created tb screening table";
 
-create table kenyaemr_datatools.hts_test as select * from kenyaemr_etl.etl_hts_test;
-create table kenyaemr_datatools.hts_referral_and_linkage as select * from kenyaemr_etl.etl_hts_referral_and_linkage;
+ -- Table Datatools drug event
+create table kenyaemr_datatools.drug_event as
+    select
+      uuid,
+      patient_id,
+      date_started,
+      visit_date,
+      provider,
+      encounter_id,
+      program,
+      regimen,
+      regimen_name,
+      regimen_line,
+      discontinued,
+      (case regimen_stopped when 1260 then 'Yes' else 'No' end) as regimen_stopped,
+      regimen_discontinued,
+      date_discontinued,
+      (case reason_discontinued when 102 then "Drug toxicity" when 160567 then "New diagnosis of Tuberculosis"  when 160569 then "Virologic failure"
+       when 159598 then "Non-compliance with treatment or therapy" when 1754 then "Medications unavailable"
+       when 1434 then "Currently pregnant"  when 1253 then "Completed PMTCT"  when 843 then "Regimen failure"
+       when 5622 then "Other" when 160559 then "Risk of pregnancy" when 160561 then "New drug available" else "" end) as reason_discontinued,
+      reason_discontinued_other
+    from kenyaemr_etl.etl_drug_event;
 
-ALTER TABLE kenyaemr_datatools.hts_test ADD INDEX(visit_date);
+ALTER TABLE kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
+SELECT "Successfully created drug event table";
+
+
+ -- create table art_preparation
+     create table kenyaemr_datatools.art_preparation as
+      select
+     uuid,
+     patient_id,
+     visit_id,
+     visit_date,
+     location_id,
+     encounter_id,
+     provider,
+     understands_hiv_art_benefits,
+     screened_negative_substance_abuse,
+     screened_negative_psychiatric_illness,
+     HIV_status_disclosure,
+     trained_drug_admin,
+     caregiver_committed,
+     adherance_barriers_identified,
+     caregiver_location_contacts_known,
+     ready_to_start_art,
+     identified_drug_time,
+     treatment_supporter_engaged,
+     support_grp_meeting_awareness,
+     enrolled_in_reminder_system
+    from kenyaemr_etl.etl_ART_preparation;
+
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(visit_date);
+    ALTER TABLE kenyaemr_datatools.art_preparation ADD INDEX(ready_to_start_art);
+
+SELECT "Successfully created art preparation table";
+
+  -- create table enhanced_adherence
+  create table kenyaemr_datatools.enhanced_adherence as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      provider,
+      session_number,
+      first_session_date,
+      pill_count,
+      arv_adherence,
+      has_vl_results,
+      vl_results_suppressed,
+      vl_results_feeling,
+      cause_of_high_vl,
+      way_forward,
+      patient_hiv_knowledge,
+      patient_drugs_uptake,
+      patient_drugs_reminder_tools,
+      patient_drugs_uptake_during_travels,
+      patient_drugs_side_effects_response,
+      patient_drugs_uptake_most_difficult_times,
+      patient_drugs_daily_uptake_feeling,
+      patient_ambitions,
+      patient_has_people_to_talk,
+      patient_enlisting_social_support,
+      patient_income_sources,
+      patient_challenges_reaching_clinic,
+      patient_worried_of_accidental_disclosure,
+      patient_treated_differently,
+      stigma_hinders_adherence,
+      patient_tried_faith_healing,
+      patient_adherence_improved,
+      patient_doses_missed,
+      review_and_barriers_to_adherence,
+      other_referrals,
+      appointments_honoured,
+      referral_experience,
+      home_visit_benefit,
+      adherence_plan,
+      next_appointment_date
+    from kenyaemr_etl.etl_enhanced_adherence;
+  ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.enhanced_adherence ADD INDEX(visit_date);
+
+SELECT "Successfully created enhanced adherence table";
+
+
+  -- create table triage
+  create table kenyaemr_datatools.triage as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+      visit_reason,
+      weight,
+      height,
+      systolic_pressure,
+      diastolic_pressure,
+      temperature,
+      pulse_rate,
+      respiratory_rate,
+      oxygen_saturation,
+      muac,
+      (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
+      last_menstrual_period,
+      voided
+    from kenyaemr_etl.etl_patient_triage;
+
+  ALTER TABLE kenyaemr_datatools.triage ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.triage ADD INDEX(visit_date);
+  SELECT "Successfully created triage table";
+
+
+  -- create table datatools_patient_contact
+  create table kenyaemr_datatools.patient_contact as
+    select
+        id,
+        uuid,
+        date_created,
+        first_name,
+        middle_name,
+        last_name,
+        sex,
+        birth_date,
+        physical_address,
+        phone_contact,
+        patient_related_to,
+        patient_id,
+        (case relationship_type when 970 then "Mother" when 971 then "Father" when 1528 then "Child" when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 162221 then "Co-wife" when 163565 then "Sexual partner" when 157351 then "Injectable drug user" when 166606 then "SNS" when 5622 then "Other" else "" end) as relationship_type,
+        appointment_date,
+        baseline_hiv_status,
+        ipv_outcome,
+       (case marital_status when 1057 then "Single" when 5555 then "Married Monogamous" when 159715 then "Married Polygamous" when 1058 then "Divorced" when 1059 then "Widowed" else "" end) as marital_status,
+       (case living_with_patient when 1065 then "Yes" when 1066 then "No" when 162570 then "Declined to Answer" else "" end) as living_with_patient,
+       (case pns_approach when 162284 then "Dual referral" when 160551 then "Passive referral" when 161642 then "Contract referral" when 163096 then "Provider referral"  else "" end) as pns_approach,
+        contact_listing_decline_reason,
+       (case consented_contact_listing when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as consented_contact_listing,
+        voided
+    from kenyaemr_etl.etl_patient_contact;
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD PRIMARY KEY(id);
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD FOREIGN KEY (patient_related_to) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD INDEX(date_created);
+  SELECT "Successfully created patient_contact table";
+
+    -- create table datatools_client_trace
+  create table kenyaemr_datatools.client_trace as
+    select
+      id,
+      uuid,
+      date_created,
+      encounter_date,
+      client_id,
+      contact_type,
+      status,
+      unique_patient_no,
+      facility_linked_to,
+      health_worker_handed_to,
+      remarks,
+      appointment_date,
+      voided
+    from kenyaemr_etl.etl_client_trace;
+  ALTER TABLE kenyaemr_datatools.client_trace ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_contact(id);
+  ALTER TABLE kenyaemr_datatools.client_trace ADD INDEX(date_created);
+  SELECT "Successfully created client_trace table";
+
+SELECT "creating hts_test table";
+create table kenyaemr_datatools.hts_test
+  as select
+  t.patient_id,
+  t.visit_id,
+  t.encounter_id,
+  t.encounter_uuid,
+  t.encounter_location,
+  t.creator,
+  t.date_created,
+  t.date_last_modified,
+  t.visit_date,
+  t.test_type,
+  t.population_type,
+  t.key_population_type,
+  t.ever_tested_for_hiv,
+  t.months_since_last_test,
+  t.patient_disabled,
+  t.disability_type,
+  t.patient_consented,
+  t.client_tested_as,
+  t.setting,
+  t.approach,
+(case  t.test_strategy
+when 164163 then "HP: Hospital Patient Testing"
+when 164953 then "NP: HTS for non-patients"
+when 164954 then "VI:Integrated VCT Center"
+when 164955 then "VS:Stand Alone VCT Center"
+when 159938 then "HB:Home Based Testing"
+when 159939 then "MO: Mobile Outreach HTS"
+when 161557 then "Index testing"
+when 166606 then "SNS - Social Networks"
+when 5622 then "O:Other"
+else ""  end ) as test_strategy,
+(case  t.hts_entry_point
+when 5485 then "In Patient Department(IPD)"
+when 160542 then "Out Patient Department(OPD)"
+when 162181 then "Peadiatric Clinic"
+when 160552 then "Nutrition Clinic"
+when 160538 then "PMTCT ANC"
+when 160456 then "PMTCT MAT"
+when 1623 then "PMTCT PNC"
+when 160541 then "TB"
+when 162050 then "CCC"
+when 159940 then "VCT"
+when 159938 then "Home Based Testing"
+when 159939 then "Mobile Outreach"
+when 162223 then "VMMC"
+when 160546 then "STI Clinic"
+when 160522 then "Emergency"
+when 163096 then "Community Testing"
+when 5622 then "Other"
+else ""  end ) as hts_entry_point,
+  t.test_1_kit_name,
+  t.test_1_kit_lot_no,
+  t.test_1_kit_expiry,
+  t.test_1_result,
+  t.test_2_kit_name,
+  t.test_2_kit_lot_no,
+  t.test_2_kit_expiry,
+  t.test_2_result,
+  t.final_test_result,
+  t.patient_given_result,
+  t.couple_discordant,
+  t.referral_for,
+  t.referral_facility,
+  t.other_referral_facility,
+  t.neg_referral_for,
+  t.neg_referral_specify,
+  t.tb_screening,
+  t.patient_had_hiv_self_test ,
+  t.remarks,
+  t.voided
+from kenyaemr_etl.etl_hts_test t
+inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = t.patient_id and d.voided=0;
 ALTER TABLE kenyaemr_datatools.hts_test ADD FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-ALTER TABLE kenyaemr_datatools.hts_test ADD index(visit_date);
+ALTER TABLE kenyaemr_datatools.hts_test ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(population_type);
 ALTER TABLE kenyaemr_datatools.hts_test ADD index(final_test_result);
-ALTER TABLE kenyaemr_datatools.hts_test ADD index(test_1_kit_name);
-ALTER TABLE kenyaemr_datatools.hts_test ADD index(test_2_kit_name);
 
+SELECT "Successfully created hts_test table";
+
+create table kenyaemr_datatools.hts_referral_and_linkage
+  as select l.* from kenyaemr_etl.etl_hts_referral_and_linkage l inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = l.patient_id and d.voided=0;
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(visit_date);
-ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_type);
-ALTER TABLE kenyaemr_datatools.hts_referral_and_linkage ADD index(tracing_status);
+
+SELECT "Successfully created referral_and_linkage table";
+
+create table kenyaemr_datatools.hts_referral
+  as select r.* from kenyaemr_etl.etl_hts_referral r inner join kenyaemr_etl.etl_patient_demographics d on d.patient_id = r.patient_id and d.voided=0;
 
 create table kenyaemr_datatools.current_in_care as select * from kenyaemr_etl.etl_current_in_care;
 ALTER TABLE kenyaemr_datatools.current_in_care add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
-create table kenyaemr_datatools.drug_event as select * from kenyaemr_etl.etl_drug_event;
-alter table kenyaemr_datatools.drug_event add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
-create table kenyaemr_datatools.ipt_screening as select * from kenyaemr_etl.etl_ipt_screening;
-alter table kenyaemr_datatools.ipt_screening add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-
 create table kenyaemr_datatools.ipt_followup as select * from kenyaemr_etl.etl_ipt_follow_up;
 alter table kenyaemr_datatools.ipt_followup add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
+CREATE TABLE  kenyaemr_datatools.default_facility_info as SELECT * from kenyaemr_etl.etl_default_facility_info;
+CREATE TABLE kenyaemr_datatools.person_address as SELECT * from kenyaemr_etl.etl_person_address;
+
+
+  -- create table alcohol_drug_abuse_screening
+create table kenyaemr_datatools.alcohol_drug_abuse_screening as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+(case alcohol_drinking_frequency when 1090 then 'Never' when 1091 then 'Monthly or less' when 1092 then '2 to 4 times a month' when 1093 then '2 to 3 times a week' when 1094 then '4 or More Times a Week' end) as alcohol_drinking_frequency,
+(case smoking_frequency when 1090 then 'Never smoked' when 156358 then 'Former cigarette smoker' when 163197 then 'Current some day smoker' when 163196 then 'Current light tobacco smoker'
+when 163195 then 'Current heavy tobacco smoker' when 163200 then 'Unknown if ever smoked' end) as smoking_frequency,
+(case drugs_use_frequency when 1090 then 'Never' when 1091 then 'Monthly or less' when 1092 then '2 to 4 times a month' when 1093 then '2 to 3 times a week' when 1094 then '4 or More Times a Week' end) as drugs_use_frequency,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_alcohol_drug_abuse_screening;
+
+ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.alcohol_drug_abuse_screening ADD INDEX(visit_date);
+SELECT "Successfully created alcohol_drug_abuse_screening table";
+
+/*Form collecting data has been discontinued
+create table kenyaemr_datatools.gender_based_violence as select * from kenyaemr_etl.etl_gender_based_violence;
+alter table kenyaemr_datatools.gender_based_violence add FOREIGN KEY(client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.gender_based_violence ADD INDEX(visit_date);*/
+
+-- create table gbv_screening
+create table kenyaemr_datatools.gbv_screening as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+(case ipv when 1065 then 'Yes' when 1066 then 'No' end) as ipv,
+(case physical_ipv when 158358 then 'Yes' when 1066 then 'No' end) as physical_ipv,
+(case emotional_ipv when 118688 then 'Yes' when 1066 then 'No' end) as emotional_ipv,
+(case sexual_ipv when 152370 then 'Yes' when 1066 then 'No' end) as sexual_ipv,
+(case ipv_relationship when 1582 then 'Yes' when 1066 then 'No' end) as ipv_relationship,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_gbv_screening;
+
+ALTER TABLE kenyaemr_datatools.gbv_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.gbv_screening ADD INDEX(visit_date);
+SELECT "Successfully created gbv_screening table";
+
+-- create table gbv_screening
+create table kenyaemr_datatools.gbv_screening_action as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+obs_id,
+location_id,
+(case help_provider when 1589 THEN "Hospital" when 165284 then "Police" when 165037 then "Peer Educator" when 1560 then "Family" when 165294 then "Peers" when 5618 then "Friends"
+                          when 165290 then "Religious Leader" when 165350 then "Dice" when 162690 then "Chief" when 5622 then "Other" else "" end) as help_provider,
+(case action_taken when 1066 then "No action taken"
+        when 165070 then "Counselling"
+        when 160570 then "Emergency pills"
+        when 1356 then "Hiv testing"
+        when 130719 then "Investigation done"
+        when 135914 then "Matter presented to court"
+        when 165228 then "P3 form issued"
+        when 165171 then "PEP given"
+        when 165192 then "Perpetrator arrested"
+        when 127910 then "Post rape care"
+        when 165203 then "PrEP given"
+        when 5618 then "Reconciliation"
+        when 165093 then "Referred back to the family"
+        when 165274 then "Referred to hospital"
+        when 165180 then "Statement taken"
+        when 165200 then "STI Prophylaxis"
+        when 165184 then "Trauma counselling done"
+        when 1185 then "Treatment"
+        when 5622 then "Other"
+        else "" end) as action_taken,
+(case reason_for_not_reporting when 1067 then "Did not know where to report"
+       when 1811 then "Distance"
+       when 140923 then "Exhaustion/Lack of energy"
+       when 163473 then "Fear shame"
+       when 159418 then "Lack of faith in system"
+       when 162951 then "Lack of knowledge"
+       when 664 then "Negative attitude of the person reported to"
+       when 143100 then "Not allowed culturally"
+       when 165161 then "Perpetrator above the law"
+       when 163475 then "Self blame"
+       else "" end) as reason_for_not_reporting,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_gbv_screening_action;
+
+ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD INDEX(visit_date);
+SELECT "Successfully created gbv_screening_action table";
+
+
+-- create table depression_screening
+create table kenyaemr_datatools.depression_screening as
+select
+patient_id,
+uuid,
+provider,
+visit_id,
+visit_date,
+encounter_id,
+location_id,
+(case PHQ_9_rating when 1115 then 'Depression unlikely' when 157790 then 'Mild depression' when 134011 then 'Moderate depression' when 134017 then 'Moderate severe depression' when 126627 then 'Severe depression' end) as PHQ_9_rating,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_depression_screening;
+
+ALTER TABLE kenyaemr_datatools.depression_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.depression_screening ADD INDEX(visit_date);
+SELECT "Successfully created depression_screening table";
+
+-- create table adverse_events
+create table kenyaemr_datatools.adverse_events as
+select
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+obs_id,
+(case cause when 70056 then 'Abicavir' when 162298 then 'ACE inhibitors' when 70878 then 'Allopurinol' when 155060 then 'Aminoglycosides' when 162299 then 'ARBs (angiotensin II receptor blockers)' when 103727 then 'Aspirin' when 71647 then 'Atazanavir' when 72822 then 'Carbamazepine' when 162301 then 'Cephalosporins' when 73300 then 'Chloroquine'  when 73667 then 'Codeine' when 74807 then 'Didanosine' when 75523 then 'Efavirenz' when 162302 then 'Erythromycins' when
+75948 then 'Ethambutol' when 77164 then 'Griseofulvin' when 162305 then 'Heparins' when 77675 then 'Hydralazine' when 78280 then 'Isoniazid' when 794 then 'Lopinavir/ritonavir' when 80106 then 'Morphine' when 80586 then 'Nevirapine' when 80696 then 'Nitrofurans' when 162306 then 'Non-steroidal anti-inflammatory drugs' when 81723 then 'Penicillamine' when 81724 then 'Penicillin' when 81959 then 'Phenolphthaleins' when 82023 then 'Phenytoin' when
+82559 then 'Procainamide' when 82900 then 'Pyrazinamide' when 83018 then 'Quinidine' when 767 then 'Rifampin' when 162307 then 'Statins' when 84309 then 'Stavudine'
+when 162170 then 'Sulfonamides' when 84795 then 'Tenofovir' when 84893 then 'Tetracycline' when 86663 then 'Zidovudine' when 5622 then 'Other' end) as cause,
+(case adverse_event when 1067 then 'Unknown' when  121629  then 'Anaemia' when 148888 then 'Anaphylaxis' when 148787 then 'Angioedema' when 120148 then 'Arrhythmia' when 108 then 'Bronchospasm' when 143264 then 'Cough' when 142412 then 'Diarrhea' when 118773 then 'Dystonia' when 140238 then 'Fever'
+when 140039 then 'Flushing' when 139581 then 'GI upset' when 139084 then 'Headache' when 159098 then 'Hepatotoxicity' when 111061 then 'Hives' when 117399 then 'Hypertension' when 879 then 'Itching' when 121677 then 'Mental status change' when 159347 then 'Musculoskeletal pain'
+when 121 then 'Myalgia' when 512 then 'Rash' when 114403 then 'Pain' when 147241 then 'Bleeding' when 135693 then 'Anaesthetic Reaction' when 167126 then 'Excessive skin removed' when 156911 then 'Damage to the penis' when 152045 then 'Problems with appearance' when 156567 then 'Hematoma/Swelling'
+when 139510 then 'Infection/Swelling' when 118771 then 'Difficulty or pain when urinating' when 163799 then 'Wound disruption (without signs of hematoma or infection)' when 5622 then 'Other' end ) as adverse_event,
+(case severity when 1498 then 'Mild' when 1499 then 'Moderate' when 1500 then 'Severe' when 162819 then 'Fatal' when 1067 then 'Unknown' end) as severity,
+start_date,
+(case action_taken when 1257 then 'CONTINUE REGIMEN' when 1259 then 'SWITCHED REGIMEN'  when 981 then 'CHANGED DOSE'  when 1258 then 'SUBSTITUTED DRUG' when 1107 then 'NONE' when 1260 then 'STOP' when 5622 then 'Other' end) as action_taken,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_adverse_events;
+
+ALTER TABLE kenyaemr_datatools.adverse_events ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.adverse_events ADD INDEX(visit_date);
+SELECT "Successfully created adverse_events table";
+
+-- create table allergies_chronic_illnesses
+create table kenyaemr_datatools.allergy_chronic_illness as
+select
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+obs_id,
+(case chronic_illness when 149019 then 'Alzheimers Disease and other Dementias'
+when 148432 then 'Arthritis'
+when 153754 then 'Asthma'
+when 159351 then 'Cancer'
+when 119270 then 'Cardiovascular diseases'
+when 120637 then 'Chronic Hepatitis'
+when 145438 then 'Chronic Kidney Disease'
+when 1295 then 'Chronic Obstructive Pulmonary Disease(COPD)'
+when 120576 then 'Chronic Renal Failure'
+when 119692 then 'Cystic Fibrosis'
+when 120291 then 'Deafness and Hearing impairment'
+when 119481 then 'Diabetes'
+when 118631 then 'Endometriosis'
+when 117855 then 'Epilepsy'
+when 117789 then 'Glaucoma'
+when 139071 then 'Heart Disease'
+when 115728 then 'Hyperlipidaemia'
+when 117399 then 'Hypertension'
+when 117321 then 'Hypothyroidism'
+when 151342 then 'Mental illness'
+when 133687 then 'Multiple Sclerosis'
+when 115115 then 'Obesity'
+when 114662 then 'Osteoporosis'
+when 117703 then 'Sickle Cell Anaemia'
+when 118976 then 'Thyroid disease'
+end) as chronic_illness,
+chronic_illness_onset_date,
+(case allergy_causative_agent when 162543 then 'Beef'
+when 72609 then 'Caffeine'
+when 162544 then 'Chocolate'
+when 162545 then 'Dairy Food'
+when 162171 then 'Eggs'
+when 162546 then 'Fish'
+when 162547 then 'Milk Protein'
+when 162172 then 'Peanuts'
+when 162175 then 'Shellfish'
+when 162176 then 'Soy'
+when 162548 then 'Strawberries'
+when 162177 then 'Wheat'
+when 162542 then 'Adhesive Tape'
+when 162536 then 'Bee Stings'
+when 162537 then 'Dust'
+when 162538 then 'Latex'
+when 162539 then 'Mold'
+when 162540 then 'Pollen'
+when 162541 then 'Ragweed'
+when 5622 then 'Other' end) as allergy_causative_agent,
+(case allergy_reaction when 1067 then 'Anaemia'
+when 121629 then 'Anaphylaxis'
+when 148888 then 'Angioedema'
+when 148787 then 'Arrhythmia'
+when 120148 then 'Bronchospasm'
+when 108 then 'Cough'
+when 143264 then 'Diarrhea'
+when 142412 then 'Dystonia'
+when 118773 then 'Fever'
+when 140238 then 'Flushing'
+when 140039 then 'GI upset'
+when 139581 then 'Headache'
+when 139084 then 'Hepatotoxicity'
+when 159098 then 'Hives'
+when 111061 then 'Hypertension'
+when 117399 then 'Itching'
+when 879 then 'Mental status change'
+when 121677 then 'Musculoskeletal pain'
+when 159347 then 'Myalgia'
+when 121 then 'Rash'
+when 512 then 'Other' end) as allergy_reaction,
+(case allergy_severity when 160754 then 'Mild' when 160755 then 'Moderate' when 160756 then 'Severe' when 160758 then 'Fatal' when 1067 then 'Unknown' end) as allergy_severity,
+allergy_onset_date,
+voided,
+date_created,
+date_last_modified
+from kenyaemr_etl.etl_allergy_chronic_illness;
+
+ALTER TABLE kenyaemr_datatools.allergy_chronic_illness ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.allergy_chronic_illness ADD INDEX(visit_date);
+SELECT "Successfully created allergy_chronic_illness table";
+
+-- create table ipt_screening
+create table kenyaemr_datatools.ipt_screening as
+select
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+obs_id,
+(case cough when 159799 then 'Yes' when 1066 then 'No' end) as cough,
+(case fever when 1494 then 'Yes' when 1066 then 'No' end) as fever,
+(case weight_loss_poor_gain when 832 then 'Yes' when 1066 then 'No' end) as weight_loss_poor_gain,
+(case night_sweats when 133027 then 'Yes' when 1066 then 'No' end) as night_sweats,
+(case contact_with_tb_case when 124068 then 'Yes' when 1066 then 'No' end) as contact_with_tb_case,
+(case lethargy when 116334 then 'Yes' when 1066 then 'No' end) as lethargy,
+(case yellow_urine when 162311 then 'Yes' when 1066 then 'No' end) as yellow_urine,
+(case numbness_bs_hands_feet when 132652 then 'Yes' when 1066 then 'No' end) as numbness_bs_hands_feet,
+(case eyes_yellowness when 5192 then 'Yes' when 1066 then 'No' end) as eyes_yellowness,
+(case upper_rightQ_abdomen_tenderness when 124994 then 'Yes' when 1066 then 'No' end) as upper_rightQ_abdomen_tenderness,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_ipt_screening;
+
+ALTER TABLE kenyaemr_datatools.ipt_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.ipt_screening ADD INDEX(visit_date);
+SELECT "Successfully created ipt_screening table";
+
+-- create table pre_hiv_enrollment_ART
+create table kenyaemr_datatools.pre_hiv_enrollment_art as
+  select
+         uuid,
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         obs_id,
+         (case PMTCT when 1065 then 'Yes' else '' end) as PMTCT,
+         (case PMTCT_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as PMTCT_regimen,
+         (case PEP when 1065 then 'Yes' else '' end) as PEP,
+         (case PEP_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as PEP_regimen,
+         (case PrEP when 1065 then 'Yes' else '' end) as PrEP,
+         (case PrEP_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as PrEP_regimen,
+         (case HAART when 1185 then 'Yes' else '' end) as HAART,
+         (case HAART_regimen when 164968 then 'AZT/3TC/DTG'
+when 164969 then 'TDF/3TC/DTG'
+when 164970 then 'ABC/3TC/DTG'
+when 164505 then 'TDF-3TC-EFV'
+when 792 then 'D4T/3TC/NVP'
+when 160124 then 'AZT/3TC/EFV'
+when 160104 then 'D4T/3TC/EFV'
+when 1652 then '3TC/NVP/AZT'
+when 161361 then 'EDF/3TC/EFV'
+when 104565 then 'EFV/FTC/TDF'
+when 162201 then '3TC/LPV/TDF/r'
+when 817 then 'ABC/3TC/AZT'
+when 162199 then 'ABC/NVP/3TC'
+when 162200 then '3TC/ABC/LPV/r'
+when 162565 then '3TC/NVP/TDF'
+when 1652 then '3TC/NVP/AZT'
+when 162561 then '3TC/AZT/LPV/r'
+when 164511 then 'AZT-3TC-ATV/r'
+when 164512 then 'TDF-3TC-ATV/r'
+when 162560 then '3TC/D4T/LPV/r'
+when 162563 then '3TC/ABC/EFV'
+when 162562 then 'ABC/LPV/R/TDF'
+when 162559 then 'ABC/DDI/LPV/r' end) as HAART_regimen,
+         date_created,
+         date_last_modified,
+         voided
+  from kenyaemr_etl.etl_pre_hiv_enrollment_art;
+
+ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.pre_hiv_enrollment_art ADD INDEX(visit_date);
+SELECT "Successfully created pre_hiv_enrollment_art table";
+
+-- create table covid_19_assessment
+create table kenyaemr_datatools.covid_19_assessment as
+select
+       uuid,
+       provider,
+       patient_id,
+       visit_id,
+       visit_date,
+       location_id,
+       encounter_id,
+       obs_id,
+       (case ever_vaccinated when 1065 then 'Yes' when 1066 then 'No' end) as ever_vaccinated,
+       (case first_vaccine_type when 166156 then 'Astrazeneca' when 166355 then 'Johnson and Johnson'
+                                when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
+           166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other' end) as first_vaccine_type,
+       (case second_vaccine_type when 166156 then 'Astrazeneca' when 166355 then 'Johnson and Johnson'
+                                 when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
+           166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other(Specify)' end) as second_vaccine_type,
+       first_dose,
+       second_dose,
+       first_dose_date,
+       second_dose_date,
+       (case first_vaccination_verified when 164134 then 'Yes' end ) as first_vaccination_verified,
+       (case second_vaccination_verified when 164134 then 'Yes' end) as second_vaccination_verified,
+       (case final_vaccination_status when 166192 then 'Partially Vaccinated' when 5585 then 'Fully Vaccinated' end) as final_vaccination_status,
+       (case ever_received_booster when 1065 then 'Yes' when 1066 then 'No' end) as ever_received_booster,
+       (case booster_vaccine_taken when 166156 then 'Astrazeneca' when 166355 then 'Johnson and Johnson'
+                                   when 166154 then 'Moderna' when 166155 then 'Pfizer' when 166157 then 'Sputnik' when
+           166379 then 'Sinopharm' when 1067 then 'Unknown' when 5622 then 'Other(Specify)' end) as booster_vaccine_taken,
+       date_taken_booster_vaccine,
+       booster_sequence,
+       (case booster_dose_verified when 164134 then 'Yes' end) as booster_dose_verified,
+       (case ever_tested_covid_19_positive when 703 then 'Yes' when 664 then 'No' when 1067 then 'Unknown' end) as ever_tested_covid_19_positive,
+       (case symptomatic when 1068 then 'Yes' when 165912 then 'No' END) as symptomatic,
+       date_tested_positive,
+       (case hospital_admission when 1065 then 'Yes' when 1066 then 'No' end) as hospital_admission,
+       admission_unit,
+       (case on_ventillator when 1065 then 'Yes' when 1066 then 'No' end) as on_ventillator,
+       (case on_oxygen_supplement when 1065 then 'Yes' when 1066 then 'No' end) as on_oxygen_supplement,
+       date_created,
+       date_last_modified,
+       voided
+from kenyaemr_etl.etl_covid19_assessment;
+
+ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.covid_19_assessment ADD INDEX(visit_date);
+SELECT "Successfully created covid_19_assessment table";
+
+-- Create table prep_enrolment
+create table kenyaemr_datatools.prep_enrolment as
+  select
+         uuid,
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         date_created,
+         date_last_modified,
+         patient_type,
+         case population_type when 164928 then 'General Population' when 6096 then 'Discordant Couple' when 164929 then 'Key Population' end as population_type,
+         case kp_type when 162277 then 'People in prison and other closed settings' when 165100 then 'Transgender' when 105 then 'PWID' when 160578 then 'MSM' when 165084 then 'MSW' when 160579 then 'FSW' end as kp_type,
+         transfer_in_entry_point,
+         referred_from,
+         transit_from,
+         transfer_in_date,
+         transfer_from,
+         initial_enrolment_date,
+         date_started_prep_trf_facility,
+         previously_on_prep,
+         regimen,
+         prep_last_date,
+         case in_school when 1 then 'Yes' when 2 then 'No' end as in_school,
+         buddy_name,
+         buddy_alias,
+         buddy_relationship,
+         buddy_phone,
+         buddy_alt_phone,
+         voided
+  from kenyaemr_etl.etl_prep_enrolment;
+
+ALTER TABLE kenyaemr_datatools.prep_enrolment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.prep_enrolment ADD INDEX(visit_date);
+SELECT "Successfully created prep_enrolment table";
+
+-- Create table cervical_cancer_screening
+create table kenyaemr_datatools.cervical_cancer_screening as
+  select
+      uuid,
+      encounter_id,
+      encounter_provider,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      date_created,
+      date_last_modified,
+      visit_type,
+      screening_type,
+      post_treatment_complication_cause,
+      post_treatment_complication_other,
+      screening_method,
+      screening_result,
+      treatment_method,
+      treatment_method_other,
+      referred_out,
+      referral_facility,
+      referral_reason,
+      next_appointment_date,
+      voided
+  from kenyaemr_etl.etl_cervical_cancer_screening;
+
+ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD INDEX(visit_date);
+SELECT "Successfully created cervical_cancer_screening table";
+
+-- Create table contact
+create table kenyaemr_datatools.kp_contact as
+select
+     uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    date_last_modified,
+    key_population_type,
+    contacted_by_peducator,
+    program_name,
+    frequent_hotspot_name,
+    frequent_hotspot_type,
+    year_started_sex_work,
+    year_started_sex_with_men,
+    year_started_drugs,
+    avg_weekly_sex_acts,
+    avg_weekly_anal_sex_acts,
+    avg_daily_drug_injections,
+    contact_person_name,
+    contact_person_alias,
+    contact_person_phone,
+    voided
+ from kenyaemr_etl.etl_contact;
+
+ALTER TABLE kenyaemr_datatools.kp_contact ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_contact ADD INDEX(visit_date);
+SELECT "Successfully created kp_contact table";
+
+-- Create table kp_client_enrollment
+create table kenyaemr_datatools.kp_client_enrollment as
+select
+  uuid,
+  client_id,
+  visit_id,
+  visit_date,
+  location_id,
+  encounter_id,
+  encounter_provider,
+  date_created,
+  date_last_modified,
+  contacted_for_prevention,
+  has_regular_free_sex_partner,
+  year_started_sex_work,
+  year_started_sex_with_men,
+  year_started_drugs,
+  has_expereienced_sexual_violence,
+  has_expereienced_physical_violence,
+  ever_tested_for_hiv,
+  test_type,
+  share_test_results,
+  willing_to_test,
+  test_decline_reason,
+  receiving_hiv_care,
+  care_facility_name,
+  ccc_number,
+  vl_test_done,
+  vl_results_date,
+  contact_for_appointment,
+  contact_method,
+  buddy_name,
+  buddy_phone_number,
+  voided
+ from kenyaemr_etl.etl_client_enrollment;
+
+ALTER TABLE kenyaemr_datatools.kp_client_enrollment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_client_enrollment ADD INDEX(visit_date);
+SELECT "Successfully created kp_client_enrollment table";
+
+-- Create table kp_clinical_visit
+create table kenyaemr_datatools.kp_clinical_visit as
+select
+    uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    date_last_modified,
+    implementing_partner,
+    type_of_visit,
+    visit_reason,
+    service_delivery_model,
+    sti_screened,
+    sti_results,
+    sti_treated,
+    sti_referred,
+    sti_referred_text,
+    tb_screened,
+    tb_results,
+    tb_treated,
+    tb_referred,
+    tb_referred_text,
+    hepatitisB_screened,
+    hepatitisB_results,
+    hepatitisB_treated,
+    hepatitisB_referred,
+    hepatitisB_text,
+    hepatitisC_screened,
+    hepatitisC_results,
+    hepatitisC_treated,
+    hepatitisC_referred,
+    hepatitisC_text,
+    overdose_screened,
+    overdose_results,
+    overdose_treated,
+    received_naloxone,
+    overdose_referred,
+    overdose_text,
+    abscess_screened,
+    abscess_results,
+    abscess_treated,
+    abscess_referred,
+    abscess_text,
+    alcohol_screened,
+    alcohol_results,
+    alcohol_treated,
+    alcohol_referred,
+    alcohol_text,
+    cerv_cancer_screened,
+    cerv_cancer_results,
+    cerv_cancer_treated,
+    cerv_cancer_referred,
+    cerv_cancer_text,
+    prep_screened,
+    prep_results,
+    prep_treated,
+    prep_referred,
+    prep_text,
+    violence_screened,
+    violence_results,
+    violence_treated,
+    violence_referred,
+    violence_text,
+    risk_red_counselling_screened,
+    risk_red_counselling_eligibility,
+    risk_red_counselling_support,
+    risk_red_counselling_ebi_provided,
+    risk_red_counselling_text,
+    fp_screened,
+    fp_eligibility,
+    fp_treated,
+    fp_referred,
+    fp_text,
+    mental_health_screened,
+    mental_health_results,
+    mental_health_support,
+    mental_health_referred,
+    mental_health_text,
+    hiv_self_rep_status,
+    last_hiv_test_setting,
+    counselled_for_hiv,
+    hiv_tested,
+    test_frequency,
+    received_results,
+    test_results,
+    linked_to_art,
+    facility_linked_to,
+    self_test_education,
+    self_test_kits_given,
+    self_use_kits,
+    distribution_kits,
+    self_tested,
+    self_test_date,
+    self_test_frequency,
+    self_test_results,
+    test_confirmatory_results,
+    confirmatory_facility,
+    offsite_confirmatory_facility,
+    self_test_linked_art,
+    self_test_link_facility,
+    hiv_care_facility,
+    other_hiv_care_facility,
+    initiated_art_this_month,
+    active_art,
+    eligible_vl,
+    vl_test_done,
+    vl_results,
+    received_vl_results,
+    condom_use_education,
+    post_abortal_care,
+    linked_to_psychosocial,
+    male_condoms_no,
+    female_condoms_no,
+    lubes_no,
+    syringes_needles_no,
+    pep_eligible,
+    exposure_type,
+    other_exposure_type,
+    clinical_notes,
+    appointment_date,
+    voided
+ from kenyaemr_etl.etl_clinical_visit;
+
+ALTER TABLE kenyaemr_datatools.kp_clinical_visit ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_clinical_visit ADD INDEX(visit_date);
+SELECT "Successfully created kp_clinical_visit table";
+
+-- Create table kp_peer_calendar
+create table kenyaemr_datatools.kp_peer_calendar as
+select
+    uuid,
+    client_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    encounter_provider,
+    date_created,
+    date_last_modified,
+    hotspot_name,
+    typology,
+    other_hotspots,
+    weekly_sex_acts,
+    monthly_condoms_required,
+    weekly_anal_sex_acts,
+    monthly_lubes_required,
+    daily_injections,
+    monthly_syringes_required,
+    years_in_sexwork_drugs,
+    experienced_violence,
+    service_provided_within_last_month,
+    monthly_n_and_s_distributed,
+    monthly_male_condoms_distributed,
+    monthly_lubes_distributed,
+    monthly_female_condoms_distributed,
+    monthly_self_test_kits_distributed,
+    received_clinical_service,
+    violence_reported,
+    referred,
+    health_edu,
+    remarks,
+    voided
+ from kenyaemr_etl.etl_peer_calendar;
+
+ALTER TABLE kenyaemr_datatools.kp_peer_calendar ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_peer_calendar ADD INDEX(visit_date);
+SELECT "Successfully created kp_peer_calendar table";
+
+-- Create table kp_sti_treatment
+create table kenyaemr_datatools.kp_sti_treatment as
+select
+  uuid,
+	client_id,
+	visit_id,
+	visit_date,
+	location_id,
+	encounter_id,
+	encounter_provider,
+	date_created,
+	date_last_modified,
+	visit_reason,
+	syndrome,
+	other_syndrome,
+	drug_prescription,
+	other_drug_prescription,
+	genital_exam_done,
+	lab_referral,
+	lab_form_number,
+	referred_to_facility,
+	facility_name,
+	partner_referral_done,
+	given_lubes,
+	no_of_lubes,
+	given_condoms,
+	no_of_condoms,
+	provider_comments,
+	provider_name,
+	appointment_date,
+	voided
+ from kenyaemr_etl.etl_sti_treatment;
+
+ALTER TABLE kenyaemr_datatools.kp_sti_treatment ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_sti_treatment ADD INDEX(visit_date);
+SELECT "Successfully created kp_sti_treatment table";
+
+-- Create table kp_peer_tracking
+create table kenyaemr_datatools.kp_peer_tracking as
+select
+  uuid,
+  provider,
+  client_id,
+  visit_id,
+  visit_date,
+  location_id,
+  encounter_id,
+  tracing_attempted,
+  tracing_not_attempted_reason,
+  attempt_number,
+  tracing_date,
+  tracing_type,
+  tracing_outcome,
+  is_final_trace,
+  tracing_outcome_status,
+  voluntary_exit_comment,
+  status_in_program,
+  source_of_information,
+  other_informant,
+  date_created,
+  date_last_modified,
+  voided
+ from kenyaemr_etl.etl_peer_tracking;
+
+ALTER TABLE kenyaemr_datatools.kp_peer_tracking ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_peer_tracking ADD INDEX(visit_date);
+SELECT "Successfully created kp_peer_tracking table";
+
+-- Create table kp_treatment_verification
+create table kenyaemr_datatools.kp_treatment_verification as
+select
+  uuid,
+  provider,
+  client_id,
+  visit_id,
+  visit_date,
+  location_id,
+  encounter_id,
+  date_diagnosed_with_hiv,
+  art_health_facility,
+  ccc_number,
+  is_pepfar_site,
+  date_initiated_art,
+  current_regimen,
+  information_source,
+  cd4_test_date,
+  cd4,
+  vl_test_date,
+  viral_load,
+  disclosed_status,
+  person_disclosed_to,
+  other_person_disclosed_to,
+  IPT_start_date,
+  IPT_completion_date,
+  on_diff_care,
+  in_support_group,
+  support_group_name,
+  opportunistic_infection,
+  oi_diagnosis_date,
+  oi_treatment_start_date,
+  oi_treatment_end_date,
+  comment,
+  date_created,
+  date_last_modified,
+  voided
+ from kenyaemr_etl.etl_treatment_verification;
+
+ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.kp_treatment_verification ADD INDEX(visit_date);
+SELECT "Successfully created kp_treatment_verification table";
+
+-- Create table vmmc_enrolment
+create table kenyaemr_datatools.vmmc_enrolment as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    (case referee when 165650 then 'Self referral' when 5619 then 'Health Care Worker' when 1555 then 'Community Health Worker' when 163488 then 'Community Health Volunteer' when 1370 then 'HTS Counsellors' when 5622 then 'Other' end) as referee,
+    other_referee,
+    (case source_of_vmmc_info when 167095 then 'Radio/Tv' when 167096 then 'Print Media' when 167098 then 'Road Show' when 1555 then 'Mobilizer CHW' when 160542 then 'OPD/MCH/HT' when 167097 then 'Social Media' when 5622 then 'Other' end) as source_of_vmmc_info,
+    other_source_of_vmmc_info,
+    county_of_origin,
+    date_created,
+    date_last_modified,
+    voided
+ from kenyaemr_etl.etl_vmmc_enrolment;
+
+ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_enrolment table";
+
+-- Create table vmmc_enrolment
+create table kenyaemr_datatools.vmmc_circumcision_procedure as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    (case circumcision_method when 167119 then 'Conventional Surgical' when 167120 then 'Device Circumcision' end) as circumcision_method,
+    (case surgical_circumcision_method when 167121 then 'Sleeve resection' when 167122 then 'Dorsal Slit' when 167123 then 'Forceps Guide' when 5622 then 'Other' end) as surgical_circumcision_method,
+    reason_circumcision_ineligible,
+    (case circumcision_device when 167124 then 'Shangring' when 5622 then 'Other' end) as circumcision_device,
+    specific_other_device,
+    device_size,
+    lot_number,
+    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
+    anaesthesia_concentration,
+    anaesthesia_volume,
+    time_of_first_placement_cut,
+    time_of_last_device_closure,
+    (case has_adverse_event when 1065 then 'Yes' when 1066 then 'No' end) as has_adverse_event,
+    adverse_event,
+    severity,
+    adverse_event_management,
+    clinician_name,
+    (case clinician_cadre when 162591 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end ) as clinician_cadre,
+    assist_clinician_name,
+    (case assist_clinician_cadre when 162591 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end) as assist_clinician_cadre,
+    theatre_number,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_circumcision_procedure;
+
+  -- Create table vmmc_client_followup
+  create table kenyaemr_datatools.vmmc_client_followup as
+    select
+      uuid,
+      provider,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      (case visit_type when 1246 then 'Scheduled' when 160101 then 'Unscheduled' end) as visit_type,
+      (case has_adverse_event when 1065 then 'Yes' when 1066 then 'No' end) as has_adverse_event,
+      adverse_event,
+      severity,
+      adverse_event_management,
+      medications_given,
+      other_medications_given,
+      clinician_name,
+      (case clinician_cadre when 162591 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end ) as clinician_cadre,
+      clinician_notes,
+      date_created,
+      date_last_modified,
+      voided
+    from kenyaemr_etl.etl_vmmc_client_followup;
+
+ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_circumcision_procedure ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_circumcision_procedure table";
+
+-- Create table vmmc_medical_history
+create table kenyaemr_datatools.vmmc_medical_history as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    case assent_given when 1065 then 'Yes' when 1066 then 'No' end as assent_given,
+    case consent_given when 1 then 'Yes' when 0 then 'No' end as consent_given,
+    case hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' end as hiv_status,
+    hiv_test_date,
+    art_start_date,
+    case current_regimen when 164968 then 'AZT/3TC/DTG'
+                         when 164969 then 'TDF/3TC/DTG'
+                         when 164970 then 'ABC/3TC/DTG'
+                         when 164505 then 'TDF-3TC-EFV'
+                         when 792 then 'D4T/3TC/NVP'
+                         when 160124 then 'AZT/3TC/EFV'
+                         when 160104 then 'D4T/3TC/EFV'
+                         when 1652 then '3TC/NVP/AZT'
+                         when 161361 then 'EDF/3TC/EFV'
+                         when 104565 then 'EFV/FTC/TDF'
+                         when 162201 then '3TC/LPV/TDF/r'
+                         when 817 then 'ABC/3TC/AZT'
+                         when 162199 then 'ABC/NVP/3TC'
+                         when 162200 then '3TC/ABC/LPV/r'
+                         when 162565 then '3TC/NVP/TDF'
+                         when 1652 then '3TC/NVP/AZT'
+                         when 162561 then '3TC/AZT/LPV/r'
+                         when 164511 then 'AZT-3TC-ATV/r'
+                         when 164512 then 'TDF-3TC-ATV/r'
+                         when 162560 then '3TC/D4T/LPV/r'
+                         when 162563 then '3TC/ABC/EFV'
+                         when 162562 then 'ABC/LPV/R/TDF'
+                         when 162559 then 'ABC/DDI/LPV/r' end as bcurrent_regimen,
+    ccc_number,
+    next_appointment_date,
+    case hiv_care_facility when 163266 then 'This health facility' when 164407 then 'Other health facility' end as hiv_care_facility,
+    hiv_care_facility_name,
+    vl,
+    cd4_count,
+    case bleeding_disorder when 147241 then 'Yes' end as bleeding_disorder,
+    case diabetes when 119481 then 'Yes' end as diabetes,
+    client_presenting_complaints,
+    other_complaints,
+    ongoing_treatment,
+    other_ongoing_treatment,
+    hb_level,
+    sugar_level,
+    case has_known_allergies when 1 then 'Yes' when 0 then 'No' end as has_known_allergies,
+    case ever_had_surgical_operation when 1065 then 'Yes' when 1066 then 'No' end as ever_had_surgical_operation,
+    specific_surgical_operation,
+    case proven_tetanus_booster when 1065 then 'Yes' when 1066 then 'No' end as proven_tetanus_booster,
+    case ever_received_tetanus_booster when 1065 then 'Yes' when 1066 then 'No' end as ever_received_tetanus_booster,
+    date_received_tetanus_booster,
+    blood_pressure,
+    pulse_rate,
+    temperature,
+    case in_good_health when 1 then 'Yes' when 0 then 'No'end as in_good_health,
+    case counselled when 1065 then 'Yes' when 1066 then 'No' end as counselled,
+    reason_ineligible,
+    case circumcision_method_chosen when 167119 then 'Conventional Surgical' when 167120 then 'Device Circumcision' end as circumcision_method_chosen,
+    case conventional_method_chosen  when 167121 then 'Sleeve resection' when 167122 then 'Dorsal Slit' when 167123 then 'Forceps Guide' when 5622 then 'Other' end as conventional_method_chosen,
+    device_name,
+    device_size,
+    other_conventional_method_device_chosen,
+    services_referral,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_medical_history;
+
+ALTER TABLE kenyaemr_datatools.vmmc_medical_history ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_medical_history ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_medical_history table";
+
+-- Create table vmmc_post_operation_assessment
+
+create table kenyaemr_datatools.vmmc_post_operation_assessment as
+select
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    blood_pressure,
+    pulse_rate,
+    temperature,
+    case penis_elevated when 1065 then 'Yes' when 1066 then 'No' end as penis_elevated,
+    case given_post_procedure_instruction when 1065 then 'Yes' when 1066 then 'No' end as given_post_procedure_instruction,
+    post_procedure_instructions,
+    case given_post_operation_medication when 1107 then 'Yes' end as given_post_operation_medication,
+    medication_given,
+    other_medication_given,
+    removal_date,
+    next_appointment_date,
+    discharged_by,
+    case cadre when 162591 then 'MO' when 162592 then 'CO' when 1577 then 'Nurse' end as cadre,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_vmmc_post_operation_assessment;
+
+ALTER TABLE kenyaemr_datatools.vmmc_post_operation_assessment ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.vmmc_post_operation_assessment ADD INDEX(visit_date);
+SELECT "Successfully created vmmc_post_operation_assessment table";
+
+  -- --------------------------- populate hts_eligibility screening table ---------------------------------------------
+  create table kenyaemr_datatools.hts_eligibility_screening as
+    select
+      patient_id,
+      visit_id,
+      encounter_id,
+      uuid,
+      location_id,
+      provider,
+      visit_date,
+      case population_type when 164928 then 'General Population' when 164929 then 'Key Population' when 138643 then 'Priority Population' end as population_type,
+      key_population_type,
+      priority_population_type,
+      case department when 160542 then 'OPD:Out-patient department' when 5485 then 'IPD:In-patient department' when 160473 then 'Emergency' when 160538 then 'PMTCT' when 159940 then 'VCT' end as department,
+      case patient_type when 164163 then 'HP:Hospital Patient' when 164953 then 'NP:Non-Hospital Patient' end as patient_type,
+      case is_health_worker when 1065 then 'Yes' when 1066 then 'No' end as is_health_worker,
+      relationship_with_contact,
+      case tested_hiv_before when 1065 then 'Yes' when 1066 then 'No' end as tested_hiv_before,
+      case who_performed_test when 5619 then 'HTS Provider' when 164952 then 'Self Tested' end as who_performed_test,
+      (case test_results when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' else '' end) as test_results,
+      date_tested,
+      case started_on_art when 1065 then 'Yes' when 1066 then 'No' end as started_on_art,
+      upn_number,
+      case ever_had_sex when 1 then 'Yes' when 0 then 'No' end as ever_had_sex,
+      case sexually_active when 1065 then 'Yes' when 1066 then 'No' end as sexually_active,
+      case new_partner when 1065 then 'Yes' when 1066 then 'No' end as new_partner,
+      (case partner_hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' else '' end) as partner_hiv_status,
+      case couple_discordant when 1065 then 'Yes' when 1066 then 'No' end as couple_discordant,
+      case multiple_partners when 1 then 'Yes' when 0 then 'No' end as multiple_partners,
+      number_partners,
+      case alcohol_sex when 1066 then 'Not at all' when 1385 then 'Sometimes' when 165027 then 'Always' end as alcohol_sex,
+      case money_sex when 1065 then 'Yes' when 1066 then 'No' end as money_sex,
+      case condom_burst when 1065 then 'Yes' when 1066 then 'No' end as condom_burst,
+      case unknown_status_partner when 1065 then 'Yes' when 1066 then 'No' end as unknown_status_partner,
+      case known_status_partner when 163289 then 'Yes' when 1066 then 'No' end as known_status_partner,
+      case experienced_gbv when 1065 then 'Yes' when 1066 then 'No' end as experienced_gbv,
+      case physical_violence when 1065 then 'Yes' when 1066 then 'No' end as physical_violence,
+      case sexual_violence when 1065 then 'Yes' when 1066 then 'No' end as sexual_violence,
+      case ever_on_prep when 1065 then 'Yes' when 1066 then 'No' end as ever_on_prep,
+      case currently_on_prep when 1065 then 'Yes' when 1066 then 'No' end as currently_on_prep,
+      case ever_on_pep when 1065 then 'Yes' when 1066 then 'No' end as ever_on_pep,
+      case currently_on_pep when 1 then 'Yes' when 0 then 'No' end as currently_on_pep,
+      case ever_had_sti when 1065 then 'Yes' when 1066 then 'No' end as ever_had_sti,
+      case currently_has_sti when 1065 then 'Yes' when 1066 then 'No' end as currently_has_sti,
+      case ever_had_tb when 1065 then 'Yes' when 1066 then 'No' end as ever_had_tb,
+      case currently_has_tb when 1065 then 'Yes' when 1066 then 'No' end as currently_has_tb,
+      case shared_needle when 1065 then 'Yes' when 1066 then 'No' end as shared_needle,
+      case needle_stick_injuries when 153574 then 'Yes' when 1066 then 'No' end as needle_stick_injuries,
+      case traditional_procedures when 1065 then 'Yes' when 1066 then 'No' end as traditional_procedures,
+      child_reasons_for_ineligibility,
+      case pregnant when 1065 then 'Yes' when 1066 then 'No' end as pregnant,
+      case breastfeeding_mother when 1065 then 'Yes' when 1066 then 'No' end as breastfeeding_mother,
+      case eligible_for_test when 1065 then 'Yes' when 1066 then 'No' end as eligible_for_test,
+      reasons_for_ineligibility,
+      specific_reason_for_ineligibility,
+      date_created,
+      date_last_modified,
+      voided
+    from kenyaemr_etl.etl_hts_eligibility_screening;
+
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(patient_id);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(visit_id);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(visit_date);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(department);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(population_type);
+  ALTER TABLE kenyaemr_datatools.hts_eligibility_screening ADD INDEX(eligible_for_test);
+
+-- Creating drug_orders table --
+create table kenyaemr_datatools.drug_order as select * from kenyaemr_etl.etl_drug_order;
+ALTER TABLE kenyaemr_datatools.drug_order add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
-END$$
+END $$
 
