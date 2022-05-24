@@ -1,7 +1,7 @@
 name: deploy to prod 8600
 on:
   push:
-    branches: [ v1.2.4 ]
+    branches: [ master ]
 jobs:
 
   build:
@@ -19,7 +19,7 @@ jobs:
         script: |
           git config --global --add safe.directory /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart      
           cd /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
-          git pull origin v1.2.4
+          git pull origin master
           git status
           mvn clean install -DskipTests
           sudo rm -rf /var/lib/OpenMRS/modules/kenyaemrCharts-*.omod
