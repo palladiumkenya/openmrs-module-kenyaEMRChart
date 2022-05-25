@@ -43,6 +43,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_immunization;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patients_booked_today;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_missed_appointments;
 DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
+DROP TABLE if exists kenyaemr_etl.etl_person_address;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
