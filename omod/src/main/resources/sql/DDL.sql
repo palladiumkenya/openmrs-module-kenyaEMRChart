@@ -43,6 +43,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_immunization;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patients_booked_today;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_missed_appointments;
 DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
+DROP TABLE if exists kenyaemr_etl.etl_person_address;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_event;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_test;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral_and_linkage;
@@ -110,6 +111,7 @@ birth_certificate_no VARCHAR(50),
 unique_patient_no VARCHAR(50),
 alien_no VARCHAR(50),
 driving_license_no VARCHAR(50),
+national_unique_patient_identifier VARCHAR(50),
 patient_clinic_number VARCHAR(15) DEFAULT NULL,
 Tb_no VARCHAR(50),
 CPIMS_unique_identifier VARCHAR(50),
