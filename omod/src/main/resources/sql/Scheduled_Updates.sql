@@ -275,7 +275,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
         ) et on et.encounter_type_id=e.encounter_type
-        join patient p on p.patient_id=e.patient_id and p.voided=0
+        join person p on p.person_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181)
       where e.voided=0 and e.date_created >= last_update_time
@@ -4186,7 +4186,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
         pp.voided voided
       from patient_program pp
         inner join program p on p.program_id=pp.program_id and p.retired=0
-        inner join patient pt on pt.patient_id=pp.patient_id and pt.voided=0
+        inner join person pt on pt.person_id=pp.patient_id and pt.voided=0
       where pp.date_created >= last_update_time
             or pp.date_changed >= last_update_time
             or pp.date_voided >= last_update_time
@@ -4229,7 +4229,7 @@ CREATE PROCEDURE sp_update_etl_person_address(IN last_update_time DATETIME)
         pa.address2 land_mark,
         pa.voided voided
       from person_address pa
-        inner join patient pt on pt.patient_id=pa.person_id and pt.voided=0
+        inner join person pt on pt.person_id=pa.person_id and pt.voided=0
       where pa.date_created >= last_update_time
             or pa.date_changed >= last_update_time
             or pa.date_voided >= last_update_time
