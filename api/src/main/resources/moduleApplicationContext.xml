@@ -33,30 +33,5 @@
 		<constructor-arg value="kenyaemrCharts:apps/etl_admin.png" />
 		<constructor-arg value="520" />
 	</bean>
-	<bean id="kenyaemr.core.etl.routines" class="org.openmrs.module.kenyacore.etl.ETLConfiguration">
-		<property name="sourceModule">
-			<value>1</value>
-		</property>
-		<property name="ddlProcedures">
-			<set>
-				<value>create_etl_tables</value>
-			</set>
-		</property>
-		<property name="dmlProcedures">
-			<set>
-				<value>sp_first_time_setup</value>
-			</set>
-		</property>
-		<property name="incrementalUpdatesProcedures">
-			<set>
-				<value>sp_scheduled_updates</value>
-			</set>
-		</property>
-		<property name="dataToolDbProcedures">
-			<set>
-				<value>create_datatools_tables</value>
-			</set>
-		</property>
-	</bean>
 	
 </beans>
