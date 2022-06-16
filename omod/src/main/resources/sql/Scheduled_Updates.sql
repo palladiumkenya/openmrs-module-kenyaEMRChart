@@ -7066,7 +7066,7 @@ select e.uuid,
     e.date_changed as date_last_modified
 from orders o
     inner join drug_order do on o.order_id = do.order_id
-    inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0
+    inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0 and e.patient_id = o.patient_id
     inner join person p on p.person_id = e.patient_id and p.voided = 0
     left outer join encounter_type et on et.encounter_type_id = e.encounter_type
     left outer join concept_name cn0
