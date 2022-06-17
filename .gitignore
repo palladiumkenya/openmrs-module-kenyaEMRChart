@@ -13,3 +13,6 @@ test/target
 
 target/checkout/
 /target
+
+# VsCode settings
+.vscode
