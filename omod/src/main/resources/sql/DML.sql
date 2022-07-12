@@ -6326,7 +6326,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                   max(if(o.concept_id = 159803 and o.value_coded = 158948, 'High workload for the staff', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 163293, 'Too sick', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 5622, 'Other', null))) as reasons_for_ineligibility,
-        max(if(o.concept_id=166365,o.value_text,null)) as specific_reason_for_ineligibility,
+        max(if(o.concept_id=160632,o.value_text,null)) as specific_reason_for_ineligibility,
         e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
@@ -6336,7 +6336,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                       left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
                                                                                                     164400,165240,162053,5569,160109,167144,1436,6096,5568,5570,165088,160579,
                                                                                                     166559,159218,163568,167161,167145,160658,165269,165203,164845,1691,165098,
-                                                                                                    165200,112141,164948,165090,165060,166365,165908,5272,5632,162699,159803,166365)
+                                                                                                    165200,112141,164948,165090,165060,166365,165908,5272,5632,162699,159803,160632)
                       and o.voided=0
                       where e.voided=0
                       group by e.patient_id,date(e.encounter_datetime);
