@@ -6105,7 +6105,7 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
                  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
                                                                                           5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
                                                                                           1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272) and o.voided=0
-        where e.voided=0f
+        where e.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
         SELECT "Completed processing vmmc medical examination form data ", CONCAT("Time: ", NOW());
