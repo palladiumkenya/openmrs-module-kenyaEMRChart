@@ -3039,7 +3039,7 @@ CREATE TABLE kenyaemr_etl.etl_drug_order (
   drug_concept_id VARCHAR(50),
   drug_short_name VARCHAR(50),
   drug_name VARCHAR(255),
-  frequency VARCHAR(50),
+  frequency VARCHAR(100),
   enc_name VARCHAR(100),
   dose VARCHAR(50),
   dose_units VARCHAR(100),

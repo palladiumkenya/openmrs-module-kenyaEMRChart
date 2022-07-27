@@ -6958,8 +6958,6 @@ select
             and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
-            or o.date_created >= last_update_time
-            or o.date_voided >= last_update_time
       group by e.patient_id,date(e.encounter_datetime)
       order by e.patient_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
@@ -7067,30 +7065,31 @@ select e.uuid,
     date(e.encounter_datetime)                                                as visit_date,
     e.visit_id,
     e.creator                                                                 as provider,
-    do.order_id,
-    o.urgency,
+    do.order_id                                                               as order_id,
+    o.urgency                                                                 as urgency,
     group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
     group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
     group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
-    group_concat(do.frequency SEPARATOR '|')                                  as frequency,
+    group_concat(case do.frequency when 1 then 'Once daily, in the evening' when 2 then 'Once daily, in the morning' when 3 then 'Twice daily'
+                                   when 4 then 'Once daily, at bedtime' when 5 then 'Once daily' when 6 then 'Thrice daily' end SEPARATOR '|')                                  as frequency,
     et.name                                                                   as enc_name,
     group_concat(do.dose SEPARATOR '|')                                       as dose,
     group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
     group_concat(do.quantity SEPARATOR '|')                                   as quantity,
     group_concat(left(cn2.name, 255) SEPARATOR '|')                           as quantity_units,
-    do.dosing_instructions,
-    do.duration,
-    (case do.duration_units
-    when 1072 then 'DAYS'
-    when 1073 then 'WEEKS'
-    when 1074
-    then 'MONTHS' end)                                               as duration_units,
-    o.instructions,
-    group_concat(left(cn3.name, 255) SEPARATOR '|')    as route,
-    o.voided,
-    o.date_voided,
-    e.date_created,
-    e.date_changed as date_last_modified
+       do.dosing_instructions                                                 as dosing_instructions,
+       do.duration                                                            as duration,
+       (case do.duration_units
+            when 1072 then 'DAYS'
+            when 1073 then 'WEEKS'
+            when 1074
+                then 'MONTHS' end)                                            as duration_units,
+       o.instructions                                                         as instructions,
+       group_concat(left(cn3.name, 255) SEPARATOR '|')                        as route,
+       o.voided                                                               as voided,
+       o.date_voided                                                          as date_voided,
+       e.date_created                                                         as date_created,
+       e.date_changed                                                         as date_last_modified
 from orders o
     inner join drug_order do on o.order_id = do.order_id
     inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0 and e.patient_id = o.patient_id
@@ -7114,10 +7113,7 @@ where o.voided = 0
   and e.date_created >= last_update_time
    or e.date_changed >= last_update_time
    or e.date_voided >= last_update_time
-   or o.date_created >= last_update_time
-   or o.date_voided >= last_update_time
 group by o.order_group_id,o.patient_id, o.encounter_id
-order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),order_id=VALUES(order_id),urgency=VALUES(urgency),
     drug_concept_id=VALUES(drug_concept_id),drug_short_name=VALUES(drug_short_name),drug_name=VALUES(drug_name),frequency=VALUES(frequency),
                      enc_name=VALUES(enc_name),dose=VALUES(dose),dose_units=VALUES(dose_units),quantity=VALUES(quantity),

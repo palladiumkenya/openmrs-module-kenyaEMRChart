@@ -6400,7 +6400,8 @@ BEGIN
            group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
            group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
            group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
-           group_concat(do.frequency SEPARATOR '|')                                  as frequency,
+           group_concat(case do.frequency when 1 then 'Once daily, in the evening' when 2 then 'Once daily, in the morning' when 3 then 'Twice daily'
+                                          when 4 then 'Once daily, at bedtime' when 5 then 'Once daily' when 6 then 'Thrice daily' end SEPARATOR '|') as frequency,
            et.name                                                                   as enc_name,
            group_concat(do.dose SEPARATOR '|')                                       as dose,
            group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
