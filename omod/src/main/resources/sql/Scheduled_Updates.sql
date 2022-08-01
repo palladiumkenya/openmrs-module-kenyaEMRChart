@@ -275,7 +275,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
         ) et on et.encounter_type_id=e.encounter_type
-        join patient p on p.patient_id=e.patient_id and p.voided=0
+        join person p on p.person_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181)
       where e.voided=0 and e.date_created >= last_update_time
@@ -520,7 +520,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join
         (
-          select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
+          select encounter_type_id, uuid, name from encounter_type where uuid ='a0034eee-1940-4e35-847f-97537a35d05e'
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
@@ -4129,7 +4129,7 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
         pp.voided voided
       from patient_program pp
         inner join program p on p.program_id=pp.program_id and p.retired=0
-        inner join patient pt on pt.patient_id=pp.patient_id and pt.voided=0
+        inner join person pt on pt.person_id=pp.patient_id and pt.voided=0
       where pp.date_created >= last_update_time
             or pp.date_changed >= last_update_time
             or pp.date_voided >= last_update_time
@@ -4172,7 +4172,7 @@ CREATE PROCEDURE sp_update_etl_person_address(IN last_update_time DATETIME)
         pa.address2 land_mark,
         pa.voided voided
       from person_address pa
-        inner join patient pt on pt.patient_id=pa.person_id and pt.voided=0
+        inner join person pt on pt.person_id=pa.person_id and pt.voided=0
       where pa.date_created >= last_update_time
             or pa.date_changed >= last_update_time
             or pa.date_voided >= last_update_time
@@ -6736,209 +6736,232 @@ DROP PROCEDURE IF EXISTS sp_update_etl_hts_eligibility_screening $$
 CREATE PROCEDURE sp_update_etl_hts_eligibility_screening(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing hts screening", CONCAT("Time: ", NOW());
-    INSERT INTO kenyaemr_etl.etl_hts_eligibility_screening (
-      patient_id,
-      visit_id,
-      encounter_id,
-      uuid,
-      location_id,
-      provider,
-      visit_date,
-      population_type,
-      key_population_type,
-      priority_population_type,
-      department,
-      patient_type,
-      is_health_worker,
-      relationship_with_contact,
-      tested_hiv_before,
-      who_performed_test,
-      test_results,
-      date_tested,
-      started_on_art,
-      upn_number,
-      ever_had_sex,
-      sexually_active,
-      new_partner,
-      partner_hiv_status,
-      couple_discordant,
-      multiple_partners,
-      number_partners,
-      alcohol_sex,
-      money_sex,
-      condom_burst,
-      unknown_status_partner,
-      known_status_partner,
-      experienced_gbv,
-      physical_violence,
-      sexual_violence,
-      ever_on_prep,
-      currently_on_prep,
-      ever_on_pep,
-      currently_on_pep,
-      ever_had_sti,
-      currently_has_sti,
-      ever_had_tb,
-      currently_has_tb,
-      shared_needle,
-      needle_stick_injuries,
-      traditional_procedures,
-      child_reasons_for_ineligibility,
-      pregnant,
-      breastfeeding_mother,
-      eligible_for_test,
-      reasons_for_ineligibility,
-      specific_reason_for_ineligibility,
-      date_created,
-      date_last_modified,
-      voided
-    )
-      select
-        e.patient_id,
-        e.visit_id,
-        e.encounter_id,
-        e.uuid,
-        e.location_id,
-        e.creator,
-        date(e.encounter_datetime) as visit_date,
-        max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
-        max(if(o.concept_id=160581,(case o.value_coded when 105 then 'People who inject drugs'
-                                    when 160578 then 'Men who have sex with men'
-                                    when 160579 then 'Female sex worker'
-                                    when 165100 then 'Transgender'
-                                    when 162277 then 'People in prison and other closed settings' else '' end),null)) as key_population_type,
-        max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
-                                    when 162198 then 'Truck driver'
-                                    when 160549 then 'Adolescent and young girls'
-                                    when 162277 then 'Prisoner'
-                                    when 165192 then 'Military and other uniformed services' else '' end),null)) as priority_population_type,
-        max(if(o.concept_id=159936,o.value_coded,null)) as department,
-        max(if(o.concept_id=164956,o.value_coded,null)) as patient_type,
-        max(if(o.concept_id=5619,o.value_coded,null)) as is_health_worker,
-        concat_ws(',', max(if(o.concept_id = 166570 and o.value_coded = 163565, 'Sexual Contact', null)),
-                  max(if(o.concept_id = 166570 and o.value_coded = 166606, 'Social Contact', null)),
-                  max(if(o.concept_id = 166570 and o.value_coded = 1107, 'None', null))) as relationship_with_contact,
-        max(if(o.concept_id=164401,o.value_coded,null)) as tested_hiv_before,
-        max(if(o.concept_id=165215,o.value_coded,null)) as who_performed_test,
-        max(if(o.concept_id=159427,o.value_coded,null)) as test_results,
-        max(if(o.concept_id=164400,o.value_datetime,null)) as date_tested,
-        max(if(o.concept_id=165240,o.value_coded,null)) as started_on_art,
-        max(if(o.concept_id=162053,o.value_numeric,null)) as upn_number,
-        max(if(o.concept_id=5569,o.value_coded,null)) as ever_had_sex,
-        max(if(o.concept_id=160109,o.value_coded,null)) as sexually_active,
-        max(if(o.concept_id=167144,o.value_coded,null)) as new_partner,
-        max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
-        max(if(o.concept_id=6096,o.value_coded,null)) as couple_discordant,
-        max(if(o.concept_id=5568,o.value_coded,null)) as multiple_partners,
-        max(if(o.concept_id=5570,o.value_numeric,null)) as number_partners,
-        max(if(o.concept_id=165088,o.value_coded,null)) as alcohol_sex,
-        max(if(o.concept_id=160579,o.value_coded,null)) as money_sex,
-        max(if(o.concept_id=166559,o.value_coded,null)) as condom_burst,
-        max(if(o.concept_id=159218,o.value_coded,null)) as unknown_status_partner,
-        max(if(o.concept_id=163568,o.value_coded,null)) as known_status_partner,
-        max(if(o.concept_id=167161,o.value_coded,null)) as experienced_gbv,
-        max(if(o.concept_id=167145,o.value_coded,null)) as physical_violence,
-        max(if(o.concept_id=160658,o.value_coded,null)) as sexual_violence,
-        max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
-        max(if(o.concept_id=165203,o.value_coded,null)) as currently_on_prep,
-        max(if(o.concept_id=164845,o.value_coded,null)) as ever_on_pep,
-        max(if(o.concept_id=1691,o.value_coded,null)) as currently_on_pep,
-        max(if(o.concept_id=165098,o.value_coded,null)) as ever_had_sti,
-        max(if(o.concept_id=165200,o.value_coded,null)) as currently_has_sti,
-        max(if(o.concept_id=112141,o.value_coded,null)) as ever_had_tb,
-        max(if(o.concept_id=164948,o.value_coded,null)) as currently_has_tb,
-        max(if(o.concept_id=165090,o.value_coded,null)) as shared_needle,
-        max(if(o.concept_id=165060,o.value_coded,null)) as needle_stick_injuries,
-        max(if(o.concept_id=166365,o.value_coded,null)) as traditional_procedures,
-        concat_ws(',', max(if(o.concept_id = 165908 and o.value_coded = 115122, 'Malnutrition', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 5050, 'Failure to thrive', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 127833, 'Recurrent infections', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 112141, 'TB', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 1174, 'Orphaned', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 163718, 'Parents tested HIV positive', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 140238, 'Prolonged fever', null)),
-                  max(if(o.concept_id = 165908 and o.value_coded = 5632, 'Child breastfeeding', null))) as child_reasons_for_ineligibility,
-        max(if(o.concept_id=5272,o.value_coded,null)) as pregnant,
-        max(if(o.concept_id=5632,o.value_coded,null)) as breastfeeding_mother,
-        max(if(o.concept_id=162699,o.value_coded,null)) as eligible_for_test,
-        concat_ws(',', max(if(o.concept_id = 159803 and o.value_coded = 167156, 'Declined testing', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 165029, 'Wants to test with partner', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 160589, 'Stigma related issues', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 141814, 'Fear of violent partner', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 155974, 'No counselor to test', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 158948, 'High workload for the staff', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 163293, 'Too sick', null)),
-                  max(if(o.concept_id = 159803 and o.value_coded = 5622, 'Other', null))) as reasons_for_ineligibility,
-        max(if(o.concept_id=166365,o.value_text,null)) as specific_reason_for_ineligibility,
-        e.date_created,
-        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
-        e.voided
+INSERT INTO kenyaemr_etl.etl_hts_eligibility_screening (
+    patient_id,
+    visit_id,
+    encounter_id,
+    uuid,
+    location_id,
+    provider,
+    visit_date,
+    population_type,
+    key_population_type,
+    priority_population_type,
+    department,
+    patient_type,
+    is_health_worker,
+    relationship_with_contact,
+    mother_hiv_status,
+    tested_hiv_before,
+    who_performed_test,
+    test_results,
+    date_tested,
+    started_on_art,
+    upn_number,
+    ever_had_sex,
+    sexually_active,
+    new_partner,
+    partner_hiv_status,
+    couple_discordant,
+    multiple_partners,
+    number_partners,
+    alcohol_sex,
+    money_sex,
+    condom_burst,
+    unknown_status_partner,
+    known_status_partner,
+    experienced_gbv,
+    type_of_gbv,
+    service_received,
+    currently_on_prep,
+    recently_on_pep,
+    recently_had_sti,
+    tb_screened,
+    cough,
+    fever,
+    weight_loss,
+    night_sweats,
+    contact_with_tb_case,
+    lethargy,
+    tb_status,
+    shared_needle,
+    needle_stick_injuries,
+    traditional_procedures,
+    child_reasons_for_ineligibility,
+    pregnant,
+    breastfeeding_mother,
+    eligible_for_test,
+    referred_for_testing,
+    reasons_for_ineligibility,
+    specific_reason_for_ineligibility,
+    date_created,
+    date_last_modified,
+    voided
+)
+select
+    e.patient_id,
+    e.visit_id,
+    e.encounter_id,
+    e.uuid,
+    e.location_id,
+    e.creator,
+    date(e.encounter_datetime) as visit_date,
+    max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
+    max(if(o.concept_id=160581,(case o.value_coded when 105 then 'People who inject drugs'
+    when 160578 then 'Men who have sex with men'
+    when 160579 then 'Female sex worker'
+    when 165100 then 'Transgender'
+    when 162277 then 'People in prison and other closed settings' else '' end),null)) as key_population_type,
+    max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
+    when 162198 then 'Truck driver'
+    when 160549 then 'Adolescent and young girls'
+    when 162277 then 'Prisoner'
+    when 165192 then 'Military and other uniformed services' else '' end),null)) as priority_population_type,
+    max(if(o.concept_id=159936,o.value_coded,null)) as department,
+    max(if(o.concept_id=164956,o.value_coded,null)) as patient_type,
+    max(if(o.concept_id=5619,o.value_coded,null)) as is_health_worker,
+    concat_ws(',', max(if(o.concept_id = 166570 and o.value_coded = 163565, 'Sexual Contact', null)),
+    max(if(o.concept_id = 166570 and o.value_coded = 166606, 'Social Contact', null)),
+    max(if(o.concept_id = 166570 and o.value_coded = 166517, 'Needle sharing', null)),
+    max(if(o.concept_id = 166570 and o.value_coded = 1107, 'None', null))) as relationship_with_contact,
+    max(if(o.concept_id=1396,o.value_coded,null)) as mother_hiv_status,
+    max(if(o.concept_id=164401,o.value_coded,null)) as tested_hiv_before,
+    max(if(o.concept_id=165215,o.value_coded,null)) as who_performed_test,
+    max(if(o.concept_id=159427,o.value_coded,null)) as test_results,
+    max(if(o.concept_id=164400,o.value_datetime,null)) as date_tested,
+    max(if(o.concept_id=165240,o.value_coded,null)) as started_on_art,
+    max(if(o.concept_id=162053,o.value_numeric,null)) as upn_number,
+    max(if(o.concept_id=5569,o.value_coded,null)) as ever_had_sex,
+    max(if(o.concept_id=160109,o.value_coded,null)) as sexually_active,
+    max(if(o.concept_id=167144,o.value_coded,null)) as new_partner,
+    max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
+    max(if(o.concept_id=6096,o.value_coded,null)) as couple_discordant,
+    max(if(o.concept_id=5568,o.value_coded,null)) as multiple_partners,
+    max(if(o.concept_id=5570,o.value_numeric,null)) as number_partners,
+    max(if(o.concept_id=165088,o.value_coded,null)) as alcohol_sex,
+    max(if(o.concept_id=160579,o.value_coded,null)) as money_sex,
+    max(if(o.concept_id=166559,o.value_coded,null)) as condom_burst,
+    max(if(o.concept_id=159218,o.value_coded,null)) as unknown_status_partner,
+    max(if(o.concept_id=163568,o.value_coded,null)) as known_status_partner,
+    max(if(o.concept_id=167161,o.value_coded,null)) as experienced_gbv,
+    concat_ws(',', max(if(o.concept_id=167145 and o.value_coded = 1065 ,'Sexual violence',null)),
+    max(if(o.concept_id=160658 and o.value_coded = 1065 ,'Emotional abuse',null)),
+    max(if(o.concept_id=165205 and o.value_coded = 1065 ,'Physical violence',null))) as type_of_gbv,
+    concat_ws(',', max(if(o.concept_id=164845 and o.value_coded = 1065 ,'PEP',null)),
+    max(if(o.concept_id=165269 and o.value_coded = 1065 ,'PrEP',null)),
+    max(if(o.concept_id=165098 and o.value_coded = 1065 ,'STI',null)),
+    max(if(o.concept_id=112141 and o.value_coded = 1065 ,'TB',null))) as service_received,
+    max(if(o.concept_id=165203,o.value_coded,null)) as currently_on_prep,
+    max(if(o.concept_id=1691,o.value_coded,null)) as recently_on_pep,
+    max(if(o.concept_id=165200,o.value_coded,null)) as recently_had_sti,
+    max(if(o.concept_id=165197,o.value_coded,null)) as tb_screened,
+    max(if(o.concept_id=1729 and o.value_coded = 159799,o.value_coded,null)) as cough,
+    max(if(o.concept_id=1729 and o.value_coded = 1494,o.value_coded,null)) as fever,
+    max(if(o.concept_id=1729 and o.value_coded = 832,o.value_coded,null)) as weight_loss,
+    max(if(o.concept_id=1729 and o.value_coded = 133027,o.value_coded,null)) as night_sweats,
+    max(if(o.concept_id=1729 and o.value_coded = 124068,o.value_coded,null)) as contact_with_tb_case,
+    max(if(o.concept_id=1729 and o.value_coded = 116334,o.value_coded,null)) as lethargy,
+    max(if(o.concept_id=1659,o.value_coded,null)) as tb_status,
+    max(if(o.concept_id=165090,o.value_coded,null)) as shared_needle,
+    max(if(o.concept_id=165060,o.value_coded,null)) as needle_stick_injuries,
+    max(if(o.concept_id=166365,o.value_coded,null)) as traditional_procedures,
+    concat_ws(',', max(if(o.concept_id = 165908 and o.value_coded = 115122, 'Malnutrition', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 5050, 'Failure to thrive', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 127833, 'Recurrent infections', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 112141, 'TB', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 1174, 'Orphaned', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 163718, 'Parents tested HIV positive', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 140238, 'Prolonged fever', null)),
+    max(if(o.concept_id = 165908 and o.value_coded = 5632, 'Child breastfeeding', null))) as child_reasons_for_ineligibility,
+    max(if(o.concept_id=5272,o.value_coded,null)) as pregnant,
+    max(if(o.concept_id=5632,o.value_coded,null)) as breastfeeding_mother,
+    max(if(o.concept_id=162699,o.value_coded,null)) as eligible_for_test,
+    max(if(o.concept_id=1788,o.value_coded,null)) as referred_for_testing,
+    concat_ws(',', max(if(o.concept_id = 159803 and o.value_coded = 167156, 'Declined testing', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 165029, 'Wants to test with partner', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 160589, 'Stigma related issues', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 141814, 'Fear of violent partner', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 155974, 'No counselor to test', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 158948, 'High workload for the staff', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 163293, 'Too sick', null)),
+    max(if(o.concept_id = 159803 and o.value_coded = 5622, 'Other', null))) as reasons_for_ineligibility,
+    max(if(o.concept_id=160632,o.value_text,null)) as specific_reason_for_ineligibility,
+    e.date_created,
+    if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+    e.voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id = e.form_id and f.uuid = '04295648-7606-11e8-adc0-fa7ae01bbebc'
-        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
-                                                                                      164400,165240,162053,5569,160109,167144,1436,6096,5568,5570,165088,160579,
-                                                                                      166559,159218,163568,167161,167145,160658,165269,165203,164845,1691,165098,
-                                                                                      165200,112141,164948,165090,165060,166365,165908,5272,5632,162699,159803,166365)
+        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+        (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
+        164400,165240,162053,5569,160109,167144,1436,6096,5568,5570,165088,160579,
+        166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
+        165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
+        5272,5632,162699,1788,159803,160632)
       and o.voided=0
       where e.voided=0
             and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
-            or o.date_created >= last_update_time
-            or o.date_voided >= last_update_time
       group by e.patient_id,date(e.encounter_datetime)
       order by e.patient_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
-      provider=VALUES(provider),
-      population_type=VALUES(population_type),
-      key_population_type=VALUES(key_population_type),
-      priority_population_type=VALUES(priority_population_type),
-      department=VALUES(department),
-      patient_type=VALUES(patient_type),
-      is_health_worker=VALUES(is_health_worker),
-      relationship_with_contact=VALUES(relationship_with_contact),
-      tested_hiv_before=VALUES(tested_hiv_before),
-      who_performed_test=VALUES(who_performed_test),
-      test_results=VALUES(test_results),
-      date_tested=VALUES(date_tested),
-      started_on_art=VALUES(started_on_art),
-      upn_number=VALUES(upn_number),
-      ever_had_sex=VALUES(ever_had_sex),
-      sexually_active=VALUES(sexually_active),
-      new_partner=VALUES(new_partner),
-      partner_hiv_status=VALUES(partner_hiv_status),
-      couple_discordant=VALUES(couple_discordant),
-      multiple_partners=VALUES(multiple_partners),
-      number_partners=VALUES(number_partners),
-      alcohol_sex=VALUES(alcohol_sex),
-      money_sex=VALUES(money_sex),
-      condom_burst=VALUES(condom_burst),
-      unknown_status_partner=VALUES(unknown_status_partner),
-      known_status_partner=VALUES(known_status_partner),
-      experienced_gbv=VALUES(experienced_gbv),
-      physical_violence=VALUES(physical_violence),
-      sexual_violence=VALUES(sexual_violence),
-      ever_on_prep=VALUES(ever_on_prep),
-      currently_on_prep=VALUES(currently_on_prep),
-      ever_on_pep=VALUES(ever_on_pep),
-      currently_on_pep=VALUES(currently_on_pep),
-      ever_had_sti=VALUES(ever_had_sti),
-      currently_has_sti=VALUES(currently_has_sti),
-      ever_had_tb=VALUES(ever_had_tb),
-      currently_has_tb=VALUES(currently_has_tb),
-      shared_needle=VALUES(shared_needle),
-      needle_stick_injuries=VALUES(needle_stick_injuries),
-      traditional_procedures=VALUES(traditional_procedures),
-      child_reasons_for_ineligibility=VALUES(child_reasons_for_ineligibility),
-      pregnant=VALUES(pregnant),
-      breastfeeding_mother=VALUES(breastfeeding_mother),
-      eligible_for_test=VALUES(eligible_for_test),
-      reasons_for_ineligibility=VALUES(reasons_for_ineligibility),
-      specific_reason_for_ineligibility=VALUES(specific_reason_for_ineligibility),
-      date_created=VALUES(date_created),
-      date_last_modified=VALUES(date_last_modified),
-      voided=VALUES(voided);
+             provider=VALUES(provider),
+             population_type=values(population_type),
+             key_population_type=values(key_population_type),
+             priority_population_type=values(priority_population_type),
+             department=values(department),
+             patient_type=values(patient_type),
+             is_health_worker=values(is_health_worker),
+             relationship_with_contact=values(relationship_with_contact),
+             mother_hiv_status=values(mother_hiv_status),
+             tested_hiv_before=values(tested_hiv_before),
+             who_performed_test=values(who_performed_test),
+             test_results=values(test_results),
+             date_tested=values(date_tested),
+             started_on_art=values(started_on_art),
+             upn_number=values(upn_number),
+             ever_had_sex=values(ever_had_sex),
+             sexually_active=values(sexually_active),
+             new_partner=values(new_partner),
+             partner_hiv_status=values(partner_hiv_status),
+             couple_discordant=values(couple_discordant),
+             multiple_partners=values(multiple_partners),
+             number_partners=values(number_partners),
+             alcohol_sex=values(alcohol_sex),
+             money_sex=values(money_sex),
+             condom_burst=values(condom_burst),
+             unknown_status_partner=values(unknown_status_partner),
+             known_status_partner=values(known_status_partner),
+             experienced_gbv=values(experienced_gbv),
+             type_of_gbv=values(type_of_gbv),
+             service_received=values(service_received),
+             currently_on_prep=values(currently_on_prep),
+             recently_on_pep=values(recently_on_pep),
+             recently_had_sti=values(recently_had_sti),
+             tb_screened=values(tb_screened),
+             cough=values(cough),
+             fever=values(fever),
+             weight_loss=values(weight_loss),
+             night_sweats=values(night_sweats),
+             contact_with_tb_case=values(contact_with_tb_case),
+             lethargy=values(lethargy),
+             contact_with_tb_case=values(contact_with_tb_case),
+             lethargy=values(lethargy),
+             tb_status=values(tb_status),
+             shared_needle=values(shared_needle),
+             needle_stick_injuries=values(needle_stick_injuries),
+             traditional_procedures=values(traditional_procedures),
+             child_reasons_for_ineligibility=values(child_reasons_for_ineligibility),
+             pregnant=values(pregnant),
+             breastfeeding_mother=values(breastfeeding_mother),
+             eligible_for_test=values(eligible_for_test),
+             referred_for_testing=values(referred_for_testing),
+             reasons_for_ineligibility=values(reasons_for_ineligibility),
+             specific_reason_for_ineligibility=values(specific_reason_for_ineligibility),
+             date_created=values(date_created),
+             date_last_modified=values(date_last_modified),
+             voided=values(voided);
 
     SELECT "Completed processing hts eligibility screening data ", CONCAT("Time: ", NOW());
   END $$
@@ -6987,30 +7010,31 @@ select e.uuid,
     date(e.encounter_datetime)                                                as visit_date,
     e.visit_id,
     e.creator                                                                 as provider,
-    do.order_id,
-    o.urgency,
+    do.order_id                                                               as order_id,
+    o.urgency                                                                 as urgency,
     group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
     group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
     group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
-    group_concat(do.frequency SEPARATOR '|')                                  as frequency,
+    group_concat(case do.frequency when 1 then 'Once daily, in the evening' when 2 then 'Once daily, in the morning' when 3 then 'Twice daily'
+                                   when 4 then 'Once daily, at bedtime' when 5 then 'Once daily' when 6 then 'Thrice daily' end SEPARATOR '|')                                  as frequency,
     et.name                                                                   as enc_name,
     group_concat(do.dose SEPARATOR '|')                                       as dose,
     group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
     group_concat(do.quantity SEPARATOR '|')                                   as quantity,
     group_concat(left(cn2.name, 255) SEPARATOR '|')                           as quantity_units,
-    do.dosing_instructions,
-    do.duration,
-    (case do.duration_units
-    when 1072 then 'DAYS'
-    when 1073 then 'WEEKS'
-    when 1074
-    then 'MONTHS' end)                                               as duration_units,
-    o.instructions,
-    group_concat(left(cn3.name, 255) SEPARATOR '|')    as route,
-    o.voided,
-    o.date_voided,
-    e.date_created,
-    e.date_changed as date_last_modified
+       do.dosing_instructions                                                 as dosing_instructions,
+       do.duration                                                            as duration,
+       (case do.duration_units
+            when 1072 then 'DAYS'
+            when 1073 then 'WEEKS'
+            when 1074
+                then 'MONTHS' end)                                            as duration_units,
+       o.instructions                                                         as instructions,
+       group_concat(left(cn3.name, 255) SEPARATOR '|')                        as route,
+       o.voided                                                               as voided,
+       o.date_voided                                                          as date_voided,
+       e.date_created                                                         as date_created,
+       e.date_changed                                                         as date_last_modified
 from orders o
     inner join drug_order do on o.order_id = do.order_id
     inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0 and e.patient_id = o.patient_id
@@ -7034,10 +7058,7 @@ where o.voided = 0
   and e.date_created >= last_update_time
    or e.date_changed >= last_update_time
    or e.date_voided >= last_update_time
-   or o.date_created >= last_update_time
-   or o.date_voided >= last_update_time
 group by o.order_group_id,o.patient_id, o.encounter_id
-order by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),order_id=VALUES(order_id),urgency=VALUES(urgency),
     drug_concept_id=VALUES(drug_concept_id),drug_short_name=VALUES(drug_short_name),drug_name=VALUES(drug_name),frequency=VALUES(frequency),
                      enc_name=VALUES(enc_name),dose=VALUES(dose),dose_units=VALUES(dose_units),quantity=VALUES(quantity),

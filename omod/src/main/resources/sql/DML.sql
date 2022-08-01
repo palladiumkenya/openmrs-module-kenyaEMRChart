@@ -495,10 +495,7 @@ max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
 e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join
-(
-	select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
-) et on et.encounter_type_id=e.encounter_type
+inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','23b4ebbd-29ad-455e-be0e-04aa6bc30798')
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126)
@@ -6208,6 +6205,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
       patient_type,
       is_health_worker,
       relationship_with_contact,
+      mother_hiv_status,
       tested_hiv_before,
       who_performed_test,
       test_results,
@@ -6227,16 +6225,19 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
       unknown_status_partner,
       known_status_partner,
       experienced_gbv,
-      physical_violence,
-      sexual_violence,
-      ever_on_prep,
+      type_of_gbv,
+      service_received,
       currently_on_prep,
-      ever_on_pep,
-      currently_on_pep,
-      ever_had_sti,
-      currently_has_sti,
-      ever_had_tb,
-      currently_has_tb,
+      recently_on_pep,
+      recently_had_sti,
+      tb_screened,
+      cough,
+      fever,
+      weight_loss,
+      night_sweats,
+      contact_with_tb_case,
+      lethargy,
+      tb_status,
       shared_needle,
       needle_stick_injuries,
       traditional_procedures,
@@ -6244,6 +6245,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
       pregnant,
       breastfeeding_mother,
       eligible_for_test,
+      referred_for_testing,
       reasons_for_ineligibility,
       specific_reason_for_ineligibility,
       date_created,
@@ -6274,7 +6276,9 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=5619,o.value_coded,null)) as is_health_worker,
         concat_ws(',', max(if(o.concept_id = 166570 and o.value_coded = 163565, 'Sexual Contact', null)),
                        max(if(o.concept_id = 166570 and o.value_coded = 166606, 'Social Contact', null)),
+                       max(if(o.concept_id = 166570 and o.value_coded = 166517, 'Needle sharing', null)),
                        max(if(o.concept_id = 166570 and o.value_coded = 1107, 'None', null))) as relationship_with_contact,
+        max(if(o.concept_id=1396,o.value_coded,null)) as mother_hiv_status,
         max(if(o.concept_id=164401,o.value_coded,null)) as tested_hiv_before,
         max(if(o.concept_id=165215,o.value_coded,null)) as who_performed_test,
         max(if(o.concept_id=159427,o.value_coded,null)) as test_results,
@@ -6294,16 +6298,24 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=159218,o.value_coded,null)) as unknown_status_partner,
         max(if(o.concept_id=163568,o.value_coded,null)) as known_status_partner,
         max(if(o.concept_id=167161,o.value_coded,null)) as experienced_gbv,
-        max(if(o.concept_id=167145,o.value_coded,null)) as physical_violence,
-        max(if(o.concept_id=160658,o.value_coded,null)) as sexual_violence,
-        max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
+        concat_ws(',', max(if(o.concept_id=167145 and o.value_coded = 1065 ,'Sexual violence',null)),
+                  max(if(o.concept_id=160658 and o.value_coded = 1065 ,'Emotional abuse',null)),
+                  max(if(o.concept_id=165205 and o.value_coded = 1065 ,'Physical violence',null))) as type_of_gbv,
+        concat_ws(',', max(if(o.concept_id=164845 and o.value_coded = 1065 ,'PEP',null)),
+                  max(if(o.concept_id=165269 and o.value_coded = 1065 ,'PrEP',null)),
+                  max(if(o.concept_id=165098 and o.value_coded = 1065 ,'STI',null)),
+                  max(if(o.concept_id=112141 and o.value_coded = 1065 ,'TB',null))) as service_received,
         max(if(o.concept_id=165203,o.value_coded,null)) as currently_on_prep,
-        max(if(o.concept_id=164845,o.value_coded,null)) as ever_on_pep,
-        max(if(o.concept_id=1691,o.value_coded,null)) as currently_on_pep,
-        max(if(o.concept_id=165098,o.value_coded,null)) as ever_had_sti,
-        max(if(o.concept_id=165200,o.value_coded,null)) as currently_has_sti,
-        max(if(o.concept_id=112141,o.value_coded,null)) as ever_had_tb,
-        max(if(o.concept_id=164948,o.value_coded,null)) as currently_has_tb,
+        max(if(o.concept_id=1691,o.value_coded,null)) as recently_on_pep,
+        max(if(o.concept_id=165200,o.value_coded,null)) as recently_had_sti,
+        max(if(o.concept_id=165197,o.value_coded,null)) as tb_screened,
+        max(if(o.concept_id=1729 and o.value_coded = 159799,o.value_coded,null)) as cough,
+        max(if(o.concept_id=1729 and o.value_coded = 1494,o.value_coded,null)) as fever,
+        max(if(o.concept_id=1729 and o.value_coded = 832,o.value_coded,null)) as weight_loss,
+        max(if(o.concept_id=1729 and o.value_coded = 133027,o.value_coded,null)) as night_sweats,
+        max(if(o.concept_id=1729 and o.value_coded = 124068,o.value_coded,null)) as contact_with_tb_case,
+        max(if(o.concept_id=1729 and o.value_coded = 116334,o.value_coded,null)) as lethargy,
+        max(if(o.concept_id=1659,o.value_coded,null)) as tb_status,
         max(if(o.concept_id=165090,o.value_coded,null)) as shared_needle,
         max(if(o.concept_id=165060,o.value_coded,null)) as needle_stick_injuries,
         max(if(o.concept_id=166365,o.value_coded,null)) as traditional_procedures,
@@ -6318,6 +6330,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=5272,o.value_coded,null)) as pregnant,
         max(if(o.concept_id=5632,o.value_coded,null)) as breastfeeding_mother,
         max(if(o.concept_id=162699,o.value_coded,null)) as eligible_for_test,
+        max(if(o.concept_id=1788,o.value_coded,null)) as referred_for_testing,
        concat_ws(',', max(if(o.concept_id = 159803 and o.value_coded = 167156, 'Declined testing', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 165029, 'Wants to test with partner', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 160589, 'Stigma related issues', null)),
@@ -6326,17 +6339,19 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                   max(if(o.concept_id = 159803 and o.value_coded = 158948, 'High workload for the staff', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 163293, 'Too sick', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 5622, 'Other', null))) as reasons_for_ineligibility,
-        max(if(o.concept_id=166365,o.value_text,null)) as specific_reason_for_ineligibility,
+        max(if(o.concept_id=160632,o.value_text,null)) as specific_reason_for_ineligibility,
         e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
         from encounter e
                       inner join person p on p.person_id=e.patient_id and p.voided=0
                       inner join form f on f.form_id = e.form_id and f.uuid = '04295648-7606-11e8-adc0-fa7ae01bbebc'
-                      left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
-                                                                                                    164400,165240,162053,5569,160109,167144,1436,6096,5568,5570,165088,160579,
-                                                                                                    166559,159218,163568,167161,167145,160658,165269,165203,164845,1691,165098,
-                                                                                                    165200,112141,164948,165090,165060,166365,165908,5272,5632,162699,159803,166365)
+                      left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                      (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
+                       164400,165240,162053,5569,160109,167144,1436,6096,5568,5570,165088,160579,
+                       166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
+                       165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
+                       5272,5632,162699,1788,159803,160632)
                       and o.voided=0
                       where e.voided=0
                       group by e.patient_id,date(e.encounter_datetime);
@@ -6389,7 +6404,8 @@ BEGIN
            group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
            group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
            group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
-           group_concat(do.frequency SEPARATOR '|')                                  as frequency,
+           group_concat(case do.frequency when 1 then 'Once daily, in the evening' when 2 then 'Once daily, in the morning' when 3 then 'Twice daily'
+                                          when 4 then 'Once daily, at bedtime' when 5 then 'Once daily' when 6 then 'Thrice daily' end SEPARATOR '|') as frequency,
            et.name                                                                   as enc_name,
            group_concat(do.dose SEPARATOR '|')                                       as dose,
            group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
