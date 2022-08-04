@@ -1624,6 +1624,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			talking_milestone,
 			review_of_systems_developmental,
 			weight_category,
+            followup_type,
 			dna_pcr_sample_date,
 			dna_pcr_contextual_status,
 			dna_pcr_result,
@@ -1684,6 +1685,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				max(if(o.concept_id=162069 and o.value_coded=162060,o.value_coded,null)) as talking_milestone,
 				max(if(o.concept_id=1189,o.value_coded,null)) as review_of_systems_developmental,
 				max(if(o.concept_id=1854,o.value_coded,null)) as weight_category,
+				max(if(o.concept_id=159402,o.value_coded,null)) as followup_type,
 				max(if(o.concept_id=159951,o.value_datetime,null)) as dna_pcr_sample_date,
 				max(if(o.concept_id=162084,o.value_coded,null)) as dna_pcr_contextual_status,
 				max(if(o.concept_id=1030,o.value_coded,null)) as dna_pcr_result,
@@ -1721,7 +1723,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484)
+														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159402)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -1862,8 +1864,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                          having vaccine != ""
                          )
                          ) y
-                           left join obs o on y.encounter_id = o.encounter_id and o.concept_id=162585 and o.voided=0
-
+                           left join obs o on y.encounter_id = o.encounter_id and o.voided=0
                     group by patient_id;
 
  SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
@@ -2340,6 +2341,7 @@ test_2_kit_lot_no,
 test_2_kit_expiry,
 test_2_result,
 final_test_result,
+syphillis_test_result,
 patient_given_result,
 couple_discordant,
 referral_for,
@@ -2389,6 +2391,7 @@ max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
 max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
 max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" when 163611 then "Invalid" else "" end),null)) as final_test_result,
+max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
 max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as couple_discordant,
 max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
@@ -2414,7 +2417,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229)
 inner join (
              select
                o.person_id,
@@ -4175,9 +4178,8 @@ select
                                  when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
         max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
         max(if(o.concept_id = 163589, (case o.value_coded when 885 then 'Pap Smear'
-                                                          when 162816 then 'VIA'
                                                           when 164805 then 'VIA'
-                                                          when 164977 then 'VILI'
+                                                          when 164977 then 'VIA/VILI'
                                                           when 160705 then 'Colposcopy'
                                                           when 159859 then 'HPV Test'
                                                           when 5622 then 'Other' else "" end), "" )) as screening_method,
@@ -6444,6 +6446,107 @@ BEGIN
 
     SELECT 'Completed processing drug orders';
 END $$
+
+-- Populating etl_preventive_services table
+DROP PROCEDURE IF EXISTS sp_populate_etl_preventive_services $$
+CREATE PROCEDURE sp_populate_etl_preventive_services()
+BEGIN
+    insert into kenyaemr_etl.etl_preventive_services(
+        patient_id,
+        visit_date,
+        provider,
+        location_id,
+        encounter_id,
+        malaria_prophylaxis_1,
+        malaria_prophylaxis_2,
+        malaria_prophylaxis_3,
+        tetanus_taxoid_1,
+        tetanus_taxoid_2,
+        tetanus_taxoid_3,
+        tetanus_taxoid_4,
+        folate_iron_1,
+        folate_iron_2,
+        folate_iron_3,
+        folate_iron_4,
+        folate_1,
+        folate_2,
+        folate_3,
+        folate_4,
+        iron_1,
+        iron_2,
+        iron_3,
+        iron_4,
+        mebendazole,
+        long_lasting_insecticidal_net,
+        comment,
+        date_last_modified,
+        date_created,
+        voided
+    )
+    select
+        y.patient_id,
+        y.visit_date,
+        y.provider as provider,
+        y.location_id,
+        y.encounter_id,
+        max(if(vaccine='Malarial prophylaxis' and sequence=1, date_given, null)) as malaria_prophylaxis_1,
+        max(if(vaccine='Malarial prophylaxis' and sequence=2, date_given, null)) as malaria_prophylaxis_2,
+        max(if(vaccine='Malarial prophylaxis' and sequence=3, date_given, null)) as malaria_prophylaxis_3,
+        max(if(vaccine='Tetanus Toxoid' and sequence=1, date_given, null)) as tetanus_taxoid_1,
+        max(if(vaccine='Tetanus Toxoid' and sequence=2, date_given, null)) as tetanus_taxoid_2,
+        max(if(vaccine='Tetanus Toxoid' and sequence=3, date_given, null)) as tetanus_taxoid_3,
+        max(if(vaccine='Tetanus Toxoid' and sequence=4, date_given, null)) as tetanus_taxoid_4,
+        max(if(vaccine='Malarial prophylaxis' and sequence=1, date_given, null)) as folate_iron_1,
+        max(if(vaccine='Malarial prophylaxis' and sequence=2, date_given, null)) as folate_iron_2,
+        max(if(vaccine='Malarial prophylaxis' and sequence=3, date_given, null)) as folate_iron_3,
+        max(if(vaccine='Malarial prophylaxis' and sequence=4, date_given, null)) as folate_iron_4,
+        max(if(vaccine='Folate' and sequence=1, date_given, null)) as folate_1,
+        max(if(vaccine='Folate' and sequence=2, date_given, null)) as folate_2,
+        max(if(vaccine='Folate' and sequence=3, date_given, null)) as folate_3,
+        max(if(vaccine='Folate' and sequence=4, date_given, null)) as folate_4,
+        max(if(vaccine='Iron' and sequence=1, date_given, null)) as iron_1,
+        max(if(vaccine='Iron' and sequence=2, date_given, null)) as iron_2,
+        max(if(vaccine='Iron' and sequence=3, date_given, null)) as iron_3,
+        max(if(vaccine='Iron' and sequence=4, date_given, null)) as iron_4,
+        max(if(vaccine='Mebendazole', date_given, null)) as mebendazole,
+        max(if(vaccine='Long-lasting insecticidal net', date_given, null)) as long_lasting_insecticidal_net,
+        y.comment,
+        y.date_last_modified,
+        y.date_created,
+        y.voided
+    from (
+             select
+                 person_id as patient_id,
+                 visit_id,
+                 date(encounter_datetime) as visit_date,
+                 creator as provider,
+                 location_id,
+                 encounter_id,
+                 max(if(concept_id=984 , (case when value_coded=84879 then 'Tetanus Toxoid' when value_coded=159610 then 'Malarial prophylaxis' when value_coded=104677 then 'Folate/iron'
+                                               when value_coded=79413 then 'Mebendazole' when value_coded=160428 then 'Long-lasting insecticidal net'
+                                               when value_coded=76609 then 'Folate' when value_coded=78218 then 'Iron' end), null)) as vaccine,
+                 max(if(concept_id=1418, value_numeric, null)) as sequence,
+                 max(if(concept_id=161011, value_text, null)) as comment,
+                 max(if(concept_id=1410, date_given, null)) as date_given,
+                 date(date_created) as date_created,
+                 date_last_modified,
+                 voided,
+                 obs_group_id
+             from (
+                      select o.person_id,e.visit_id,o.concept_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified, o.value_coded, o.value_numeric,o.value_text, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, e.voided,e.location_id
+                      from openmrs.obs o
+                               inner join openmrs.encounter e on e.encounter_id=o.encounter_id
+                               inner join openmrs.person p on p.person_id=o.person_id and p.voided=0
+                               inner join openmrs.form f on f.form_id=e.form_id and f.uuid = 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30'
+                      where concept_id in(984,1418,161011,1410,5096) and o.voided=0
+                      group by o.obs_group_id,o.concept_id, e.encounter_datetime
+                  ) t
+             group by t.obs_group_id
+             having vaccine != ''
+         ) y
+    group by y.obs_group_id;
+    SELECT 'Completed processing preventive services';
+END $$
     -- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -6528,6 +6631,7 @@ CALL sp_populate_etl_vmmc_medical_history();
 CALL sp_populate_etl_vmmc_post_operation_assessment();
 CALL sp_populate_etl_hts_eligibility_screening();
 CALL sp_populate_etl_drug_order();
+CALL sp_populate_etl_preventive_services();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
