@@ -1482,6 +1482,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       talking_milestone,
       review_of_systems_developmental,
       weight_category,
+      followup_type,
       dna_pcr_sample_date,
       dna_pcr_contextual_status,
       dna_pcr_result,
@@ -1542,6 +1543,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
         max(if(o.concept_id=162069 and o.value_coded=162060,o.value_coded,null)) as talking_milestone,
         max(if(o.concept_id=1189,o.value_coded,null)) as review_of_systems_developmental,
         max(if(o.concept_id=1854,o.value_coded,null)) as weight_category,
+        max(if(o.concept_id=159402,o.value_coded,null)) as followup_type,
         max(if(o.concept_id=159951,o.value_datetime,null)) as dna_pcr_sample_date,
         max(if(o.concept_id=162084,o.value_coded,null)) as dna_pcr_contextual_status,
         max(if(o.concept_id=1030,o.value_coded,null)) as dna_pcr_result,
@@ -1579,7 +1581,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,1193,161534,162558,160481,163145,1379,5484)
+                            and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,1193,161534,162558,160481,163145,1379,5484,159402)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
@@ -1596,7 +1598,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       dna_pcr_result=VALUES(dna_pcr_result),first_antibody_result=VALUES(first_antibody_result),final_antibody_result=VALUES(final_antibody_result),
       tetracycline_ointment_given=VALUES(tetracycline_ointment_given),pupil_examination=VALUES(pupil_examination),sight_examination=VALUES(sight_examination),squint=VALUES(squint),deworming_drug=VALUES(deworming_drug),dosage=VALUES(dosage),unit=VALUES(unit),comments=VALUES(comments),next_appointment_date=VALUES(next_appointment_date)
       ,nvp_given=VALUES(nvp_given),ctx_given=VALUES(ctx_given),muac=VALUES(muac),weight_category=VALUES(weight_category),stunted=VALUES(stunted),multi_vitamin_given=VALUES(multi_vitamin_given),vitaminA_given=VALUES(vitaminA_given),disability=VALUES(disability),referred_from=VALUES(referred_from),
-      referred_to=VALUES(referred_to),counselled_on=VALUES(counselled_on),MNPS_Supplementation=VALUES(MNPS_Supplementation)
+      referred_to=VALUES(referred_to),counselled_on=VALUES(counselled_on),MNPS_Supplementation=VALUES(MNPS_Supplementation),followup_type=VALUES(followup_type)
     ;
 
     END $$
@@ -1736,7 +1738,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
                having vaccine != ""
              )
            ) y
-        left join obs o on y.encounter_id = o.encounter_id and o.concept_id=162585 and o.voided=0
+        left join obs o on y.encounter_id = o.encounter_id and o.voided=0
       group by patient_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV_birth=VALUES(OPV_birth),OPV_1=VALUES(OPV_1),OPV_2=VALUES(OPV_2),OPV_3=VALUES(OPV_3),IPV=VALUES(IPV),
       DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
@@ -2384,6 +2386,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       test_2_kit_expiry,
       test_2_result,
       final_test_result,
+      syphillis_test_result,
       patient_given_result,
       couple_discordant,
       referral_for,
@@ -2433,6 +2436,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
         max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
         max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" when 163611 then "Invalid" else null end),null)) as final_test_result,
+        max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_given_result,
         max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as couple_discordant,
         max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
@@ -2458,7 +2462,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
         inner join obs o on o.encounter_id = e.encounter_id and o.voided=0 and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481)
+                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,299)
         inner join (
                      select
                        o.person_id,
