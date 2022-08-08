@@ -31,5 +31,6 @@ jobs:
           sudo chown -R tomcat:tomcat /var/lib/OpenMRS/modules/
           sudo chmod +r /var/lib/OpenMRS/modules/*.omod
           sudo chmod 755 /var/lib/OpenMRS/modules/*.omod
-          sudo service tomcat9 restart
+          sudo systemctl stop tomcat
+          sudo systemctl start tomcat
          
