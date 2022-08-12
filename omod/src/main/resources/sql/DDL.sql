@@ -95,6 +95,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_client_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_order;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_preventive_services;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -903,6 +904,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     talking_milestone INT(11),
     review_of_systems_developmental INT(11),
     weight_category INT(11),
+    followup_type INT(11),
     dna_pcr_sample_date DATE,
     dna_pcr_contextual_status INT(11),
     dna_pcr_result INT(11),
@@ -1213,6 +1215,7 @@ test_2_kit_lot_no VARCHAR(50) DEFAULT NULL,
 test_2_kit_expiry DATE DEFAULT NULL,
 test_2_result VARCHAR(50) DEFAULT NULL,
 final_test_result VARCHAR(50) DEFAULT NULL,
+syphillis_test_result VARCHAR(50) DEFAULT NULL,
 patient_given_result VARCHAR(50) DEFAULT NULL,
 couple_discordant VARCHAR(100) DEFAULT NULL,
 referral_for VARCHAR(100) DEFAULT NULL,
@@ -3062,8 +3065,45 @@ CREATE TABLE kenyaemr_etl.etl_drug_order (
   INDEX(patient_id, visit_date),
   INDEX(order_id)
 );
-
 SELECT "Successfully created etl_drug_orders table";
+
+-- Create table etl_preventive_services --
+CREATE TABLE kenyaemr_etl.etl_preventive_services (
+  patient_id INT(11) NOT NULL,
+  visit_date DATE,
+  provider INT(11),
+  location_id INT(11),
+  encounter_id INT(11) NOT NULL,
+  malaria_prophylaxis_1 DATE,
+  malaria_prophylaxis_2 DATE,
+  malaria_prophylaxis_3 DATE,
+  tetanus_taxoid_1 DATE,
+  tetanus_taxoid_2 DATE,
+  tetanus_taxoid_3 DATE,
+  tetanus_taxoid_4 DATE,
+  folate_iron_1 DATE,
+  folate_iron_2 DATE,
+  folate_iron_3 DATE,
+  folate_iron_4 DATE,
+  folate_1 DATE,
+  folate_2 DATE,
+  folate_3 DATE,
+  folate_4 DATE,
+  iron_1 DATE,
+  iron_2 DATE,
+  iron_3 DATE,
+  iron_4 DATE,
+  mebendazole DATE,
+  long_lasting_insecticidal_net DATE DEFAULT NULL,
+  comment VARCHAR(250) DEFAULT NULL,
+  date_last_modified DATETIME,
+  date_created DATETIME NOT NULL,
+  voided int(11),
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  INDEX(visit_date),
+  INDEX(patient_id),
+  INDEX(encounter_id));
+SELECT "Successfully created etl_preventive_services table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
