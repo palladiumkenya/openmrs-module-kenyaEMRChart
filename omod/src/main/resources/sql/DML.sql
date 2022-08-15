@@ -5495,9 +5495,9 @@ select
        if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified
       from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
-       inner join openmrs.form f on f.form_id=e.form_id and f.retired=0
+       inner join form f on f.form_id=e.form_id and f.retired=0
        inner join (
-                    select encounter_type_id, uuid, name from openmrs.encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e',
+                    select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e',
                                                                                                    'c4a2be28-6673-4c36-b886-ea89b0a42116',
                                                                                                    '706a8b12-c4ce-40e4-aec3-258b989bf6d3',
                                                                                                    '35c6fcc2-960b-11ec-b909-0242ac120002',
@@ -6457,6 +6457,7 @@ BEGIN
         provider,
         location_id,
         encounter_id,
+        obs_group_id,
         malaria_prophylaxis_1,
         malaria_prophylaxis_2,
         malaria_prophylaxis_3,
@@ -6489,6 +6490,7 @@ BEGIN
         y.provider as provider,
         y.location_id,
         y.encounter_id,
+        y.obs_group_id,
         max(if(vaccine='Malarial prophylaxis' and sequence=1, date_given, null)) as malaria_prophylaxis_1,
         max(if(vaccine='Malarial prophylaxis' and sequence=2, date_given, null)) as malaria_prophylaxis_2,
         max(if(vaccine='Malarial prophylaxis' and sequence=3, date_given, null)) as malaria_prophylaxis_3,
@@ -6496,10 +6498,10 @@ BEGIN
         max(if(vaccine='Tetanus Toxoid' and sequence=2, date_given, null)) as tetanus_taxoid_2,
         max(if(vaccine='Tetanus Toxoid' and sequence=3, date_given, null)) as tetanus_taxoid_3,
         max(if(vaccine='Tetanus Toxoid' and sequence=4, date_given, null)) as tetanus_taxoid_4,
-        max(if(vaccine='Malarial prophylaxis' and sequence=1, date_given, null)) as folate_iron_1,
-        max(if(vaccine='Malarial prophylaxis' and sequence=2, date_given, null)) as folate_iron_2,
-        max(if(vaccine='Malarial prophylaxis' and sequence=3, date_given, null)) as folate_iron_3,
-        max(if(vaccine='Malarial prophylaxis' and sequence=4, date_given, null)) as folate_iron_4,
+        max(if(vaccine='Folate/Iron' and sequence=1, date_given, null)) as folate_iron_1,
+        max(if(vaccine='Folate/Iron' and sequence=2, date_given, null)) as folate_iron_2,
+        max(if(vaccine='Folate/Iron' and sequence=3, date_given, null)) as folate_iron_3,
+        max(if(vaccine='Folate/Iron' and sequence=4, date_given, null)) as folate_iron_4,
         max(if(vaccine='Folate' and sequence=1, date_given, null)) as folate_1,
         max(if(vaccine='Folate' and sequence=2, date_given, null)) as folate_2,
         max(if(vaccine='Folate' and sequence=3, date_given, null)) as folate_3,
@@ -6534,10 +6536,10 @@ BEGIN
                  obs_group_id
              from (
                       select o.person_id,e.visit_id,o.concept_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified, o.value_coded, o.value_numeric,o.value_text, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, e.voided,e.location_id
-                      from openmrs.obs o
-                               inner join openmrs.encounter e on e.encounter_id=o.encounter_id
-                               inner join openmrs.person p on p.person_id=o.person_id and p.voided=0
-                               inner join openmrs.form f on f.form_id=e.form_id and f.uuid = 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30'
+                      from obs o
+                               inner join encounter e on e.encounter_id=o.encounter_id
+                               inner join person p on p.person_id=o.person_id and p.voided=0
+                               inner join form f on f.form_id=e.form_id and f.uuid = 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30'
                       where concept_id in(984,1418,161011,1410,5096) and o.voided=0
                       group by o.obs_group_id,o.concept_id, e.encounter_datetime
                   ) t
