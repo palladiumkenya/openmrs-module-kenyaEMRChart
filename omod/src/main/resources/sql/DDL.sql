@@ -3074,6 +3074,7 @@ CREATE TABLE kenyaemr_etl.etl_preventive_services (
   provider INT(11),
   location_id INT(11),
   encounter_id INT(11) NOT NULL,
+  obs_group_id INT(11) NOT NULL,
   malaria_prophylaxis_1 DATE,
   malaria_prophylaxis_2 DATE,
   malaria_prophylaxis_3 DATE,
@@ -3100,6 +3101,7 @@ CREATE TABLE kenyaemr_etl.etl_preventive_services (
   date_created DATETIME NOT NULL,
   voided int(11),
   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  PRIMARY KEY (patient_id,encounter_id,obs_group_id),
   INDEX(visit_date),
   INDEX(patient_id),
   INDEX(encounter_id));
