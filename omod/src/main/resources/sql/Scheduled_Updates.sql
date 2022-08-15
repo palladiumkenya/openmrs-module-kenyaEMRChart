@@ -5843,9 +5843,9 @@ select
        e.voided as voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
-       inner join openmrs.form f on f.form_id=e.form_id and f.retired=0
+       inner join form f on f.form_id=e.form_id and f.retired=0
        inner join (
-                    select encounter_type_id, uuid, name from openmrs.encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e',
+                    select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e',
                                                                                                    'c4a2be28-6673-4c36-b886-ea89b0a42116',
                                                                                                    '706a8b12-c4ce-40e4-aec3-258b989bf6d3',
                                                                                                    '35c6fcc2-960b-11ec-b909-0242ac120002',
@@ -7126,6 +7126,122 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),
 
 SELECT "Completed processing drug orders data ", CONCAT("Time: ", NOW());
 END $$
+
+--- sp_update_etl_drug_order ---
+
+DROP PROCEDURE IF EXISTS sp_update_etl_preventive_services $$
+CREATE PROCEDURE sp_update_etl_preventive_services(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing Preventive services", CONCAT("Time: ", NOW());
+
+    insert into kenyaemr_etl.etl_preventive_services(
+        patient_id,
+        visit_date,
+        provider,
+        location_id,
+        encounter_id,
+        obs_group_id,
+        malaria_prophylaxis_1,
+        malaria_prophylaxis_2,
+        malaria_prophylaxis_3,
+        tetanus_taxoid_1,
+        tetanus_taxoid_2,
+        tetanus_taxoid_3,
+        tetanus_taxoid_4,
+        folate_iron_1,
+        folate_iron_2,
+        folate_iron_3,
+        folate_iron_4,
+        folate_1,
+        folate_2,
+        folate_3,
+        folate_4,
+        iron_1,
+        iron_2,
+        iron_3,
+        iron_4,
+        mebendazole,
+        long_lasting_insecticidal_net,
+        comment,
+        date_last_modified,
+        date_created,
+        voided
+    )
+    select
+        y.patient_id,
+        y.visit_date,
+        y.provider as provider,
+        y.location_id,
+        y.encounter_id,
+        y.obs_group_id,
+        max(if(vaccine='Malarial prophylaxis' and sequence=1, date_given, null)) as malaria_prophylaxis_1,
+        max(if(vaccine='Malarial prophylaxis' and sequence=2, date_given, null)) as malaria_prophylaxis_2,
+        max(if(vaccine='Malarial prophylaxis' and sequence=3, date_given, null)) as malaria_prophylaxis_3,
+        max(if(vaccine='Tetanus Toxoid' and sequence=1, date_given, null)) as tetanus_taxoid_1,
+        max(if(vaccine='Tetanus Toxoid' and sequence=2, date_given, null)) as tetanus_taxoid_2,
+        max(if(vaccine='Tetanus Toxoid' and sequence=3, date_given, null)) as tetanus_taxoid_3,
+        max(if(vaccine='Tetanus Toxoid' and sequence=4, date_given, null)) as tetanus_taxoid_4,
+        max(if(vaccine='Folate/Iron' and sequence=1, date_given, null)) as folate_iron_1,
+        max(if(vaccine='Folate/Iron' and sequence=2, date_given, null)) as folate_iron_2,
+        max(if(vaccine='Folate/Iron' and sequence=3, date_given, null)) as folate_iron_3,
+        max(if(vaccine='Folate/Iron' and sequence=4, date_given, null)) as folate_iron_4,
+        max(if(vaccine='Folate' and sequence=1, date_given, null)) as folate_1,
+        max(if(vaccine='Folate' and sequence=2, date_given, null)) as folate_2,
+        max(if(vaccine='Folate' and sequence=3, date_given, null)) as folate_3,
+        max(if(vaccine='Folate' and sequence=4, date_given, null)) as folate_4,
+        max(if(vaccine='Iron' and sequence=1, date_given, null)) as iron_1,
+        max(if(vaccine='Iron' and sequence=2, date_given, null)) as iron_2,
+        max(if(vaccine='Iron' and sequence=3, date_given, null)) as iron_3,
+        max(if(vaccine='Iron' and sequence=4, date_given, null)) as iron_4,
+        max(if(vaccine='Mebendazole', date_given, null)) as mebendazole,
+        max(if(vaccine='Long-lasting insecticidal net', date_given, null)) as long_lasting_insecticidal_net,
+        y.comment,
+        y.date_last_modified,
+        y.date_created,
+        y.voided
+    from (
+             select
+                 person_id as patient_id,
+                 visit_id,
+                 date(encounter_datetime) as visit_date,
+                 creator as provider,
+                 location_id,
+                 encounter_id,
+                 max(if(concept_id=984 , (case when value_coded=84879 then 'Tetanus Toxoid' when value_coded=159610 then 'Malarial prophylaxis' when value_coded=104677 then 'Folate/Iron'
+                                               when value_coded=79413 then 'Mebendazole' when value_coded=160428 then 'Long-lasting insecticidal net'
+                                               when value_coded=76609 then 'Folate' when value_coded=78218 then 'Iron' end), null)) as vaccine,
+                 max(if(concept_id=1418, value_numeric, null)) as sequence,
+                 max(if(concept_id=161011, value_text, null)) as comment,
+                 max(if(concept_id=1410, date_given, null)) as date_given,
+                 date(date_created) as date_created,
+                 date_last_modified,
+                 voided,
+                 obs_group_id
+             from (
+                      select o.person_id,e.visit_id,o.concept_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified, o.value_coded, o.value_numeric,o.value_text, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, e.voided,e.location_id
+                      from obs o
+                               inner join encounter e on e.encounter_id=o.encounter_id
+                               inner join person p on p.person_id=o.person_id and p.voided=0
+                               inner join form f on f.form_id=e.form_id and f.uuid = 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30'
+                      where concept_id in(984,1418,161011,1410,5096) and o.voided=0
+                         and e.date_created >= last_update_time
+                         or e.date_changed >= last_update_time
+                         or e.date_voided >= last_update_time
+                      group by o.obs_group_id,o.concept_id, e.encounter_datetime
+                  ) t
+             group by t.obs_group_id
+             having vaccine != ''
+         ) y
+    group by y.obs_group_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),malaria_prophylaxis_1=VALUES(malaria_prophylaxis_1),malaria_prophylaxis_2=VALUES(malaria_prophylaxis_2),
+                            malaria_prophylaxis_3=VALUES(malaria_prophylaxis_3),tetanus_taxoid_1=VALUES(tetanus_taxoid_1),tetanus_taxoid_2=VALUES(tetanus_taxoid_2),tetanus_taxoid_3=VALUES(tetanus_taxoid_3),
+                            tetanus_taxoid_4=VALUES(tetanus_taxoid_4),folate_iron_1=VALUES(folate_iron_1),folate_iron_2=VALUES(folate_iron_2),folate_iron_3=VALUES(folate_iron_3),
+                            folate_iron_4=VALUES(folate_iron_4),folate_1=VALUES(folate_1),folate_2=VALUES(folate_2),folate_3=VALUES(folate_3),
+                            folate_4=VALUES(folate_4),iron_1=VALUES(iron_1),iron_2=VALUES(iron_2),
+                            iron_3=VALUES(iron_3),iron_4=VALUES(iron_4),mebendazole=VALUES(mebendazole),
+                            long_lasting_insecticidal_net=VALUES(long_lasting_insecticidal_net),comment=VALUES(comment),voided=VALUES(voided);
+    SELECT "Completed processing Preventive services data", CONCAT("Time: ", NOW());
+END $$
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -7205,6 +7321,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_vmmc_post_operation_assessment(last_update_time);
     CALL sp_update_etl_hts_eligibility_screening(last_update_time);
     CALL sp_update_etl_drug_order(last_update_time);
+    CALL sp_update_etl_preventive_services(last_update_time);
 
     CALL sp_update_dashboard_table();
 

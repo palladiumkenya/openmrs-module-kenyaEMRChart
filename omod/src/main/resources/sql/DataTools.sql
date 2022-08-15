@@ -2404,6 +2404,46 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
 create table kenyaemr_datatools.drug_order as select * from kenyaemr_etl.etl_drug_order;
 ALTER TABLE kenyaemr_datatools.drug_order add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
+-- create table preventive_services
+create table kenyaemr_datatools.preventive_services as
+select
+    patient_id,
+    visit_date,
+    provider,
+    location_id,
+    encounter_id,
+    malaria_prophylaxis_1,
+    malaria_prophylaxis_2,
+    malaria_prophylaxis_3,
+    tetanus_taxoid_1,
+    tetanus_taxoid_2,
+    tetanus_taxoid_3,
+    tetanus_taxoid_4,
+    folate_iron_1,
+    folate_iron_2,
+    folate_iron_3,
+    folate_iron_4,
+    folate_1,
+    folate_2,
+    folate_3,
+    folate_4,
+    iron_1,
+    iron_2,
+    iron_3,
+    iron_4,
+    mebendazole,
+    long_lasting_insecticidal_net,
+    comment,
+    date_last_modified,
+    date_created,
+    voided
+from kenyaemr_etl.etl_preventive_services;
+
+ALTER TABLE kenyaemr_datatools.preventive_services ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(patient_id);
+ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(visit_date);
+SELECT "Successfully created preventive_services table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
