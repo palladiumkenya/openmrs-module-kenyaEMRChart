@@ -2761,6 +2761,21 @@ yellow_urine,
 numbness_bs_hands_feet,
 eyes_yellowness,
 upper_rightQ_abdomen_tenderness,
+on_anti_tb_drugs,
+on_ipt,
+ever_on_ipt,
+spatum_smear_ordered,
+chest_xray_ordered,
+genexpert_ordered,
+spatum_smear_result,
+chest_xray_result,
+genexpert_result,
+clinical_tb_diagnosis,
+contact_invitation,
+evaluated_for_ipt,
+tb_status,
+started_anti_TB,
+tb_rx_date,
 date_created,
 date_last_modified,
 voided
@@ -2777,6 +2792,21 @@ select
        max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 132652 or o1.value_coded = 1066),o1.value_coded,null)) as numbness_bs_hands_feet,
        max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 5192 or o1.value_coded = 1066),o1.value_coded,null)) as eyes_yellowness,
        max(if(o1.obs_group =1727 and o1.concept_id = 1729 and (o1.value_coded = 124994 or o1.value_coded = 1066),o1.value_coded,null)) as upper_rightQ_abdomen_tenderness,
+       max(if(o.concept_id=164948,o.value_coded,null)) as on_anti_tb_drugs ,
+       max(if(o.concept_id=164949,o.value_coded,null)) as on_ipt ,
+       max(if(o.concept_id=164950,o.value_coded,null)) as ever_on_ipt ,
+       max(if(o.concept_id=1271 and o.value_coded =307,o.value_coded,null)) as spatum_smear_ordered ,
+       max(if(o.concept_id=1271 and o.value_coded =12,o.value_coded,null)) as chest_xray_ordered ,
+       max(if(o.concept_id=1271 and o.value_coded = 162202,o.value_coded,null)) as genexpert_ordered ,
+       max(if(o.concept_id=307,o.value_coded,null)) as spatum_smear_result ,
+       max(if(o.concept_id=12,o.value_coded,null)) as chest_xray_result ,
+       max(if(o.concept_id=162202,o.value_coded,null)) as genexpert_result ,
+       max(if(o.concept_id=163752,o.value_coded,null)) as clinical_tb_diagnosis ,
+       max(if(o.concept_id=163414,o.value_coded,null)) as contact_invitation ,
+       max(if(o.concept_id=162275,o.value_coded,null)) as evaluated_for_ipt ,
+       max(if(o.concept_id=1659,o.value_coded,null)) as tb_status,
+       max(if(o.concept_id=162309,o.value_coded,null)) as started_anti_TB,
+       max(if(o.concept_id=1113,o.value_datetime,null)) as tb_rx_date,
        e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
@@ -2786,7 +2816,7 @@ from encounter e
                   ) et on et.encounter_type_id=e.encounter_type
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                                                                                and o1.concept_id =1729 and o1.voided=0
+                                                                                and o1.concept_id in (1729,164948) and o1.voided=0
                                                                                 and o.concept_id in(160108,1727)) o1 on o1.encounter_id = e.encounter_id
 where e.voided=0
 group by o1.obs_id;
@@ -4109,7 +4139,7 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
            max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
            max(if(o.concept_id=164352,(case o.value_coded when 1527 then "Parent" when 974 then "Uncle" when 972 then "Sibling" when 162722 then "Childrens home" when 975 then "Aunt"  else "" end),null)) as relationship_to_client,
            max(if(o.concept_id=160642,o.value_text,null)) as caregiver_phone_number,
-           max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" else "" end),null)) as client_enrolled_cpims,
+           max(if(o.concept_id=163766,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as client_enrolled_cpims,
            max(if(o.concept_id=165347,o.value_text,null)) as partner_offering_ovc,
            max(if(o.concept_id=163775 and o.value_coded=1141, "Yes",null)) as ovc_comprehensive_program,
            max(if(o.concept_id=163775 and o.value_coded=160549,"Yes",null)) as dreams_program,
