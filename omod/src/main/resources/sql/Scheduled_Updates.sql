@@ -2319,7 +2319,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         od.urgency,
         od.order_reason,
         (case when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-         when o.concept_id in(1030,1305,1325,159430,161472) then o.value_coded END) AS test_result,
+         when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032) then o.value_coded END) AS test_result,
         od.date_activated as date_test_requested,
         e.encounter_datetime as date_test_result_received,
         e.date_created,
@@ -2331,7 +2331,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
         ) et on et.encounter_type_id=e.encounter_type
-        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472)
+        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032)
         left join orders od on od.order_id = o.order_id and od.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -2351,9 +2351,6 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 DROP PROCEDURE IF EXISTS sp_update_hts_test$$
 CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
   BEGIN
-
-
-
     INSERT INTO kenyaemr_etl.etl_hts_test (
       patient_id,
       visit_id,
@@ -3610,7 +3607,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         max(if(o.concept_id = 165106 and o.value_coded = 155589, "Renal impairment",NULL)),
         max(if(o.concept_id = 165106 and o.value_coded = 127750, "Not willing",NULL)),
         max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
-        max(if(o.concept_id = 165109, (case o.value_coded when 1256 then "Start" when 1257 then "Continue" when 162904 then "Restart" when 1258 then "Substitute" when 1260 then "Defer" else "" end), "" )) as treatment_plan,
+        max(if(o.concept_id = 165109, (case o.value_coded when 1257 then "Continue" when 162904 then "Restart" when 1260 then "Discontinue" else "" end), "" )) as treatment_plan,
         max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end), "" )) as prescribed_PrEP,
         max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" end), "" )) as regimen_prescribed,
         max(if(o.concept_id = 164433, o.value_text, null)) as months_prescribed_regimen,
@@ -7219,7 +7216,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_mch_delivery(last_update_time);
     CALL sp_update_drug_event(last_update_time);
     CALL sp_update_etl_pharmacy_extract(last_update_time);
-    -- CALL sp_update_etl_laboratory_extract(last_update_time);
+    CALL sp_update_etl_laboratory_extract(last_update_time);
     CALL sp_update_hts_test(last_update_time);
     CALL sp_update_hts_linkage_and_referral(last_update_time);
     CALL sp_update_hts_referral(last_update_time);
