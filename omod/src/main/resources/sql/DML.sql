@@ -5498,7 +5498,7 @@ select
        max(if(o1.obs_group =121760 and o1.concept_id = 1255,o1.value_coded,null)) as action_taken,
        e.voided as voided,
        e.date_created as date_created,
-       if(max(o1.date_created) > min(o1.date_created),max(o1.date_created),NULL) as date_last_modified
+       greatest(max(o1.date_created),min(o1.date_created)) as date_last_modified
       from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.retired=0
