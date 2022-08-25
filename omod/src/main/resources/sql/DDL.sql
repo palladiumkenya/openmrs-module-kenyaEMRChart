@@ -1701,6 +1701,8 @@ SELECT "Successfully created etl_ART_preparation table";
     hiv_signs VARCHAR(10),
     adherence_counselled VARCHAR(10),
     adherence_outcome VARCHAR(50),
+    poor_adherence_reasons varchar(255),
+    other_poor_adherence_reasons varchar(255),
     prep_contraindications VARCHAR(255),
     treatment_plan VARCHAR(255),
     prescribed_PrEP VARCHAR(10),
