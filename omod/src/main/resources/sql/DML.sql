@@ -4107,7 +4107,7 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
            e.encounter_id as encounter_id,
            e.creator,
            e.date_created as date_created,
-           if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+           greatest(min(o.date_created),max(o.date_created)) as date_last_modified,
            max(if(o.concept_id=163777,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as caregiver_enrolled_here,
            max(if(o.concept_id=163258,o.value_text,null)) as caregiver_name,
            max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
