@@ -3527,6 +3527,8 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         hiv_signs,
         adherence_counselled,
         adherence_outcome,
+        poor_adherence_reasons,
+        other_poor_adherence_reasons,
         prep_contraindications,
         treatment_plan,
         prescribed_PrEP,
@@ -3582,6 +3584,11 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         max(if(o.concept_id = 165101, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as hiv_signs,
         max(if(o.concept_id = 165104, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as adherence_counselled,
         max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair" when 159407 then 'Poor' else "" end), "" )) as adherence_outcome,
+        max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
+                                     when 164997 then "Stigma" when 160583 then "Shared with others" when 1064 then "No perceived risk"
+                                     when 160588 then "Pill burden" when 160584 then "Lost/out of pills" when 1056 then "Separated from HIV+"
+                                     when 159935 then "Side effects" when 160587 then "Forgot" when 5622 then "Other-specify" else "" end), "" )) as poor_adherence_reasons,
+        max(if(o.concept_id = 160632, o.value_text, null )) as other_poor_adherence_reasons,
         CONCAT_WS(',',max(if(o.concept_id = 165106 and o.value_coded = 1107, "None",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 138571, "Confirmed HIV+",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 155589, "Renal impairment",NULL)),
@@ -3603,7 +3610,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
              inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
-                                                                                      165109,159777,165055,165309,5096,165310,163042,134346,164075,1417,164515,164433,165353,165354) and o.voided=0
+                                                                                      165109,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354) and o.voided=0
     where e.voided=0
     group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
