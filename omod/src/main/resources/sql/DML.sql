@@ -2283,8 +2283,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 			max(if(o.concept_id=1252,o.value_coded,null)) as reason_discontinued,
 			max(if(o.concept_id=5622,o.value_text,null)) as reason_discontinued_other,
 			e.date_created as date_created,
-      if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
-
+            if(max(o.date_created) > min(o.date_created),max(o.date_created),NULL) as date_last_modified
 		from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
@@ -4110,7 +4109,7 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
            e.encounter_id as encounter_id,
            e.creator,
            e.date_created as date_created,
-           if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+           greatest(min(o.date_created),max(o.date_created)) as date_last_modified,
            max(if(o.concept_id=163777,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as caregiver_enrolled_here,
            max(if(o.concept_id=163258,o.value_text,null)) as caregiver_name,
            max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
@@ -5499,7 +5498,7 @@ select
        max(if(o1.obs_group =121760 and o1.concept_id = 1255,o1.value_coded,null)) as action_taken,
        e.voided as voided,
        e.date_created as date_created,
-       if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified
+       greatest(max(o1.date_created),min(o1.date_created)) as date_last_modified
       from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.retired=0
@@ -5513,7 +5512,7 @@ select
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
                                                                                 and o1.concept_id in (1193,159935,162875,162760,160753,1255) and o1.voided=0
-                                                                                and o.concept_id = 121760) o1 on o1.encounter_id = e.encounter_id
+                                                                                and o.concept_id =121760) o1 on o1.encounter_id = e.encounter_id
 where e.voided=0
 group by o1.obs_id;
 
@@ -5552,7 +5551,7 @@ select
    max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
    max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
    max(if(o1.obs_group =121689 and o1.concept_id = 160753,date(o1.value_datetime),null)) as allergy_onset_date,
-   e.date_created as date_created,  if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
+   e.date_created as date_created,  if(max(o1.date_created) > min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0

@@ -2185,7 +2185,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
         max(if(o.concept_id=1252,o.value_coded,null)) as reason_discontinued,
         max(if(o.concept_id=5622,o.value_text,null)) as reason_discontinued_other,
         e.date_created as date_created,
-        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified
+        if(max(o.date_created) > min(o.date_created),max(o.date_created),NULL) as date_last_modified
 
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
@@ -4120,7 +4120,7 @@ CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
         e.encounter_id as encounter_id,
         e.creator,
         e.date_created as date_created,
-        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+        greatest(min(o.date_created),max(o.date_created)) as date_last_modified,
         max(if(o.concept_id=163777,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as caregiver_enrolled_here,
         max(if(o.concept_id=163258,o.value_text,null)) as caregiver_name,
         max(if(o.concept_id=1533,(case o.value_coded when 1534 then "Male" when 1535 then "Female" else "" end),null)) as caregiver_gender,
@@ -5845,7 +5845,7 @@ select
        max(if(o1.obs_group =121760 and o1.concept_id = 160753,date(o1.value_datetime),null)) as start_date,
        max(if(o1.obs_group =121760 and o1.concept_id = 1255,o1.value_coded,null)) as action_taken,
        e.date_created as date_created,
-       if(max(o1.date_created)!=min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
+       if(max(o1.date_created) > min(o1.date_created),max(o1.date_created),NULL) as date_last_modified
        e.voided as voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
