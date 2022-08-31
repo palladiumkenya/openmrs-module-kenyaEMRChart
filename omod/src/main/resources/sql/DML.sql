@@ -3483,6 +3483,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
     SELECT "Processing PrEP follow-up form", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_prep_followup(
         uuid,
+        form,
         provider,
         patient_id,
         visit_id,
@@ -3542,7 +3543,12 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         voided
     )
     select
-        e.uuid, e.creator as provider,e.patient_id, e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,e.date_created,
+        e.uuid,
+      (case f.uuid
+            when '1bfb09fc-56d7-4108-bd59-b2765fd312b8' then 'prep-initial'
+            when 'ee3e2017-52c0-4a54-99ab-ebb542fb8984' then 'prep-consultation'
+        end) as form,
+        e.creator as provider,e.patient_id, e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id = 161558,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_screened,
         max(if(o.concept_id = 165098 and o.value_coded = 145762,"GUD",null)) as genital_ulcer_disease,

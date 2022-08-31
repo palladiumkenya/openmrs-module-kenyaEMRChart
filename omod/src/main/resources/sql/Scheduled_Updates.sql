@@ -3504,6 +3504,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
     SELECT "Processing PrEP follow-up", CONCAT("Time: ", NOW());
     insert into kenyaemr_etl.etl_prep_followup(
         uuid,
+        form,
         provider,
         patient_id,
         visit_id,
@@ -3563,7 +3564,12 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         voided
     )
     select
-        e.uuid, e.creator as provider,e.patient_id, e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,e.date_created,
+        e.uuid,
+        (case f.uuid
+              when '1bfb09fc-56d7-4108-bd59-b2765fd312b8' then 'prep-initial'
+              when 'ee3e2017-52c0-4a54-99ab-ebb542fb8984' then 'prep-consultation'
+         end) as form,
+        e.creator as provider,e.patient_id, e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id = 161558,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as sti_screened,
         max(if(o.concept_id = 165098 and o.value_coded = 145762,"GUD",null)) as genital_ulcer_disease,
@@ -3627,7 +3633,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         e.voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
-        inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984")
+        inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                                                                                     165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
                                                                                                                                                                                                                                                              165109,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165354,165310) and o.voided=0
@@ -5788,7 +5794,7 @@ select
        max(if(o1.obs_group =121760 and o1.concept_id = 160753,date(o1.value_datetime),null)) as start_date,
        max(if(o1.obs_group =121760 and o1.concept_id = 1255,o1.value_coded,null)) as action_taken,
        e.date_created as date_created,
-       if(max(o1.date_created) > min(o1.date_created),max(o1.date_created),NULL) as date_last_modified
+       if(max(o1.date_created) > min(o1.date_created),max(o1.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
