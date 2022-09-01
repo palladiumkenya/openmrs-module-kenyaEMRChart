@@ -2119,6 +2119,10 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       encounter_provider INT(11),
       date_created DATETIME NOT NULL,
       date_last_modified DATETIME,
+      patient_type VARCHAR(50),
+      transfer_in_date DATE,
+      date_first_enrolled_in_kp DATE,
+      facility_transferred_from VARCHAR(255),
       key_population_type VARCHAR(255),
       contacted_by_peducator VARCHAR(10),
       program_name VARCHAR(255),
@@ -2139,7 +2143,10 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id),
       index(unique_identifier),
-      index(key_population_type)
+      index(key_population_type),
+      index(patient_type),
+      index(transfer_in_date),
+      index(date_first_enrolled_in_kp)
     );
 
     SELECT "Successfully created etl_contact table";
