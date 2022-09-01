@@ -4358,6 +4358,10 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
             encounter_provider,
             date_created,
             date_last_modified,
+            patient_type,
+            transfer_in_date,
+            date_first_enrolled_in_kp,
+            facility_transferred_from,
             key_population_type,
             contacted_by_peducator,
             program_name,
@@ -4384,6 +4388,10 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                e.creator,
                e.date_created,
                if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+               max(if(o.concept_id=164932,(case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" else "" end),null)) as patient_type,
+               max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
+               max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
+               max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
                max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
                                                      then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
                max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
@@ -4427,7 +4435,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                  ) et on et.encounter_type_id=e.encounter_type
                join person p on p.person_id=e.patient_id and p.voided=0
                left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                          and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
+                                          and o.concept_id in (164932,160534,160555,160535,164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
         where e.voided=0
         group by e.patient_id, e.encounter_id;
 

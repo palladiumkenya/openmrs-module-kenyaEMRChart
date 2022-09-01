@@ -4311,6 +4311,10 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
       encounter_provider,
       date_created,
       date_last_modified,
+      patient_type,
+      transfer_in_date,
+      date_first_enrolled_in_kp,
+      facility_transferred_from,
       key_population_type,
       contacted_by_peducator,
       program_name,
@@ -4337,6 +4341,10 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         e.creator,
         e.date_created,
         if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+        max(if(o.concept_id=164932,(case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" else "" end),null)) as patient_type,
+        max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
+        max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
+        max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
         max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
           then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
         max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
@@ -4380,7 +4388,7 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                         and o.concept_id in (164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
+                                         and o.concept_id in (164932,160534,160555,160535,164929,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -4388,7 +4396,8 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
       group by e.patient_id, e.encounter_id
       order by e.patient_id
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),key_population_type=VALUES(key_population_type),contacted_by_peducator=VALUES(contacted_by_peducator),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),patient_type=VALUES(patient_type),transfer_in_date=VALUES(transfer_in_date),date_first_enrolled_in_kp=VALUES(date_first_enrolled_in_kp),
+      facility_transferred_from=VALUES(facility_transferred_from),key_population_type=VALUES(key_population_type),contacted_by_peducator=VALUES(contacted_by_peducator),
       program_name=VALUES(program_name),frequent_hotspot_name=VALUES(frequent_hotspot_name),frequent_hotspot_type=VALUES(frequent_hotspot_type),year_started_sex_work=VALUES(year_started_sex_work),
       year_started_sex_with_men=VALUES(year_started_sex_with_men),year_started_drugs=VALUES(year_started_drugs),avg_weekly_sex_acts=VALUES(avg_weekly_sex_acts),avg_weekly_anal_sex_acts=VALUES(avg_weekly_anal_sex_acts),
       avg_daily_drug_injections=VALUES(avg_daily_drug_injections),contact_person_name=VALUES(contact_person_name),contact_person_alias=VALUES(contact_person_alias),contact_person_phone=VALUES(contact_person_phone),voided=VALUES(voided);
