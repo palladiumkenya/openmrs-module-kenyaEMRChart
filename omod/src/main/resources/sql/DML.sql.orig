@@ -6558,7 +6558,11 @@ BEGIN
                  voided,
                  obs_group_id
              from (
+<<<<<<< HEAD
+                      select o.person_id,e.visit_id,o.concept_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified, o.value_coded, o.value_numeric,o.value_text, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, e.voided,e.location_id
+=======
                       select o.person_id,e.visit_id,o.concept_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.value_coded, o.value_numeric,o.value_text, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, e.voided,e.location_id
+>>>>>>> Conflict resolution
                       from obs o
                                inner join encounter e on e.encounter_id=o.encounter_id
                                inner join person p on p.person_id=o.person_id and p.voided=0
@@ -6573,8 +6577,12 @@ BEGIN
     SELECT 'Completed processing preventive services';
 END $$
     -- end of dml procedures
+<<<<<<< HEAD
+		SET sql_mode=@OLD_SQL_MODE$$
+=======
 
 		SET sql_mode=@OLD_SQL_MODE $$
+>>>>>>> Conflict resolution
 
 -- ------------------------------------------- running all procedures -----------------------------
 
