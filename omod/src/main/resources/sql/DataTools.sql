@@ -1794,6 +1794,7 @@ select
     date_first_enrolled_in_kp,
     facility_transferred_from,
     key_population_type,
+    priority_population_type,
     contacted_by_peducator,
     program_name,
     frequent_hotspot_name,
