@@ -2125,6 +2125,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       facility_transferred_from VARCHAR(255),
       key_population_type VARCHAR(255),
       priority_population_type VARCHAR(255),
+      implementation_subcounty VARCHAR(200),
       contacted_by_peducator VARCHAR(10),
       program_name VARCHAR(255),
       frequent_hotspot_name VARCHAR(255),
@@ -2148,7 +2149,8 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       index(priority_population_type),
       index(patient_type),
       index(transfer_in_date),
-      index(date_first_enrolled_in_kp)
+      index(date_first_enrolled_in_kp),
+      index(implementation_subcounty)
     );
 
     SELECT "Successfully created etl_contact table";

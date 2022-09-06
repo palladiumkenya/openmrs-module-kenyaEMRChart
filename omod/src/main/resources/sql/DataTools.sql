@@ -1795,6 +1795,7 @@ select
     facility_transferred_from,
     key_population_type,
     priority_population_type,
+    implementation_subcounty,
     contacted_by_peducator,
     program_name,
     frequent_hotspot_name,
