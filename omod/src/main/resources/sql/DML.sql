@@ -4360,6 +4360,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
             facility_transferred_from,
             key_population_type,
             priority_population_type,
+            implementation_subcounty,
             contacted_by_peducator,
             program_name,
             frequent_hotspot_name,
@@ -4393,6 +4394,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                                                      then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
                max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
                                                then  "Prisoner" else "" end),null)) as priority_population_type,
+               max(if(o.concept_id=167131,o.value_text,null)) as implementation_subcounty,
                max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
                max(if(o.concept_id=165137,o.value_text,null)) as program_name,
                max(if(o.concept_id=165006,o.value_text,null)) as frequent_hotspot_name,
@@ -4434,7 +4436,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                  ) et on et.encounter_type_id=e.encounter_type
                join person p on p.person_id=e.patient_id and p.voided=0
                left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                          and o.concept_id in (164932,160534,160555,160535,164929,138643,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
+                                          and o.concept_id in (164932,160534,160555,160535,164929,138643,167131,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
         where e.voided=0
         group by e.patient_id, e.encounter_id;
 
