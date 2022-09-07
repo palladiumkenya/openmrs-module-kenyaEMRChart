@@ -4375,7 +4375,9 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
       facility_transferred_from,
       key_population_type,
       priority_population_type,
+      implementation_county,
       implementation_subcounty,
+      implementation_ward,
       contacted_by_peducator,
       program_name,
       frequent_hotspot_name,
@@ -4410,7 +4412,9 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
           then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
           then  "Prisoner" else "" end),null)) as priority_population_type,
-        max(if(o.concept_id=167131,o.value_text,null)) as implementation_subcounty,
+        max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
+        max(if(o.concept_id=161551,o.value_text,null)) as implementation_subcounty,
+        max(if(o.concept_id=161550,o.value_text,null)) as implementation_ward,
         max(if(o.concept_id=165004,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as contacted_by_peducator,
         max(if(o.concept_id=165137,o.value_text,null)) as program_name,
         max(if(o.concept_id=165006,o.value_text,null)) as frequent_hotspot_name,
@@ -4452,7 +4456,7 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                         and o.concept_id in (164932,160534,160555,160535,164929,138643,167131,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
+                                         and o.concept_id in (164932,160534,160555,160535,164929,138643,167131,161551,161550,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -4461,7 +4465,8 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
       group by e.patient_id, e.encounter_id
       order by e.patient_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),patient_type=VALUES(patient_type),transfer_in_date=VALUES(transfer_in_date),date_first_enrolled_in_kp=VALUES(date_first_enrolled_in_kp),
-      facility_transferred_from=VALUES(facility_transferred_from),key_population_type=VALUES(key_population_type),priority_population_type=VALUES(priority_population_type),implementation_subcounty=VALUES(implementation_subcounty),contacted_by_peducator=VALUES(contacted_by_peducator),
+      facility_transferred_from=VALUES(facility_transferred_from),key_population_type=VALUES(key_population_type),priority_population_type=VALUES(priority_population_type),implementation_county=VALUES(implementation_county),implementation_subcounty=VALUES(implementation_subcounty),
+      implementation_ward=VALUES(implementation_ward),contacted_by_peducator=VALUES(contacted_by_peducator),
       program_name=VALUES(program_name),frequent_hotspot_name=VALUES(frequent_hotspot_name),frequent_hotspot_type=VALUES(frequent_hotspot_type),year_started_sex_work=VALUES(year_started_sex_work),
       year_started_sex_with_men=VALUES(year_started_sex_with_men),year_started_drugs=VALUES(year_started_drugs),avg_weekly_sex_acts=VALUES(avg_weekly_sex_acts),avg_weekly_anal_sex_acts=VALUES(avg_weekly_anal_sex_acts),
       avg_daily_drug_injections=VALUES(avg_daily_drug_injections),contact_person_name=VALUES(contact_person_name),contact_person_alias=VALUES(contact_person_alias),contact_person_phone=VALUES(contact_person_phone),voided=VALUES(voided);
