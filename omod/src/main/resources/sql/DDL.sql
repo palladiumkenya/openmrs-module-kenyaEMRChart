@@ -2311,6 +2311,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       received_vl_results VARCHAR(100),
       condom_use_education VARCHAR(10),
       post_abortal_care VARCHAR(10),
+      referral VARCHAR(10),
       linked_to_psychosocial VARCHAR(10),
       male_condoms_no VARCHAR(10),
       female_condoms_no VARCHAR(10),
