@@ -1972,6 +1972,7 @@ select
     received_vl_results,
     condom_use_education,
     post_abortal_care,
+    referral,
     linked_to_psychosocial,
     male_condoms_no,
     female_condoms_no,
