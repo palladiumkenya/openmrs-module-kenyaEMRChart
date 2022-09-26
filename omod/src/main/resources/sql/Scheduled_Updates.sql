@@ -7099,8 +7099,6 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),
 
 SELECT "Completed processing drug orders data ", CONCAT("Time: ", NOW());
 END $$
-<<<<<<< HEAD
-=======
 
 --- sp_update_etl_drug_order ---
 
@@ -7217,7 +7215,7 @@ BEGIN
                             long_lasting_insecticidal_net=VALUES(long_lasting_insecticidal_net),comment=VALUES(comment),voided=VALUES(voided);
     SELECT "Completed processing Preventive services data", CONCAT("Time: ", NOW());
 END $$
->>>>>>> 5241f1b... Modified how date last modified is fetched
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE$$
