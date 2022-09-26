@@ -1658,6 +1658,7 @@ SELECT "Successfully created etl_ART_preparation table";
 
   CREATE TABLE kenyaemr_etl.etl_prep_followup (
     uuid char(38),
+    form VARCHAR(50),
     provider INT(11),
     patient_id INT(11) NOT NULL,
     visit_id INT(11),
@@ -1701,6 +1702,8 @@ SELECT "Successfully created etl_ART_preparation table";
     hiv_signs VARCHAR(10),
     adherence_counselled VARCHAR(10),
     adherence_outcome VARCHAR(50),
+    poor_adherence_reasons varchar(255),
+    other_poor_adherence_reasons varchar(255),
     prep_contraindications VARCHAR(255),
     treatment_plan VARCHAR(255),
     prescribed_PrEP VARCHAR(10),
@@ -1716,7 +1719,8 @@ SELECT "Successfully created etl_ART_preparation table";
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
-    INDEX(encounter_id)
+    INDEX(encounter_id),
+    INDEX(form)
   );
   SELECT "Successfully created etl_prep_followup table";
 
@@ -2115,7 +2119,15 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       encounter_provider INT(11),
       date_created DATETIME NOT NULL,
       date_last_modified DATETIME,
+      patient_type VARCHAR(50),
+      transfer_in_date DATE,
+      date_first_enrolled_in_kp DATE,
+      facility_transferred_from VARCHAR(255),
       key_population_type VARCHAR(255),
+      priority_population_type VARCHAR(255),
+      implementation_county VARCHAR(200),
+      implementation_subcounty VARCHAR(200),
+      implementation_ward VARCHAR(200),
       contacted_by_peducator VARCHAR(10),
       program_name VARCHAR(255),
       frequent_hotspot_name VARCHAR(255),
@@ -2135,7 +2147,12 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id),
       index(unique_identifier),
-      index(key_population_type)
+      index(key_population_type),
+      index(priority_population_type),
+      index(patient_type),
+      index(transfer_in_date),
+      index(date_first_enrolled_in_kp),
+      index(implementation_subcounty)
     );
 
     SELECT "Successfully created etl_contact table";
