@@ -4401,12 +4401,11 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         e.encounter_id,
         e.creator,
         e.date_created,
-        if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id=164932,(case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" else "" end),null)) as patient_type,
         max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
         max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
         max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
-        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
           then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
