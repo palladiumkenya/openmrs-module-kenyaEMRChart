@@ -4388,7 +4388,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                e.encounter_id,
                e.creator,
                e.date_created,
-               if(max(o.date_created)!=min(o.date_created),max(o.date_created),NULL) as date_last_modified,
+               if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
                max(if(o.concept_id=164932,(case o.value_coded when 164144 then "New Patient" when 160563 then "Transfer in" else "" end),null)) as patient_type,
                max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
                max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
