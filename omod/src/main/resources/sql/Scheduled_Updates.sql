@@ -4710,6 +4710,7 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
       received_vl_results,
       condom_use_education,
       post_abortal_care,
+      referral,
       linked_to_psychosocial,
       male_condoms_no,
       female_condoms_no,
@@ -4834,7 +4835,8 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=165246,(case o.value_coded when 164369 then "N"  else "Y" end),null)) as received_vl_results,
         max(if(o.concept_id=165247,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as condom_use_education,
         max(if(o.concept_id=164820,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as post_abortal_care,
-        max(if(o.concept_id=165302,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as linked_to_psychosocial,
+        max(if(o.concept_id=165302,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as referral,
+        max(if(o.concept_id=163766,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as linked_to_psychosocial,
         max(if(o.concept_id=165055,o.value_numeric,null)) as male_condoms_no,
         max(if(o.concept_id=165056,o.value_numeric,null)) as female_condoms_no,
         max(if(o.concept_id=165057,o.value_numeric,null)) as lubes_no,
@@ -4856,7 +4858,7 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
                                                                                                                                    165041,161471,165254,165255,165256,165042,165046,165257,165201,165258,165259,165044,165051,165260,165261,165262,165043,165047,165263,165264,165265,
                                                                                                                                                                                                                        164934,165196,165266,165267,165268,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
           165209,160653,165279,165280,165210,165211,165213,165281,165282,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
-                                                                                                                                                    164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,165055,165056,
+                                                                                                                                                    164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,163766,165055,165056,
                                                       165057,165058,164845,165248,5096)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -4969,6 +4971,7 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
       received_vl_results=VALUES(received_vl_results),
       condom_use_education=VALUES(condom_use_education),
       post_abortal_care=VALUES(post_abortal_care),
+      referral=VALUES(referral),
       linked_to_psychosocial=VALUES(linked_to_psychosocial),
       male_condoms_no=VALUES(male_condoms_no),
       female_condoms_no=VALUES(female_condoms_no),
