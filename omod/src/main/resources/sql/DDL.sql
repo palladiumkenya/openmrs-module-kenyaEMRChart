@@ -3149,7 +3149,7 @@ create table kenyaemr_etl.etl_overdose_reporting (
     risk_factors                     INT(11),
     other_risk_factors               VARCHAR(255),
     drug                             INT(11),
-    other_risk_drug                  VARCHAR(255),
+    other_drug                       VARCHAR(255),
     outcome                          INT(11),
     remarks                          VARCHAR(255),
     reported_by                      VARCHAR(255),
