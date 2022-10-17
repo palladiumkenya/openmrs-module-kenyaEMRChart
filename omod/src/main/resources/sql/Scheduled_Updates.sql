@@ -7368,7 +7368,7 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid in ('92fd9c5a-c84a-483b-8d78-d4d7a600db30','d753bab3-0bbb-43f5-9796-5e95a5d641f3')
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (162725,165146,165133,165006,165005,165136,165140,1193,163101,165141,160632,1473,165144,165143,160753,)
+                                                                          (162725,165146,165133,165006,165005,165136,165140,1193,163101,165141,160632,1473,165144,165143,160753)
         and o.voided=0
     where e.voided=0
         and e.date_created >= last_update_time
@@ -7376,7 +7376,7 @@ BEGIN
        or e.date_voided >= last_update_time
        or o.date_created >= last_update_time
        or o.date_voided >= last_update_time
-    group by e.patient_id,date(e.encounter_datetime)
+    group by e.patient_id,e.encounter_type
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
                             provider=VALUES(provider),
                             overdose_location=VALUES(overdose_location),
