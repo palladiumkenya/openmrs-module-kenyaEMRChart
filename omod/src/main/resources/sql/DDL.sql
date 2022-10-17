@@ -96,6 +96,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_order;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_preventive_services;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -3129,6 +3130,45 @@ CREATE TABLE kenyaemr_etl.etl_preventive_services (
   INDEX(patient_id),
   INDEX(encounter_id));
 SELECT "Successfully created etl_preventive_services table";
+
+-- Create table etl_overdose_reporting --
+create table kenyaemr_etl.etl_overdose_reporting (
+    client_id                       INT(11) not null,
+    visit_id                         INT(11) DEFAULT NULL,
+    encounter_id                     INT(11) NOT NULL primary key,
+    uuid                             CHAR(38) NOT NULL,
+    location_id                      INT(11) NOT NULL,
+    provider                         INT(11) NOT NULL,
+    visit_date                       DATE,
+    overdose_location                VARCHAR(100),
+    overdose_date                    DATE,
+    incident_type                    INT(11),
+    incident_site_name               VARCHAR(255),
+    incident_site_type               INT(11),
+    naloxone_provided                INT(11),
+    risk_factors                     INT(11),
+    other_risk_factors               VARCHAR(255),
+    drug                             INT(11),
+    other_risk_drug                  VARCHAR(255),
+    outcome                          INT(11),
+    remarks                          VARCHAR(255),
+    reported_by                      VARCHAR(255),
+    date_reported                    DATE,
+    witness                          VARCHAR(255),
+    date_witnessed                   DATE,
+    encounter                        VARCHAR(255),
+    date_created                     DATETIME NOT NULL,
+    date_last_modified               DATETIME,
+    voided                           INT(11),
+    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    index(client_id),
+    index(visit_id),
+    index(visit_date),
+    index(naloxone_provided),
+    index(outcome)
+);
+SELECT "Successfully created etl_overdose_reporting table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

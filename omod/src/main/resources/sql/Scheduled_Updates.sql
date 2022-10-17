@@ -7291,6 +7291,116 @@ BEGIN
                             long_lasting_insecticidal_net=VALUES(long_lasting_insecticidal_net),comment=VALUES(comment),voided=VALUES(voided);
     SELECT "Completed processing Preventive services data", CONCAT("Time: ", NOW());
 END $$
+
+DROP PROCEDURE IF EXISTS sp_update_etl_overdose_reporting $$
+CREATE PROCEDURE sp_update_etl_overdose_reporting(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing overdose reporting";
+    INSERT INTO kenyaemr_etl.etl_overdose_reporting (
+        client_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        provider,
+        location_id,
+        visit_date,
+        overdose_location,
+        overdose_date,
+        incident_type,
+        incident_site_name,
+        incident_site_type,
+        naloxone_provided,
+        risk_factors,
+        other_risk_factors,
+        drug,
+        other_drug,
+        outcome,
+        remarks,
+        reported_by,
+        date_reported,
+        witness,
+        date_witnessed,
+        encounter,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id=162725,o.value_text,null)) as overdose_location,
+        max(if(o.concept_id=165146,o.value_datetime,null)) as overdose_date,
+        max(if(o.concept_id=165133,o.value_coded,null)) as incident_type,
+        max(if(o.concept_id=165006,o.value_text,null)) as incident_site_name,
+        max(if(o.concept_id=165005,o.value_coded,null)) as incident_site_type,
+        max(if(o.concept_id=165136,o.value_coded,null)) as naloxone_provided,
+        concat_ws(',', max(if(o.concept_id = 165140 and o.value_coded = 989, 'Age', null)),
+                  max(if(o.concept_id = 165140 and o.value_coded = 162747, 'Comorbidity', null)),
+                  max(if(o.concept_id = 165140 and o.value_coded = 131779, 'Abstinence from opioid use', null)),
+                  max(if(o.concept_id = 165140 and o.value_coded = 129754, 'Mixing', null)),
+                  max(if(o.concept_id = 165140 and o.value_coded = 134236, 'MAT induction/Re-induction', null)),
+                  max(if(o.concept_id = 165140 and o.value_coded = 5622, 'Other', null))) as risk_factors,
+        max(if(o.concept_id=165145,o.value_text,null)) as other_risk_factors,
+        concat_ws(',', max(if(o.concept_id = 1193 and o.value_coded = 79661, 'Methadone', null)),
+                  max(if(o.concept_id = 1193 and o.value_coded = 121725, 'Alcohol', null)),
+                  max(if(o.concept_id = 1193 and o.value_coded = 146504, 'Cannabis', null)),
+                  max(if(o.concept_id = 1193 and o.value_coded = 73650, 'Cocaine', null)),
+                  max(if(o.concept_id = 1193 and o.value_coded = 76511, 'Flunitrazepam (Tap tap, Bugizi)', null)),
+                  max(if(o.concept_id = 1193 and o.value_coded = 77443, 'Heroine', null)),
+                  max(if(o.concept_id = 1193 and o.value_coded = 5622, 'Other', null))) as risk_factors,
+        max(if(o.concept_id=163101,o.value_text,null)) as other_drug,
+        max(if(o.concept_id=165141,o.value_coded,null)) as outcome,
+        max(if(o.concept_id=160632,o.value_text,null)) as remarks,
+        max(if(o.concept_id=1473,o.value_text,null)) as reported_by,
+        max(if(o.concept_id=165144,o.value_datetime,null)) as date_reported,
+        max(if(o.concept_id=165143,o.value_coded,null)) as witness,
+        max(if(o.concept_id=160753,o.value_datetime,null)) as date_witnessed,
+        case f.uuid when '92fd9c5a-c84a-483b-8d78-d4d7a600db30' then 'Peer Overdose' when 'd753bab3-0bbb-43f5-9796-5e95a5d641f3' then 'HCW overdose' end as encounter,
+        e.date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid in ('92fd9c5a-c84a-483b-8d78-d4d7a600db30','d753bab3-0bbb-43f5-9796-5e95a5d641f3')
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (162725,165146,165133,165006,165005,165136,165140,1193,163101,165141,160632,1473,165144,165143,160753,)
+        and o.voided=0
+    where e.voided=0
+        and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id,date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                            provider=VALUES(provider),
+                            overdose_location=VALUES(overdose_location),
+                            overdose_date=VALUES(overdose_date),
+                            incident_type=VALUES(incident_type),
+                            incident_site_name=VALUES(incident_site_name),
+                            incident_site_type=VALUES(incident_site_type),
+                            naloxone_provided=VALUES(naloxone_provided),
+                            risk_factors=VALUES(risk_factors),
+                            other_risk_factors=VALUES(other_risk_factors),
+                            drug=VALUES(drug),
+                            other_drug=VALUES(other_drug),
+                            outcome=VALUES(outcome),
+                            remarks=VALUES(remarks),
+                            reported_by=VALUES(reported_by),
+                            date_reported=VALUES(date_reported),
+                            witness=VALUES(witness),
+                            date_witnessed=VALUES(date_witnessed),
+                            encounter=VALUES(encounter),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided=VALUES(voided);
+    SELECT "Completed processing overdose reporting";
+END $$
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -7371,6 +7481,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_hts_eligibility_screening(last_update_time);
     CALL sp_update_etl_drug_order(last_update_time);
     CALL sp_update_etl_preventive_services(last_update_time);
+    CALL sp_update_etl_overdose_reporting(last_update_time);
 
     CALL sp_update_dashboard_table();
 
