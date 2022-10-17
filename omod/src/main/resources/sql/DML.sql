@@ -6658,7 +6658,7 @@ BEGIN
         max(if(o.concept_id=160632,o.value_text,null)) as remarks,
         max(if(o.concept_id=1473,o.value_text,null)) as reported_by,
         max(if(o.concept_id=165144,o.value_datetime,null)) as date_reported,
-        max(if(o.concept_id=165143,o.value_coded,null)) as witness,
+        max(if(o.concept_id=165143,o.value_text,null)) as witness,
         max(if(o.concept_id=160753,o.value_datetime,null)) as date_witnessed,
         case f.uuid when '92fd9c5a-c84a-483b-8d78-d4d7a600db30' then 'Peer Overdose' when 'd753bab3-0bbb-43f5-9796-5e95a5d641f3' then 'HCW overdose' end as encounter,
         e.date_created,
