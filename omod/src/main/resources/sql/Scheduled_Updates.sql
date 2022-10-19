@@ -2364,6 +2364,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       test_type,
       population_type,
       key_population_type,
+      priority_population_type,
       ever_tested_for_hiv,
       months_since_last_test,
       patient_disabled,
@@ -2408,7 +2409,8 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         e.encounter_datetime as visit_date,
         max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type ,
         max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" when 138643 then "Priority Population"  else null end),null)) as population_type,
-        max(if(o.concept_id=160581,(case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as key_population_type,
+        max(if(o.concept_id=160581 and o.value_coded in(105,160578,160579,165100,162277,5622), (case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 5622 then "Other"  else null end),null)) as key_population_type,
+        max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
         max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as ever_tested_for_hiv,
         max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
         max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_disabled,
@@ -2486,7 +2488,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), test_type=VALUES(test_type), population_type=VALUES(population_type),
-      key_population_type=VALUES(key_population_type), ever_tested_for_hiv=VALUES(ever_tested_for_hiv), patient_disabled=VALUES(patient_disabled),
+      key_population_type=VALUES(key_population_type),priority_population_type=VALUES(priority_population_type), ever_tested_for_hiv=VALUES(ever_tested_for_hiv), patient_disabled=VALUES(patient_disabled),
       disability_type=VALUES(disability_type), patient_consented=VALUES(patient_consented), client_tested_as=VALUES(client_tested_as),
       test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point),setting=VALUES(setting),approach=VALUES(approach),
       test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
