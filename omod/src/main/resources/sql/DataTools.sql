@@ -2465,6 +2465,59 @@ ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(patient_id);
 ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(visit_date);
 SELECT "Successfully created preventive_services table";
 
+-- create table preventive_services
+create table kenyaemr_datatools.overdose_reporting as
+select
+    client_id,
+    visit_id,
+    encounter_id,
+    uuid,
+    provider,
+    location_id,
+    visit_date,
+    overdose_location,
+    overdose_date,
+    (case incident_type when 165134 then 'New' when 165135 then 'Recurrent' end) as incident_type,
+    incident_site_name,
+    (case incident_site_type when 165011 then 'Street'
+                            when 165012 then 'Injecting den'
+                            when 165013 then 'Uninhabitable building'
+                            when 165014 then 'Public Park'
+                            when 165015 then 'Beach'
+                            when 165016 then 'Casino'
+                            when 165017 then 'Bar with lodging'
+                            when 165018 then 'Bar without lodging'
+                            when 165019 then 'Sex den'
+                            when 165020 then 'Strip club'
+                            when 165021 then 'Highway'
+                            when 165022 then 'Brothel'
+                            when 165023 then 'Guest house/hotel'
+                            when 165025 then 'illicit brew den'
+                            when 165026 then 'Barber shop/salon'
+                            end) as incident_site_type,
+    (case naloxone_provided when 1065 then 'Yes' when 1066 then 'No' end) as naloxone_provided,
+    risk_factors,
+    other_risk_factors,
+    drug,
+    other_drug,
+    (case outcome when 1898 then 'Recovered' when 160034 then 'Died' when 1272 then 'Referred' end) as outcome,
+    remarks,
+    reported_by,
+    date_reported,
+    witness,
+    date_witnessed,
+    encounter,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_overdose_reporting;
+
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(client_id);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(visit_date);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(naloxone_provided);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(outcome);
+SELECT "Successfully created overdose_reporting table";
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
