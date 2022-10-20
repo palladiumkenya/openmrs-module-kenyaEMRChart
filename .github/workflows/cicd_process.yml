@@ -26,8 +26,22 @@ jobs:
           git clone -b master https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
           git status
           mvn clean install -DskipTests
-          sudo rm -rf /var/lib/OpenMRS/modules/kenyaemrCharts-*.omod
-          sudo cp /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart/omod/target/kenyaemrCharts-*.omod /var/lib/OpenMRS/modules/
+  deploy:
+    needs: build
+    name: Deploy to test instance
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote connection
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.CICD_SECRET }}
+        port: ${{ secrets.PORT }}
+        command_timeout: 200m
+        script: |
+          sudo rm -rf /var/lib/OpenMRS/modules/covid19-*.omod
+          sudo cp /apps/github-workflows/kenyaemr-modules/openmrs-module-covid19/omod/target/covid19-*.omod /var/lib/OpenMRS/modules/
           sudo chown -R tomcat:tomcat /var/lib/OpenMRS/modules/
           sudo chmod +r /var/lib/OpenMRS/modules/*.omod
           sudo chmod 755 /var/lib/OpenMRS/modules/*.omod
