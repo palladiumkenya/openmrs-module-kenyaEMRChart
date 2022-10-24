@@ -4409,7 +4409,7 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
         max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
         max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-          then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end),null)) as key_population_type,
+          then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 1175 then "Not applicable" else "" end),null)) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
           then  "Prisoner" else "" end),null)) as priority_population_type,
         max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
