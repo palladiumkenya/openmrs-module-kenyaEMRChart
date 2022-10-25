@@ -227,6 +227,7 @@ when 160585 then "Felt too ill to take medication" when 160586 then "Felt better
 when 160588 then "Pill burden" when 160589 then "Concerned about privacy/stigma" when 820 then "TRANSPORT PROBLEMS"  else "" end) as poor_arv_adherence_reason,
 poor_arv_adherence_reason_other,
 (case pwp_disclosure when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_disclosure,
+(case pwp_pead_disclosure when 1066 then "No disclosure" when 162979 then "Partial disclosure" when 166982 then "Full disclosure" else "" end) as pwp_pead_disclosure,
 (case pwp_partner_tested when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_partner_tested,
 (case condom_provided when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as condom_provided,
 (case substance_abuse_screening when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as substance_abuse_screening,
