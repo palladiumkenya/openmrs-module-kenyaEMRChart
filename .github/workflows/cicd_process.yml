@@ -15,7 +15,7 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.CICD_SECRET }}
         port: ${{ secrets.PORT }}
-        command_timeout: 300m
+        command_timeout: 3000m
         script: |
           cd /apps/github-workflows/kenyaemr-modules
           sudo rm -rf openmrs-module-kenyaEMRChart 
@@ -23,7 +23,7 @@ jobs:
           sudo chown -R cicd2:cicd2 openmrs-module-kenyaEMRChart
           git config --global --add safe.directory /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart      
           cd openmrs-module-kenyaEMRChart
-          git clone -b master https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
+          git clone https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
           git status
           mvn clean install -DskipTests
   deploy:
