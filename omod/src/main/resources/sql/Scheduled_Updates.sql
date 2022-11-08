@@ -2381,6 +2381,8 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       approach,
       test_strategy,
       hts_entry_point,
+      hts_risk_category,
+      hts_risk_score,
       test_1_kit_name,
       test_1_kit_lot_no,
       test_1_kit_expiry,
@@ -2432,6 +2434,8 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(o.concept_id=163556,(case o.value_coded when 164163 then "Provider Initiated Testing(PITC)" when 164953 then "Client Initiated Testing (CITC)" else "" end ),null)) as approach,
         max(if(o.concept_id=164956,o.value_coded,null)) as test_strategy,
         max(if(o.concept_id=160540,o.value_coded,null)) as hts_entry_point,
+        max(if(o.concept_id=167163,(case o.value_coded when 1407 then "Low" when 1499 then "Moderate" when 1408 then "High" when 167164 then "Very high" else "" end),null)) as hts_risk_category,
+        max(if(o.concept_id=167162,o.value_numeric,null)) as hts_risk_score,
         max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
         max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
         max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -2467,7 +2471,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
         inner join obs o on o.encounter_id = e.encounter_id and o.voided=0 and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,299)
+                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,299,167163,167162)
         inner join (
                      select
                        o.person_id,
@@ -2496,7 +2500,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), test_type=VALUES(test_type), population_type=VALUES(population_type),
       key_population_type=VALUES(key_population_type),priority_population_type=VALUES(priority_population_type), ever_tested_for_hiv=VALUES(ever_tested_for_hiv), patient_disabled=VALUES(patient_disabled),
       disability_type=VALUES(disability_type), patient_consented=VALUES(patient_consented), client_tested_as=VALUES(client_tested_as),
-      test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point),setting=VALUES(setting),approach=VALUES(approach),
+      test_strategy=VALUES(test_strategy),hts_entry_point=VALUES(hts_entry_point),hts_risk_category=VALUES(hts_risk_category),hts_risk_score=VALUES(hts_risk_score),setting=VALUES(setting),approach=VALUES(approach),
       test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
       test_1_kit_expiry=VALUES(test_1_kit_expiry), test_1_result=VALUES(test_1_result), test_2_kit_name=VALUES(test_2_kit_name),
       test_2_kit_lot_no=VALUES(test_2_kit_lot_no), test_2_kit_expiry=VALUES(test_2_kit_expiry), test_2_result=VALUES(test_2_result),

@@ -2339,6 +2339,8 @@ setting,
 approach,
 test_strategy,
 hts_entry_point,
+hts_risk_category,
+hts_risk_score,
 test_1_kit_name,
 test_1_kit_lot_no,
 test_1_kit_expiry,
@@ -2390,6 +2392,8 @@ max(if(o.concept_id=165215,(case o.value_coded when 1537 then "Facility" when 16
 max(if(o.concept_id=163556,(case o.value_coded when 164163 then "Provider Initiated Testing(PITC)" when 164953 then "Client Initiated Testing (CITC)" else "" end ),null)) as approach,
 max(if(o.concept_id=164956,o.value_coded,null)) as test_strategy,
 max(if(o.concept_id=160540,o.value_coded,null)) as hts_entry_point,
+max(if(o.concept_id=167163,(case o.value_coded when 1407 then "Low" when 1499 then "Moderate" when 1408 then "High" when 167164 then "Very high" else "" end),null)) as hts_risk_category,
+max(if(o.concept_id=167162,o.value_numeric,null)) as hts_risk_score,
 max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -2425,7 +2429,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162)
 inner join (
              select
                o.person_id,
