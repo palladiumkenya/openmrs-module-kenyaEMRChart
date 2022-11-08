@@ -1222,6 +1222,8 @@ when 160522 then "Emergency"
 when 163096 then "Community Testing"
 when 5622 then "Other"
 else ""  end ) as hts_entry_point,
+t.hts_risk_category,
+t.hts_risk_score,
   t.test_1_kit_name,
   t.test_1_kit_lot_no,
   t.test_1_kit_expiry,
