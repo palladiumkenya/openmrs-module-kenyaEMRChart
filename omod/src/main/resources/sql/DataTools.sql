@@ -28,6 +28,7 @@ unique_patient_no,
 alien_no,
 driving_license_no,
 national_unique_patient_identifier,
+hts_recency_id,
 patient_clinic_number,
 Tb_no,
 CPIMS_unique_identifier,
@@ -227,6 +228,7 @@ when 160585 then "Felt too ill to take medication" when 160586 then "Felt better
 when 160588 then "Pill burden" when 160589 then "Concerned about privacy/stigma" when 820 then "TRANSPORT PROBLEMS"  else "" end) as poor_arv_adherence_reason,
 poor_arv_adherence_reason_other,
 (case pwp_disclosure when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_disclosure,
+(case pwp_pead_disclosure when 1066 then "No disclosure" when 162979 then "Partial disclosure" when 166982 then "Full disclosure" else "" end) as pwp_pead_disclosure,
 (case pwp_partner_tested when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_partner_tested,
 (case condom_provided when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as condom_provided,
 (case substance_abuse_screening when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as substance_abuse_screening,
@@ -237,6 +239,7 @@ poor_arv_adherence_reason_other,
 (case system_review_finding when 1115 then "NORMAL" when 1116 then "ABNORMAL" else "" end) as system_review_finding,
 next_appointment_date,
 refill_date,
+(case appointment_consent when 1065 then "Yes" when 1066 then "No" else "" end) as appointment_consent,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
@@ -260,31 +263,37 @@ SELECT "Successfully created hiv followup table";
 
 -- -------------------------------- create table laboratory_extract ------------------------------------------
 create table kenyaemr_datatools.laboratory_extract as
-select 
-uuid,
-encounter_id,
-patient_id,
-location_id,
-visit_date,
-visit_id,
-(case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
-  when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" else "" end) as lab_test,
-urgency,
-(case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
-    when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
-    when 161236 then 'Routine' when 162080 then 'Baseline VL (for infants diagnosed through EID)' when 162081 then 'Repeat' when 163523 then 'Clinical failure'
-    when 160032 then 'Confirmation of persistent low level Viremia (PLLV)' when 1040 then 'Initial PCR (6week or first contact)' when 1326 then '2nd PCR (6 months)' when 164860 then '3rd PCR (12months)'
-    when 162082 then 'Confirmatory PCR and Baseline VL' when 164460 then 'Ab test 6 weeks after cessation of breastfeeding'
-    when 164860 then 'Ab test at 18 months (1.5 years)'
-    else '' end) as order_reason,
-if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
-if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end), 
-if(lab_test=302, (case test_result when 1115 then "Normal" when 1116 then "Abnormal" when 1067 then "Unknown" end), 
-if(lab_test=32, (case test_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" end), 
-if(lab_test=1305, (case test_result when 1306 then "BEYOND DETECTABLE LIMIT" when 1301 then "DETECTED" when 1302 then "LDL" when 1304 then "POOR SAMPLE QUALITY" end), 
-test_result ))))) AS test_result,
-date_created,
-created_by 
+select
+    uuid,
+    encounter_id,
+    patient_id,
+    location_id,
+    visit_date,
+    visit_id,
+    (case lab_test when 5497 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
+                   when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" when 1029 then "VDRL Titre" when 1031 then "Treponema Pallidum Hemagglutination Assay"
+                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative" else "" end) as lab_test,
+    urgency,
+    (case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
+                       when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
+                       when 161236 then 'Routine' when 162080 then 'Baseline VL (for infants diagnosed through EID)' when 162081 then 'Repeat' when 163523 then 'Clinical failure'
+                       when 160032 then 'Confirmation of persistent low level Viremia (PLLV)' when 1040 then 'Initial PCR (6week or first contact)' when 1326 then '2nd PCR (6 months)' when 164860 then '3rd PCR (12months)'
+                       when 162082 then 'Confirmatory PCR and Baseline VL' when 164460 then 'Ab test 6 weeks after cessation of breastfeeding'
+                       when 164860 then 'Ab test at 18 months (1.5 years)'
+                       else '' end) as order_reason,
+    if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end),
+       if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end),
+          if(lab_test=302, (case test_result when 1115 then "Normal" when 1116 then "Abnormal" when 1067 then "Unknown" end),
+             if(lab_test=32, (case test_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" end),
+                if(lab_test=1305, (case test_result when 1306 then "BEYOND DETECTABLE LIMIT" when 1301 then "DETECTED" when 1302 then "LDL" when 1304 then "POOR SAMPLE QUALITY" end),
+                   if(lab_test=1029, (case test_result when 664 then "Negative" when 703 then "Positive" end),
+                      if(lab_test=1031, (case test_result when 1311 then "<1:2" when 1312 then "01:02" when 1313 then "1:4" when 1314 then "01:08" when 1315 then "01:16" when 1316 then "01:32" when 1317 then ">1:32" when 1304 then "Poor Sample Quality"
+                                                          when 163621 then "1:64" when 163622 then "1:128" when 163623 then "1:256" when 163624 then ">1:572" end),
+                         if(lab_test=1032, (case test_result when 703 then "Positive" when 664 then "Negative" when 1300 then "Equivocal" when 1304 then "Poor Sample Quality" end),
+                            if(lab_test=1619, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
+                               test_result ))))))))) AS test_result,
+    date_created,
+    created_by
 from kenyaemr_etl.etl_laboratory_extract;
 
 ALTER TABLE kenyaemr_datatools.laboratory_extract ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
@@ -1174,6 +1183,7 @@ create table kenyaemr_datatools.hts_test
   t.test_type,
   t.population_type,
   t.key_population_type,
+  t.priority_population_type,
   t.ever_tested_for_hiv,
   t.months_since_last_test,
   t.patient_disabled,
@@ -1212,6 +1222,8 @@ when 160522 then "Emergency"
 when 163096 then "Community Testing"
 when 5622 then "Other"
 else ""  end ) as hts_entry_point,
+t.hts_risk_category,
+t.hts_risk_score,
   t.test_1_kit_name,
   t.test_1_kit_lot_no,
   t.test_1_kit_expiry,
@@ -1783,7 +1795,15 @@ select
     encounter_provider,
     date_created,
     date_last_modified,
+    patient_type,
+    transfer_in_date,
+    date_first_enrolled_in_kp,
+    facility_transferred_from,
     key_population_type,
+    priority_population_type,
+    implementation_county,
+    implementation_subcounty,
+    implementation_ward,
     contacted_by_peducator,
     program_name,
     frequent_hotspot_name,
@@ -1926,6 +1946,11 @@ select
     mental_health_support,
     mental_health_referred,
     mental_health_text,
+    mat_screened,
+    mat_results,
+    mat_treated,
+    mat_referred,
+    mat_text,
     hiv_self_rep_status,
     last_hiv_test_setting,
     counselled_for_hiv,
@@ -1958,6 +1983,7 @@ select
     received_vl_results,
     condom_use_education,
     post_abortal_care,
+    referral,
     linked_to_psychosocial,
     male_condoms_no,
     female_condoms_no,
@@ -2404,6 +2430,99 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
 create table kenyaemr_datatools.drug_order as select * from kenyaemr_etl.etl_drug_order;
 ALTER TABLE kenyaemr_datatools.drug_order add FOREIGN KEY(patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
+-- create table preventive_services
+create table kenyaemr_datatools.preventive_services as
+select
+    patient_id,
+    visit_date,
+    provider,
+    location_id,
+    encounter_id,
+    malaria_prophylaxis_1,
+    malaria_prophylaxis_2,
+    malaria_prophylaxis_3,
+    tetanus_taxoid_1,
+    tetanus_taxoid_2,
+    tetanus_taxoid_3,
+    tetanus_taxoid_4,
+    folate_iron_1,
+    folate_iron_2,
+    folate_iron_3,
+    folate_iron_4,
+    folate_1,
+    folate_2,
+    folate_3,
+    folate_4,
+    iron_1,
+    iron_2,
+    iron_3,
+    iron_4,
+    mebendazole,
+    long_lasting_insecticidal_net,
+    comment,
+    date_last_modified,
+    date_created,
+    voided
+from kenyaemr_etl.etl_preventive_services;
+
+ALTER TABLE kenyaemr_datatools.preventive_services ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(patient_id);
+ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(visit_date);
+SELECT "Successfully created preventive_services table";
+
+-- create table preventive_services
+create table kenyaemr_datatools.overdose_reporting as
+select
+    client_id,
+    visit_id,
+    encounter_id,
+    uuid,
+    provider,
+    location_id,
+    visit_date,
+    overdose_location,
+    overdose_date,
+    (case incident_type when 165134 then 'New' when 165135 then 'Recurrent' end) as incident_type,
+    incident_site_name,
+    (case incident_site_type when 165011 then 'Street'
+                            when 165012 then 'Injecting den'
+                            when 165013 then 'Uninhabitable building'
+                            when 165014 then 'Public Park'
+                            when 165015 then 'Beach'
+                            when 165016 then 'Casino'
+                            when 165017 then 'Bar with lodging'
+                            when 165018 then 'Bar without lodging'
+                            when 165019 then 'Sex den'
+                            when 165020 then 'Strip club'
+                            when 165021 then 'Highway'
+                            when 165022 then 'Brothel'
+                            when 165023 then 'Guest house/hotel'
+                            when 165025 then 'illicit brew den'
+                            when 165026 then 'Barber shop/salon'
+                            end) as incident_site_type,
+    (case naloxone_provided when 1065 then 'Yes' when 1066 then 'No' end) as naloxone_provided,
+    risk_factors,
+    other_risk_factors,
+    drug,
+    other_drug,
+    (case outcome when 1898 then 'Recovered' when 160034 then 'Died' when 1272 then 'Referred' end) as outcome,
+    remarks,
+    reported_by,
+    date_reported,
+    witness,
+    date_witnessed,
+    encounter,
+    date_created,
+    date_last_modified,
+    voided
+from kenyaemr_etl.etl_overdose_reporting;
+
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(client_id);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(visit_date);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(naloxone_provided);
+ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(outcome);
+SELECT "Successfully created overdose_reporting table";
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$

@@ -96,6 +96,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_post_operation_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_order;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_preventive_services;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -113,6 +114,7 @@ unique_patient_no VARCHAR(50),
 alien_no VARCHAR(50),
 driving_license_no VARCHAR(50),
 national_unique_patient_identifier VARCHAR(50),
+hts_recency_id VARCHAR(50),
 patient_clinic_number VARCHAR(15) DEFAULT NULL,
 Tb_no VARCHAR(50),
 CPIMS_unique_identifier VARCHAR(50),
@@ -299,6 +301,7 @@ arv_adherence INT(11),
 poor_arv_adherence_reason INT(11),
 poor_arv_adherence_reason_other VARCHAR(200),
 pwp_disclosure INT(11),
+pwp_pead_disclosure INT(11),
 pwp_partner_tested INT(11),
 condom_provided INT(11),
 substance_abuse_screening INT(11),
@@ -309,6 +312,7 @@ at_risk_population INT(11),
 system_review_finding INT(11),
 next_appointment_date DATE,
 refill_date DATE,
+appointment_consent INT(11),
 next_appointment_reason INT(11),
 stability INT(11),
 differentiated_care INT(11),
@@ -341,6 +345,7 @@ INDEX(visit_date, condom_provided),
 INDEX(visit_date, family_planning_method),
 INDEX(nutritional_status),
 INDEX(next_appointment_date),
+INDEX(appointment_consent),
 INDEX(visit_date, next_appointment_date)
 );
 
@@ -1196,6 +1201,7 @@ visit_date DATE,
 test_type INT(11) DEFAULT NULL,
 population_type VARCHAR(50),
 key_population_type VARCHAR(50),
+priority_population_type VARCHAR(50),
 ever_tested_for_hiv VARCHAR(10),
 months_since_last_test INT(11),
 patient_disabled VARCHAR(50),
@@ -1206,6 +1212,8 @@ setting VARCHAR(50),
 approach VARCHAR(50),
 test_strategy VARCHAR(50),
 hts_entry_point VARCHAR(50),
+hts_risk_category VARCHAR(50),
+hts_risk_score DOUBLE,
 test_1_kit_name VARCHAR(50),
 test_1_kit_lot_no VARCHAR(50) DEFAULT NULL,
 test_1_kit_expiry DATE DEFAULT NULL,
@@ -1232,6 +1240,8 @@ index(visit_id),
 index(tb_screening),
 index(visit_date),
 index(population_type),
+index(hts_risk_category),
+index(hts_risk_score),
 index(test_type),
 index(final_test_result),
 index(couple_discordant),
@@ -1361,6 +1371,7 @@ visit_date DATE,
 location_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL PRIMARY KEY,
 tracing_type INT(11),
+missed_appointment_date DATE,
 reason_for_missed_appointment INT(11),
 non_coded_missed_appointment_reason VARCHAR(100),
 tracing_outcome INT(11),
@@ -1377,6 +1388,7 @@ CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
 INDEX(encounter_id),
 INDEX(patient_id),
+INDEX(missed_appointment_date),
 INDEX(true_status),
 INDEX(cause_of_death),
 INDEX(tracing_type)
@@ -1658,6 +1670,7 @@ SELECT "Successfully created etl_ART_preparation table";
 
   CREATE TABLE kenyaemr_etl.etl_prep_followup (
     uuid char(38),
+    form VARCHAR(50),
     provider INT(11),
     patient_id INT(11) NOT NULL,
     visit_id INT(11),
@@ -1701,6 +1714,8 @@ SELECT "Successfully created etl_ART_preparation table";
     hiv_signs VARCHAR(10),
     adherence_counselled VARCHAR(10),
     adherence_outcome VARCHAR(50),
+    poor_adherence_reasons varchar(255),
+    other_poor_adherence_reasons varchar(255),
     prep_contraindications VARCHAR(255),
     treatment_plan VARCHAR(255),
     prescribed_PrEP VARCHAR(10),
@@ -1716,7 +1731,8 @@ SELECT "Successfully created etl_ART_preparation table";
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
-    INDEX(encounter_id)
+    INDEX(encounter_id),
+    INDEX(form)
   );
   SELECT "Successfully created etl_prep_followup table";
 
@@ -2115,7 +2131,15 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       encounter_provider INT(11),
       date_created DATETIME NOT NULL,
       date_last_modified DATETIME,
+      patient_type VARCHAR(50),
+      transfer_in_date DATE,
+      date_first_enrolled_in_kp DATE,
+      facility_transferred_from VARCHAR(255),
       key_population_type VARCHAR(255),
+      priority_population_type VARCHAR(255),
+      implementation_county VARCHAR(200),
+      implementation_subcounty VARCHAR(200),
+      implementation_ward VARCHAR(200),
       contacted_by_peducator VARCHAR(10),
       program_name VARCHAR(255),
       frequent_hotspot_name VARCHAR(255),
@@ -2135,7 +2159,12 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       CONSTRAINT unique_uuid UNIQUE(uuid),
       index(client_id),
       index(unique_identifier),
-      index(key_population_type)
+      index(key_population_type),
+      index(priority_population_type),
+      index(patient_type),
+      index(transfer_in_date),
+      index(date_first_enrolled_in_kp),
+      index(implementation_subcounty)
     );
 
     SELECT "Successfully created etl_contact table";
@@ -2262,6 +2291,11 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       mental_health_support VARCHAR(100),
       mental_health_referred VARCHAR(10),
       mental_health_text VARCHAR(255),
+      mat_screened VARCHAR(10),
+      mat_results VARCHAR(255),
+      mat_treated VARCHAR(100),
+      mat_referred VARCHAR(10),
+      mat_text VARCHAR(255),
       hiv_self_rep_status VARCHAR(50),
       last_hiv_test_setting VARCHAR(100),
       counselled_for_hiv VARCHAR(10),
@@ -2294,6 +2328,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
       received_vl_results VARCHAR(100),
       condom_use_education VARCHAR(10),
       post_abortal_care VARCHAR(10),
+      referral VARCHAR(10),
       linked_to_psychosocial VARCHAR(10),
       male_condoms_no VARCHAR(10),
       female_condoms_no VARCHAR(10),
@@ -3074,6 +3109,7 @@ CREATE TABLE kenyaemr_etl.etl_preventive_services (
   provider INT(11),
   location_id INT(11),
   encounter_id INT(11) NOT NULL,
+  obs_group_id INT(11) NOT NULL,
   malaria_prophylaxis_1 DATE,
   malaria_prophylaxis_2 DATE,
   malaria_prophylaxis_3 DATE,
@@ -3100,10 +3136,50 @@ CREATE TABLE kenyaemr_etl.etl_preventive_services (
   date_created DATETIME NOT NULL,
   voided int(11),
   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+  PRIMARY KEY (patient_id,encounter_id,obs_group_id),
   INDEX(visit_date),
   INDEX(patient_id),
   INDEX(encounter_id));
 SELECT "Successfully created etl_preventive_services table";
+
+-- Create table etl_overdose_reporting --
+create table kenyaemr_etl.etl_overdose_reporting (
+    client_id                       INT(11) not null,
+    visit_id                         INT(11) DEFAULT NULL,
+    encounter_id                     INT(11) NOT NULL primary key,
+    uuid                             CHAR(38) NOT NULL,
+    location_id                      INT(11) NOT NULL,
+    provider                         INT(11) NOT NULL,
+    visit_date                       DATE,
+    overdose_location                VARCHAR(100),
+    overdose_date                    DATE,
+    incident_type                    INT(11),
+    incident_site_name               VARCHAR(255),
+    incident_site_type               INT(11),
+    naloxone_provided                INT(11),
+    risk_factors                     INT(11),
+    other_risk_factors               VARCHAR(255),
+    drug                             INT(11),
+    other_drug                       VARCHAR(255),
+    outcome                          INT(11),
+    remarks                          VARCHAR(255),
+    reported_by                      VARCHAR(255),
+    date_reported                    DATE,
+    witness                          VARCHAR(255),
+    date_witnessed                   DATE,
+    encounter                        VARCHAR(255),
+    date_created                     DATETIME NOT NULL,
+    date_last_modified               DATETIME,
+    voided                           INT(11),
+    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    index(client_id),
+    index(visit_id),
+    index(visit_date),
+    index(naloxone_provided),
+    index(outcome)
+);
+SELECT "Successfully created etl_overdose_reporting table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
