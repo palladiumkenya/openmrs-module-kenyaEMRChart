@@ -519,7 +519,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=162549,o.value_datetime,null)) as refill_date,
         max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
         max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
-        max(if(o.concept_id=1855,(case o.value_coded when 2 then 1 when 1 then 2 else "" end),null)) as stability,    -- updated question :Healthcare team has concerns about providing longer follow-up intervals for the patient? inverted the stability question yes no
+        max(if(o.concept_id=1855,o.value_coded,null)) as stability,
         max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
         e.voided as voided
       from encounter e
