@@ -290,8 +290,12 @@ select
                       if(lab_test=1031, (case test_result when 1311 then "<1:2" when 1312 then "01:02" when 1313 then "1:4" when 1314 then "01:08" when 1315 then "01:16" when 1316 then "01:32" when 1317 then ">1:32" when 1304 then "Poor Sample Quality"
                                                           when 163621 then "1:64" when 163622 then "1:128" when 163623 then "1:256" when 163624 then ">1:572" end),
                          if(lab_test=1032, (case test_result when 703 then "Positive" when 664 then "Negative" when 1300 then "Equivocal" when 1304 then "Poor Sample Quality" end),
+                         if(lab_test=307, (case test_result when 1364 then "Three Plus" when 1362 then "One Plus" when 1363 then "Two Plus" when 664 then "Negative" when 159985 then "Scanty" when 703 then "Positive"
+                             when 160008 then "Contaminated specimen" when 164369 then "Results not available" when 1118 then "Not done" end),
+                         if(lab_test=162202, (case test_result when 664 then "NEGATIVE" when 162203 then "Mycobacterium tuberculosis detected with rifampin resistance" when 162204 then "Mycobacterium tuberculosis detected without rifampin resistance"
+                                                               when 164104 then "Mycobacterium tuberculosis detected with indeterminate rifampin resistance"  when 163611 then "Invalid" when 1138 then "INDETERMINATE" end),
                             if(lab_test=1619, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
-                               test_result ))))))))) AS test_result,
+                               test_result ))))))))))) AS test_result,
     date_created,
     created_by
 from kenyaemr_etl.etl_laboratory_extract;
