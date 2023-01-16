@@ -2325,7 +2325,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         od.urgency,
         od.order_reason,
         (case when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-         when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45) then o.value_coded END) AS test_result,
+         when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718) then o.value_coded END) AS test_result,
         od.date_activated as date_test_requested,
         e.encounter_datetime as date_test_result_received,
         e.date_created,
@@ -2337,7 +2337,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
         ) et on et.encounter_type_id=e.encounter_type
-        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45)
+        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718)
         left join orders od on od.order_id = o.order_id and od.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
