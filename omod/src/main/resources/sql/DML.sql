@@ -1087,6 +1087,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			encounter_id,
 			date_created,
 			date_last_modified,
+			anc_visit_number,
 			admission_number,
 			duration_of_pregnancy,
 			mode_of_delivery,
@@ -1144,6 +1145,19 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				e.encounter_id,
 				e.date_created,
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+				max(if(o.concept_id=1590,o.value_text,null)) as anc_visit_number,
+				max(if(o.concept_id=160704,(case o.value_coded when 132681 then "Normal" when 5577 then "Episiotomy" when 159264 then "Vaginal Tear" when 118935 then "FGM" when 139505 then "Vaginal wart" else "" end),null)) as vaginal_examination,
+				max(if(o.concept_id=1282,(case o.value_coded when 81369 then "Oxytocin" when 104590 then "Carbetocin" when 1107 then "None" else "" end),null)) as uterotonic_given,
+				max(if(o.concept_id=159369,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as chhlohexidine_applied_on_code_stump,
+				max(if(o.concept_id=984,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as vitamin_K_given,
+				max(if(o.concept_id=161094,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as kangaroo_mother_care_given,
+				max(if(o.concept_id=1396,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" else "" end),null)) as testing_done_in_the_maternity_hiv_status,
+				max(if(o.concept_id=161930,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "N/A" else "" end),null)) as infant_provided_with_arv_prophylaxis,
+				max(if(o.concept_id=163783,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1067 then "N/A" else "" end),null)) as mother_on_haart_during_anc,
+				max(if(o.concept_id=299,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1118 then "Not Done" else "" end),null)) as vdrl_rpr_results,
+				max(if(o.concept_id=1427,o.value_datetime,null)) as date_of_last_menstrual_period,
+				max(if(o.concept_id=5596,o.value_datetime,null)) as estimated_date_of_delivery,
+				max(if(o.concept_id=164359,o.value_text,null)) as reason_for_referral,
 				max(if(o.concept_id=162054,o.value_text,null)) as admission_number,
 				max(if(o.concept_id=1789,o.value_numeric,null)) as duration_of_pregnancy,
 				max(if(o.concept_id=5630,o.value_coded,null)) as mode_of_delivery,
@@ -1161,7 +1175,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=1379 and o.value_coded=161096,o.value_coded,null)) as counseling_on_exclusive_breastfeeding,
 				max(if(o.concept_id=1379 and o.value_coded=162091,o.value_coded,null)) as counseling_on_infant_feeding_for_hiv_infected,
 				max(if(o.concept_id=1151,o.value_coded,null)) as mother_decision,
-				max(if(o.concept_id=163454,o.value_coded,null)) as placenta_complete,
+				max(if(o.concept_id=163454,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1501 then "Baby born before arrival" else "" end),null)) as placenta_complete,
 				max(if(o.concept_id=1602,o.value_coded,null)) as maternal_death_audited,
 				max(if(o.concept_id=1573,o.value_coded,null)) as cadre,
 				max(if(o.concept_id=120216,o.value_coded,null)) as delivery_complications,
@@ -1194,7 +1208,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,299,1427,5596,164359,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where

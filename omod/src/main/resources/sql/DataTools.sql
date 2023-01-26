@@ -542,6 +542,19 @@ SELECT "Successfully created pharmacy extract table";
       encounter_id,
       date_created,
       admission_number,
+      anc_visit_number,
+      vaginal_examination,
+      uterotonic_given,
+      chhlohexidine_applied_on_code_stump,
+      vitamin_K_given,
+      kangaroo_mother_care_given,
+      testing_done_in_the_maternity_hiv_status,
+      infant_provided_with_arv_prophylaxis,
+      mother_on_haart_during_anc,
+      vdrl_rpr_results,
+      date_of_last_menstrual_period,
+      estimated_date_of_delivery,
+      reason_for_referral,
       duration_of_pregnancy,
       (case mode_of_delivery when 1170 then "Spontaneous vaginal delivery" when 1171 then "Cesarean section" when 1172 then "Breech delivery"
        when 118159 then "Forceps or Vacuum Extractor Delivery" when 159739 then "emergency caesarean section" when 159260 then "vacuum extractor delivery"
@@ -563,7 +576,7 @@ SELECT "Successfully created pharmacy extract table";
       (case counseling_on_infant_feeding_for_hiv_infected when 162091 then "Counseling for infant feeding practices to prevent HIV" else "" end) as counseling_on_infant_feeding_for_hiv_infected,
       (case mother_decision when 1173 then "EXPRESSED BREASTMILK" when 1152 then "WEANED" when 5254 then "Infant formula" when 1150 then "BREASTFED PREDOMINATELY"
        when 6046 then "Mixed feeding" when 5526 then "BREASTFED EXCLUSIVELY" when 968 then "COW MILK" when 1595 then "REPLACEMENT FEEDING"  else "" end) as mother_decision,
-      (case placenta_complete when 163455 then "Complete placenta at delivery" when 163456 then "Incomplete placenta at delivery" else "" end) as placenta_complete,
+       placenta_complete,
       (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" else "" end) as maternal_death_audited,
       (case cadre when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then " COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as cadre,
       (case delivery_complications when 1065 then "Yes" when 1066 then "No" else "" end) as delivery_complications,
