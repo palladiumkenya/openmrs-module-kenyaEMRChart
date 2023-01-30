@@ -654,6 +654,8 @@ SELECT "Successfully created pharmacy extract table";
       delivery_date,
       (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" else "" end) as mode_of_delivery,
       (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
+      (case visit_timing_mother when 1721 then '0-48 Hours' when 1722 then '3 days - 6 weeks' when 1723 then 'More than 6 weeks' end) as visit_timing_mother,
+      (case visit_timing_baby when 167012 then '0-48 Hours' when 167013 then '3 days - 6 weeks' when 167015 then 'More than 6 weeks' end) as visit_timing_baby,
       (case delivery_outcome when 159913 then 'Single' when 159914 then 'Twins' when 159915 then 'Triplets' end) as delivery_outcome,
       temperature,
       pulse_rate,
@@ -676,6 +678,7 @@ SELECT "Successfully created pharmacy extract table";
       (case lochia when 159845 then "lochia excessive" when 159846 then "lochia foul smelling" when 159721 then "Lochia type" else "" end) as lochia,  -- recheck
       (case counselled_on_infant_feeding when 1065 then 'Yes' when 1066 then 'No' end) as counselled_on_infant_feeding,
       (case pallor when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as pallor,
+      (case pallor_severity when 1498 then 'Mild' when 1499 then 'Moderate' when 1500 then 'Severe' else '' end) as pallor_severity,
       (case pph when 1065 then "Present" when 1066 then "Absent" else "" end) as pph,
       (case mother_hiv_status when 1067 then "Unknown" when 664 then "NEGATIVE" when 703 then "POSITIVE" else "" end) as mother_hiv_status,
       (case condition_of_baby when 1855 then "In good health" when 162132 then "Patient condition poor" when 1067 then "Unknown" when 162133 then "Patient condition fair/satisfactory" else "" end) as condition_of_baby,
@@ -692,8 +695,10 @@ SELECT "Successfully created pharmacy extract table";
       pelvic_lymph_node_exam,
       final_test_result,
       patient_given_result,
+      (case couple_counselled when 1065 then "Yes" when 1066 then "No" else "" end) as couple_counselled,
       (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
+      (case mother_haart_given when 1065 then 'Yes' when 1066 then 'No' when 1175 then 'N/A' when 164142 then 'Revisit' else '' end) as mother_haart_given,
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
       (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
       (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
@@ -702,7 +707,7 @@ SELECT "Successfully created pharmacy extract table";
       (case iron_supplementation when 1065 then "Yes" when 1066 then "No" else "" end) as iron_supplementation,
       (case fistula_screening when 1107 then "None" when 49 then "Vesicovaginal Fistula" when 127847 then "Rectovaginal fistula" when 1118 then "Not done"  else "" end) as fistula_screening,
       (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 159393 then "Presumed" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
-      (case cacx_screening_method when 885 then "PAP Smear" when 162816 then "VIA" when 5622 then "Other" else "" end) as cacx_screening_method,
+      (case cacx_screening_method when 885 then "PAP Smear" when 162816 then "VIA" when 164977 then "VILI" when 159859 then 'HPV' when 5622 then "Other" else "" end) as cacx_screening_method,
       (case family_planning_status when 965 then "On Family Planning" when 160652 then "Not using Family Planning"  else "" end) as family_planning_status,
       (case family_planning_method when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectible" when 1359 then "Implant"
        when 5275 then "Intrauterine Device" when 136163 then "Lactational Amenorhea Method" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness"
