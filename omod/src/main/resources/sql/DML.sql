@@ -1123,6 +1123,19 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			encounter_id,
 			date_created,
 			date_last_modified,
+			number_of_anc_visits,
+			vaginal_examination,
+            uterotonic_given
+            chlohexidine_applied_on_code_stump
+            vitamin_K_given,
+            kangaroo_mother_care_given,
+            testing_done_in_the_maternity_hiv_status,
+            infant_provided_with_arv_prophylaxis,
+            mother_on_haart_during_anc,
+            vdrl_rpr_results,
+            date_of_last_menstrual_period,
+            estimated_date_of_delivery,
+            reason_for_referral,
 			admission_number,
 			duration_of_pregnancy,
 			mode_of_delivery,
@@ -1180,6 +1193,19 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				e.encounter_id,
 				e.date_created,
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+				max(if(o.concept_id=1590,o.value_numeric,null)) as number_of_anc_visits,
+				max(if(o.concept_id=160704,o.value_coded,null)) as vaginal_examination,
+                max(if(o.concept_id=1282,o.value_coded,null)) as uterotonic_given,
+                max(if(o.concept_id=159369,o.value_coded,null)) as chlohexidine_applied_on_code_stump,
+                max(if(o.concept_id=984,o.value_coded,null)) as vitamin_K_given,
+                max(if(o.concept_id=161094,o.value_coded,null)) as kangaroo_mother_care_given,
+                max(if(o.concept_id=1396,o.value_coded,null)) as testing_done_in_the_maternity_hiv_status,
+                max(if(o.concept_id=161930,o.value_coded,null)) as infant_provided_with_arv_prophylaxis,
+                max(if(o.concept_id=163783,o.value_coded,null)) as mother_on_haart_during_anc,
+                max(if(o.concept_id=299,o.value_coded,null)) as vdrl_rpr_results,
+                max(if(o.concept_id=1427,o.value_datetime,null)) as date_of_last_menstrual_period,
+                max(if(o.concept_id=5596,o.value_datetime,null)) as estimated_date_of_delivery,
+                max(if(o.concept_id=164359,o.value_text,null)) as reason_for_referral,
 				max(if(o.concept_id=162054,o.value_text,null)) as admission_number,
 				max(if(o.concept_id=1789,o.value_numeric,null)) as duration_of_pregnancy,
 				max(if(o.concept_id=5630,o.value_coded,null)) as mode_of_delivery,
@@ -1230,7 +1256,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,299,1427,5596,164359,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where
