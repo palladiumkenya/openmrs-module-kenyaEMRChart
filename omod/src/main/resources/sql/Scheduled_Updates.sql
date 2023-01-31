@@ -1013,8 +1013,8 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
       date_last_modified,
       number_of_anc_visits,
       vaginal_examination,
-      uterotonic_given
-      chlohexidine_applied_on_code_stump
+      uterotonic_given,
+      chlohexidine_applied_on_code_stump,
       vitamin_K_given,
       kangaroo_mother_care_given,
       testing_done_in_the_maternity_hiv_status,
