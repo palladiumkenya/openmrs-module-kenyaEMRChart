@@ -1734,6 +1734,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			referred_to,
 			counselled_on,
 			MNPS_Supplementation,
+      LLIN,
 			comments,
 			next_appointment_date,
 			date_created,
@@ -1795,6 +1796,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				max(if(o.concept_id=160481,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=1379,o.value_coded,null)) as counselled_on,
 				max(if(o.concept_id=5484,o.value_coded,null)) as MNPS_Supplementation,
+				max(if(o.concept_id=159855,o.value_coded,null)) as LLIN,
 				max(if(o.concept_id=159395,o.value_text,null)) as comments,
 				max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
 				e.date_created as date_created,
@@ -1802,7 +1804,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159402)
+														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159855,159402)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
