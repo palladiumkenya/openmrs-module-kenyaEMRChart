@@ -847,7 +847,8 @@ SELECT "Successfully created post natal visit table";
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
       (case counselled_on when 1914 then "HIV" when 1380 then "Nutrition" else "" end) as counselled_on,
-     (case mnps_supplementation when 161649 then "Yes" when 1107 then "No" else "" end) as MNPS_Supplementation,
+      (case mnps_supplementation when 161649 then "Yes" when 1107 then "No" else "" end) as MNPS_Supplementation,
+      (case LLIN when 1065 then "Yes" when 1066 then "No" else "" end) as LLIN,
       comments,
       next_appointment_date
     from kenyaemr_etl.etl_hei_follow_up_visit;
