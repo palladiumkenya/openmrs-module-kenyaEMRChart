@@ -796,6 +796,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       partner_hiv_tested,
       partner_hiv_status,
       prophylaxis_given,
+      haart_given,
       date_given_haart,
       baby_azt_dispensed,
       baby_nvp_dispensed,
@@ -897,6 +898,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
         max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
         max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
+        max(if(o.concept_id=5576,o.value_coded,null)) as haart_given,
         max(if(o.concept_id=163784,o.value_datetime,null)) as date_given_haart,
         max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
         max(if(o.concept_id=1282,o.value_coded,null)) as baby_nvp_dispensed,
@@ -962,7 +964,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592)
+                            and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592)
         inner join
         (
           select form_id, uuid,name from form where
@@ -981,7 +983,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       fetal_heart_rate=VALUES(fetal_heart_rate),fetal_movement=VALUES(fetal_movement),
       who_stage=VALUES(who_stage),cd4=VALUES(cd4),vl_sample_taken=VALUES(vl_sample_taken),viral_load=VALUES(viral_load),ldl=VALUES(ldl),arv_status=VALUES(arv_status),final_test_result=VALUES(final_test_result),
       patient_given_result=VALUES(patient_given_result),
-      partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),date_given_haart=VALUES(date_given_haart),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),deworming_done_anc=VALUES(deworming_done_anc),
+      partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),haart_given=VALUES(haart_given),date_given_haart=VALUES(date_given_haart),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),deworming_done_anc=VALUES(deworming_done_anc),
       TTT=VALUES(TTT),IPT_dose_given_anc=VALUES(IPT_dose_given_anc),IPT_malaria=VALUES(IPT_malaria),
       iron_supplement=VALUES(iron_supplement),deworming=VALUES(deworming),bed_nets=VALUES(bed_nets),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),
       urine_nitrite_test=VALUES(urine_nitrite_test),
