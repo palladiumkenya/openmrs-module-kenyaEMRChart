@@ -564,7 +564,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     partner_hiv_status INT(11),
     prophylaxis_given INT(11),
     haart_given INT(11),
-    prophylaxis_given INT(11),
     date_given_haart DATE,
     baby_azt_dispensed INT(11),
     baby_nvp_dispensed INT(11),
