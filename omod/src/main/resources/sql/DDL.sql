@@ -978,6 +978,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     referred_to INT(11),
     counselled_on INT(11),
     MNPS_Supplementation INT(11),
+    LLIN INT(11),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
