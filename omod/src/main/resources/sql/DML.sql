@@ -1484,7 +1484,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(o.concept_id=162121,o.value_coded,null)) as umblical_cord,
 				max(if(o.concept_id=162127,o.value_coded,null)) as baby_immunization_started,
 				max(if(o.concept_id=1382,o.value_coded,null)) as family_planning_counseling,
-				max(if(o.concept_id=160967,o.value_text,null)) as uterus_examination,
+				max(if(o.concept_id=163742,o.value_coded,null)) as uterus_examination,
 				max(if(o.concept_id=160968,o.value_text,null)) as uterus_cervix_examination,
 				max(if(o.concept_id=160969,o.value_text,null)) as vaginal_examination,
 				max(if(o.concept_id=160970,o.value_text,null)) as parametrial_examination,
@@ -1526,7 +1526,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,160967,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
+														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
                                                                             1724,167017,163783,162642)
 				inner join
 				(
