@@ -727,7 +727,7 @@ SELECT "Successfully created pharmacy extract table";
       (case umblical_cord when 162122 then "Neonatal umbilical stump clean" when 162123 then "Neonatal umbilical stump not clean" when 162124 then "Neonatal umbilical stump moist" when 159418 then "Not at all sure" else "" end) as umblical_cord,
       (case baby_immunization_started when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as baby_immunization_started,
       (case family_planning_counseling when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as family_planning_counseling,
-      uterus_examination,
+      (case uterus_examination when 163750 then "Contracted" when 148220 then "Not contracted" when 5622 then "Other" else "" end) as uterus_examination,
       uterus_cervix_examination,
       vaginal_examination,
       parametrial_examination,

@@ -804,7 +804,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     umblical_cord INT(11),
     baby_immunization_started INT(11),
     family_planning_counseling INT(11),
-    uterus_examination VARCHAR(100),
+    uterus_examination INT(11),
     uterus_cervix_examination VARCHAR(100),
     vaginal_examination VARCHAR(100),
     parametrial_examination VARCHAR(100),
