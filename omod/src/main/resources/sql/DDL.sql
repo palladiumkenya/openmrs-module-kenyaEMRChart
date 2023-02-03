@@ -662,6 +662,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     testing_done_in_the_maternity_hiv_status INT(11),
     infant_provided_with_arv_prophylaxis INT(11),
     mother_on_haart_during_anc INT(11),
+    mother_started_haart_at_maternity INT(11),
     vdrl_rpr_results INT(11),
     date_of_last_menstrual_period DATETIME,
     estimated_date_of_delivery DATETIME,

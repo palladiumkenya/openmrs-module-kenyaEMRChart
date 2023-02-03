@@ -571,6 +571,7 @@ SELECT "Successfully created pharmacy extract table";
        (case testing_done_in_the_maternity_hiv_status when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" when 164817 then "Known Positive" else "" end) as testing_done_in_the_maternity_hiv_status,
        (case infant_provided_with_arv_prophylaxis when 1065 then "Yes" when 1066 then "No" when 1067 then "N/A" else "" end) as infant_provided_with_arv_prophylaxis,
        (case mother_on_haart_during_anc when 1065 then "Yes" when 1066 then "No" when 1067 then "N/A" else "" end) as mother_on_haart_during_anc,
+       (case mother_started_haart_at_maternity when 1065 then "Yes" when 1066 then "No" when 1067 then "N/A" else "" end) as mother_started_haart_at_maternity,
        (case vdrl_rpr_results when 703 then "Positive" when 664 then "Negative" when 1118 then "Not Done" else "" end) as vdrl_rpr_results,
        date_of_last_menstrual_period,
        estimated_date_of_delivery,
