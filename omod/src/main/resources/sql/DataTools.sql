@@ -420,6 +420,31 @@ SELECT "Successfully created pharmacy extract table";
       hiv_test_date,
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       partner_hiv_test_date,
+      ti_date_started_art,
+      (case ti_curent_regimen when 164968 then 'AZT/3TC/DTG'
+       when 164969 then 'TDF/3TC/DTG'
+       when 164970 then 'ABC/3TC/DTG'
+       when 164505 then 'TDF-3TC-EFV'
+       when 792 then 'D4T/3TC/NVP'
+       when 160124 then 'AZT/3TC/EFV'
+       when 160104 then 'D4T/3TC/EFV'
+       when 1652 then '3TC/NVP/AZT'
+       when 161361 then 'EDF/3TC/EFV'
+       when 104565 then 'EFV/FTC/TDF'
+       when 162201 then '3TC/LPV/TDF/r'
+       when 817 then 'ABC/3TC/AZT'
+       when 162199 then 'ABC/NVP/3TC'
+       when 162200 then '3TC/ABC/LPV/r'
+       when 162565 then '3TC/NVP/TDF'
+       when 1652 then '3TC/NVP/AZT'
+       when 162561 then '3TC/AZT/LPV/r'
+       when 164511 then 'AZT-3TC-ATV/r'
+       when 164512 then 'TDF-3TC-ATV/r'
+       when 162560 then '3TC/D4T/LPV/r'
+       when 162563 then '3TC/ABC/EFV'
+       when 162562 then 'ABC/LPV/R/TDF'
+       when 162559 then 'ABC/DDI/LPV/r' end) as ti_curent_regimen,
+       ti_care_facility,
       urine_microscopy,
       (case urinary_albumin when 664 then "Negative" when 1874 then "Trace - 15" when 1362 then "One Plus(+) - 30" when 1363 then "Two Plus(++) - 100" when 1364 then "Three Plus(+++) - 300" when 1365 then "Four Plus(++++) - 1000" else "" end) as urinary_albumin,
       (case glucose_measurement when 1115 then "Normal" when 1874 then "Trace" when 1362 then "One Plus(+)" when 1363 then "Two Plus(++)" when 1364 then "Three Plus(+++)" when 1365 then "Four Plus(++++)" else "" end) as glucose_measurement,

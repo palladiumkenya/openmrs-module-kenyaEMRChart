@@ -779,6 +779,9 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			hiv_test_date,
 			partner_hiv_status,
 			partner_hiv_test_date,
+      ti_date_started_art,
+      ti_curent_regimen,
+      ti_care_facility,
 			urine_microscopy,
 			urinary_albumin,
 			glucose_measurement,
@@ -822,6 +825,9 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				max(if(o.concept_id=160554,o.value_datetime,null)) as hiv_test_date,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=160082,o.value_datetime,null)) as partner_hiv_test_date,
+        max(if(o.concept_id=159599,o.value_datetime,null)) as ti_date_started_art,
+        max(if(o.concept_id = 164855,o.value_coded,null)) as ti_curent_regimen,
+				max(if(o.concept_id=162724,o.value_text,null)) as ti_care_facility,
 				max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
 				max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
 				max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -842,7 +848,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
+														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
