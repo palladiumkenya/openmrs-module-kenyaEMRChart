@@ -1294,7 +1294,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       partner_hiv_tested,
       partner_hiv_status,
       mother_haart_given,
-      prophylaxis_given
+      prophylaxis_given,
       infant_prophylaxis_timing,
       baby_azt_dispensed,
       baby_nvp_dispensed,
