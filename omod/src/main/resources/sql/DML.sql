@@ -779,6 +779,9 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			hiv_test_date,
 			partner_hiv_status,
 			partner_hiv_test_date,
+      ti_date_started_art,
+      ti_curent_regimen,
+      ti_care_facility,
 			urine_microscopy,
 			urinary_albumin,
 			glucose_measurement,
@@ -822,6 +825,9 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				max(if(o.concept_id=160554,o.value_datetime,null)) as hiv_test_date,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=160082,o.value_datetime,null)) as partner_hiv_test_date,
+        max(if(o.concept_id=159599,o.value_datetime,null)) as ti_date_started_art,
+        max(if(o.concept_id = 164855,o.value_coded,null)) as ti_curent_regimen,
+				max(if(o.concept_id=162724,o.value_text,null)) as ti_care_facility,
 				max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
 				max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
 				max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -842,7 +848,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
+														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -1134,6 +1140,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
       testing_done_in_the_maternity_hiv_status,
       infant_provided_with_arv_prophylaxis,
       mother_on_haart_during_anc,
+      mother_started_haart_at_maternity,
       vdrl_rpr_results,
       date_of_last_menstrual_period,
       estimated_date_of_delivery,
@@ -1204,6 +1211,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
         max(if(o.concept_id=1396,o.value_coded,null)) as testing_done_in_the_maternity_hiv_status,
         max(if(o.concept_id=161930,o.value_coded,null)) as infant_provided_with_arv_prophylaxis,
         max(if(o.concept_id=163783,o.value_coded,null)) as mother_on_haart_during_anc,
+        max(if(o.concept_id=166665,o.value_coded,null)) as mother_started_haart_at_maternity,
         max(if(o.concept_id=299,o.value_coded,null)) as vdrl_rpr_results,
         max(if(o.concept_id=1427,o.value_datetime,null)) as date_of_last_menstrual_period,
         max(if(o.concept_id=5596,o.value_datetime,null)) as estimated_date_of_delivery,
@@ -1258,7 +1266,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,299,1427,5596,164359,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,162092,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where

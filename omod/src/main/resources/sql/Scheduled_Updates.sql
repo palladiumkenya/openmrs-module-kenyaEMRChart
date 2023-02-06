@@ -670,6 +670,9 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       hiv_test_date,
       partner_hiv_status,
       partner_hiv_test_date,
+      ti_date_started_art,
+      ti_curent_regimen,
+      ti_care_facility,
       urine_microscopy,
       urinary_albumin,
       glucose_measurement,
@@ -713,6 +716,9 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=160554,o.value_datetime,null)) as hiv_test_date,
         max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
         max(if(o.concept_id=160082,o.value_datetime,null)) as partner_hiv_test_date,
+        max(if(o.concept_id=159599,o.value_datetime,null)) as ti_date_started_art,
+        max(if(o.concept_id = 164855,o.value_coded,null)) as ti_curent_regimen,
+        max(if(o.concept_id=162724,o.value_text,null)) as ti_care_facility,
         max(if(o.concept_id=56,o.value_text,null)) as urine_microscopy,
         max(if(o.concept_id=1875,o.value_coded,null)) as urinary_albumin,
         max(if(o.concept_id=159734,o.value_coded,null)) as glucose_measurement,
@@ -733,7 +739,7 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
+                            and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
@@ -747,6 +753,7 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),service_type=VALUES(service_type),anc_number=VALUES(anc_number),first_anc_visit_date=VALUES(first_anc_visit_date),gravida=VALUES(gravida),parity=VALUES(parity),parity_abortion=VALUES(parity_abortion),age_at_menarche=VALUES(age_at_menarche),lmp=VALUES(lmp),lmp_estimated=VALUES(lmp_estimated),
       edd_ultrasound=VALUES(edd_ultrasound),blood_group=VALUES(blood_group),serology=VALUES(serology),tb_screening=VALUES(tb_screening),bs_for_mps=VALUES(bs_for_mps),hiv_status=VALUES(hiv_status),hiv_test_date=VALUES(hiv_status),partner_hiv_status=VALUES(partner_hiv_status),partner_hiv_test_date=VALUES(partner_hiv_test_date),
+      ti_date_started_art=VALUES(ti_date_started_art),ti_curent_regimen=VALUES(ti_curent_regimen),ti_care_facility=VALUES(ti_care_facility),
       urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),urine_nitrite_test=VALUES(urine_nitrite_test),urine_leukocyte_esterace_test=VALUES(urine_leukocyte_esterace_test),urinary_ketone=VALUES(urinary_ketone),
       urine_bile_salt_test=VALUES(urine_bile_salt_test),urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),discontinuation_reason=VALUES(discontinuation_reason)
     ;
@@ -1022,6 +1029,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
       testing_done_in_the_maternity_hiv_status,
       infant_provided_with_arv_prophylaxis,
       mother_on_haart_during_anc,
+      mother_started_haart_at_maternity,
       vdrl_rpr_results,
       date_of_last_menstrual_period,
       estimated_date_of_delivery,
@@ -1084,6 +1092,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
         max(if(o.concept_id=1396,o.value_coded,null)) as testing_done_in_the_maternity_hiv_status,
         max(if(o.concept_id=161930,o.value_coded,null)) as infant_provided_with_arv_prophylaxis,
         max(if(o.concept_id=163783,o.value_coded,null)) as mother_on_haart_during_anc,
+        max(if(o.concept_id=166665,o.value_coded,null)) as mother_started_haart_at_maternity,
         max(if(o.concept_id=299,o.value_coded,null)) as vdrl_rpr_results,
         max(if(o.concept_id=1427,o.value_datetime,null)) as date_of_last_menstrual_period,
         max(if(o.concept_id=5596,o.value_datetime,null)) as estimated_date_of_delivery,
@@ -1130,7 +1139,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,299,1427,5596,164359,1789,5630,5599,162092,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+                            and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,162092,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1144,7 +1153,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),visit_id=VALUES(visit_id),visit_date=VALUES(visit_date),encounter_id=VALUES(encounter_id),number_of_anc_visits=VALUES(number_of_anc_visits),vaginal_examination=VALUES(vaginal_examination),uterotonic_given=VALUES(uterotonic_given),chlohexidine_applied_on_code_stump=VALUES(chlohexidine_applied_on_code_stump),vitamin_K_given=VALUES(vitamin_K_given),
-       kangaroo_mother_care_given=VALUES(kangaroo_mother_care_given),testing_done_in_the_maternity_hiv_status=VALUES(testing_done_in_the_maternity_hiv_status),infant_provided_with_arv_prophylaxis=VALUES(infant_provided_with_arv_prophylaxis),mother_on_haart_during_anc=VALUES(mother_on_haart_during_anc),vdrl_rpr_results=VALUES(vdrl_rpr_results),date_of_last_menstrual_period=VALUES(date_of_last_menstrual_period),estimated_date_of_delivery=VALUES(estimated_date_of_delivery),
+       kangaroo_mother_care_given=VALUES(kangaroo_mother_care_given),testing_done_in_the_maternity_hiv_status=VALUES(testing_done_in_the_maternity_hiv_status),infant_provided_with_arv_prophylaxis=VALUES(infant_provided_with_arv_prophylaxis),mother_on_haart_during_anc=VALUES(mother_on_haart_during_anc),mother_started_haart_at_maternity=VALUES(mother_started_haart_at_maternity),vdrl_rpr_results=VALUES(vdrl_rpr_results),date_of_last_menstrual_period=VALUES(date_of_last_menstrual_period),estimated_date_of_delivery=VALUES(estimated_date_of_delivery),
        reason_for_referral=VALUES(reason_for_referral),date_created=VALUES(date_created),admission_number=VALUES(admission_number),duration_of_pregnancy=VALUES(duration_of_pregnancy),mode_of_delivery=VALUES(mode_of_delivery),date_of_delivery=VALUES(date_of_delivery),blood_loss=VALUES(blood_loss),condition_of_mother=VALUES(condition_of_mother),
       apgar_score_1min=VALUES(apgar_score_1min),apgar_score_5min=VALUES(apgar_score_5min),apgar_score_10min=VALUES(apgar_score_10min),resuscitation_done=VALUES(resuscitation_done),place_of_delivery=VALUES(place_of_delivery),delivery_assistant=VALUES(delivery_assistant),counseling_on_infant_feeding=VALUES(counseling_on_infant_feeding) ,counseling_on_exclusive_breastfeeding=VALUES(counseling_on_exclusive_breastfeeding),
       counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),delivery_complications=VALUES(delivery_complications),coded_delivery_complications=VALUES(coded_delivery_complications),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),baby_sex=VALUES(baby_sex),
