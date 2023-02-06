@@ -741,6 +741,7 @@ SELECT "Successfully created pharmacy extract table";
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       (case mother_haart_given when 1065 then 'Yes' when 1066 then 'No' when 1175 then 'N/A' when 164142 then 'Revisit' else '' end) as mother_haart_given,
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
+      (case infant_prophylaxis_timing when 1065 then 'Less than 6 weeks' when 1066 then 'Greater 6 weeks' end) as infant_prophylaxis_timing,
       (case baby_azt_dispensed when 160123 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_azt_dispensed,
       (case baby_nvp_dispensed when 80586 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as baby_nvp_dispensed,
       (case pnc_exercises when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as pnc_exercises,
