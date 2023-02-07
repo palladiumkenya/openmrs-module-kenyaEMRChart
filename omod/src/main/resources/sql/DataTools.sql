@@ -2427,6 +2427,40 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
   -- --------------------------- populate hts_eligibility screening table ---------------------------------------------
   create table kenyaemr_datatools.hts_eligibility_screening as
     select
+      (case  test_strategy
+      when 164163 then "HP: Hospital Patient Testing"
+      when 164953 then "NP: HTS for non-patients"
+      when 164954 then "VI:Integrated VCT Center"
+      when 164955 then "VS:Stand Alone VCT Center"
+      when 159938 then "HB:Home Based Testing"
+      when 159939 then "MO: Mobile Outreach HTS"
+      when 161557 then "Index testing"
+      when 166606 then "SNS - Social Networks"
+      when 5622 then "O:Other"
+      else ""  end ) as test_strategy,
+      (case  hts_entry_point
+      when 5485 then "In Patient Department(IPD)"
+      when 160542 then "Out Patient Department(OPD)"
+      when 162181 then "Peadiatric Clinic"
+      when 160552 then "Nutrition Clinic"
+      when 160538 then "PMTCT ANC"
+      when 160456 then "PMTCT MAT"
+      when 1623 then "PMTCT PNC"
+      when 160541 then "TB"
+      when 162050 then "CCC"
+      when 159940 then "VCT"
+      when 159938 then "Home Based Testing"
+      when 159939 then "Mobile Outreach"
+      when 162223 then "VMMC"
+      when 160546 then "STI Clinic"
+      when 160522 then "Emergency"
+      when 163096 then "Community Testing"
+      when 5622 then "Other"
+      else ""  end ) as hts_entry_point,
+      hts_risk_category,
+      hts_risk_score,
+      reason_to_test,
+      reason_not_to_test,
       patient_id,
       visit_id,
       encounter_id,
