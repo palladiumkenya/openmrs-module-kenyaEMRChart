@@ -6943,6 +6943,12 @@ CREATE PROCEDURE sp_update_etl_hts_eligibility_screening(IN last_update_time DAT
   BEGIN
     SELECT "Processing hts screening", CONCAT("Time: ", NOW());
 INSERT INTO kenyaemr_etl.etl_hts_eligibility_screening (
+    test_strategy,
+    hts_entry_point,
+    hts_risk_category,
+    hts_risk_score,
+    reason_to_test,
+    reason_not_to_test,
     patient_id,
     visit_id,
     encounter_id,
@@ -7005,6 +7011,12 @@ INSERT INTO kenyaemr_etl.etl_hts_eligibility_screening (
     voided
 )
 select
+    max(if(o.concept_id=164956,o.value_coded,null)) as test_strategy,
+    max(if(o.concept_id=160540,o.value_coded,null)) as hts_entry_point,
+    max(if(o.concept_id=167163,(case o.value_coded when 1407 then "Low" when 1499 then "Moderate" when 1408 then "High" when 167164 then "Very high" else "" end),null)) as hts_risk_category,
+    max(if(o.concept_id=167162,o.value_numeric,null)) as hts_risk_score,
+    max(if(o.concept_id=164126,(case o.value_coded when 167141 then "Computed risk score" when 166664 then "Eligibility screening outcome" when 1163 then "Both" else "" end),null)) as reason_to_test,
+    max(if(o.concept_id=159803,(case o.value_coded when 167141 then "Computed risk score" when 166664 then "Eligibility screening outcome" when 1163 then "Both" else "" end),null)) as reason_not_to_test,
     e.patient_id,
     e.visit_id,
     e.encounter_id,
@@ -7111,7 +7123,14 @@ select
             or e.date_voided >= last_update_time
       group by e.patient_id,date(e.encounter_datetime)
       order by e.patient_id
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+    ON DUPLICATE KEY UPDATE 
+             test_strategy=VALUES(test_strategy),
+             hts_entry_point=VALUES(hts_entry_point),
+             hts_risk_category=VALUES(hts_risk_category),
+             hts_risk_score=VALUES(hts_risk_score),
+             reason_to_test=VALUES(reason_to_test),
+             reason_not_to_test=VALUES(reason_not_to_test),
+             visit_date=VALUES(visit_date),
              provider=VALUES(provider),
              population_type=values(population_type),
              key_population_type=values(key_population_type),
