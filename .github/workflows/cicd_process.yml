@@ -26,7 +26,6 @@ jobs:
           git clone -b master https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
           git status
           mvn license:format
-          mvn license:aggregate-add-third-party
           mvn clean install -DskipTests
           sudo rm -rf /var/lib/OpenMRS/modules/kenyaEMRChart-*.omod
           sudo cp -r /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaemr/omod/target/kenyaEMRChart-*.omod /var/lib/OpenMRS/modules/
