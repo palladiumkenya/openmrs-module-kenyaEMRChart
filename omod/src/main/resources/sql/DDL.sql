@@ -3047,7 +3047,7 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
   priority_population_type         VARCHAR(100),
   patient_disabled                 VARCHAR(50),
   disability_type                  VARCHAR(255),
-  recommended-test                 VARCHAR(50),
+  recommended_test                 VARCHAR(50),
   department                       INT(11),
   patient_type                     INT(11),
   is_health_worker                 INT(11),

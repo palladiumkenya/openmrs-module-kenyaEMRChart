@@ -2463,7 +2463,7 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
       reason_not_to_test,
       patient_disabled,
       disability_type,
-      recommended-test,
+      recommended_test,
       patient_id,
       visit_id,
       encounter_id,
