@@ -6334,7 +6334,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
     INSERT INTO kenyaemr_etl.etl_hts_eligibility_screening (
       patient_disabled,
       disability_type,
-      recommended-test,
+      recommended_test,
       test_strategy,
       hts_entry_point,
       hts_risk_category,
@@ -6410,7 +6410,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                  nullif(max(if(o.concept_id=162558 and o.value_coded = 164538,"Physically Challenged",'')),''),
                  nullif(max(if(o.concept_id=162558 and o.value_coded = 5622,"Other",'')),''),
                  nullif(max(if(o.concept_id=160632,o.value_text,'')),'')) as disability_type,
-        max(if(o.concept_id=167229,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as recommended-test,
+        max(if(o.concept_id=167229,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as recommended_test,
         max(if(o.concept_id=164956,o.value_coded,null)) as test_strategy,
         max(if(o.concept_id=160540,o.value_coded,null)) as hts_entry_point,
         max(if(o.concept_id=167163,(case o.value_coded when 1407 then "Low" when 1499 then "Moderate" when 1408 then "High" when 167164 then "Very high" else "" end),null)) as hts_risk_category,
