@@ -1546,6 +1546,7 @@ SELECT "Successfully created etl_ART_preparation table";
     muac DOUBLE,
     nutritional_status INT(11) DEFAULT NULL,
     last_menstrual_period DATE,
+    hpv_vaccinated INT(11),
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
