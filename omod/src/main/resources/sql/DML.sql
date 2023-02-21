@@ -3232,6 +3232,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 			muac,
 			nutritional_status,
 			last_menstrual_period,
+      hpv_vaccinated,
       date_last_modified,
 			voided
 		)
@@ -3256,6 +3257,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
 				max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
 				max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
+        max(if(o.concept_id=160325,o.value_coded,null)) as hpv_vaccinated,
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 				e.voided as voided
 			from encounter e
@@ -3265,7 +3267,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427)
+				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427,160325)
 			where e.voided=0
 			group by e.patient_id, visit_date
 		;

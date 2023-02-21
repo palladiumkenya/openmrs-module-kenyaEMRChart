@@ -1179,6 +1179,7 @@ SELECT "Successfully created enhanced adherence table";
       muac,
       (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
       last_menstrual_period,
+      (case hpv_vaccinated when 1065 then 'Yes' when 1066 then 'No' else '' end) as hpv_vaccinated,
       voided
     from kenyaemr_etl.etl_patient_triage;
 
