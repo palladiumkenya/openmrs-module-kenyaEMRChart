@@ -3226,6 +3226,9 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 			systolic_pressure,
 			diastolic_pressure,
 			temperature,
+		    sari_fever_measured,
+            sari_cough_measured,
+            sari_onset_symptoms,
 			pulse_rate,
 			respiratory_rate,
 			oxygen_saturation,
@@ -3233,6 +3236,13 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 			nutritional_status,
 			last_menstrual_period,
       hpv_vaccinated,
+      sexual_abstained,
+      lmp_in_last_seven_days,
+      family_planing,
+      miscarriage,
+      baby_in_last_week,
+      refer_client_for_pregnancy,
+      triage_notes,
       date_last_modified,
 			voided
 		)
@@ -3251,6 +3261,9 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
 				max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
 				max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+				max(if(o.concept_id=140238,o.value_numeric,null)) as sari_fever_measured,
+				max(if(o.concept_id=143264,o.value_numeric,null)) as sari_cough_measured,
+				max(if(o.concept_id=1729,o.value_numeric,null)) as sari_cough_measured,
 				max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
 				max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
 				max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
@@ -3258,6 +3271,14 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
 				max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
         max(if(o.concept_id=160325,o.value_coded,null)) as hpv_vaccinated,
+        max(if(o.concept_id=160109,o.value_coded,null)) as sexual_abstained,
+        max(if(o.concept_id=162877,o.value_coded,null)) as lmp_in_last_seven_days,
+        max(if(o.concept_id=160653,o.value_coded,null)) as family_planing,
+        max(if(o.concept_id=48,o.value_coded,null)) as miscarriage,
+        max(if(o.concept_id=1657,o.value_coded,null)) as baby_in_last_week,
+        max(if(o.concept_id=1282,o.value_coded,null)) as refer_client_for_pregnancy,
+        max(if(o.concept_id=159395,o.value_coded,null)) as triage_notes,
+
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 				e.voided as voided
 			from encounter e
@@ -3267,7 +3288,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163300,1427,160325)
+				and o.concept_id in (160430,5089,5090,5085,5086,5088,140238,143264,1729,5087,5242,5092,1343,163300,1427,160325,160109,162877,160653,48,1657,1282,159395)
 			where e.voided=0
 			group by e.patient_id, visit_date
 		;

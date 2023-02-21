@@ -1173,6 +1173,9 @@ SELECT "Successfully created enhanced adherence table";
       systolic_pressure,
       diastolic_pressure,
       temperature,
+      (case sari_fever_measured when 1065 then 'Yes' when 1066 then 'No' when 1067 then "Unknown" else '' end) as sari_fever_measured,
+      (case sari_cough_measured when 1065 then 'Yes' when 1066 then 'No' when 1067 then "Unknown" else '' end) as sari_cough_measured,
+      (case sari_onset_symptoms when 1065 then 'Yes' when 1066 then 'No' when 1067 then "Unknown" else '' end) as sari_onset_symptoms,
       pulse_rate,
       respiratory_rate,
       oxygen_saturation,
@@ -1180,6 +1183,13 @@ SELECT "Successfully created enhanced adherence table";
       (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
       last_menstrual_period,
       (case hpv_vaccinated when 1065 then 'Yes' when 1066 then 'No' else '' end) as hpv_vaccinated,
+      (case sexual_abstained when 1065 then 'Yes' when 1066 then 'No' else '' end) as sexual_abstained,
+      (case lmp_in_last_seven_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as lmp_in_last_seven_days,
+      (case family_planing when 1065 then 'Yes' when 1066 then 'No' else '' end) as family_planing,
+      (case miscarriage when 1065 then 'Yes' when 1066 then 'No' else '' end) as miscarriage,
+      (case baby_in_last_week when 1065 then 'Yes' when 1066 then 'No' else '' end) as baby_in_last_week,
+      (case refer_client_for_pregnancy when 1065 then 'Yes' when 1066 then 'No' else '' end) as refer_client_for_pregnancy,
+      triage_notes,
       voided
     from kenyaemr_etl.etl_patient_triage;
 
