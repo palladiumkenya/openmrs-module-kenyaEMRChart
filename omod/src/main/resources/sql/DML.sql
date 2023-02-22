@@ -3274,6 +3274,169 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END $$
 
+-- ------------- populate etl_patient_sari--------------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_patient_sari $$
+CREATE PROCEDURE sp_populate_etl_patient_sari()
+	BEGIN
+		SELECT "Processing Patient Sari ", CONCAT("Time: ", NOW());
+		INSERT INTO kenyaemr_etl.etl_patient_sari(
+			uuid,
+			patient_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+			date_last_modified,
+			abnormal_breath_sounds,
+            wheezing,
+            sore_throat,
+            difficulty_in_breathing,
+            chest_pain,
+            rhinorrhea,
+            sore_muscles,
+            haemoptysis,
+            chills,
+            diarrhea,
+            vomiting,
+            ear_pain,
+            skin_rash,
+            lack_of_appetite,
+            conjunctivitis,
+            convulsions,
+            rigors,
+            pneumonia_clinical_diagnosis,
+            unable_to_breastfeed,
+            vomits_everything ,
+            stridor,
+            grunting,
+            nasal_flaring,
+            chest_in_drawing,
+            lethargic,
+            unconscious_comatose,
+		    reported_lmp,
+            pregnant,
+            due_date,
+            child_born_at_term,
+            weeks_of_gestation,
+            chronic_respiratory_disease,
+            chronic_neurological,
+            newly_diagnosed_tb,
+            prior_tb,
+            hiv_aids,
+            chronic_cardiac,
+            malnutrition,
+            chronic_liver_disease,
+            chronic_renal_disease,
+            diabetes,
+            asthma,
+            cancer,
+            sickle_cell_disease,
+            rickets,
+            covid_19,
+            other_specify,
+            existing_chronic_condition_in_past_3_months,
+            times_had_chronic_condition_past_3,
+            hospitalised_past_12_months,
+            hospitalised_for_respiratory_problem,
+            hospitalised_chronic_condition_past_12_months,
+            smoke,
+            tobacco_products,
+            influenza_vaccine,
+            doses_of_pneumococcal_vaccine,
+            pneumococcal_child_verification_card,
+            hib_vaccine,
+            doses_of_hib_vaccine,
+            hib_child_vaccination_card,
+            voided
+		)
+			select
+				e.uuid,
+				e.patient_id,
+				date(e.encounter_datetime) as visit_date,
+				e.location_id,
+				e.encounter_id as encounter_id,
+				e.creator,
+				e.date_created as date_created,
+				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+				max(if(o.concept_id=113316,o.value_coded,null)) as abnormal_breath_sounds,
+				max(if(o.concept_id=113316,o.value_coded,null)) as wheezing,
+				max(if(o.concept_id=158843,o.value_coded,null)) as sore_throat,
+				max(if(o.concept_id=122496,o.value_coded,null)) as difficulty_in_breathing,
+				max(if(o.concept_id=120749,o.value_coded,null)) as chest_pain,
+				max(if(o.concept_id=165501,o.value_coded,null)) as rhinorrhea,
+				max(if(o.concept_id=133632,o.value_coded,null)) as sore_muscles,
+				max(if(o.concept_id=138905,o.value_coded,null)) as haemoptysis,
+				max(if(o.concept_id=871,o.value_coded,null)) as chills,
+				max(if(o.concept_id=142412,o.value_coded,null)) as diarrhea,
+				max(if(o.concept_id=122983,o.value_coded,null)) as vomiting,
+				max(if(o.concept_id=131602,o.value_coded,null)) as ear_pain,
+				max(if(o.concept_id=512,o.value_coded,null)) as skin_rash,
+				max(if(o.concept_id=163484,o.value_coded,null)) as lack_of_appetite,
+				max(if(o.concept_id=119905,o.value_coded,null)) as conjunctivitis,
+				max(if(o.concept_id=113054,o.value_coded,null)) as convulsions,
+				max(if(o.concept_id=127361,o.value_coded,null)) as rigors,
+				max(if(o.concept_id=114100,o.value_coded,null)) as pneumonia_clinical_diagnosis,
+				max(if(o.concept_id=159861,o.value_coded,null)) as unable_to_breastfeed,
+				max(if(o.concept_id=164482,o.value_coded,null)) as vomits_everything,
+				max(if(o.concept_id=125782,o.value_coded,null)) as stridor,
+				max(if(o.concept_id=156534,o.value_coded,null)) as grunting,
+				max(if(o.concept_id=1861,o.value_coded,null)) as nasal_flaring,
+				max(if(o.concept_id=136768,o.value_coded,null)) as chest_in_drawing,
+				max(if(o.concept_id=116334,o.value_coded,null)) as lethargic,
+				max(if(o.concept_id=123818,o.value_coded,null)) as unconscious_comatose,
+				max(if(o.concept_id=1427,date(o.value_datetime),null)) as reported_lmp,
+                max(if(o.concept_id=5272,o.value_coded,null)) as pregnant,
+                max(if(o.concept_id=5596,o.value_coded,null)) as due_date,
+                max(if(o.concept_id=165793,o.value_coded,null)) as child_born_at_term,
+                max(if(o.concept_id=1438,o.value_coded,null)) as weeks_of_gestation,
+                max(if(o.concept_id=166093,o.value_coded,null)) as chronic_respiratory_disease,
+                max(if(o.concept_id=165646,o.value_coded,null)) as chronic_neurological,
+                max(if(o.concept_id=1687,o.value_coded,null)) as newly_diagnosed_tb,
+                max(if(o.concept_id=112141,o.value_coded,null)) as prior_tb,
+                max(if(o.concept_id=1169,o.value_coded,null)) as hiv_aids,
+                max(if(o.concept_id=139071,o.value_coded,null)) as chronic_cardiac,
+                max(if(o.concept_id=115122,o.value_coded,null)) as malnutrition,
+                max(if(o.concept_id=6032,o.value_coded,null)) as chronic_liver_disease,
+                max(if(o.concept_id=6033,o.value_coded,null)) as chronic_renal_disease,
+                max(if(o.concept_id=119481,o.value_coded,null)) as diabetes,
+                max(if(o.concept_id=121375,o.value_coded,null)) as asthma,
+                max(if(o.concept_id=116030,o.value_coded,null)) as cancer,
+                max(if(o.concept_id=160225,o.value_coded,null)) as sickle_cell_disease,
+                max(if(o.concept_id=127394,o.value_coded,null)) as rickets,
+                max(if(o.concept_id=165866,o.value_coded,null)) as covid_19,
+                max(if(o.concept_id=165230,o.value_coded,null)) as other_specify,
+                max(if(o.concept_id=1797,o.value_coded,null)) as existing_chronic_condition_in_past_3_months,
+                max(if(o.concept_id=165416,o.value_coded,null)) as times_had_chronic_condition_past_3,
+                max(if(o.concept_id=163403,o.value_coded,null)) as hospitalised_past_12_months,
+                max(if(o.concept_id=159518,o.value_coded,null)) as hospitalised_for_respiratory_problem,
+                max(if(o.concept_id=5704,o.value_coded,null)) as hospitalised_chronic_condition_past_12_months,
+                max(if(o.concept_id=152722,o.value_coded,null)) as smoke,
+                max(if(o.concept_id=163201,o.value_coded,null)) as tobacco_products,
+                max(if(o.concept_id=164134,o.value_coded,null)) as influenza_vaccine,
+                max(if(o.concept_id=160855,o.value_coded,null)) as doses_of_pneumococcal_vaccine,
+                max(if(o.concept_id=165911,o.value_coded,null)) as pneumococcal_child_verification_card,
+                max(if(o.concept_id=160855,o.value_coded,null)) as hib_vaccine,
+                max(if(o.concept_id=163331,o.value_coded,null)) as doses_of_hib_vaccine,
+                max(if(o.concept_id=165911,o.value_coded,null)) as hib_child_vaccination_card,
+				e.voided as voided
+			from encounter e
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join
+				(
+					select form_id, uuid,name from form where
+						uuid in('c8893e6a-f681-4412-b8f6-f02528ffd03b')
+				) f on f.form_id=e.form_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+				 and o.concept_id in (113316,113316,158843,122496,120749,165501,133632,138905,142412,871,122983,131602,512,163484,119905,127361,113054,114100,159861,164482,125782,156534,1861,136768,116334,123818,1427,5272,5596,165793,1438,166093,165646,1687,112141,1169,13907,115122,6032,6033,119481,121375,116030,160225,127394,
+				 165866,165230,1797,163403,159518,5704,152722,163201,165416,164134,160855,165911,160855,163331,165911)
+			where e.voided=0
+			group by e.patient_id, e.encounter_id, visit_date
+		;
+		SELECT "Completed processing Sari screening data ", CONCAT("Time: ", NOW());
+		END $$
+
 
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
@@ -6840,6 +7003,7 @@ CALL sp_populate_etl_ccc_defaulter_tracing();
 CALL sp_populate_etl_ART_preparation();
 CALL sp_populate_etl_enhanced_adherence();
 CALL sp_populate_etl_patient_triage();
+CALL sp_populate_etl_patient_sari();
 CALL sp_populate_etl_ipt_initiation();
 CALL sp_populate_etl_ipt_follow_up();
 CALL sp_populate_etl_ipt_outcome();

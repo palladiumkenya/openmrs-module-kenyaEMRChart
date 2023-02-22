@@ -52,6 +52,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_sari;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_linkage_tracing;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_initiation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_follow_up;
@@ -1556,7 +1557,89 @@ SELECT "Successfully created etl_ART_preparation table";
     INDEX(patient_id, visit_date)
   );
 
-  SELECT "Successfully created etl_patient_triage table";
+  SELECT "Successfully created etl_patient_sari table";
+
+    -- ------------ create table etl_patient_sari-----------------------
+    CREATE TABLE kenyaemr_etl.etl_patient_sari (
+      uuid CHAR(38),
+      encounter_id INT(11) NOT NULL PRIMARY KEY,
+      patient_id INT(11) NOT NULL ,
+      location_id INT(11) DEFAULT NULL,
+      visit_date DATE,
+      visit_id INT(11),
+      encounter_provider INT(11),
+      date_created DATETIME NOT NULL,
+      date_last_modified DATETIME,
+      abnormal_breath_sounds INT(11),
+      wheezing INT(11),
+      sore_throat INT(11),
+      difficulty_in_breathing INT(11),
+      chest_pain INT(11),
+      rhinorrhea INT(11),
+      sore_muscles INT(11),
+      haemoptysis INT(11),
+      chills INT(11),
+      diarrhea INT(11),
+      vomiting INT(11),
+      ear_pain INT(11),
+      skin_rash INT(11),
+      lack_of_appetite INT(11),
+      conjunctivitis INT(11),
+      convulsions INT(11),
+      rigors INT(11),
+      pneumonia_clinical_diagnosis INT(11),
+      unable_to_breastfeed INT(11),
+      vomits_everything INT(11),
+      stridor INT(11),
+      grunting INT(11),
+      nasal_flaring INT(11),
+      chest_in_drawing INT(11),
+      lethargic INT(11),
+      unconscious_comatose INT(11),
+      reported_lmp DATE,
+      pregnant INT(11),
+      due_date DATE,
+      child_born_at_term INT(11),
+      weeks_of_gestation INT(11),
+      chronic_respiratory_disease INT(11),
+      chronic_neurological INT(11),
+      newly_diagnosed_tb INT(11),
+      prior_tb INT(11),
+      hiv_aids INT(11),
+      chronic_cardiac INT(11),
+      malnutrition INT(11),
+      chronic_liver_disease INT(11),
+      chronic_renal_disease INT(11),
+      diabetes INT(11),
+      asthma INT(11),
+      cancer INT(11),
+      sickle_cell_disease INT(11),
+      rickets INT(11),
+      covid_19 INT(11),
+      other_specify varchar(255),
+      existing_chronic_condition_in_past_3_months INT(11),
+     times_had_chronic_condition_past_3 INT(11),
+      hospitalised_past_12_months INT(11),
+       hospitalised_for_respiratory_problem INT(11),
+      hospitalised_chronic_condition_past_12_months INT(11),
+      smoke INT(11),
+      tobacco_products INT(11),
+      influenza_vaccine INT(11),
+      doses_of_pneumococcal_vaccine INT(11),
+       pneumococcal_child_verification_card INT(11),
+      hib_vaccine INT(11),
+      doses_of_hib_vaccine INT(11),
+      hib_child_vaccination_card INT(11),
+        voided INT(11),
+      CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+      CONSTRAINT unique_uuid UNIQUE(uuid),
+      INDEX(visit_date),
+      INDEX(encounter_id),
+      INDEX(patient_id),
+      INDEX(patient_id, visit_date)
+    );
+
+    SELECT "Successfully created etl_patient_sari table";
 
   -- ------------ create table etl_prep_behaviour_risk_assessment-----------------------
 

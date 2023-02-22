@@ -1187,6 +1187,83 @@ SELECT "Successfully created enhanced adherence table";
   ALTER TABLE kenyaemr_datatools.triage ADD INDEX(visit_date);
   SELECT "Successfully created triage table";
 
+  -- create table sari
+  create table kenyaemr_datatools.sari as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+     (case abnormal_breath_sounds when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as abnormal_breath_sounds,
+     (case wheezing when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as wheezing,
+     (case sore_throat when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as sore_throat,
+     (case difficulty_in_breathing when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as difficulty_in_breathing,
+     (case chest_pain when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chest_pain,
+     (case rhinorrhea when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as rhinorrhea,
+     (case sore_muscles when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as sore_muscles,
+     (case haemoptysis when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as haemoptysis,
+     (case chills when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chills,
+     (case diarrhea when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as diarrhea,
+     (case vomiting when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as vomiting,
+     (case ear_pain when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as ear_pain,
+     (case skin_rash when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as skin_rash,
+     (case lack_of_appetite when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as lack_of_appetite,
+     (case conjunctivitis when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as conjunctivitis,
+     (case convulsions when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as convulsions,
+     (case rigors when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as rigors,
+     (case pneumonia_clinical_diagnosis when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as pneumonia_clinical_diagnosis,
+     (case unable_to_breastfeed when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as unable_to_breastfeed,
+     (case vomits_everything when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as vomits_everything,
+     (case stridor when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as stridor,
+     (case grunting when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as grunting,
+     (case nasal_flaring when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as nasal_flaring,
+     (case chest_in_drawing when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chest_in_drawing,
+     (case lethargic when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as lethargic,
+     (case unconscious_comatose when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as unconscious_comatose,
+      reported_lmp,
+      (case pregnant when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as pregnant,
+      due_date,
+      (case child_born_at_term when 1065 then 'Yes' when 1066 then 'No' else '' end) as child_born_at_term,
+      weeks_of_gestation,
+      (case chronic_respiratory_disease when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chronic_respiratory_disease,
+      (case chronic_neurological when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chronic_neurological,
+      (case newly_diagnosed_tb when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as newly_diagnosed_tb,
+      (case prior_tb when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as prior_tb,
+      (case hiv_aids when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as hiv_aids,
+      (case chronic_cardiac when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chronic_cardiac,
+      (case malnutrition when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as malnutrition,
+      (case chronic_liver_disease when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chronic_liver_disease,
+      (case chronic_renal_disease when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as chronic_renal_disease,
+      (case diabetes when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as diabetes,
+      (case asthma when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as asthma,
+      (case cancer when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as cancer,
+      (case sickle_cell_disease when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as sickle_cell_disease,
+      (case rickets when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as rickets,
+      (case covid_19 when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as covid_19,
+      other_specify,
+      (case existing_chronic_condition_in_past_3_months when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as existing_chronic_condition_in_past_3_months,
+      times_had_chronic_condition_past_3,
+      (case hospitalised_past_12_months when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as hospitalised_past_12_months,
+      (case hospitalised_for_respiratory_problem when 1065 then 'Yes' when 1066 then 'No' else '' end) as hospitalised_for_respiratory_problem,
+      hospitalised_chronic_condition_past_12_months,
+      (case smoke when 1065 then 'Yes' when 1066 then 'No' else '' end) as smoke,
+      (case tobacco_products when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as tobacco_products,
+      (case influenza_vaccine when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as influenza_vaccine,
+      (case doses_of_pneumococcal_vaccine when 1107 then '0' when 1182 then '1' when 1183 then '2' when 1184 then '3' when 1067 then 'Unknown' else '' end) as doses_of_pneumococcal_vaccine,
+      (case pneumococcal_child_verification_card when 1065 then 'Yes' when 1066 then 'No' else '' end) as pneumococcal_child_verification_card,
+      (case hib_vaccine when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' else '' end) as hib_vaccine,
+      (case doses_of_hib_vaccine when 1107 then '0' when 1182 then '1' when 1183 then '2' when 1184 then '3' when 1067 then 'Unknown' else '' end) as doses_of_hib_vaccine,
+      (case hib_child_vaccination_card when 1107 then '0' when 1182 then '1' when 1183 then '2' when 1184 then '3' when 1067 then 'Unknown' else '' end) as hib_child_vaccination_card,
+      voided
+    from kenyaemr_etl.etl_patient_sari;
+
+  ALTER TABLE kenyaemr_datatools.sari ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.sari ADD INDEX(visit_date);
+  SELECT "Successfully created sari table";
 
   -- create table datatools_patient_contact
   create table kenyaemr_datatools.patient_contact as
