@@ -2427,43 +2427,6 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
   -- --------------------------- populate hts_eligibility screening table ---------------------------------------------
   create table kenyaemr_datatools.hts_eligibility_screening as
     select
-      (case  test_strategy
-      when 164163 then "HP: Hospital Patient Testing"
-      when 164953 then "NP: HTS for non-patients"
-      when 164954 then "VI:Integrated VCT Center"
-      when 164955 then "VS:Stand Alone VCT Center"
-      when 159938 then "HB:Home Based Testing"
-      when 159939 then "MO: Mobile Outreach HTS"
-      when 161557 then "Index testing"
-      when 166606 then "SNS - Social Networks"
-      when 5622 then "O:Other"
-      else ""  end ) as test_strategy,
-      (case  hts_entry_point
-      when 5485 then "In Patient Department(IPD)"
-      when 160542 then "Out Patient Department(OPD)"
-      when 162181 then "Peadiatric Clinic"
-      when 160552 then "Nutrition Clinic"
-      when 160538 then "PMTCT ANC"
-      when 160456 then "PMTCT MAT"
-      when 1623 then "PMTCT PNC"
-      when 160541 then "TB"
-      when 162050 then "CCC"
-      when 159940 then "VCT"
-      when 159938 then "Home Based Testing"
-      when 159939 then "Mobile Outreach"
-      when 162223 then "VMMC"
-      when 160546 then "STI Clinic"
-      when 160522 then "Emergency"
-      when 163096 then "Community Testing"
-      when 5622 then "Other"
-      else ""  end ) as hts_entry_point,
-      hts_risk_category,
-      hts_risk_score,
-      reason_to_test,
-      reason_not_to_test,
-      patient_disabled,
-      disability_type,
-      recommended_test,
       patient_id,
       visit_id,
       encounter_id,
@@ -2476,6 +2439,41 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
       priority_population_type,
       case department when 160542 then 'OPD:Out-patient department' when 5485 then 'IPD:In-patient department' when 160473 then 'Emergency' when 160538 then 'PMTCT' when 159940 then 'VCT' end as department,
       case patient_type when 164163 then 'HP:Hospital Patient' when 164953 then 'NP:Non-Hospital Patient' end as patient_type,
+      (case  test_strategy
+           when 164163 then "HP: Hospital Patient Testing"
+           when 164953 then "NP: HTS for non-patients"
+           when 164954 then "VI:Integrated VCT Center"
+           when 164955 then "VS:Stand Alone VCT Center"
+           when 159938 then "HB:Home Based Testing"
+           when 159939 then "MO: Mobile Outreach HTS"
+           when 161557 then "Index testing"
+           when 166606 then "SNS - Social Networks"
+           when 5622 then "O:Other"
+           else ""  end ) as test_strategy,
+      (case  hts_entry_point
+           when 5485 then "In Patient Department(IPD)"
+           when 160542 then "Out Patient Department(OPD)"
+           when 162181 then "Peadiatric Clinic"
+           when 160552 then "Nutrition Clinic"
+           when 160538 then "PMTCT ANC"
+           when 160456 then "PMTCT MAT"
+           when 1623 then "PMTCT PNC"
+           when 160541 then "TB"
+           when 162050 then "CCC"
+           when 159940 then "VCT"
+           when 159938 then "Home Based Testing"
+           when 159939 then "Mobile Outreach"
+           when 162223 then "VMMC"
+           when 160546 then "STI Clinic"
+           when 160522 then "Emergency"
+           when 163096 then "Community Testing"
+           when 5622 then "Other"
+           else ""  end ) as hts_entry_point,
+      hts_risk_category,
+      hts_risk_score,
+      patient_disabled,
+      disability_type,
+      recommended_test,
       case is_health_worker when 1065 then 'Yes' when 1066 then 'No' end as is_health_worker,
       relationship_with_contact,
       case mother_hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' end as mother_hiv_status,
@@ -2485,25 +2483,25 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
       date_tested,
       case started_on_art when 1065 then 'Yes' when 1066 then 'No' end as started_on_art,
       upn_number,
-      case ever_had_sex when 1 then 'Yes' when 0 then 'No' end as ever_had_sex,
-      case sexually_active when 1065 then 'Yes' when 1066 then 'No' end as sexually_active,
-      case new_partner when 1065 then 'Yes' when 1066 then 'No' end as new_partner,
-      (case partner_hiv_status when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' else '' end) as partner_hiv_status,
+      case ever_had_sex when 1065 then 'Yes' when 1066 then 'No' when 162570 then 'Declined to answer' end as ever_had_sex,
+      sexually_active,
+      new_partner,
+      partner_hiv_status,
       case couple_discordant when 1065 then 'Yes' when 1066 then 'No' end as couple_discordant,
-      case multiple_partners when 1 then 'Yes' when 0 then 'No' end as multiple_partners,
+      multiple_partners,
       number_partners,
       case alcohol_sex when 1066 then 'Not at all' when 1385 then 'Sometimes' when 165027 then 'Always' end as alcohol_sex,
-      case money_sex when 1065 then 'Yes' when 1066 then 'No' end as money_sex,
-      case condom_burst when 1065 then 'Yes' when 1066 then 'No' end as condom_burst,
-      case unknown_status_partner when 1065 then 'Yes' when 1066 then 'No' end as unknown_status_partner,
-      case known_status_partner when 163289 then 'Yes' when 1066 then 'No' end as known_status_partner,
-      case experienced_gbv when 1065 then 'Yes' when 1066 then 'No' end as experienced_gbv,
+      money_sex,
+      condom_burst,
+      unknown_status_partner,
+      known_status_partner,
+      experienced_gbv,
       type_of_gbv,
       service_received,
-      case currently_on_prep when 1065 then 'Yes' when 1066 then 'No' end as currently_on_prep,
-      case recently_on_pep when 1 then 'Yes' when 0 then 'No' end as recently_on_pep,
-      case recently_had_sti when 1065 then 'Yes' when 1066 then 'No' end as recently_had_sti,
-      case tb_screened when 1065 then 'Yes' when 1066 then 'No' end as tb_screened,
+      currently_on_prep,
+      recently_on_pep as recently_on_pep,
+      recently_had_sti,
+      tb_screened,
       case cough when 159799 then 'Yes' when 1066 then 'No' end as cough,
       case fever when 1494 then 'Yes' when 1066 then 'No' end as fever,
       case weight_loss when 832 then 'Yes' when 1066 then 'No' end as weight_loss,
@@ -2511,14 +2509,16 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
       case contact_with_tb_case when 124068 then 'Yes' when 1066 then 'No' end as contact_with_tb_case,
       case lethargy when 116334 then 'Yes' when 1066 then 'No' end as lethargy,
       case tb_status when 1660 then 'No TB signs' when 142177 then 'Presumed TB' when 1662 then 'TB Confirmed' end as tb_status,
-      case shared_needle when 1065 then 'Yes' when 1066 then 'No' end as shared_needle,
+      shared_needle,
       case needle_stick_injuries when 153574 then 'Yes' when 1066 then 'No' end as needle_stick_injuries,
       case traditional_procedures when 1065 then 'Yes' when 1066 then 'No' end as traditional_procedures,
       child_reasons_for_ineligibility,
-      case pregnant when 1065 then 'Yes' when 1066 then 'No' end as pregnant,
-      case breastfeeding_mother when 1065 then 'Yes' when 1066 then 'No' end as breastfeeding_mother,
+      pregnant,
+      breastfeeding_mother,
       case eligible_for_test when 1065 then 'Yes' when 1066 then 'No' end as eligible_for_test,
       case referred_for_testing when 1065 then 'Yes' when 1066 then 'No' end as referred_for_testing,
+      reason_to_test,
+      reason_not_to_test,
       reasons_for_ineligibility,
       specific_reason_for_ineligibility,
       date_created,
