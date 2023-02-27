@@ -1085,7 +1085,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id=1590,o.value_numeric,null)) as number_of_anc_visits,
         max(if(o.concept_id=160704,o.value_coded,null)) as vaginal_examination,
-        max(if(o.concept_id=1282 and o.value_coded in (81369,104590,1107),o.value_coded,null)),
+        max(if(o.concept_id=1282 and o.value_coded in (81369,104590,1107),o.value_coded,null)) as uterotonic_given,
         max(if(o.concept_id=159369,o.value_coded,null)) as chlohexidine_applied_on_code_stump,
         max(if(o.concept_id=984,o.value_coded,null)) as vitamin_K_given,
         max(if(o.concept_id=161094,o.value_coded,null)) as kangaroo_mother_care_given,
