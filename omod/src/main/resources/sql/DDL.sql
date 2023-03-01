@@ -674,7 +674,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     duration_of_pregnancy DOUBLE,
     mode_of_delivery INT(11),
     date_of_delivery DATETIME,
-    blood_loss INT(11),
+    blood_loss DOUBLE,
     condition_of_mother INT(11),
     delivery_outcome VARCHAR(255),
     apgar_score_1min  DOUBLE,
