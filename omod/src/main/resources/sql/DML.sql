@@ -6454,7 +6454,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=167144,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as new_partner,
         max(if(o.concept_id=1436,(case o.value_coded when 703 then "Positive" when 664  THEN "Negative" when 1067 then 'Unknown' when 162570 THEN "Declined to answer" else "" end),null)) as partner_hiv_status,
         max(if(o.concept_id=6096,o.value_coded,null)) as couple_discordant,
-        max(if(o.concept_id=5568,(case o.value_coded when 1 then "YES" when 0 THEN "NO" end),null)) as multiple_partners,
+        max(if(o.concept_id=5568,(case o.value_coded when 1 then "YES" when 2 THEN "NO" end),null)) as multiple_partners,
         max(if(o.concept_id=5570,o.value_numeric,null)) as number_partners,
         max(if(o.concept_id=165088,o.value_coded,null)) as alcohol_sex,
         max(if(o.concept_id=160579,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as money_sex,
