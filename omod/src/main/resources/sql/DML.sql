@@ -6431,7 +6431,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                   nullif(max(if(o.concept_id=162558 and o.value_coded = 5622,"Other",'')),''),
                   nullif(max(if(o.concept_id=160632,o.value_text,'')),'')) as disability_type,
         max(if(o.concept_id=159936,o.value_coded,null)) as department,
-        max(if(o.concept_id=164956,o.value_coded,null)) as patient_type,
+        max(if(o.concept_id=164932,o.value_coded,null)) as patient_type,
         max(if(o.concept_id=5619,o.value_coded,null)) as is_health_worker,
         max(if(o.concept_id=167229,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as recommended_test,
         max(if(o.concept_id=164956,o.value_coded,null)) as test_strategy,
@@ -6514,7 +6514,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                       inner join person p on p.person_id=e.patient_id and p.voided=0
                       inner join form f on f.form_id = e.form_id and f.uuid = '04295648-7606-11e8-adc0-fa7ae01bbebc'
                       left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                      (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
+                      (164930,160581,138643,159936,164932,5619,166570,164401,165215,159427,
                        164400,165240,162053,160109,167144,1436,6096,5568,5570,165088,160579,
                        166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
                        165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
