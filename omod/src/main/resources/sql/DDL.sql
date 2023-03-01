@@ -3059,7 +3059,7 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
   date_tested                      DATE,
   started_on_art                   INT(11),
   upn_number                       varchar(80),
-  ever_had_sex                     VARCHAR(100),
+  ever_had_sex                     INT(11),
   sexually_active                  VARCHAR(100),
   new_partner                      VARCHAR(100),
   partner_hiv_status               VARCHAR(100),

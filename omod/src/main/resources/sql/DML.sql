@@ -6447,10 +6447,10 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=164400,o.value_datetime,null)) as date_tested,
         max(if(o.concept_id=165240,o.value_coded,null)) as started_on_art,
         max(if(o.concept_id=162053,o.value_numeric,null)) as upn_number,
-        max(if(o.concept_id=163272,o.value_coded,null)) as ever_had_sex,
+        max(if(o.concept_id=5569,o.value_coded,null)) as ever_had_sex,
         max(if(o.concept_id=160109,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as sexually_active,
         max(if(o.concept_id=167144,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as new_partner,
-        max(if(o.concept_id=1436,(case o.value_coded when 703 then "Positive" when 664 THEN "Negative" when 162570 THEN "Declined to answer" else "" end),null)) as partner_hiv_status,
+        max(if(o.concept_id=1436,(case o.value_coded when 703 then "Positive" when 664  THEN "Negative" when 1067 then 'Unknown' when 162570 THEN "Declined to answer" else "" end),null)) as partner_hiv_status,
         max(if(o.concept_id=6096,o.value_coded,null)) as couple_discordant,
         max(if(o.concept_id=5568,(case o.value_coded when 1 then "YES" when 0 THEN "NO" end),null)) as multiple_partners,
         max(if(o.concept_id=5570,o.value_numeric,null)) as number_partners,
@@ -6458,7 +6458,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=160579,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as money_sex,
         max(if(o.concept_id=166559,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as condom_burst,
         max(if(o.concept_id=159218,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as unknown_status_partner,
-        max(if(o.concept_id=163568,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as known_status_partner,
+        max(if(o.concept_id=163568,(case o.value_coded when 163289 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as known_status_partner,
         max(if(o.concept_id=167161,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as experienced_gbv,
         concat_ws(',', max(if(o.concept_id=167145 and o.value_coded = 1065 ,'Sexual violence',null)),
                   max(if(o.concept_id=160658 and o.value_coded = 1065 ,'Emotional abuse',null)),
@@ -6513,10 +6513,10 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                       inner join form f on f.form_id = e.form_id and f.uuid = '04295648-7606-11e8-adc0-fa7ae01bbebc'
                       left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                       (164930,160581,138643,159936,164956,5619,166570,164401,165215,159427,
-                       164400,165240,162053,163272,160109,167144,1436,6096,5568,5570,165088,160579,
+                       164400,165240,162053,160109,167144,1436,6096,5568,5570,165088,160579,
                        166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
                        165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
-                       5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396)
+                       5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396,5569)
                       and o.voided=0
                       where e.voided=0
                       group by e.patient_id,date(e.encounter_datetime);

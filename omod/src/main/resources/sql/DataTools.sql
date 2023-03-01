@@ -2483,7 +2483,7 @@ SELECT "Successfully created vmmc_post_operation_assessment table";
       date_tested,
       case started_on_art when 1065 then 'Yes' when 1066 then 'No' end as started_on_art,
       upn_number,
-      case ever_had_sex when 1065 then 'Yes' when 1066 then 'No' when 162570 then 'Declined to answer' end as ever_had_sex,
+      case ever_had_sex when 1 then 'Yes' when 0 then 'No' end as ever_had_sex,
       sexually_active,
       new_partner,
       partner_hiv_status,
