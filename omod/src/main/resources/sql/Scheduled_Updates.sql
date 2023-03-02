@@ -7039,7 +7039,8 @@ select
                                                    when 160578 then 'Men who have sex with men'
                                                    when 160579 then 'Female sex worker'
                                                    when 165100 then 'Transgender'
-                                                   when 162277 then 'People in prison and other closed settings' else '' end),null)) as key_population_type,
+                                                   when 162277 then 'People in prison and other closed settings'
+                                                   when 5622 then 'Other' else '' end),null)) as key_population_type,
     max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
                                                    when 162198 then 'Truck driver'
                                                    when 160549 then 'Adolescent and young girls'
