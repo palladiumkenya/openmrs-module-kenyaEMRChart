@@ -559,7 +559,6 @@ SELECT "Successfully created pharmacy extract table";
       (case counselled_on_breast_care when 159856 then 'Yes' end) as counselled_on_breast_care,
       (case counselled_on_infant_feeding when 161651 then 'Yes' end) as counselled_on_infant_feeding,
       (case counselled_on_treated_nets when 1381 then 'Yes' end) as counselled_on_treated_nets,
-      (case minimum_care_package  when 1065 then "Yes" when 1066 then "No" else "" end) as minimum_care_package,
       (case risk_reduction when 165275 then 'Yes' end) as risk_reduction,
       (case partner_testing when 161557 then 'Yes' end) as partner_testing,
       (case sti_screening when 165190 then 'Yes' end) as sti_screening,
