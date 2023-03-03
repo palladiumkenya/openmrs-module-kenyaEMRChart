@@ -1074,7 +1074,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
         max(if(o.concept_id=159853 and o.value_coded=1381,o.value_coded,null)) counselled_on_treated_nets,
         max(if(o.concept_id=1591,o.value_coded,null)) as intermittent_presumptive_treatment_given,
         max(if(o.concept_id=1418,o.value_numeric,null)) as intermittent_presumptive_treatment_dose,
-        max(if(o.concept_id=165302,o.value_coded,null)) as minimum_care_package,
+        max(if(o.concept_id in (165302,161595),o.value_coded,null)) as minimum_care_package,
                 concat_ws(',',nullif(max(if(o.concept_id=1592 and o.value_coded =165275,"Risk Reduction counselling",'')),''),
                           nullif(max(if(o.concept_id=1592 and o.value_coded =161557,"HIV Testing for the Partner",'')),''),
                           nullif(max(if(o.concept_id=1592 and o.value_coded =165190,"STI Screening and treatment",'')),''),
@@ -1113,7 +1113,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592)
+														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595)
 				inner join
 				(
 					select form_id, uuid,name from form where
