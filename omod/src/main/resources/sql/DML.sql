@@ -777,6 +777,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			bs_for_mps,
 			hiv_status,
 			hiv_test_date,
+            care_facility,
 			partner_hiv_status,
 			partner_hiv_test_date,
       ti_date_started_art,
@@ -823,6 +824,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 				max(if(o.concept_id=32,o.value_coded,null)) as bs_for_mps,
 				max(if(o.concept_id=159427,o.value_coded,null)) as hiv_status,
 				max(if(o.concept_id=160554,o.value_datetime,null)) as hiv_test_date,
+				max(if(o.concept_id=162724,o.value_text,null)) as care_facility,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=160082,o.value_datetime,null)) as partner_hiv_test_date,
         max(if(o.concept_id=159599,o.value_datetime,null)) as ti_date_started_art,
@@ -848,7 +850,7 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
+														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478,162724)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -914,8 +916,8 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			date_given_haart,
 			baby_azt_dispensed,
 			baby_nvp_dispensed,
-      deworming_done_anc,
-      IPT_dose_given_anc,
+            deworming_done_anc,
+            IPT_dose_given_anc,
 			TTT,
 			IPT_malaria,
 			iron_supplement,
@@ -937,36 +939,39 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			syphilis_test_status,
 			syphilis_treated_status,
 			bs_mps,
-      diabetes_test,
-      fgm_done,
-      fgm_complications,
-      fp_method_postpartum,
+            diabetes_test,
+            fgm_done,
+            fgm_complications,
+            fp_method_postpartum,
 			anc_exercises,
 			tb_screening,
 			cacx_screening,
 			cacx_screening_method,
-      hepatitis_b_screening,
-      hepatitis_b_treatment,
+            hepatitis_b_screening,
+            hepatitis_b_treatment,
 			has_other_illnes,
 			counselled,
 			counselled_on_birth_plans,
-      counselled_on_danger_signs,
-      counselled_on_family_planning,
-      counselled_on_hiv,
-      counselled_on_supplimental_feeding,
-      counselled_on_breast_care,
-      counselled_on_infant_feeding,
-      counselled_on_treated_nets,
-      minimum_care_package,
-      risk_reduction,
-      partner_testing,
-      sti_screening,
-      condom_provision,
-      prep_adherence,
-      anc_visits_emphasis,
-      pnc_fp_counseling,
-      referral_vmmc,
-      referral_dreams,
+          counselled_on_danger_signs,
+          counselled_on_family_planning,
+          counselled_on_hiv,
+          counselled_on_supplimental_feeding,
+          counselled_on_breast_care,
+          counselled_on_infant_feeding,
+          counselled_on_treated_nets,
+          intermittent_presumptive_treatment_given,
+          intermittent_presumptive_treatment_dose,
+          minimum_care_package,
+          minimum_package_of_care_services,
+          risk_reduction,
+          partner_testing,
+          sti_screening,
+          condom_provision,
+          prep_adherence,
+          anc_visits_emphasis,
+          pnc_fp_counseling,
+          referral_vmmc,
+          referral_dreams,
 			referred_from,
 			referred_to,
 			next_appointment_date,
@@ -1067,7 +1072,29 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
         max(if(o.concept_id=159853 and o.value_coded=159856,o.value_coded,null)) counselled_on_breast_care,
         max(if(o.concept_id=159853 and o.value_coded=161651,o.value_coded,null)) counselled_on_infant_feeding,
         max(if(o.concept_id=159853 and o.value_coded=1381,o.value_coded,null)) counselled_on_treated_nets,
-        max(if(o.concept_id=165302,o.value_coded,null)) as minimum_care_package,
+        max(if(o.concept_id=1591,o.value_coded,null)) as intermittent_presumptive_treatment_given,
+        max(if(o.concept_id=1418,o.value_numeric,null)) as intermittent_presumptive_treatment_dose,
+        max(if(o.concept_id in (165302,161595),o.value_coded,null)) as minimum_care_package,
+                concat_ws(',',nullif(max(if(o.concept_id=1592 and o.value_coded =165275,"Risk Reduction counselling",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =161557,"HIV Testing for the Partner",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =165190,"STI Screening and treatment",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =159777,"Condom Provision",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =165203,"PrEP with emphasis on adherence",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =165475,"Emphasize importance of follow up ANC Visits",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =1382,"Postnatal FP Counselling and support",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =162223,"Referrals for VMMC Services for partner",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =165368,"Referrals for OVC/DREAMS",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =166607,"Pre appointmnet SMS",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =166486,"Tartgeted home visits",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =1167,"Psychosocial and disclosure support",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =165002,"3-monthly Enhanced ART adherence assessments optimize TLD",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =163310,"Timely viral load monitoring, early ART switches",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =167410,"Complex case reviews in MDT/Consultation with clinical mentors",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =167079,"Enhanced longitudinal Mother-Infant Pair follow up",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =166563,"Early HEI case identification",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =160116,"Bi weekly random file audits to inform quality improvement",'')),''),
+                          nullif(max(if(o.concept_id=1592 and o.value_coded =160031,"LTFU root cause audit and return to care plan default",'')),'')
+                    ) as minimum_package_of_care_services,
         max(if(o.concept_id=1592 and o.value_coded=165275,o.value_coded,null)) risk_reduction,
         max(if(o.concept_id=1592 and o.value_coded=161557,o.value_coded,null)) partner_testing,
         max(if(o.concept_id=1592 and o.value_coded=165190,o.value_coded,null)) sti_screening,
@@ -1086,7 +1113,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592)
+														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1702,6 +1729,11 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			height,
 			muac,
 			primary_caregiver,
+            revisit_this_year,
+            height_length,
+            referred,
+            referral_reason,
+            danger_signs,
 			infant_feeding,
 			stunted,
 			tb_assessment_outcome,
@@ -1764,6 +1796,11 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
 				max(if(o.concept_id=160908,o.value_coded,null)) as muac,
 				max(if(o.concept_id=160640,o.value_coded,null)) as primary_caregiver,
+				max(if(o.concept_id=164142,o.value_coded,null)) as revisit_this_year,
+				max(if(o.concept_id=164088,o.value_coded,null)) as height_length,
+				max(if(o.concept_id=1788,o.value_coded,null)) as referred,
+				max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
+				max(if(o.concept_id=159860,o.value_coded,null)) as danger_signs,
 				max(if(o.concept_id=1151,o.value_coded,null)) as infant_feeding,
 				max(if(o.concept_id=164088,o.value_coded,null)) as stunted,
 				max(if(o.concept_id=1659,o.value_coded,null)) as tb_assessment_outcome,
@@ -1816,7 +1853,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159855,159402)
+														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159855,159402,164142,164088,1788,164359,159860)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -4924,7 +4961,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                 164934,165196,165266,165267,165268,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
                 165209,160653,165279,165280,165210,165211,165213,165281,165282,166663,166664,165052,166637,165093,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
                 164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,163766,165055,165056,
-                165057,165058,164845,165248,5096)
+                165057,165058,164845,165248,5096,164142)
         where e.voided=0
         group by e.patient_id, e.encounter_id, visit_date;
         SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
