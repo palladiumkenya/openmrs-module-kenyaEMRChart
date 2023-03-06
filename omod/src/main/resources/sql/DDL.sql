@@ -485,7 +485,6 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     bs_for_mps INT(11),
     hiv_status INT(11),
     hiv_test_date DATE,
-    care_facility VARCHAR(100),
     partner_hiv_status INT(11),
     partner_hiv_test_date DATE,
     ti_date_started_art DATE,
