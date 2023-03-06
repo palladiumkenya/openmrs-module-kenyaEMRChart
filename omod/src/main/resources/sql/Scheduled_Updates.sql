@@ -668,7 +668,6 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       bs_for_mps,
       hiv_status,
       hiv_test_date,
-      care_facility,
       partner_hiv_status,
       partner_hiv_test_date,
       ti_date_started_art,
@@ -715,7 +714,6 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=32,o.value_coded,null)) as bs_for_mps,
         max(if(o.concept_id=159427,o.value_coded,null)) as hiv_status,
         max(if(o.concept_id=160554,o.value_datetime,null)) as hiv_test_date,
-        max(if(o.concept_id=162724,o.value_text,null)) as care_facility,
         max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
         max(if(o.concept_id=160082,o.value_datetime,null)) as partner_hiv_test_date,
         max(if(o.concept_id=159599,o.value_datetime,null)) as ti_date_started_art,
@@ -741,7 +739,7 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478,162724)
+                            and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
@@ -757,7 +755,7 @@ CREATE PROCEDURE sp_update_etl_mch_enrollment(IN last_update_time DATETIME)
       edd_ultrasound=VALUES(edd_ultrasound),blood_group=VALUES(blood_group),serology=VALUES(serology),tb_screening=VALUES(tb_screening),bs_for_mps=VALUES(bs_for_mps),hiv_status=VALUES(hiv_status),hiv_test_date=VALUES(hiv_status),partner_hiv_status=VALUES(partner_hiv_status),partner_hiv_test_date=VALUES(partner_hiv_test_date),
       ti_date_started_art=VALUES(ti_date_started_art),ti_curent_regimen=VALUES(ti_curent_regimen),ti_care_facility=VALUES(ti_care_facility),
       urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),urine_nitrite_test=VALUES(urine_nitrite_test),urine_leukocyte_esterace_test=VALUES(urine_leukocyte_esterace_test),urinary_ketone=VALUES(urinary_ketone),
-      urine_bile_salt_test=VALUES(urine_bile_salt_test),urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),discontinuation_reason=VALUES(discontinuation_reason),care_facility=VALUES(care_facility)
+      urine_bile_salt_test=VALUES(urine_bile_salt_test),urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),discontinuation_reason=VALUES(discontinuation_reason)
     ;
 
     END $$

@@ -418,7 +418,6 @@ SELECT "Successfully created pharmacy extract table";
       (case bs_for_mps when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" else "" end) as bs_for_mps,
       (case hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" when 1402 then "Not Tested" else "" end) as hiv_status,
       hiv_test_date,
-      care_facility,
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
       partner_hiv_test_date,
       ti_date_started_art,
