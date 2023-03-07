@@ -1427,6 +1427,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 			umblical_cord,
 			baby_immunization_started,
 			family_planning_counseling,
+		    other_maternal_complications,
 			uterus_examination,
 			uterus_cervix_examination,
 			vaginal_examination,
@@ -1447,6 +1448,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 		    couple_counselled,
 			partner_hiv_tested,
 			partner_hiv_status,
+            pnc_hiv_test_timing_mother,
             mother_haart_given,
 			prophylaxis_given,
             infant_prophylaxis_timing,
@@ -1510,6 +1512,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(o.concept_id=162121,o.value_coded,null)) as umblical_cord,
 				max(if(o.concept_id=162127,o.value_coded,null)) as baby_immunization_started,
 				max(if(o.concept_id=1382,o.value_coded,null)) as family_planning_counseling,
+				max(if(o.concept_id=160632,o.value_text,null)) as other_maternal_complications,
 				max(if(o.concept_id=163742,o.value_coded,null)) as uterus_examination,
 				max(if(o.concept_id=160968,o.value_text,null)) as uterus_cervix_examination,
 				max(if(o.concept_id=160969,o.value_text,null)) as vaginal_examination,
@@ -1530,6 +1533,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(o.concept_id=165070,o.value_coded,null)) as couple_counselled,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
+                max(if(o.concept_id=165218,o.value_coded,null)) as pnc_hiv_test_timing_mother,
 				max(if(o.concept_id=163783,o.value_coded,null)) as mother_haart_given,
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
 				max(if(o.concept_id=166665,o.value_coded,null)) as infant_prophylaxis_timing,
@@ -1554,7 +1558,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                                            1724,167017,163783,162642,166665)
+                                                                            1724,167017,163783,162642,166665,165218,160632)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1931,7 +1935,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                            max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
                            max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
                            max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
-                           max(date(o.value_datetime)) as fully_immunized
+                           y.fully_immunized as fully_immunized
                     from (
                          (select
                                  person_id as patient_id,
@@ -1944,6 +1948,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                                  max(if(concept_id=1282 , "Vitamin A", "")) as vaccine,
                                  max(if(concept_id=1418, value_numeric, "")) as sequence,
                                  max(if(concept_id=1282 , date(obs_datetime), "")) as date_given,
+                                 max(if(concept_id=164134 , value_coded, "")) as fully_immunized,
                                  obs_group_id
                           from (
                                select o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime
@@ -1955,10 +1960,10 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                                         select encounter_type_id, uuid, name from encounter_type where
                                             uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
                                         ) et on et.encounter_type_id=e.encounter_type
-                               where concept_id in(1282,1418) and o.voided=0
+                               where concept_id in(1282,1418,164134) and o.voided=0 group by obs_group_id,concept_id
                                ) t
-                          group by obs_group_id
-                          having vaccine != ""
+                          group by ifnull(obs_group_id,1)
+                          having (vaccine != "" or fully_immunized !='')
                          )
                          union
                          (
@@ -1975,6 +1980,7 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                                                               when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
                                 max(if(concept_id=1418, value_numeric, "")) as sequence,
                                 max(if(concept_id=1410, date_given, "")) as date_given,
+                                max(if(concept_id=164134, value_coded, "")) as fully_immunized,
                                 obs_group_id
                          from (
                               select o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
@@ -1986,10 +1992,10 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
                                        select encounter_type_id, uuid, name from encounter_type where
                                            uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
                                        ) et on et.encounter_type_id=e.encounter_type
-                              where concept_id in(984,1418,1410) and o.voided=0
+                              where concept_id in(984,1418,1410,164134) and o.voided=0 group by obs_group_id,concept_id
                               ) t
-                         group by obs_group_id
-                         having vaccine != ""
+                         group by ifnull(obs_group_id,1)
+                         having (vaccine != "" or fully_immunized !='')
                          )
                          ) y
                            left join obs o on y.encounter_id = o.encounter_id and o.voided=0
