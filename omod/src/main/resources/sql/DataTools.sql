@@ -730,6 +730,7 @@ SELECT "Successfully created pharmacy extract table";
       (case umblical_cord when 162122 then "Neonatal umbilical stump clean" when 162123 then "Neonatal umbilical stump not clean" when 162124 then "Neonatal umbilical stump moist" when 159418 then "Not at all sure" else "" end) as umblical_cord,
       (case baby_immunization_started when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as baby_immunization_started,
       (case family_planning_counseling when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as family_planning_counseling,
+      other_maternal_complications,
       (case uterus_examination when 163750 then "Contracted" when 148220 then "Not contracted" when 5622 then "Other" else "" end) as uterus_examination,
       uterus_cervix_examination,
       vaginal_examination,
@@ -742,6 +743,7 @@ SELECT "Successfully created pharmacy extract table";
       (case couple_counselled when 1065 then "Yes" when 1066 then "No" else "" end) as couple_counselled,
       (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
       (case partner_hiv_status when 664 then "HIV Negative" when 703 then "HIV Positive" when 1067 then "Unknown" else "" end) as partner_hiv_status,
+      (case pnc_hiv_test_timing_mother when 162080 then "Less than 6 weeks" when 162081 then "Greater 6 weeks" when 1118 then "Not Done" end) as pnc_hiv_test_timing_mother,
       (case mother_haart_given when 1065 then 'Yes' when 1066 then 'No' when 1175 then 'N/A' when 164142 then 'Revisit' else '' end) as mother_haart_given,
       (case prophylaxis_given when 105281 then "Cotrimoxazole" when 74250 then "Dapsone" when 1107 then "None" else "" end) as prophylaxis_given,
       (case infant_prophylaxis_timing when 1065 then 'Less than 6 weeks' when 1066 then 'Greater 6 weeks' end) as infant_prophylaxis_timing,
@@ -927,7 +929,7 @@ SELECT "Successfully created post natal visit table";
 			VitaminA_1_and_half_yr,
 			VitaminA_2_yr ,
 			VitaminA_2_to_5_yr,
-			fully_immunized
+            case fully_immunized when 1065 then 'Yes' when 1066 then 'No' end as fully_immunized
     from kenyaemr_etl.etl_hei_immunization;
 
   ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
