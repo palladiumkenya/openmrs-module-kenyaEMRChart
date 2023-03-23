@@ -547,7 +547,7 @@ o.concept_id,
 od.urgency,
 od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-	when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718) then o.value_coded
+	when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722) then o.value_coded
 	END) AS test_result,
     od.date_activated as date_test_requested,
   e.encounter_datetime as date_test_result_received,
@@ -561,7 +561,7 @@ from encounter e
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc','bcc6da85-72f2-4291-b206-789b8186a021')
 ) et on et.encounter_type_id=e.encounter_type
-inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718)
+inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722)
 left join orders od on od.order_id = o.order_id and od.voided=0
 where e.voided=0
 group by o.obs_id;
@@ -2222,7 +2222,7 @@ insert into kenyaemr_etl.etl_tb_screening(
 select
        e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
        max(if(o.concept_id=1729 and o.value_coded =159799,o.value_coded,null)) as cough_for_2wks_or_more,
-       max(if(o.concept_id=1729 and o.value_coded =124068,o.value_coded,null)) confirmed_tb_contact,
+       max(if(o.concept_id=1729 and o.value_coded in (124068,1066),o.value_coded,null)) confirmed_tb_contact,
        max(if(o.concept_id=1729 and o.value_coded =1494,o.value_coded,null)) fever_for_2wks_or_more,
        max(if(o.concept_id=1729 and o.value_coded =832,o.value_coded,null)) as noticeable_weight_loss,
        max(if(o.concept_id=1729 and o.value_coded =133027,o.value_coded,null)) as night_sweat_for_2wks_or_more,
@@ -6512,15 +6512,15 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                   max(if(o.concept_id=165098 and o.value_coded = 1065 ,'STI',null)),
                   max(if(o.concept_id=112141 and o.value_coded = 1065 ,'TB',null))) as service_received,
         max(if(o.concept_id=165203,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as currently_on_prep,
-        max(if(o.concept_id=1691,(case o.value_coded when 1 then "YES" when 0 THEN "NO" end),null)) as recently_on_pep,
+        max(if(o.concept_id=1691,(case o.value_coded when 1 then "YES" when 2 THEN "NO" end),null)) as recently_on_pep,
         max(if(o.concept_id=165200,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as recently_had_sti,
         max(if(o.concept_id=165197,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as tb_screened,
-        max(if(o.concept_id=1729 and o.value_coded = 159799,o.value_coded,null)) as cough,
-        max(if(o.concept_id=1729 and o.value_coded = 1494,o.value_coded,null)) as fever,
-        max(if(o.concept_id=1729 and o.value_coded = 832,o.value_coded,null)) as weight_loss,
-        max(if(o.concept_id=1729 and o.value_coded = 133027,o.value_coded,null)) as night_sweats,
-        max(if(o.concept_id=1729 and o.value_coded = 124068,o.value_coded,null)) as contact_with_tb_case,
-        max(if(o.concept_id=1729 and o.value_coded = 116334,o.value_coded,null)) as lethargy,
+        max(if(o.concept_id=1729 and o.value_coded = 159799,o.value_coded,1066)) as cough,
+        max(if(o.concept_id=1729 and o.value_coded = 1494,o.value_coded,1066)) as fever,
+        max(if(o.concept_id=1729 and o.value_coded = 832,o.value_coded,1066)) as weight_loss,
+        max(if(o.concept_id=1729 and o.value_coded = 133027,o.value_coded,1066)) as night_sweats,
+        max(if(o.concept_id=1729 and o.value_coded = 124068,o.value_coded,1066)) as contact_with_tb_case,
+        max(if(o.concept_id=1729 and o.value_coded = 116334,o.value_coded,1066)) as lethargy,
         max(if(o.concept_id=1659,o.value_coded,null)) as tb_status,
         max(if(o.concept_id=165090,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as shared_needle,
         max(if(o.concept_id=165060,o.value_coded,null)) as needle_stick_injuries,

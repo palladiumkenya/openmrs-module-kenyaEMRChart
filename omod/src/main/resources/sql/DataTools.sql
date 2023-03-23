@@ -283,6 +283,7 @@ select
                        else '' end) as order_reason,
     if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end),
        if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end),
+       if(lab_test=163722, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end),
           if(lab_test=302, (case test_result when 1115 then "Normal" when 1116 then "Abnormal" when 1067 then "Unknown" end),
              if(lab_test=32, (case test_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" end),
                 if(lab_test=1305, (case test_result when 1306 then "BEYOND DETECTABLE LIMIT" when 1301 then "DETECTED" when 1302 then "LDL" when 1304 then "POOR SAMPLE QUALITY" end),
@@ -297,7 +298,7 @@ select
                                                                when 164104 then "Mycobacterium tuberculosis detected with indeterminate rifampin resistance"  when 163611 then "Invalid" when 1138 then "INDETERMINATE" end),
                             if(lab_test=1619, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
                             if(lab_test=45, (case test_result when 703 then "Positive" when 664 then "Negative" when 1138 then "Indeterminate" when 1304 then "Poor Quality Sample" end),
-                               test_result ))))))))))))) AS test_result,
+                               test_result )))))))))))))) AS test_result,
     date_created,
     created_by
 from kenyaemr_etl.etl_laboratory_extract;
