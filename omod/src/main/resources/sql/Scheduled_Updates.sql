@@ -1127,7 +1127,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
         max(if(o.concept_id=1789,o.value_numeric,null)) as duration_of_pregnancy,
         max(if(o.concept_id=5630,o.value_coded,null)) as mode_of_delivery,
         max(if(o.concept_id=5599,o.value_datetime,null)) as date_of_delivery,
-        max(if(o.concept_id=161928,o.value_coded,null)) as blood_loss,
+        max(if(o.concept_id=161928,o.value_numeric,null)) as blood_loss,
         max(if(o.concept_id=1856,o.value_coded,null)) as condition_of_mother,
         max(if(o.concept_id=159949,o.value_coded,null)) as delivery_outcome,
         max(if(o.concept_id=159603,o.value_numeric,null)) as apgar_score_1min,
