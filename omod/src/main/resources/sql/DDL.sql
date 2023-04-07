@@ -1030,6 +1030,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     PCV_10_3 VARCHAR(50),
     ROTA_1 VARCHAR(50),
     ROTA_2 VARCHAR(50),
+    ROTA_3 VARCHAR(50),
     Measles_rubella_1 VARCHAR(50),
     Measles_rubella_2 VARCHAR(50),
     Yellow_fever VARCHAR(50),
