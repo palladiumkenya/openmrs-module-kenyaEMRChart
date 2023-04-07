@@ -2261,6 +2261,81 @@ ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD FOREIGN KEY (patient_id) REFER
 ALTER TABLE kenyaemr_datatools.vmmc_enrolment ADD INDEX(visit_date);
 SELECT "Successfully created vmmc_enrolment table";
 
+-- Create table mortality_audit
+create table kenyaemr_datatools.mortality_audit as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    (case patient_type when 1405 then 'HEI' when 1169 then 'HIV Client' when 163324 then 'HIV-Co Infected client' when 164500 then 'TB Client' end) as patient_type,
+      tibu_id,
+      maternal_haart,
+      (case io_perinatal_period when 1065 then 'Yes' when 1066 then 'No' end) as io_perinatal_period,
+      io_perinatal_specify,
+      io_perinatal_specify_date,
+     (case io_perinatal_treatment when 1065 then 'Yes' when 1066 then 'No' end) as  io_perinatal_treatment,
+      io_perinatal_treatment_specify,
+      oi_perinatal_status,
+      (case crag_cd4 when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as crag_cd4,
+      crag_results,
+      (case lumbar_puncture when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as lumbar_puncture,
+      results_in_lumbar_puncture,
+      (case positive_lumbar_puncture when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as positive_lumbar_puncture,
+      (case antifungal_regimen when 71187 then 'Liposomal Amphoterin + Flucytosine' when 76489 then 'Amphoterin B deoxycholate + Flucytosine' when 76488 then 'Amphoterin B deoxycholate + Fluconazole'  when 5622 then 'Other specify' end) as antifungal_regimen,
+      antifungal_regimen_specify,
+      (case treated_lumbar_puncture when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as treated_lumbar_puncture,
+      (case fluconazole_given when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as fluconazole_given,
+      (case tb_lam when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as tb_lam,
+      (case tb_lam_diagnosis when 1065 then 'Yes' when 1066 then 'No' end) as tb_lam_diagnosis,
+      (case type_of_tb when 164397 then 'Bacteriologically confirmed' when 164398 then 'Clinically Diagnosed' end) as type_of_tb,
+      (case tb_treated_given when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as tb_treated_given,
+      (case treatment_adr when 1065 then 'Yes' when 1066 then 'No' end) as treatment_adr,
+      adr_reaction,
+      adr_severity,
+      (case anti_tb_medication when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as anti_tb_medication ,
+      (case suspected_drug when 767 then 'Rifampicin withDTG' when 79651 then 'Metformin with DTG' when 82312 then 'Polyvalent cations with DTG (e.g., calcium supplements, iron supplements, Magnesium/Aluminum containing antiacids)' when 167427 then 'Anticonvulsants with DTG (Carbamazine,phenobarbital, phenytoin)'  when 167459 then 'Other, please specify' end) as suspected_drug ,
+      suspected_drug_specify,
+      (case tb_diagnosis when 1465 then 'Culture' when 162202 then 'Gene X pert' when 307 then 'AFB Smear Microscopy'  when 167459 then 'LAM'  when 12 then 'X ray'  when 5622 then 'Other Specify' end) as tb_diagnosis,
+      tb_diagnosis_specify,
+      (case tb_type_diagnosis when 164397 then 'Bacteriologically confirmed' when 164398 then 'Clinically Diagnosed' when 5042 then 'EPTB (Specify location)' end) as tb_type_diagnosis,
+      (case confirm_drug_resistance when 1065 then 'Yes' when 1066 then 'No'  else '' end) as confirm_drug_resistance,
+      (case specify_drug_resistance when 164366 then 'Rifampicin Resistance' when 78280 then 'INH Monoresistance' when 166383 then 'Other Monoresistance' when 164367 then 'Polyresistance' when 159909 then 'MDR' when 159957 then 'Pre XDR' when 159346 then 'XDR' end) as specify_drug_resistance,
+      (case initiated_anti_tb_treatment when 1065 then 'Yes' when 1066 then 'No' end) as initiated_anti_tb_treatment,
+      bmi,
+      muac,
+      z_score,
+      (case anthropometric_findings when 161650 then 'Therapeutic feeds' when 1380 then 'Nutritional Counselling'  when 86339 then 'Vitamin A'  when 82912 then 'Pyridoxine' when 159854 then 'Supplementary' when 1107 then 'None' end) as anthropometric_findings,
+      (case intensive_phase_tb__treatment when 1246 then 'Attended all scheduled visits' when 162191 then 'Missed a visit(s) and traced back'  when 166541 then 'Missed a visit(s) and not traced back' end) as intensive_phase_tb__treatment ,
+      (case continuation_phase_tb__treatment when 1246 then 'Attended all scheduled visits' when 162191 then 'Missed a visit(s) and traced back'  when 166541 then 'Missed a visit(s) and not traced back' end) as continuation_phase_tb__treatment,
+      (case adverse_reactions when 1065 then 'Yes' when 1066 then 'No' end) as adverse_reactions,
+      reaction,
+      severity,
+      (case drug_interactions when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as drug_interactions,
+      drug_interactions_specify,
+      (case diagnosed_opportunistic when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as diagnosed_opportunistic,
+      specify_diagnosed_opportunistic,
+      (case ncd_comorbidity when 119481 then 'Diabetic' when 117399 then 'Hypertension' when 145438 then 'Chronic Kidney disease' when 139201 then 'Liver disease' when 119270 then 'Cardiovascular Disease' when 155569 then 'Lung disease eg Asthma' when 116030 then 'Cancer' when 1107 then 'None' when  5622 then 'Other specify' end) as ncd_comorbidity,
+      specify_other_ncd_comorbidity,
+       (case ncd_controlled when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Unknown' end) as ncd_controlled,
+      (case ncd_risk_factor when 115115 then 'Obese(BMI >30)' when 1455 then 'Smoking' when 121725 then 'Alcoholism'  when 135797 then 'Sedentary Lifestyle'  when 117441 then 'Hyperlipidemia' end) as ncd_risk_factor,
+      (case death_contribution when 118855 then 'Drug/Substance abuse' when 1169 then 'Advanced HIV Disease' when 167387 then 'HIV Treatment failure' when 121760 then 'Adverse drug reactions'  when 134725 then 'Malnutrition' when 150452 then 'Injury or accident' when 116128 then 'Malaria'  when 163323 then 'TB treatment failure' when 141747 then 'Drug interactions'  when 131768 then 'Other OIs'  when 162747 then 'Other Co morbidities specify' end) as death_contribution,
+      death_contribution_specify,
+      (case death_cause when 1748 then 'Immediate cause' when 123809 then 'Antecedent cause' when 166659 then 'Underlying Condition' when 162580 then 'Other significant' end) as death_cause,
+      gap_noted,
+      key_action,
+    date_created,
+    date_last_modified,
+    voided
+ from kenyaemr_etl.etl_mortality_audit;
+
+ALTER TABLE kenyaemr_datatools.mortality_audit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.mortality_audit ADD INDEX(visit_date);
+SELECT "Successfully created mortality_audit table";
+
 -- Create table vmmc_enrolment
 create table kenyaemr_datatools.vmmc_circumcision_procedure as
 select

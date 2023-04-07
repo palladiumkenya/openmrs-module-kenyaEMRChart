@@ -6085,6 +6085,177 @@ BEGIN
     SELECT "Completed processing vmmc enrolment data ", CONCAT("Time: ", NOW());
     END $$
 
+
+-- Populate etl_mortality_audit
+DROP PROCEDURE IF EXISTS sp_populate_etl_mortality_audit $$
+CREATE PROCEDURE sp_populate_etl_mortality_audit()
+BEGIN
+    SELECT "Processing mortality audit", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_mortality_audit(
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+     patient_type,
+           tibu_id,
+           maternal_haart,
+           io_perinatal_period,
+           io_perinatal_specify,
+           io_perinatal_specify_date,
+           io_perinatal_treatment,
+           io_perinatal_treatment_specify,
+           oi_perinatal_status,
+           crag_cd4,
+           crag_results,
+           lumbar_puncture,
+           results_in_lumbar_puncture,
+           positive_lumbar_puncture,
+           antifungal_regimen,
+           antifungal_regimen_specify,
+           treated_lumbar_puncture,
+           fluconazole_given,
+           tb_lam,
+           tb_lam_diagnosis,
+           type_of_tb,
+           tb_treated_given,
+           treatment_adr,
+           adr_reaction,
+           adr_severity,
+           anti_tb_medication ,
+           suspected_drug,
+           suspected_drug_specify,
+           tb_diagnosis,
+           tb_diagnosis_specify,
+           tb_type_diagnosis,
+           confirm_drug_resistance,
+           specify_drug_resistance,
+           initiated_anti_tb_treatment,
+           bmi,
+           muac,
+           z_score,
+           anthropometric_findings,
+           intensive_phase_tb__treatment ,
+           continuation_phase_tb__treatment,
+           adverse_reactions,
+           reaction,
+           severity,
+           drug_interactions,
+           drug_interactions_specify,
+           diagnosed_opportunistic,
+           specify_diagnosed_opportunistic,
+           ncd_comorbidity,
+           specify_other_ncd_comorbidity,
+           ncd_risk_factor,
+           ncd_controlled,
+           death_contribution,
+           death_contribution_specify,
+           death_cause,
+           gap_noted,
+           key_action,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+         max(if(o.concept_id=162728,o.value_coded,null)) as patient_type,
+                                 max(if(o.concept_id = 164415, o.value_text, null )) as tibu_id,
+                                 max(if(o.concept_id=163783,o.value_coded,null)) as maternal_haart,
+                                 max(if(o.concept_id=162728,o.value_coded,null)) as io_perinatal_period,
+                                 max(if(o.concept_id = 165399, o.value_text, null )) as io_perinatal_specify,
+                                 max(if(o.concept_id=159948,date(o.value_datetime),null)) as io_perinatal_specify_date,
+                                 max(if(o.concept_id=166665,o.value_coded,null)) as io_perinatal_treatment,
+                                 max(if(o.concept_id = 161011, o.value_text, null )) as io_perinatal_treatment_specify,
+                                 max(if(o.concept_id=163105,o.value_coded,null)) as oi_perinatal_status,
+                                 max(if(o.concept_id=166555,o.value_coded,null)) as crag_cd4,
+
+                                 max(if(o.concept_id=167452,o.value_coded,null)) as crag_results,
+                                 max(if(o.concept_id=1651,o.value_coded,null)) as lumbar_puncture,
+                                 max(if(o.concept_id=166664,o.value_coded,null)) as results_in_lumbar_puncture,
+                                 max(if(o.concept_id=1792,o.value_coded,null)) as positive_lumbar_puncture,
+                                 max(if(o.concept_id=1282,o.value_coded,null)) as antifungal_regimen,
+                                 max(if(o.concept_id = 165145, o.value_text, null )) as antifungal_regimen_specify,
+                                 max(if(o.concept_id=163105,o.value_coded,null)) as treated_lumbar_puncture,
+                                 max(if(o.concept_id=166665,o.value_coded,null)) as fluconazole_given,
+                                 max(if(o.concept_id=167459,o.value_coded,null)) as tb_lam,
+                                 max(if(o.concept_id=164500,o.value_coded,null)) as tb_lam_diagnosis,
+
+                                 max(if(o.concept_id=160051,o.value_coded,null)) as type_of_tb,
+                                 max(if(o.concept_id=162309,o.value_coded,null)) as tb_treated_given,
+                                 max(if(o.concept_id=160646,o.value_coded,null)) as treatment_adr,
+                                 concat_ws(',', max(if(o.concept_id = 162760 and o.value_coded = 512, 'Rash', null)),
+                                       max(if(o.concept_id = 162760 and o.value_coded = 165040, 'Hepatitis', null)),
+                                       max(if(o.concept_id = 162760 and o.value_coded = 118983, 'Peripheral Neuropathy', null)),
+                                       max(if(o.concept_id = 162760 and o.value_coded = 165139, 'Other Specify', null)))  as adr_reaction,
+                                 concat_ws(',', max(if(o.concept_id = 160759 and o.value_coded = 160754, 'Grade I', null)),
+                                      max(if(o.concept_id = 160759 and o.value_coded = 160755, 'Grade II', null)),
+                                      max(if(o.concept_id = 160759 and o.value_coded = 160756, 'Grade III', null)),
+                                      max(if(o.concept_id = 160759 and o.value_coded = 160757, 'Grade IV', null)),
+                                      max(if(o.concept_id = 160759 and o.value_coded = 1107, 'Not graded', null))) as adr_severity,
+
+
+                                 max(if(o.concept_id=159935,o.value_coded,null)) as anti_tb_medication ,
+                                 max(if(o.concept_id=1193,o.value_coded,null)) as suspected_drug ,
+                                 max(if(o.concept_id = 160632, o.value_text, null )) as suspected_drug_specify,
+                                 max(if(o.concept_id=163752,o.value_coded,null)) as tb_diagnosis,
+                                 max(if(o.concept_id = 161011, o.value_text, null )) as tb_diagnosis_specify,
+
+                                 max(if(o.concept_id=164368,o.value_coded,null)) as tb_type_diagnosis,
+                                 max(if(o.concept_id=159957,o.value_coded,null)) as confirm_drug_resistance,
+                                 max(if(o.concept_id = 1417, o.value_text, null )) as specify_drug_resistance,
+                                 max(if(o.concept_id=162309,o.value_coded,null)) as initiated_anti_tb_treatment,
+                                 max(if(o.concept_id=1342,o.value_numeric,null)) as bmi,
+                                 max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+                                 max(if(o.concept_id=162584,o.value_numeric,null)) as z_score,
+                                 max(if(o.concept_id=163304,o.value_coded,null)) as anthropometric_findings,
+                                 max(if(o.concept_id=166484,o.value_coded,null)) as intensive_phase_tb__treatment ,
+                                 max(if(o.concept_id=159792,o.value_coded,null)) as continuation_phase_tb__treatment,
+
+                                 max(if(o.concept_id=160759,o.value_coded,null)) as adverse_reactions,
+                                       concat_ws(',', max(if(o.concept_id = 159935 and o.value_coded = 512, 'Rash', null)),
+                                             max(if(o.concept_id = 159935 and o.value_coded = 165040, 'Hepatitis', null)),
+                                             max(if(o.concept_id = 159935 and o.value_coded = 118983, 'Peripheral Neuropathy', null)),
+                                             max(if(o.concept_id = 159935 and o.value_coded = 165139, 'Other Specify', null)))  as reaction,
+                                       concat_ws(',', max(if(o.concept_id = 162820 and o.value_coded = 160754, 'Grade I', null)),
+                                            max(if(o.concept_id = 162820 and o.value_coded = 160755, 'Grade II', null)),
+                                            max(if(o.concept_id = 162820 and o.value_coded = 160756, 'Grade III', null)),
+                                            max(if(o.concept_id = 162820 and o.value_coded = 160757, 'Grade IV', null)),
+                                            max(if(o.concept_id = 162820 and o.value_coded = 1107, 'Not graded', null))) as severity,
+                                 max(if(o.concept_id=162760,o.value_coded,null)) as drug_interactions,
+                                 max(if(o.concept_id=164879,o.value_text,null)) as drug_interactions_specify,
+                                 max(if(o.concept_id=159394,o.value_coded,null)) as diagnosed_opportunistic,
+                                 max(if(o.concept_id = 161602, o.value_text, null )) as specify_diagnosed_opportunistic,
+                                 max(if(o.concept_id=1687,o.value_coded,null)) as ncd_comorbidity,
+                                 max(if(o.concept_id = 165399, o.value_text, null )) as specify_other_ncd_comorbidity,
+                                 max(if(o.concept_id=165430,o.value_coded,null)) as ncd_risk_factor,
+
+                                 max(if(o.concept_id=166937,o.value_coded,null)) as ncd_controlled,
+                                 max(if(o.concept_id=1814,o.value_coded,null)) as death_contribution,
+                                 max(if(o.concept_id = 161011, o.value_text, null )) as death_contribution_specify,
+                                 max(if(o.concept_id=1599,o.value_coded,null)) as death_cause,
+                                 max(if(o.concept_id = 162169, o.value_text, null )) as gap_noted,
+                                 max(if(o.concept_id = 164378, o.value_text, null )) as key_action,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided as voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ("11b088ab-1bdb-4f99-9cf3-445f19342130")
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162728,164415,163783,162728,165399,159948,166665,161011,163105,166555,
+                                                                                                     167452,1651,166664,1792,1282,165145,163105,166665,167459,164500,
+                                                                                                     160051,162309,160646,162760,160759,159935,1193,160632,163752,161011,164368,
+                                                                                                     159957,1417,162309,1342,1343,162584,163304,166484,159792,160759,
+                                                                                                     159935,162820, 162760,164879,159394,161602,1687,165399,165430,166937,
+                                                                                                      1814,161011,1599,162169,164378) and o.voided=0
+    where e.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+
+    SELECT "Completed mortality audit data ", CONCAT("Time: ", NOW());
+    END $$
+
     -- Populate etl_vmmc_circumcision_procedure
     DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_circumcision_procedure $$
     CREATE PROCEDURE sp_populate_etl_vmmc_circumcision_procedure()
@@ -6977,6 +7148,7 @@ CALL sp_populate_etl_ipt_screening();
 CALL sp_populate_etl_pre_hiv_enrollment_art();
 CALL sp_populate_etl_covid_19_assessment();
 CALL sp_populate_etl_vmmc_enrolment();
+CALL sp_populate_etl_mortality_audit();
 CALL sp_populate_etl_vmmc_circumcision_procedure();
 CALL sp_populate_etl_vmmc_client_followup();
 CALL sp_populate_etl_vmmc_medical_history();

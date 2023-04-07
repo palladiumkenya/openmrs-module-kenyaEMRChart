@@ -89,6 +89,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pre_hiv_enrollment_art;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_covid19_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_enrolment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_mortality_audit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_circumcision_procedure;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_medical_history;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_vmmc_client_followup;
@@ -2873,6 +2874,82 @@ CREATE TABLE kenyaemr_etl.etl_vmmc_enrolment
     INDEX (encounter_id),
     INDEX (source_of_vmmc_info),
     INDEX (county_of_origin)
+);
+-- -- Create table kenyaemr_etl.etl_mortality_audit -----
+
+CREATE TABLE kenyaemr_etl.etl_mortality_audit
+(
+    uuid                      char(38),
+    provider                  INT(11),
+    patient_id                INT(11)  NOT NULL,
+    visit_id                  INT(11),
+    visit_date                DATE,
+    location_id               INT(11) DEFAULT NULL,
+    encounter_id              INT(11)  NOT NULL,
+  patient_type INT(11),
+     tibu_id varchar(20),
+     maternal_haart INT(11),
+     io_perinatal_period INT(11),
+     io_perinatal_specify varchar(225),
+     io_perinatal_specify_date DATE,
+     io_perinatal_treatment INT(11),
+     io_perinatal_treatment_specify varchar(225),
+     oi_perinatal_status INT(11),
+     crag_cd4 INT(11),
+     crag_results INT(11),
+     lumbar_puncture INT(11),
+     results_in_lumbar_puncture INT(11),
+     positive_lumbar_puncture INT(11),
+     antifungal_regimen INT(11),
+     antifungal_regimen_specify varchar(100),
+     treated_lumbar_puncture INT(11),
+     fluconazole_given INT(11),
+     tb_lam INT(11),
+     tb_lam_diagnosis INT(11),
+     type_of_tb INT(11),
+     tb_treated_given INT(11),
+     treatment_adr INT(11),
+     adr_reaction INT(11),
+     adr_severity INT(11),
+     anti_tb_medication INT(11),
+     suspected_drug INT(11),
+     suspected_drug_specify varchar(100),
+     tb_diagnosis INT(11),
+     tb_diagnosis_specify varchar(100),
+     tb_type_diagnosis INT(11),
+     confirm_drug_resistance INT(11),
+     specify_drug_resistance varchar(100),
+     initiated_anti_tb_treatment INT(11),
+     bmi DOUBLE,
+     muac DOUBLE,
+     z_score DOUBLE,
+     anthropometric_findings INT(11),
+     intensive_phase_tb__treatment INT(11),
+     continuation_phase_tb__treatment INT(11),
+     adverse_reactions INT(11),
+     reaction INT(11),
+     severity INT(11),
+     drug_interactions INT(11),
+     drug_interactions_specify varchar(100),
+     diagnosed_opportunistic INT(11),
+     specify_diagnosed_opportunistic INT(11),
+     ncd_comorbidity INT(11),
+     specify_other_ncd_comorbidity varchar(100),
+     ncd_risk_factor INT(11),
+     ncd_controlled INT(11),
+     death_contribution INT(11),
+     death_contribution_specify varchar(100),
+     death_cause INT(11),
+     gap_noted varchar(250),
+     key_action varchar(250),
+    date_created              DATETIME NOT NULL,
+    date_last_modified        DATETIME,
+    voided                    INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date),
+    INDEX (patient_id),
+    INDEX (encounter_id)
 );
 
  -- -- Create table kenyaemr_etl.etl_vmmc_circumcision_procedure -----
