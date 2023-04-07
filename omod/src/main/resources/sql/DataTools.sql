@@ -922,6 +922,7 @@ SELECT "Successfully created post natal visit table";
 			PCV_10_3,
 			ROTA_1,
 			ROTA_2,
+			ROTA_3,
 			Measles_rubella_1,
 			Measles_rubella_2,
 			Yellow_fever,

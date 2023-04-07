@@ -1825,6 +1825,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       PCV_10_3,
       ROTA_1,
       ROTA_2,
+      ROTA_3,
       Measles_rubella_1,
       Measles_rubella_2,
       Yellow_fever,
@@ -1857,6 +1858,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
         max(if(vaccine="PCV" and sequence=3, date_given, "")) as PCV_10_3,
         max(if(vaccine="ROTA" and sequence=1, date_given, "")) as ROTA_1,
         max(if(vaccine="ROTA" and sequence=2, date_given, "")) as ROTA_2,
+        max(if(vaccine="ROTA" and sequence=3, date_given, "")) as ROTA_3,
         max(if(vaccine="measles_rubella" and sequence=1, date_given, "")) as Measles_rubella_1,
         max(if(vaccine="measles_rubella" and sequence=2, date_given, "")) as Measles_rubella_2,
         max(if(vaccine="yellow_fever", date_given, "")) as Yellow_fever,
@@ -1943,7 +1945,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       group by patient_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),BCG=VALUES(BCG),OPV_birth=VALUES(OPV_birth),OPV_1=VALUES(OPV_1),OPV_2=VALUES(OPV_2),OPV_3=VALUES(OPV_3),IPV=VALUES(IPV),
       DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
-      ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2), Yellow_fever=VALUES(Yellow_fever),
+      ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),ROTA_3=VALUES(ROTA_3),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2), Yellow_fever=VALUES(Yellow_fever),
       Measles_6_months=VALUES(Measles_6_months), VitaminA_6_months=VALUES(VitaminA_6_months),VitaminA_1_yr=VALUES(VitaminA_1_yr),
       VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr),fully_immunized=VALUES(fully_immunized)
     ;
