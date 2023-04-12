@@ -777,7 +777,7 @@ et.uuid,
 	when '4f02dfed-a2ec-40c2-b546-85dab5831871' then 'VMMC'
 end) as program_name,
 e.encounter_id,
-max(if(o.concept_id=161555, o.value_coded, null)) as reason_discontinued,
+coalesce(max(if(o.concept_id=161555, o.value_coded, null)),max(if(o.concept_id=159786, o.value_coded, null))) as reason_discontinued,
 max(if(o.concept_id=164384, o.value_datetime, null)) as effective_discontinuation_date,
 max(if(o.concept_id=1285, o.value_coded, null)) as trf_out_verified,
 max(if(o.concept_id=164133, o.value_datetime, null)) as trf_out_verification_date,
@@ -792,7 +792,7 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,164384,1543,159495,160649,1285,164133,1599,1748,162580,160218)
+	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,159786,159787,164384,1543,159495,160649,1285,164133,1599,1748,162580,160218)
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
