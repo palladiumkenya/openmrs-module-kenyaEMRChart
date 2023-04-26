@@ -3317,6 +3317,75 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
 
     END $$
 
+-- ------------- populate etl_generalized_anxiety_disorder-------------------------
+
+DROP PROCEDURE IF EXISTS sp_update_etl_generalized_anxiety_disorder $$
+CREATE PROCEDURE sp_update_etl_generalized_anxiety_disorder(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing General anxiety disorder", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_generalized_anxiety_disorder(
+		uuid,
+		patient_id,
+		visit_id,
+		visit_date,
+		location_id,
+		encounter_id,
+		encounter_provider,
+		date_created,
+        feeling_nervous_anxious,
+        control_worrying,
+        worrying_much,
+        trouble_relaxing,
+        being_restless,
+        feeling_bad,
+        feeling_afraid,
+        assessment_outcome,
+        date_last_modified,
+        voided
+    )
+      select
+        e.uuid,
+        e.patient_id,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.location_id,
+        e.encounter_id as encounter_id,
+        e.creator,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+		max(if(o.concept_id=167003,trim(o.value_text),null)) as feeling_nervous_anxious,
+		max(if(o.concept_id=167005,trim(o.value_text),null)) as control_worrying,
+		max(if(o.concept_id=166482,trim(o.value_text),null)) as worrying_much,
+		max(if(o.concept_id=167064,trim(o.value_text),null)) as trouble_relaxing,
+		max(if(o.concept_id=167065,trim(o.value_text),null)) as being_restless,
+		max(if(o.concept_id=167066,trim(o.value_text),null)) as feeling_bad,
+		max(if(o.concept_id=167067,trim(o.value_text),null)) as feeling_afraid,
+		max(if(o.concept_id=167267,trim(o.value_text),null)) as assessment_outcome,
+        e.voided as voided
+
+      from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
+        inner join form f on f.form_id=e.form_id and f.uuid in ("524d078e-936a-4543-9ca6-7a8d9ed4db06")
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167003,167005,166482,167064,167065,167066,167067,167267) and o.voided=0
+      where e.voided=0 and e.date_created >= last_update_time
+            or e.date_changed >= last_update_time
+            or e.date_voided >= last_update_time
+            or o.date_created >= last_update_time
+            or o.date_voided >= last_update_time
+      group by e.patient_id, visit_date
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+    feeling_nervous_anxious=VALUES(feeling_nervous_anxious),
+    control_worrying=VALUES(control_worrying),
+    worrying_much=VALUES(worrying_much),
+    trouble_relaxing=VALUES(trouble_relaxing),
+    being_restless=VALUES(being_restless),
+    feeling_bad=VALUES(feeling_bad),
+    feeling_afraid=VALUES(feeling_afraid),
+    assessment_outcome=VALUES(assessment_outcome),
+    voided=VALUES(voided);
+    END $$
+
+-- ------------- populate etl_generalized_anxiety_disorder-------------------------
 
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
@@ -7691,6 +7760,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_ART_preparation(last_update_time);
     CALL sp_update_etl_enhanced_adherence(last_update_time);
     CALL sp_update_etl_patient_triage(last_update_time);
+    CALL sp_update_etl_generalized_anxiety_disorder(last_update_time);
     CALL sp_update_etl_prep_enrolment(last_update_time);
     CALL sp_update_etl_prep_behaviour_risk_assessment(last_update_time);
     CALL sp_update_etl_prep_monthly_refill(last_update_time);
