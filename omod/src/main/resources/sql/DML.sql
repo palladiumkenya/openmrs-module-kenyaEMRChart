@@ -605,7 +605,7 @@ od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452) then o.value_coded
 	END) AS test_result,
-    od.date_activated as date_test_requested,``
+    od.date_activated as date_test_requested,
   e.encounter_datetime as date_test_result_received,
 -- test requested by
 e.date_created,
