@@ -826,6 +826,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     test_2_kit_expiry DATE DEFAULT NULL,
     test_2_result VARCHAR(50) DEFAULT NULL,
     final_test_result VARCHAR(50) DEFAULT NULL,
+    syphilis_results INT(11) DEFAULT NULL,
     patient_given_result VARCHAR(50) DEFAULT NULL,
     couple_counselled INT(11),
     partner_hiv_tested INT(11),
