@@ -605,7 +605,7 @@ od.order_reason,
 (CASE when o.concept_id in(5497,730,654,790,856) then o.value_numeric
 	when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452) then o.value_coded
 	END) AS test_result,
-    od.date_activated as date_test_requested,
+    od.date_activated as date_test_requested,``
   e.encounter_datetime as date_test_result_received,
 -- test requested by
 e.date_created,
@@ -1167,7 +1167,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595)
+														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,299)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1500,6 +1500,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 			test_2_kit_expiry,
 			test_2_result,
 			final_test_result,
+            syphilis_results,
 			patient_given_result,
 		    couple_counselled,
 			partner_hiv_tested,
@@ -1585,6 +1586,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
+                max(if(o.concept_id=299,o.value_coded,null)) as syphilis_results,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=165070,o.value_coded,null)) as couple_counselled,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -1614,7 +1616,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                                            1724,167017,163783,162642,166665,165218,160632)
+                                                                            1724,167017,163783,162642,166665,165218,160632,299)
 				inner join
 				(
 					select form_id, uuid,name from form where

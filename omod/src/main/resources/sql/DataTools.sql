@@ -742,6 +742,7 @@ SELECT "Successfully created pharmacy extract table";
       ovarian_examination,
       pelvic_lymph_node_exam,
       final_test_result,
+      (case syphilis_results when 1229 then "Positive" when 1228 then "Negative" end) as syphilis_results,
       patient_given_result,
       (case couple_counselled when 1065 then "Yes" when 1066 then "No" else "" end) as couple_counselled,
       (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
