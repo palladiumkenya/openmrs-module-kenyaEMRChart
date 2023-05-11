@@ -4543,6 +4543,7 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
                                                                when 165385 then 'Cryotherapy performed (single Visit)'
                                                                when 159837 then 'Hysterectomy'
                                                                when 165391 then 'Referred for cancer treatment'
+                                                               when 1107 then 'None'
                                                                when 5622 then 'Other' else "" end), "" )) as treatment_method,
                                 max(if(o.concept_id=160632,o.value_text,null)) as treatment_method_other,
                                 max(if(o.concept_id=165267,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
@@ -4564,7 +4565,10 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
         or o.date_voided >= last_update_time
       group by e.encounter_id
       having screening_result is not null
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), encounter_provider=VALUES(encounter_provider),screening_method = VALUES(screening_method), screening_result = VALUES(screening_result);
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), encounter_provider=VALUES(encounter_provider),screening_method = VALUES(screening_method), screening_result = VALUES(screening_result),
+                            visit_type=VALUES(visit_type),screening_type=VALUES(screening_type),post_treatment_complication_cause=VALUES(post_treatment_complication_cause),post_treatment_complication_other=VALUES(post_treatment_complication_other),
+                            treatment_method=VALUES(treatment_method),treatment_method_other=VALUES(treatment_method_other),referred_out=VALUES(referred_out),referral_facility=VALUES(referral_facility),referral_reason=VALUES(referral_reason),
+                            next_appointment_date=VALUES(next_appointment_date),voided=VALUES(voided);
     SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
     SELECT "Completed processing CAXC screening", CONCAT("Time: ", NOW());

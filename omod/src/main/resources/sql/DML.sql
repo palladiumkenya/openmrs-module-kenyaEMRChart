@@ -4418,6 +4418,7 @@ select
                                                        when 165385 then 'Cryotherapy performed (single Visit)'
                                                        when 159837 then 'Hysterectomy'
                                                        when 165391 then 'Referred for cancer treatment'
+                                                       when 1107 then 'None'
                                                        when 5622 then 'Other' else "" end), "" )) as treatment_method,
       max(if(o.concept_id=160632,o.value_text,null)) as treatment_method_other,
       max(if(o.concept_id=165267,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
