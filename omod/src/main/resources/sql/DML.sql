@@ -4431,7 +4431,7 @@ select
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid ='0c93b93c-bfef-4d2a-9fbe-16b59ee366e7'
-  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,1107,5096) and o.voided=0
+  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,5096) and o.voided=0
 where e.voided=0
 group by e.encounter_id
 having screening_result is not null;
