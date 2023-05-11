@@ -4543,6 +4543,7 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
                                                                when 165385 then 'Cryotherapy performed (single Visit)'
                                                                when 159837 then 'Hysterectomy'
                                                                when 165391 then 'Referred for cancer treatment'
+                                                               when 1107 then 'None'
                                                                when 5622 then 'Other' else "" end), "" )) as treatment_method,
                                 max(if(o.concept_id=160632,o.value_text,null)) as treatment_method_other,
                                 max(if(o.concept_id=165267,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
@@ -4555,7 +4556,7 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid ='0c93b93c-bfef-4d2a-9fbe-16b59ee366e7'
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,5096) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,1107,5096) and o.voided=0
       where
         e.date_created >= last_update_time
         or e.date_changed >= last_update_time
@@ -4564,7 +4565,10 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
         or o.date_voided >= last_update_time
       group by e.encounter_id
       having screening_result is not null
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), encounter_provider=VALUES(encounter_provider),screening_method = VALUES(screening_method), screening_result = VALUES(screening_result);
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), encounter_provider=VALUES(encounter_provider),screening_method = VALUES(screening_method), screening_result = VALUES(screening_result),
+                            visit_type=VALUES(visit_type),screening_type=VALUES(screening_type),post_treatment_complication_cause=VALUES(post_treatment_complication_cause),post_treatment_complication_other=VALUES(post_treatment_complication_other),
+                            treatment_method=VALUES(treatment_method),treatment_method_other=VALUES(treatment_method_other),referred_out=VALUES(referred_out),referral_facility=VALUES(referral_facility),referral_reason=VALUES(referral_reason),
+                            next_appointment_date=VALUES(next_appointment_date),voided=VALUES(voided);
     SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
     SELECT "Completed processing CAXC screening", CONCAT("Time: ", NOW());
