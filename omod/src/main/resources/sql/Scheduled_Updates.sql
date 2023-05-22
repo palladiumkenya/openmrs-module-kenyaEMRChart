@@ -6159,6 +6159,7 @@ encounter_id,
 obs_id,
 chronic_illness,
 chronic_illness_onset_date,
+is_chronic_illness_controlled,
 allergy_causative_agent,
 allergy_reaction,
 allergy_severity,
@@ -6171,6 +6172,7 @@ select
    e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id, o1.obs_id,
    max(if(o1.obs_group =159392 and o1.concept_id = 1284,o1.value_coded,null)) as chronic_illness,
    max(if(o1.obs_group =159392 and o1.concept_id = 159948,date(o1.value_datetime),null)) as chronic_illness_onset_date,
+   max(if(o1.obs_group =159392 and o1.concept_id = 166937,o1.value_coded,null)) as is_chronic_illness_controlled,
    max(if(o1.obs_group =121689 and o1.concept_id = 160643,o1.value_coded,null)) as allergy_causative_agent,
    max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
    max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
@@ -6184,7 +6186,7 @@ from encounter e
               ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.date_voided as date_voided,
                           o1.date_created as date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                           and o1.concept_id in (1284,159948,160643,159935,162760,160753)
+                           and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937)
                           and o.concept_id in (159392,121689)) o1 on o1.encounter_id = e.encounter_id and o1.voided=0
 where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time
@@ -6197,6 +6199,7 @@ order by e.patient_id
         provider=VALUES(provider),
         chronic_illness=VALUES(chronic_illness),
         chronic_illness_onset_date=VALUES(chronic_illness_onset_date),
+        is_chronic_illness_controlled=VALUES(is_chronic_illness_controlled),
         allergy_causative_agent=VALUES(allergy_causative_agent),
         allergy_reaction=VALUES(allergy_reaction),
         allergy_severity=VALUES(allergy_severity),

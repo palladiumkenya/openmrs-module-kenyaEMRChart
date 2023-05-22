@@ -1555,6 +1555,7 @@ when 117703 then 'Sickle Cell Anaemia'
 when 118976 then 'Thyroid disease'
 end) as chronic_illness,
 chronic_illness_onset_date,
+case is_chronic_illness_controlled when 1065 then 'Yes' when 1066 then 'No' end as is_chronic_illness_controlled,
 (case allergy_causative_agent when 162543 then 'Beef'
 when 72609 then 'Caffeine'
 when 162544 then 'Chocolate'
