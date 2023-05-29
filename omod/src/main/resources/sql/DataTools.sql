@@ -1192,6 +1192,7 @@ SELECT "Successfully created enhanced adherence table";
       respiratory_rate,
       oxygen_saturation,
       muac,
+      (case z_score when 1115 then "Normal (Median)" when 123814 then "Mild (-1 SD)" when 123815 then "Moderate (-2 SD)" when 164131 then "Severe (-3 SD and -4 SD)" else "" end) as z_score,
       (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
       last_menstrual_period,
       (case hpv_vaccinated when 1065 then 'Yes' when 1066 then 'No' else '' end) as hpv_vaccinated,

@@ -1558,6 +1558,7 @@ SELECT "Successfully created etl_ART_preparation table";
     respiratory_rate DOUBLE,
     oxygen_saturation DOUBLE,
     muac DOUBLE,
+    z_score INT(11),
     nutritional_status INT(11) DEFAULT NULL,
     last_menstrual_period DATE,
     hpv_vaccinated INT(11),
