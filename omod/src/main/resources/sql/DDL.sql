@@ -1558,6 +1558,7 @@ SELECT "Successfully created etl_ART_preparation table";
     respiratory_rate DOUBLE,
     oxygen_saturation DOUBLE,
     muac DOUBLE,
+    z_score_absolute DOUBLE DEFAULT NULL,
     z_score INT(11),
     nutritional_status INT(11) DEFAULT NULL,
     last_menstrual_period DATE,

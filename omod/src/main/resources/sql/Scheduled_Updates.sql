@@ -3270,6 +3270,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       respiratory_rate,
       oxygen_saturation,
       muac,
+      z_score_absolute,
       z_score,
       nutritional_status,
       last_menstrual_period,
@@ -3296,6 +3297,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
         max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
         max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
         max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+        max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
         max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
         max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
         max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
@@ -3308,7 +3310,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325)
+                                 and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3317,7 +3319,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),weight=VALUES(weight),height=VALUES(height),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),
       temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
-      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score=VALUES(z_score),nutritional_status=VALUES(nutritional_status),last_menstrual_period=VALUES(last_menstrual_period),hpv_vaccinated=VALUES(hpv_vaccinated),voided=VALUES(voided);
+      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score=VALUES(z_score),nutritional_status=VALUES(nutritional_status),last_menstrual_period=VALUES(last_menstrual_period),hpv_vaccinated=VALUES(hpv_vaccinated),voided=VALUES(voided),z_score_absolute=VALUES(z_score_absolute);
 
     END $$
 
