@@ -1,8 +1,8 @@
 
 SET @OLD_SQL_MODE=@@SQL_MODE $$
 SET SQL_MODE='' $$
-DROP PROCEDURE IF EXISTS sp_populate_etl_patient_demographics $$
-CREATE PROCEDURE sp_populate_etl_patient_demographics()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_demographics $$
+CREATE PROCEDURE sp_populate_dwapi_patient_demographics()
 BEGIN
 -- initial set up of etl_patient_demographics table
 SELECT "Processing patient demographics data ", CONCAT("Time: ", NOW());
@@ -181,8 +181,8 @@ set d.marital_status=pstatus.marital_status,
 END $$
 
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_hiv_enrollment $$
-CREATE PROCEDURE sp_populate_etl_hiv_enrollment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hiv_enrollment $$
+CREATE PROCEDURE sp_populate_dwapi_hiv_enrollment()
 BEGIN
 -- populate patient_hiv_enrollment table
 -- uuid: de78a6be-bfc5-4634-adc3-5f1a280455cc
@@ -273,8 +273,8 @@ END $$
 
 -- ------------- populate etl_hiv_followup--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_hiv_followup $$
-CREATE PROCEDURE sp_populate_etl_hiv_followup()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hiv_followup $$
+CREATE PROCEDURE sp_populate_dwapi_hiv_followup()
 BEGIN
 SELECT "Processing HIV Followup data ", CONCAT("Time: ", NOW());
 INSERT INTO dwapi_etl.etl_patient_hiv_followup(
@@ -569,8 +569,8 @@ END $$
 
 -- ------------- populate etl_laboratory_extract  uuid:  --------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_laboratory_extract $$
-CREATE PROCEDURE sp_populate_etl_laboratory_extract()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_laboratory_extract $$
+CREATE PROCEDURE sp_populate_dwapi_laboratory_extract()
 BEGIN
 SELECT "Processing Laboratory data ", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_laboratory_extract(
@@ -663,8 +663,8 @@ END $$
 
 -- ------------- populate etl_pharmacy_extract table--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_pharmacy_extract $$
-CREATE PROCEDURE sp_populate_etl_pharmacy_extract()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_pharmacy_extract $$
+CREATE PROCEDURE sp_populate_dwapi_pharmacy_extract()
 BEGIN
 SELECT "Processing Pharmacy data ", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_pharmacy_extract(
@@ -732,8 +732,8 @@ END $$
 
 -- ------------ create table etl_patient_treatment_event----------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_program_discontinuation $$
-CREATE PROCEDURE sp_populate_etl_program_discontinuation()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_program_discontinuation $$
+CREATE PROCEDURE sp_populate_dwapi_program_discontinuation()
 BEGIN
 SELECT "Processing Program (HIV, TB, MCH,TPT,OTZ,OVC ...) discontinuations ", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_patient_program_discontinuation(
@@ -806,8 +806,8 @@ SELECT "Completed processing discontinuation data ", CONCAT("Time: ", NOW());
 END $$
 
 -- ------------- populate etl_mch_enrollment-------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_mch_enrollment $$
-CREATE PROCEDURE sp_populate_etl_mch_enrollment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_enrollment $$
+CREATE PROCEDURE sp_populate_dwapi_mch_enrollment()
 	BEGIN
 		SELECT "Processing MCH Enrollments ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_mch_enrollment(
@@ -916,8 +916,8 @@ CREATE PROCEDURE sp_populate_etl_mch_enrollment()
 		END $$
 -- ------------- populate etl_mch_antenatal_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_mch_antenatal_visit $$
-CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_antenatal_visit $$
+CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 	BEGIN
 		SELECT "Processing MCH antenatal visits ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_mch_antenatal_visit(
@@ -1198,8 +1198,8 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 
 -- ------------- populate etl_mchs_delivery-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_mch_delivery $$
-CREATE PROCEDURE sp_populate_etl_mch_delivery()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_delivery $$
+CREATE PROCEDURE sp_populate_dwapi_mch_delivery()
 	BEGIN
 		SELECT "Processing MCH Delivery visits", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_mchs_delivery(
@@ -1377,8 +1377,8 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 
 -- ------------- populate etl_mchs_discharge-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_mch_discharge $$
-CREATE PROCEDURE sp_populate_etl_mch_discharge()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_discharge $$
+CREATE PROCEDURE sp_populate_dwapi_mch_discharge()
 	BEGIN
 		SELECT "Processing MCH Discharge ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_mchs_discharge(
@@ -1436,8 +1436,8 @@ CREATE PROCEDURE sp_populate_etl_mch_discharge()
 
 -- ------------- populate etl_mch_postnatal_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_mch_postnatal_visit $$
-CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_postnatal_visit $$
+CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 	BEGIN
 		SELECT "Processing MCH postnatal visits ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_mch_postnatal_visit(
@@ -1646,8 +1646,8 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 
 -- ------------- populate etl_hei_enrollment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_hei_enrolment $$
-CREATE PROCEDURE sp_populate_etl_hei_enrolment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hei_enrolment $$
+CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
 	BEGIN
 		SELECT "Processing HEI Enrollments", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_hei_enrollment(
@@ -1773,8 +1773,8 @@ CREATE PROCEDURE sp_populate_etl_hei_enrolment()
 
 -- ------------- populate etl_hei_follow_up_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_hei_follow_up $$
-CREATE PROCEDURE sp_populate_etl_hei_follow_up()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hei_follow_up $$
+CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
 	BEGIN
 		SELECT "Processing HEI Followup visits", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_hei_follow_up_visit(
@@ -1927,12 +1927,11 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 
 -- ------------- populate etl_immunization   --------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_hei_immunization $$
-CREATE PROCEDURE sp_populate_etl_hei_immunization()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hei_immunization $$
+CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
  BEGIN
   SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_hei_immunization(
-        uuid,
     patient_id,
     visit_date,
     created_by,
@@ -2067,8 +2066,8 @@ CREATE PROCEDURE sp_populate_etl_hei_immunization()
 
 -- ------------- populate etl_tb_enrollment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_tb_enrollment $$
-CREATE PROCEDURE sp_populate_etl_tb_enrollment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_tb_enrollment $$
+CREATE PROCEDURE sp_populate_dwapi_tb_enrollment()
 BEGIN
 SELECT "Processing TB Enrollments ", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_tb_enrollment(
@@ -2164,8 +2163,8 @@ END $$
 
 -- ------------- populate etl_tb_follow_up_visit-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_tb_follow_up_visit $$
-CREATE PROCEDURE sp_populate_etl_tb_follow_up_visit()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_tb_follow_up_visit $$
+CREATE PROCEDURE sp_populate_dwapi_tb_follow_up_visit()
 BEGIN
 SELECT "Processing TB Followup visits ", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_tb_follow_up_visit(
@@ -2242,8 +2241,8 @@ END $$
 
 -- ------------- populate etl_tb_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_tb_screening $$
-CREATE PROCEDURE sp_populate_etl_tb_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_tb_screening $$
+CREATE PROCEDURE sp_populate_dwapi_tb_screening()
 BEGIN
 SELECT "Processing TB Screening data ", CONCAT("Time: ", NOW());
 
@@ -2318,8 +2317,8 @@ END $$
 
 -- ------------------------------------------- drug event ---------------------------
 
-DROP PROCEDURE IF EXISTS sp_drug_event $$
-CREATE PROCEDURE sp_drug_event()
+DROP PROCEDURE IF EXISTS sp_dwapi_drug_event $$
+CREATE PROCEDURE sp_dwapi_drug_event()
 BEGIN
 SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 	INSERT INTO dwapi_etl.etl_drug_event(
@@ -2500,8 +2499,8 @@ END $$
 -- ------------------------------------ populate hts test table ----------------------------------------
 
 
-DROP PROCEDURE IF EXISTS sp_populate_hts_test $$
-CREATE PROCEDURE sp_populate_hts_test()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_test $$
+CREATE PROCEDURE sp_populate_dwapi_hts_test()
 BEGIN
 SELECT "Processing hts tests";
 INSERT INTO dwapi_etl.etl_hts_test (
@@ -2645,8 +2644,8 @@ END $$
 
 -- ------------------------------------ POPULATE HTS LINKAGES AND REFERRALS -------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_hts_linkage_and_referral $$
-CREATE PROCEDURE sp_populate_hts_linkage_and_referral()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_linkage_and_referral $$
+CREATE PROCEDURE sp_populate_dwapi_hts_linkage_and_referral()
 BEGIN
 SELECT "Processing hts linkages, referrals and tracing";
 INSERT INTO dwapi_etl.etl_hts_referral_and_linkage (
@@ -2710,12 +2709,12 @@ END $$
 
 -- ------------------------------------ update hts referral table ---------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_hts_referral $$
-CREATE PROCEDURE sp_populate_hts_referral()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_referral $$
+CREATE PROCEDURE sp_populate_dwapi_hts_referral()
   BEGIN
     SELECT "Processing hts referrals";
     INSERT INTO dwapi_etl.etl_hts_referral (
-                                               uuid,
+      uuid,
       patient_id,
       visit_id,
       encounter_id,
@@ -2755,104 +2754,10 @@ CREATE PROCEDURE sp_populate_hts_referral()
 
     END $$
 
--- ----------------------------------- UPDATE DASHBOARD TABLE ---------------------
-
-
-DROP PROCEDURE IF EXISTS sp_update_dashboard_table $$
-CREATE PROCEDURE sp_update_dashboard_table()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_patient_contact $$
+CREATE PROCEDURE sp_populate_dwapi_hts_patient_contact()
 BEGIN
-
-DECLARE startDate DATE;
-DECLARE endDate DATE;
-DECLARE reportingPeriod VARCHAR(20);
-
-SET startDate = DATE_FORMAT(NOW() - INTERVAL 1 MONTH, '%Y-%m-01');
-SET endDate = DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 1 MONTH), '%Y-%m-%d');
-SET reportingPeriod = DATE_FORMAT(NOW() - INTERVAL 1 MONTH, '%Y-%M');
-
--- CURRENT IN CARE
-DROP TABLE IF EXISTS dwapi_etl.etl_current_in_care;
-
-CREATE TABLE dwapi_etl.etl_current_in_care AS
-	select fup.visit_date,fup.patient_id as patient_id,p.dob,p.Gender,max(e.visit_date) as enroll_date,
-																				greatest(max(e.visit_date), ifnull(max(date(e.transfer_in_date)),'0000-00-00')) as latest_enrolment_date,
-																				greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
-																				greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
-																				mid(max(concat(fup.visit_date,fup.stability)),11) as stability,
-																				d.patient_id as disc_patient,
-																				d.effective_disc_date as effective_disc_date,
-																				max(d.visit_date) as date_discontinued,
-																				de.patient_id as started_on_drugs
-	from dwapi_etl.etl_patient_hiv_followup fup
-		join dwapi_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
-		join dwapi_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
-		left outer join dwapi_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(endDate)
-		left outer JOIN
-		(select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date,max(date(effective_discontinuation_date)) as effective_disc_date from dwapi_etl.etl_patient_program_discontinuation
-		where date(visit_date) <= date(endDate) and program_name='HIV'
-		group by patient_id
-		) d on d.patient_id = fup.patient_id
-	where fup.visit_date <= date(endDate)
-	group by patient_id
-	having  (
-		((timestampdiff(DAY,date(latest_tca),date(endDate)) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and ((date(d.effective_disc_date) > date(endDate) or date(enroll_date) > date(d.effective_disc_date)) or d.effective_disc_date is null))
-		and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
-	);
-
--- ADD INDICES
-ALTER TABLE dwapi_etl.etl_current_in_care ADD INDEX(enroll_date);
-ALTER TABLE dwapi_etl.etl_current_in_care ADD INDEX(latest_vis_date);
-ALTER TABLE dwapi_etl.etl_current_in_care ADD INDEX(latest_tca);
-ALTER TABLE dwapi_etl.etl_current_in_care ADD INDEX(started_on_drugs);
-ALTER TABLE dwapi_etl.etl_current_in_care ADD INDEX(patient_id);
-
-
-DROP TABLE IF EXISTS dwapi_etl.etl_last_month_newly_enrolled_in_care;
-CREATE TABLE dwapi_etl.etl_last_month_newly_enrolled_in_care (
-  patient_id INT(11) not null
-);
-
-INSERT INTO dwapi_etl.etl_last_month_newly_enrolled_in_care
-select distinct e.patient_id
-from dwapi_etl.etl_hiv_enrollment e
-       join dwapi_etl.etl_patient_demographics p on p.patient_id=e.patient_id
-where  e.entry_point <> 160563  and transfer_in_date is null
-  and date(e.visit_date) between startDate and endDate and (e.patient_type not in (160563, 164931, 159833) or e.patient_type is null or e.patient_type='');
-
-
-DROP TABLE IF EXISTS dwapi_etl.etl_last_month_newly_on_art;
-CREATE TABLE dwapi_etl.etl_last_month_newly_on_art (
-  patient_id INT(11) not null
-);
-
-INSERT INTO dwapi_etl.etl_last_month_newly_on_art
-select distinct net.patient_id
-from (
-     select e.patient_id,e.date_started,
-            e.gender,
-            e.dob,
-            d.visit_date as dis_date,
-            if(d.visit_date is not null, 1, 0) as TOut,
-            e.regimen, e.regimen_line, e.alternative_regimen,
-            mid(max(concat(fup.visit_date,fup.next_appointment_date)),11) as latest_tca,
-            max(if(enr.date_started_art_at_transferring_facility is not null and enr.facility_transferred_from is not null, 1, 0)) as TI_on_art,
-            max(if(enr.transfer_in_date is not null, 1, 0)) as TIn,
-            max(fup.visit_date) as latest_vis_date
-     from (select e.patient_id,p.dob,p.Gender,min(e.date_started) as date_started,
-                  mid(min(concat(e.date_started,e.regimen_name)),11) as regimen,
-                  mid(min(concat(e.date_started,e.regimen_line)),11) as regimen_line,
-                  max(if(discontinued,1,0))as alternative_regimen
-           from dwapi_etl.etl_drug_event e
-                  join dwapi_etl.etl_patient_demographics p on p.patient_id=e.patient_id
-           group by e.patient_id) e
-            left outer join dwapi_etl.etl_patient_program_discontinuation d on d.patient_id=e.patient_id
-            left outer join dwapi_etl.etl_hiv_enrollment enr on enr.patient_id=e.patient_id
-            left outer join dwapi_etl.etl_patient_hiv_followup fup on fup.patient_id=e.patient_id
-     where  date(e.date_started) between startDate and endDate
-     group by e.patient_id
-     having TI_on_art=0
-     )net;
-
+SELECT "Processing hts patient contacts";
 --Tested contacts
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_contacts;
 
@@ -2875,14 +2780,14 @@ group by c.id;
 ALTER TABLE dwapi_etl.etl_contacts_linked ADD INDEX(id);
 ALTER TABLE dwapi_etl.etl_contacts_linked ADD INDEX(visit_date);
 
-SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
+SELECT "Completed processing hts patient contacts", CONCAT("Time: ", NOW());
 
 END $$
 
 -- ------------- populate etl_ipt_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_screening $$
-CREATE PROCEDURE sp_populate_etl_ipt_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ipt_screening $$
+CREATE PROCEDURE sp_populate_dwapi_ipt_screening()
 BEGIN
 SELECT "Processing TPT screening", CONCAT("Time: ", NOW());
 
@@ -2942,8 +2847,8 @@ END $$
 
 -- ------------- populate etl_ipt_followup-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_follow_up $$
-CREATE PROCEDURE sp_populate_etl_ipt_follow_up()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ipt_follow_up $$
+CREATE PROCEDURE sp_populate_dwapi_ipt_follow_up()
 BEGIN
 SELECT "Processing TPT followup forms", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_ipt_follow_up(
@@ -2993,8 +2898,8 @@ END $$
 
 -- ------------- populate defaulter tracing-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ccc_defaulter_tracing $$
-CREATE PROCEDURE sp_populate_etl_ccc_defaulter_tracing()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ccc_defaulter_tracing $$
+CREATE PROCEDURE sp_populate_dwapi_ccc_defaulter_tracing()
 BEGIN
 SELECT "Processing ccc defaulter tracing form", CONCAT("Time: ", NOW());
 
@@ -3046,8 +2951,8 @@ END $$
 
 -- ------------- populate etl_ART_preparation-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ART_preparation $$
-CREATE PROCEDURE sp_populate_etl_ART_preparation()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ART_preparation $$
+CREATE PROCEDURE sp_populate_dwapi_ART_preparation()
   BEGIN
     SELECT "Processing ART Preparation ", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_ART_preparation(
@@ -3131,8 +3036,8 @@ date_last_modified
 
 -- ------------- populate etl_enhanced_adherence-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_enhanced_adherence $$
-CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_enhanced_adherence $$
+CREATE PROCEDURE sp_populate_dwapi_enhanced_adherence()
 	BEGIN
 		SELECT "Processing Enhanced Adherence ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_enhanced_adherence(
@@ -3252,8 +3157,8 @@ CREATE PROCEDURE sp_populate_etl_enhanced_adherence()
 
 -- ------------- populate etl_patient_triage--------------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_patient_triage $$
-CREATE PROCEDURE sp_populate_etl_patient_triage()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_triage $$
+CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 	BEGIN
 		SELECT "Processing Patient Triage ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_patient_triage(
@@ -3326,8 +3231,8 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_prep_behaviour_risk_assessment $$
-CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_prep_behaviour_risk_assessment $$
+CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
   BEGIN
     SELECT "Processing Behaviour risk assessment form", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_prep_behaviour_risk_assessment(
@@ -3438,8 +3343,8 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
 
 -- ------------- populate etl_prep_monthly_refill-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_prep_monthly_refill $$
-CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_prep_monthly_refill $$
+CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
   BEGIN
     SELECT "Processing monthly refill form", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_prep_monthly_refill(
@@ -3514,8 +3419,8 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
 
 -- ------------- populate etl_prep_discontinuation-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_prep_discontinuation $$
-CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_prep_discontinuation $$
+CREATE PROCEDURE sp_populate_dwapi_prep_discontinuation()
   BEGIN
     SELECT "Processing PrEP discontinuation form", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_prep_discontinuation(
@@ -3565,8 +3470,8 @@ CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
 
 -- ------------- populate etl_prep_enrollment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_prep_enrolment $$
-CREATE PROCEDURE sp_populate_etl_prep_enrolment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_prep_enrolment $$
+CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
   BEGIN
     SELECT "Processing PrEP enrolment form", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_prep_enrolment(
@@ -3635,8 +3540,8 @@ CREATE PROCEDURE sp_populate_etl_prep_enrolment()
 
 -- ------------- populate etl_prep_followup-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_prep_followup $$
-CREATE PROCEDURE sp_populate_etl_prep_followup()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_prep_followup $$
+CREATE PROCEDURE sp_populate_dwapi_prep_followup()
   BEGIN
     SELECT "Processing PrEP follow-up form", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_prep_followup(
@@ -3785,42 +3690,9 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
   END $$
 
--- ------------- populate etl_progress_note-------------------------
-
-DROP PROCEDURE IF EXISTS sp_populate_etl_progress_note $$
-CREATE PROCEDURE sp_populate_etl_progress_note()
-  BEGIN
-    SELECT "Processing progress form", CONCAT("Time: ", NOW());
-    insert into dwapi_etl.etl_progress_note(
-        uuid,
-        provider ,
-        patient_id,
-        visit_id,
-        visit_date,
-        location_id,
-        encounter_id,
-        date_created,
-        date_last_modified,
-        notes,
-        voided
-        )
-    select
-           e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
-           if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
-           max(if(o.concept_id = 159395, o.value_text, null )) as notes,
-           e.voided
-    from encounter e
-			inner join person p on p.person_id=e.patient_id and p.voided=0
-			inner join form f on f.form_id=e.form_id and f.uuid in ("c48ed2a2-0a0f-4f4e-9fed-a79ca3e1a9b9")
-      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159395) and o.voided=0
-    where e.voided=0
-    group by e.encounter_id;
-    SELECT "Completed processing progress note", CONCAT("Time: ", NOW());
-
-END $$
-		---------------------------------------- populate tpt initiation -----------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_initiation $$
-CREATE PROCEDURE sp_populate_etl_ipt_initiation()
+---------------------------------------- populate tpt initiation -----------------------------
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ipt_initiation $$
+CREATE PROCEDURE sp_populate_dwapi_ipt_initiation()
 	BEGIN
 		SELECT "Processing TPT initiations ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_ipt_initiation(
@@ -3871,8 +3743,8 @@ set i.sub_county_reg_number=pid.sub_county_reg_number;
 END $$
 
 	-- ------------------------------------- process tpt followup -------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_followup $$
-CREATE PROCEDURE sp_populate_etl_ipt_followup()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ipt_followup $$
+CREATE PROCEDURE sp_populate_dwapi_ipt_followup()
 	BEGIN
 		SELECT "Processing TPT followup ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_ipt_follow_up(
@@ -3926,8 +3798,8 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 		SELECT "Completed processing TPT followup data ", CONCAT("Time: ", NOW());
 		END $$
 		-- ----------------------------------- process tpt outcome ---------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_ipt_outcome $$
-CREATE PROCEDURE sp_populate_etl_ipt_outcome()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ipt_outcome $$
+CREATE PROCEDURE sp_populate_dwapi_ipt_outcome()
 	BEGIN
 		SELECT "Processing TPT outcome ", CONCAT("Time: ", NOW());
 		insert into dwapi_etl.etl_ipt_outcome(
@@ -3967,8 +3839,8 @@ CREATE PROCEDURE sp_populate_etl_ipt_outcome()
 		END $$
 
 		-- --------------------------------------- process HTS linkage tracing ------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_hts_linkage_tracing $$
-CREATE PROCEDURE sp_populate_etl_hts_linkage_tracing()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_linkage_tracing $$
+CREATE PROCEDURE sp_populate_dwapi_hts_linkage_tracing()
 	BEGIN
 		SELECT "Processing HTS Linkage tracing ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_hts_linkage_tracing(
@@ -4015,8 +3887,8 @@ CREATE PROCEDURE sp_populate_etl_hts_linkage_tracing()
 
 		-- ------------------------- process patient program ------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_patient_program $$
-CREATE PROCEDURE sp_populate_etl_patient_program()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_program $$
+CREATE PROCEDURE sp_populate_dwapi_patient_program()
 	BEGIN
 		SELECT "Processing patient program ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_patient_program(
@@ -4061,8 +3933,8 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 
   -- ------------------- populate person address table -------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_person_address $$
-CREATE PROCEDURE sp_populate_etl_person_address()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_person_address $$
+CREATE PROCEDURE sp_populate_dwapi_person_address()
   BEGIN
     SELECT "Processing person addresses ", CONCAT("Time: ", NOW());
     INSERT INTO dwapi_etl.etl_person_address(
@@ -4099,8 +3971,8 @@ CREATE PROCEDURE sp_populate_etl_person_address()
 
     	 -- --------------------------------------- process OTZ enrollment ------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_otz_enrollment $$
-CREATE PROCEDURE sp_populate_etl_otz_enrollment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_otz_enrollment $$
+CREATE PROCEDURE sp_populate_dwapi_otz_enrollment()
 	BEGIN
 		SELECT "Processing OTZ Enrollment ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_otz_enrollment(
@@ -4159,8 +4031,8 @@ CREATE PROCEDURE sp_populate_etl_otz_enrollment()
 
 
     -- --------------------------------------- process OTZ activity ------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_otz_activity $$
-CREATE PROCEDURE sp_populate_etl_otz_activity()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_otz_activity $$
+CREATE PROCEDURE sp_populate_dwapi_otz_activity()
 	BEGIN
 		SELECT "Processing OTZ Activity ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_otz_activity(
@@ -4226,27 +4098,10 @@ CREATE PROCEDURE sp_populate_etl_otz_activity()
 
 -- ------------------------- create table for default facility ------------------------
 
-DROP PROCEDURE IF EXISTS sp_create_default_facility_table $$
-CREATE PROCEDURE sp_create_default_facility_table()
-	BEGIN
-		SELECT "Processing default facility info ", CONCAT("Time: ", NOW());
-		CREATE TABLE dwapi_etl.etl_default_facility_info
-			as select (select value_reference from location_attribute
-			where location_id in (select property_value
-														from global_property
-														where property='kenyaemr.defaultLocation') and attribute_type_id=1) as siteCode,
-								(select name from location
-								where location_id in (select property_value
-																			from global_property
-																			where property='kenyaemr.defaultLocation')) as FacilityName;
-
-		SELECT "Completed processing information about default facility ", CONCAT("Time: ", NOW());
-		END $$
-
 		    	 -- --------------------------------------- process OVC enrollment ------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ovc_enrolment $$
-CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_ovc_enrolment $$
+CREATE PROCEDURE sp_populate_dwapi_ovc_enrolment()
 	BEGIN
 		SELECT "Processing OVC Enrolment ", CONCAT("Time: ", NOW());
     INSERT INTO dwapi_etl.etl_ovc_enrolment(
@@ -4310,8 +4165,8 @@ CREATE PROCEDURE sp_populate_etl_ovc_enrolment()
 
 -- -------------populate etl_cervical_cancer_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_cervical_cancer_screening $$
-CREATE PROCEDURE sp_populate_etl_cervical_cancer_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_cervical_cancer_screening $$
+CREATE PROCEDURE sp_populate_dwapi_cervical_cancer_screening()
 BEGIN
 SELECT "Processing CAXC screening", CONCAT("Time: ", NOW());
 
@@ -4401,8 +4256,8 @@ SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW())
 END $$
 		--------------------------- process patient contact ------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_patient_contact $$
-CREATE PROCEDURE sp_populate_etl_patient_contact()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_contact $$
+CREATE PROCEDURE sp_populate_dwapi_patient_contact()
 	BEGIN
 		SELECT "Processing patient contact ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_patient_contact(
@@ -4463,8 +4318,8 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
 
 				-- ------------------------- process contact trace ------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_client_trace $$
-CREATE PROCEDURE sp_populate_etl_client_trace()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_client_trace $$
+CREATE PROCEDURE sp_populate_dwapi_client_trace()
 	BEGIN
 		SELECT "Processing client trace ", CONCAT("Time: ", NOW());
 		INSERT INTO dwapi_etl.etl_client_trace(
@@ -4506,8 +4361,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
 		END $$
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_kp_contact $$
-    CREATE PROCEDURE sp_populate_etl_kp_contact()
+    DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_contact $$
+    CREATE PROCEDURE sp_populate_dwapi_kp_contact()
       BEGIN
         SELECT "Processing client contact data ", CONCAT("Time: ", NOW());
         insert into dwapi_etl.etl_contact (
@@ -4624,8 +4479,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
         END $$
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_kp_client_enrollment $$
-    CREATE PROCEDURE sp_populate_etl_kp_client_enrollment()
+    DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_client_enrollment $$
+    CREATE PROCEDURE sp_populate_dwapi_kp_client_enrollment()
     BEGIN
     SELECT "Processing client enrollment data ", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_client_enrollment (
@@ -4711,8 +4566,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
     -- ------------- populate etl_kp_clinical_visit--------------------------------
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_kp_clinical_visit $$
-    CREATE PROCEDURE sp_populate_etl_kp_clinical_visit()
+    DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_clinical_visit $$
+    CREATE PROCEDURE sp_populate_dwapi_kp_clinical_visit()
       BEGIN
         SELECT "Processing Clinical Visit ", CONCAT("Time: ", NOW());
         INSERT INTO dwapi_etl.etl_clinical_visit(
@@ -4994,8 +4849,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
     -- ------------- populate etl_kp_sti_treatment--------------------------------
 
-        DROP PROCEDURE IF EXISTS sp_populate_etl_kp_sti_treatment $$
-        CREATE PROCEDURE sp_populate_etl_kp_sti_treatment()
+        DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_sti_treatment $$
+        CREATE PROCEDURE sp_populate_dwapi_kp_sti_treatment()
           BEGIN
             SELECT "Processing STI Treatment ", CONCAT("Time: ", NOW());
             INSERT INTO dwapi_etl.etl_sti_treatment(
@@ -5074,8 +4929,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
     END $$
     -- ------------- populate etl_kp_peer_calendar--------------------------------
 
-        DROP PROCEDURE IF EXISTS sp_populate_etl_kp_peer_calendar $$
-        CREATE PROCEDURE sp_populate_etl_kp_peer_calendar()
+        DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_peer_calendar $$
+        CREATE PROCEDURE sp_populate_dwapi_kp_peer_calendar()
           BEGIN
             SELECT "Processing Peer calendar ", CONCAT("Time: ", NOW());
             INSERT INTO  dwapi_etl.etl_peer_calendar(
@@ -5167,8 +5022,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
 
 -- ------------- populate kp peer tracking-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_kp_peer_tracking $$
-CREATE PROCEDURE sp_populate_etl_kp_peer_tracking()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_peer_tracking $$
+CREATE PROCEDURE sp_populate_dwapi_kp_peer_tracking()
 BEGIN
 SELECT "Processing kp peer tracking form", CONCAT("Time: ", NOW());
 
@@ -5226,8 +5081,8 @@ END $$
 
 -- ------------- populate kp treatment verification-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_kp_treatment_verification $$
-CREATE PROCEDURE sp_populate_etl_kp_treatment_verification()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_kp_treatment_verification $$
+CREATE PROCEDURE sp_populate_dwapi_kp_treatment_verification()
 BEGIN
 SELECT "Processing kp treatment verification form", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_treatment_verification(
@@ -5339,8 +5194,8 @@ SELECT "Completed processing treatment verification form", CONCAT("Time: ", NOW(
 END $$
 -- ------------- populate kp Gender based violence-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_gender_based_violence $$
-CREATE PROCEDURE sp_populate_etl_gender_based_violence()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_gender_based_violence $$
+CREATE PROCEDURE sp_populate_dwapi_gender_based_violence()
 BEGIN
 SELECT "Processing kp gender based violence form", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_gender_based_violence(
@@ -5448,8 +5303,8 @@ END $$
 
 -- ------------- populate kp PrEP verification-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_PrEP_verification $$
-CREATE PROCEDURE sp_populate_etl_PrEP_verification()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_PrEP_verification $$
+CREATE PROCEDURE sp_populate_dwapi_PrEP_verification()
 BEGIN
 SELECT "Processing kp PrEP verification form", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_PrEP_verification(
@@ -5503,8 +5358,8 @@ END $$
 
 -- ------------- populate etl_alcohol_drug_abuse_screening-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_alcohol_drug_abuse_screening $$
-CREATE PROCEDURE sp_populate_etl_alcohol_drug_abuse_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_alcohol_drug_abuse_screening $$
+CREATE PROCEDURE sp_populate_dwapi_alcohol_drug_abuse_screening()
 BEGIN
 SELECT "Processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT)", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_alcohol_drug_abuse_screening(
@@ -5541,8 +5396,8 @@ SELECT "Completed processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT) d
 END $$
 
       -- ------------- populate etl_gbv_screening-------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_gbv_screening $$
-CREATE PROCEDURE sp_populate_etl_gbv_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_gbv_screening $$
+CREATE PROCEDURE sp_populate_dwapi_gbv_screening()
 BEGIN
 SELECT "Processing gbv screening", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_gbv_screening(
@@ -5586,8 +5441,8 @@ END $$
 
       -- ------------- populate etl_gbv_screening_action-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_gbv_screening_action $$
-CREATE PROCEDURE sp_populate_etl_gbv_screening_action()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_gbv_screening_action $$
+CREATE PROCEDURE sp_populate_dwapi_gbv_screening_action()
 BEGIN
 SELECT "Processing gbv screening action", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_gbv_screening_action(
@@ -5625,8 +5480,8 @@ SELECT "Completed processing gbv screening action data ", CONCAT("Time: ", NOW()
 END $$
 
 -- ------------- populate etl_depression_screening-------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_depression_screening $$
-CREATE PROCEDURE sp_populate_etl_depression_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_depression_screening $$
+CREATE PROCEDURE sp_populate_dwapi_depression_screening()
 BEGIN
 SELECT "Processing depression screening", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_depression_screening(
@@ -5659,8 +5514,8 @@ SELECT "Completed processing depression screening data ", CONCAT("Time: ", NOW()
 END $$
 
 -- Populate Adverse events
-DROP PROCEDURE IF EXISTS sp_populate_etl_adverse_events $$
-CREATE PROCEDURE sp_populate_etl_adverse_events()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_adverse_events $$
+CREATE PROCEDURE sp_populate_dwapi_adverse_events()
 BEGIN
 SELECT "Processing adverse events", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_adverse_events(
@@ -5721,8 +5576,8 @@ SELECT "Completed processing adverse events data ", CONCAT("Time: ", NOW());
 END $$
 
 -- Populate Allergy and chronic illness----
-DROP PROCEDURE IF EXISTS sp_populate_etl_allergy_chronic_illness $$
-CREATE PROCEDURE sp_populate_etl_allergy_chronic_illness()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_allergy_chronic_illness $$
+CREATE PROCEDURE sp_populate_dwapi_allergy_chronic_illness()
 BEGIN
 SELECT "Processing alergy and chronic illness", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_allergy_chronic_illness(
@@ -5772,8 +5627,8 @@ SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: "
 END $$
 
 -- Populate etl_pre_hiv_enrollment_ART
-DROP PROCEDURE IF EXISTS sp_populate_etl_pre_hiv_enrollment_art $$
-CREATE PROCEDURE sp_populate_etl_pre_hiv_enrollment_art()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_pre_hiv_enrollment_art $$
+CREATE PROCEDURE sp_populate_dwapi_pre_hiv_enrollment_art()
 BEGIN
 SELECT "Processing pre_hiv enrollment ART", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_pre_hiv_enrollment_art(
@@ -5825,8 +5680,8 @@ SELECT "Completed processing pre hiv enrollment ART data ", CONCAT("Time: ", NOW
 END$$
 
 -- ------------- populate etl_covid_19_assessment-------------------------
-DROP PROCEDURE IF EXISTS sp_populate_etl_covid_19_assessment $$
-CREATE PROCEDURE sp_populate_etl_covid_19_assessment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_covid_19_assessment $$
+CREATE PROCEDURE sp_populate_dwapi_covid_19_assessment()
 BEGIN
 SELECT "Processing covid_19_assessment", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_covid19_assessment (uuid,
@@ -6011,8 +5866,8 @@ SELECT "Completed processing covid_19 assessment data ", CONCAT("Time: ", NOW())
 END $$
 
 -- Populate etl_vmmc_enrolment
-DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_enrolment $$
-CREATE PROCEDURE sp_populate_etl_vmmc_enrolment()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_vmmc_enrolment $$
+CREATE PROCEDURE sp_populate_dwapi_vmmc_enrolment()
 BEGIN
     SELECT "Processing vmmc enrolment", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_vmmc_enrolment(
@@ -6053,8 +5908,8 @@ BEGIN
     END $$
 
     -- Populate etl_vmmc_circumcision_procedure
-    DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_circumcision_procedure $$
-    CREATE PROCEDURE sp_populate_etl_vmmc_circumcision_procedure()
+    DROP PROCEDURE IF EXISTS sp_populate_dwapi_vmmc_circumcision_procedure $$
+    CREATE PROCEDURE sp_populate_dwapi_vmmc_circumcision_procedure()
     BEGIN
         SELECT "Processing vmmc circumcision procedure", CONCAT("Time: ", NOW());
         insert into dwapi_etl.etl_vmmc_circumcision_procedure(
@@ -6133,8 +5988,8 @@ BEGIN
         END $$
 
 -- Populate etl_vmmc_client_followup
-DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_client_followup $$
-CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_vmmc_client_followup $$
+CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
   BEGIN
     SELECT "Processing vmmc client followup", CONCAT("Time: ", NOW());
     insert into dwapi_etl.etl_vmmc_client_followup(
@@ -6198,8 +6053,8 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
 
     -- Populate etl_vmmc_medical_history
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_medical_history $$
-    CREATE PROCEDURE sp_populate_etl_vmmc_medical_history()
+    DROP PROCEDURE IF EXISTS sp_populate_dwapi_vmmc_medical_history $$
+    CREATE PROCEDURE sp_populate_dwapi_vmmc_medical_history()
     BEGIN
         SELECT "Processing vmmc medical history", CONCAT("Time: ", NOW());
         insert into dwapi_etl.etl_vmmc_medical_history(
@@ -6324,8 +6179,8 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
 
     -- Populate etl_vmmc_post_operation_assessment
 
-    DROP PROCEDURE IF EXISTS sp_populate_etl_vmmc_post_operation_assessment $$
-    CREATE PROCEDURE sp_populate_etl_vmmc_post_operation_assessment()
+    DROP PROCEDURE IF EXISTS sp_populate_dwapi_vmmc_post_operation_assessment $$
+    CREATE PROCEDURE sp_populate_dwapi_vmmc_post_operation_assessment()
     BEGIN
         SELECT "Processing post vmmc operation assessment", CONCAT("Time: ", NOW());
         insert into dwapi_etl.etl_vmmc_post_operation_assessment(uuid,
@@ -6393,8 +6248,8 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
 
 -- Populate etl_vmmc_post_operation_assessment
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_hts_eligibility_screening $$
-CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_eligibility_screening $$
+CREATE PROCEDURE sp_populate_dwapi_hts_eligibility_screening()
   BEGIN
     SELECT "Processing hts eligibility screening";
     INSERT INTO dwapi_etl.etl_hts_eligibility_screening (
@@ -6591,8 +6446,8 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
   END $$
 
 -- Populating etl_drug_order
-DROP PROCEDURE IF EXISTS sp_populate_etl_drug_order $$
-CREATE PROCEDURE sp_populate_etl_drug_order()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_drug_order $$
+CREATE PROCEDURE sp_populate_dwapi_drug_order()
 BEGIN
     INSERT INTO dwapi_etl.etl_drug_order (
         uuid,
@@ -6682,11 +6537,10 @@ BEGIN
 END $$
 
 -- Populating etl_preventive_services table
-DROP PROCEDURE IF EXISTS sp_populate_etl_preventive_services $$
-CREATE PROCEDURE sp_populate_etl_preventive_services()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_preventive_services $$
+CREATE PROCEDURE sp_populate_dwapi_preventive_services()
 BEGIN
     insert into dwapi_etl.etl_preventive_services(
-                                                     uuid,
         patient_id,
         visit_date,
         provider,
@@ -6720,7 +6574,6 @@ BEGIN
         voided
     )
     select
-        y.uuid,
         y.patient_id,
         y.visit_date,
         y.provider as provider,
@@ -6785,9 +6638,9 @@ BEGIN
     group by y.obs_group_id;
     SELECT 'Completed processing preventive services';
 END $$
--- Procedure sp_populate_etl_overdose_reporting --
-DROP PROCEDURE IF EXISTS sp_populate_etl_overdose_reporting $$
-CREATE PROCEDURE sp_populate_etl_overdose_reporting()
+-- Procedure sp_populate_dwapi_overdose_reporting --
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_overdose_reporting $$
+CREATE PROCEDURE sp_populate_dwapi_overdose_reporting()
 BEGIN
     SELECT "Processing overdose reporting";
     INSERT INTO dwapi_etl.etl_overdose_reporting (
@@ -6874,90 +6727,88 @@ END $$
 
 -- ------------------------------------------- running all procedures -----------------------------
 
-DROP PROCEDURE IF EXISTS sp_first_time_setup $$
-CREATE PROCEDURE sp_first_time_setup()
+DROP PROCEDURE IF EXISTS sp_dwapi_etl_refresh $$
+CREATE PROCEDURE sp_dwapi_etl_refresh()
 BEGIN
 DECLARE populate_script_id INT(11);
 SELECT "Beginning first time setup", CONCAT("Time: ", NOW());
-INSERT INTO dwapi_etl.etl_script_status(script_name, start_time) VALUES('initial_population_of_tables', NOW());
+INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('initial_population_of_dwapi_tables', NOW());
 SET populate_script_id = LAST_INSERT_ID();
 
-CALL sp_populate_etl_patient_demographics();
-CALL sp_populate_etl_hiv_enrollment();
-CALL sp_populate_etl_hiv_followup();
-CALL sp_populate_etl_laboratory_extract();
-CALL sp_populate_etl_pharmacy_extract();
-CALL sp_populate_etl_program_discontinuation();
-CALL sp_populate_etl_mch_enrollment();
-CALL sp_populate_etl_mch_antenatal_visit();
-CALL sp_populate_etl_mch_postnatal_visit();
-CALL sp_populate_etl_tb_enrollment();
-CALL sp_populate_etl_tb_follow_up_visit();
-CALL sp_populate_etl_tb_screening();
-CALL sp_populate_etl_hei_enrolment();
-CALL sp_populate_etl_hei_immunization();
-CALL sp_populate_etl_hei_follow_up();
-CALL sp_populate_etl_mch_delivery();
-CALL sp_populate_etl_mch_discharge();
-CALL sp_drug_event();
-CALL sp_populate_hts_test();
-CALL sp_populate_hts_linkage_and_referral();
-CALL sp_populate_hts_referral();
-CALL sp_populate_etl_ccc_defaulter_tracing();
-CALL sp_populate_etl_ART_preparation();
-CALL sp_populate_etl_enhanced_adherence();
-CALL sp_populate_etl_patient_triage();
-CALL sp_populate_etl_ipt_initiation();
-CALL sp_populate_etl_ipt_follow_up();
-CALL sp_populate_etl_ipt_outcome();
-CALL sp_populate_etl_prep_enrolment();
-CALL sp_populate_etl_prep_followup();
-CALL sp_populate_etl_prep_behaviour_risk_assessment();
-CALL sp_populate_etl_prep_monthly_refill();
-CALL sp_populate_etl_progress_note();
-CALL sp_populate_etl_prep_discontinuation();
-CALL sp_populate_etl_hts_linkage_tracing();
-CALL sp_populate_etl_patient_program();
-CALL sp_update_dashboard_table();
-CALL sp_create_default_facility_table();
-CALL sp_populate_etl_person_address();
-CALL sp_populate_etl_otz_enrollment();
-CALL sp_populate_etl_otz_activity();
-CALL sp_populate_etl_ovc_enrolment();
-CALL sp_populate_etl_cervical_cancer_screening();
-CALL sp_populate_etl_patient_contact();
-CALL sp_populate_etl_client_trace();
-CALL sp_populate_etl_kp_contact();
-CALL sp_populate_etl_kp_client_enrollment();
-CALL sp_populate_etl_kp_clinical_visit();
-CALL sp_populate_etl_kp_sti_treatment();
-CALL sp_populate_etl_kp_peer_calendar();
-CALL sp_populate_etl_kp_peer_tracking();
-CALL sp_populate_etl_kp_treatment_verification();
---CALL sp_populate_etl_gender_based_violence();
-CALL sp_populate_etl_PrEP_verification();
-CALL sp_populate_etl_alcohol_drug_abuse_screening();
-CALL sp_populate_etl_gbv_screening();
-CALL sp_populate_etl_gbv_screening_action();
-CALL sp_populate_etl_depression_screening();
-CALL sp_populate_etl_adverse_events();
-CALL sp_populate_etl_allergy_chronic_illness();
-CALL sp_populate_etl_ipt_screening();
-CALL sp_populate_etl_pre_hiv_enrollment_art();
-CALL sp_populate_etl_covid_19_assessment();
-CALL sp_populate_etl_vmmc_enrolment();
-CALL sp_populate_etl_vmmc_circumcision_procedure();
-CALL sp_populate_etl_vmmc_client_followup();
-CALL sp_populate_etl_vmmc_medical_history();
-CALL sp_populate_etl_vmmc_post_operation_assessment();
-CALL sp_populate_etl_hts_eligibility_screening();
-CALL sp_populate_etl_drug_order();
-CALL sp_populate_etl_preventive_services();
-CALL sp_populate_etl_overdose_reporting();
+CALL sp_populate_dwapi_patient_demographics();
+CALL sp_populate_dwapi_hiv_enrollment();
+CALL sp_populate_dwapi_hiv_followup();
+CALL sp_populate_dwapi_laboratory_extract();
+CALL sp_populate_dwapi_pharmacy_extract();
+CALL sp_populate_dwapi_program_discontinuation();
+CALL sp_populate_dwapi_mch_enrollment();
+CALL sp_populate_dwapi_mch_antenatal_visit();
+CALL sp_populate_dwapi_mch_postnatal_visit();
+CALL sp_populate_dwapi_tb_enrollment();
+CALL sp_populate_dwapi_tb_follow_up_visit();
+CALL sp_populate_dwapi_tb_screening();
+CALL sp_populate_dwapi_hei_enrolment();
+CALL sp_populate_dwapi_hei_immunization();
+CALL sp_populate_dwapi_hei_follow_up();
+CALL sp_populate_dwapi_mch_delivery();
+CALL sp_populate_dwapi_mch_discharge();
+CALL sp_dwapi_drug_event();
+CALL sp_populate_dwapi_hts_test();
+CALL sp_populate_dwapi_hts_linkage_and_referral();
+CALL sp_populate_dwapi_hts_referral();
+CALL sp_populate_dwapi_ccc_defaulter_tracing();
+CALL sp_populate_dwapi_ART_preparation();
+CALL sp_populate_dwapi_enhanced_adherence();
+CALL sp_populate_dwapi_patient_triage();
+CALL sp_populate_dwapi_ipt_initiation();
+CALL sp_populate_dwapi_ipt_follow_up();
+CALL sp_populate_dwapi_ipt_outcome();
+CALL sp_populate_dwapi_prep_enrolment();
+CALL sp_populate_dwapi_prep_followup();
+CALL sp_populate_dwapi_prep_behaviour_risk_assessment();
+CALL sp_populate_dwapi_prep_monthly_refill();
+CALL sp_populate_dwapi_progress_note();
+CALL sp_populate_dwapi_prep_discontinuation();
+CALL sp_populate_dwapi_hts_linkage_tracing();
+CALL sp_populate_dwapi_patient_program();
+CALL sp_populate_dwapi_person_address();
+CALL sp_populate_dwapi_otz_enrollment();
+CALL sp_populate_dwapi_otz_activity();
+CALL sp_populate_dwapi_ovc_enrolment();
+CALL sp_populate_dwapi_cervical_cancer_screening();
+CALL sp_populate_dwapi_patient_contact();
+CALL sp_populate_dwapi_client_trace();
+CALL sp_populate_dwapi_kp_contact();
+CALL sp_populate_dwapi_kp_client_enrollment();
+CALL sp_populate_dwapi_kp_clinical_visit();
+CALL sp_populate_dwapi_kp_sti_treatment();
+CALL sp_populate_dwapi_kp_peer_calendar();
+CALL sp_populate_dwapi_kp_peer_tracking();
+CALL sp_populate_dwapi_kp_treatment_verification();
+CALL sp_populate_dwapi_PrEP_verification();
+CALL sp_populate_dwapi_alcohol_drug_abuse_screening();
+CALL sp_populate_dwapi_gbv_screening();
+CALL sp_populate_dwapi_gbv_screening_action();
+CALL sp_populate_dwapi_depression_screening();
+CALL sp_populate_dwapi_adverse_events();
+CALL sp_populate_dwapi_allergy_chronic_illness();
+CALL sp_populate_dwapi_ipt_screening();
+CALL sp_populate_dwapi_pre_hiv_enrollment_art();
+CALL sp_populate_dwapi_covid_19_assessment();
+CALL sp_populate_dwapi_vmmc_enrolment();
+CALL sp_populate_dwapi_vmmc_circumcision_procedure();
+CALL sp_populate_dwapi_vmmc_client_followup();
+CALL sp_populate_dwapi_vmmc_medical_history();
+CALL sp_populate_dwapi_vmmc_post_operation_assessment();
+CALL sp_populate_dwapi_hts_eligibility_screening();
+CALL sp_populate_dwapi_drug_order();
+CALL sp_populate_dwapi_preventive_services();
+CALL sp_populate_dwapi_overdose_reporting();
+CALL sp_populate_dwapi_hts_patient_contact();
 
-UPDATE dwapi_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
+UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
-SELECT "Completed first time setup", CONCAT("Time: ", NOW());
+SELECT "Completed refresh for dwapi tables", CONCAT("Time: ", NOW());
 END $$
 
 
