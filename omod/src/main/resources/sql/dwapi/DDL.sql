@@ -1,5 +1,5 @@
-DROP PROCEDURE IF EXISTS create_etl_tables $$
-CREATE PROCEDURE create_etl_tables()
+DROP PROCEDURE IF EXISTS create_dwapi_tables $$
+CREATE PROCEDURE create_dwapi_tables()
 BEGIN
 DECLARE script_id INT(11);
 
@@ -7,20 +7,10 @@ DECLARE script_id INT(11);
 drop database if exists dwapi_etl;
 create database dwapi_etl DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
-drop database if exists kenyaemr_datatools;
-create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
-DROP TABLE IF EXISTS dwapi_etl.etl_script_status;
-CREATE TABLE dwapi_etl.etl_script_status(
-  id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  script_name VARCHAR(50) DEFAULT null,
-  start_time DATETIME DEFAULT NULL,
-  stop_time DATETIME DEFAULT NULL,
-  error VARCHAR(255) DEFAULT NULL
-);
 
 -- Log start time
-INSERT INTO dwapi_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_tables', NOW());
+INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_dwapi_tables', NOW());
 SET script_id = LAST_INSERT_ID();
 
 DROP TABLE if exists dwapi_etl.etl_hiv_enrollment;
@@ -57,7 +47,6 @@ DROP TABLE IF EXISTS dwapi_etl.etl_ipt_initiation;
 DROP TABLE IF EXISTS dwapi_etl.etl_ipt_follow_up;
 DROP TABLE IF EXISTS dwapi_etl.etl_ipt_outcome;
 DROP TABLE IF EXISTS dwapi_etl.etl_patient_program;
-DROP TABLE IF EXISTS dwapi_etl.etl_default_facility_info;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_referral;
 
 DROP TABLE IF EXISTS dwapi_etl.etl_prep_behaviour_risk_assessment;
@@ -3263,6 +3252,6 @@ create table dwapi_etl.etl_overdose_reporting (
 );
 SELECT "Successfully created etl_overdose_reporting table";
 
-UPDATE dwapi_etl.etl_script_status SET stop_time=NOW() where id= script_id;
+UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
