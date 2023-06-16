@@ -89,6 +89,7 @@ DROP TABLE IF EXISTS dwapi_etl.etl_overdose_reporting;
 
 -- create table etl_patient_demographics
 create table dwapi_etl.etl_patient_demographics (
+uuid char(38),
 patient_id INT(11) not null primary key,
 given_name VARCHAR(255),
 middle_name VARCHAR(255),

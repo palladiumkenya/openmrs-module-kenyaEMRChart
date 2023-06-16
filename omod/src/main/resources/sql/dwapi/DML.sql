@@ -8,6 +8,7 @@ BEGIN
 SELECT "Processing patient demographics data ", CONCAT("Time: ", NOW());
 
 insert into dwapi_etl.etl_patient_demographics(
+    uuid,
     patient_id,
     given_name,
     middle_name,
@@ -21,6 +22,7 @@ insert into dwapi_etl.etl_patient_demographics(
     death_date
     )
 select
+       p.uuid,
        p.person_id,
        p.given_name,
        p.middle_name,
@@ -34,6 +36,7 @@ select
        p.death_date
 FROM (
      select
+            p.uuid,
             p.person_id,
             pn.given_name,
             pn.middle_name,
@@ -47,8 +50,7 @@ FROM (
             p.death_date
      from person p
             left join patient pa on pa.patient_id=p.person_id
-            left join person_name pn on pn.person_id = p.person_id and pn.voided=0
-     where p.voided=0
+            left join person_name pn on pn.person_id = p.person_id
      GROUP BY p.person_id
      ) p
 ON DUPLICATE KEY UPDATE given_name = p.given_name, middle_name=p.middle_name, family_name=p.family_name;
@@ -170,7 +172,7 @@ join (select o.person_id as patient_id,
                    from obs o
              join concept_name cn on cn.concept_id=o.value_coded and cn.concept_name_type='FULLY_SPECIFIED'
                                        and cn.locale='en'
-      where o.concept_id in (1054,1712,1542) and o.voided=0
+      where o.concept_id in (1054,1712,1542)
       group by person_id) pstatus on pstatus.patient_id=d.patient_id
 set d.marital_status=pstatus.marital_status,
     d.education_level=pstatus.education_level,
@@ -278,6 +280,7 @@ CREATE PROCEDURE sp_populate_dwapi_hiv_followup()
 BEGIN
 SELECT "Processing HIV Followup data ", CONCAT("Time: ", NOW());
 INSERT INTO dwapi_etl.etl_patient_hiv_followup(
+                                               uuid,
 patient_id,
 visit_id,
 visit_date,
@@ -385,6 +388,7 @@ differentiated_care,
 voided
 )
 select
+    e.uuid,
 e.patient_id,
 e.visit_id,
 date(e.encounter_datetime) as visit_date,
@@ -558,10 +562,9 @@ e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','23b4ebbd-29ad-455e-be0e-04aa6bc30798')
-left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+left outer join obs o on o.encounter_id=e.encounter_id
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607)
-where e.voided=0
 group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
 END $$
@@ -3215,14 +3218,13 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 				e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join person p on p.person_id=e.patient_id
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
-				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+				left outer join obs o on o.encounter_id=e.encounter_id
 				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
-			where e.voided=0
 			group by e.patient_id, visit_date
 		;
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
@@ -6767,7 +6769,6 @@ CALL sp_populate_dwapi_prep_enrolment();
 CALL sp_populate_dwapi_prep_followup();
 CALL sp_populate_dwapi_prep_behaviour_risk_assessment();
 CALL sp_populate_dwapi_prep_monthly_refill();
-CALL sp_populate_dwapi_progress_note();
 CALL sp_populate_dwapi_prep_discontinuation();
 CALL sp_populate_dwapi_hts_linkage_tracing();
 CALL sp_populate_dwapi_patient_program();
