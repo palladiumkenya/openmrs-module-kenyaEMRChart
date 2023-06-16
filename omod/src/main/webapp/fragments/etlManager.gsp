@@ -265,8 +265,8 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 </button>
 
 
-    <button id="recreate-dwapi"  style="height:43px;width:185px">
-        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="42" height="32" /> Recreate DWAPI Tables
+    <button id="recreate-dwapi"  style="height:43px;width:280px">
+        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Refresh DWAPI Tables for Upload
     </button>
 </div>
 <br/>
