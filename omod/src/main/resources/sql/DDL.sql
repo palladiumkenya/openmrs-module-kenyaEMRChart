@@ -76,7 +76,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_peer_tracking;
---DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
+-- DROP TABLE IF EXISTS kenyaemr_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
@@ -135,7 +135,7 @@ marital_status VARCHAR(50) DEFAULT NULL,
 education_level VARCHAR(50) DEFAULT NULL,
 kdod_service_number VARCHAR(50) DEFAULT NULL,
 cadre VARCHAR(100) DEFAULT NULL,
-rank VARCHAR(100) DEFAULT NULL,
+kdod_rank VARCHAR(100) DEFAULT NULL,
 unit VARCHAR(100) DEFAULT NULL,
 dead INT(11),
 death_date DATE DEFAULT NULL,
@@ -2786,7 +2786,7 @@ INDEX(encounter_id),
 INDEX(obs_id)
 );
 
-------------- create table etl_pre_hiv_enrollment_art-----------------------
+-- ----------- create table etl_pre_hiv_enrollment_art-----------------------
 
 CREATE TABLE kenyaemr_etl.etl_pre_hiv_enrollment_art (
 uuid char(38),
