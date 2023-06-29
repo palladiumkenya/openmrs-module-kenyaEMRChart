@@ -107,6 +107,7 @@ facility_confirmed_hiv_positive,
 (case ever_on_pep when 1 then "Yes" else "" end) as ever_on_pep,
 (case ever_on_prep when 1065 then "Yes" else "" end) as ever_on_prep,
 (case ever_on_haart when 1185 then "Yes" else "" end) as ever_on_haart,
+IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 name_of_treatment_supporter,
 (case relationship_of_treatment_supporter when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" 
   when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end) as relationship_of_treatment_supporter,
