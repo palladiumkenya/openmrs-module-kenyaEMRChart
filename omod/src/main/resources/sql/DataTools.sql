@@ -1828,6 +1828,7 @@ create table kenyaemr_datatools.prep_enrolment as
          initial_enrolment_date,
          date_started_prep_trf_facility,
          previously_on_prep,
+         prep_type,
          regimen,
          prep_last_date,
          case in_school when 1 then 'Yes' when 2 then 'No' end as in_school,
