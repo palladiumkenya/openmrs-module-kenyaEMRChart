@@ -7,6 +7,7 @@ BEGIN
 -- update etl_patient_demographics table
 insert into kenyaemr_etl.etl_patient_demographics(
 patient_id,
+uuid,
 given_name,
 middle_name,
 family_name,
@@ -20,6 +21,7 @@ death_date
 )
 select 
 p.person_id,
+p.uuid,
 p.given_name,
 p.middle_name,
 p.family_name,
@@ -33,6 +35,7 @@ p.death_date
 FROM (
 select 
 p.person_id,
+p.uuid,
 pn.given_name,
 pn.middle_name,
 pn.family_name,
@@ -303,6 +306,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
   BEGIN
 
     INSERT INTO kenyaemr_etl.etl_patient_hiv_followup(
+      uuid,
       patient_id,
       visit_id,
       visit_date,
@@ -410,6 +414,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       voided
     )
       select
+        e.uuid,
         e.patient_id,
         e.visit_id,
         date(e.encounter_datetime) as visit_date,
