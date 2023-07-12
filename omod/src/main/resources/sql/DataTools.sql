@@ -15,6 +15,7 @@ create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unico
 create table kenyaemr_datatools.patient_demographics as
 select 
 patient_id,
+uuid,
 given_name,
 middle_name,
 family_name,
@@ -133,7 +134,8 @@ SELECT "Successfully created hiv enrollment table";
 
 -- ----------------------------------- create table hiv_followup ----------------------------------------------
 create table kenyaemr_datatools.hiv_followup as
-select 
+select
+uuid,
 patient_id,
 visit_id,
 visit_date,
