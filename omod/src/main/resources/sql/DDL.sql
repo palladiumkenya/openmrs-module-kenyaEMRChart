@@ -101,6 +101,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
 patient_id INT(11) not null primary key,
+uuid char(38),
 given_name VARCHAR(255),
 middle_name VARCHAR(255),
 family_name VARCHAR(255),

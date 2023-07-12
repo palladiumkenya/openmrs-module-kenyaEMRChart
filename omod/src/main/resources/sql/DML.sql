@@ -9,6 +9,7 @@ SELECT "Processing patient demographics data ", CONCAT("Time: ", NOW());
 
 insert into kenyaemr_etl.etl_patient_demographics(
     patient_id,
+    uuid,
     given_name,
     middle_name,
     family_name,
@@ -22,6 +23,7 @@ insert into kenyaemr_etl.etl_patient_demographics(
     )
 select
        p.person_id,
+       p.uuid,
        p.given_name,
        p.middle_name,
        p.family_name,
@@ -35,6 +37,7 @@ select
 FROM (
      select
             p.person_id,
+            p.uuid,
             pn.given_name,
             pn.middle_name,
             pn.family_name,
@@ -280,6 +283,7 @@ CREATE PROCEDURE sp_populate_etl_hiv_followup()
 BEGIN
 SELECT "Processing HIV Followup data ", CONCAT("Time: ", NOW());
 INSERT INTO kenyaemr_etl.etl_patient_hiv_followup(
+uuid,
 patient_id,
 visit_id,
 visit_date,
@@ -387,6 +391,7 @@ differentiated_care,
 voided
 )
 select
+e.uuid,
 e.patient_id,
 e.visit_id,
 date(e.encounter_datetime) as visit_date,
