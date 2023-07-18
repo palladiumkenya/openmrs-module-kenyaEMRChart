@@ -46,9 +46,7 @@ public class RefreshETLTablesTask extends AbstractTask {
 				public void execute(Connection connection) throws SQLException {
 
 			CallableStatement cs = connection.prepareCall("{call sp_scheduled_updates}");
-			CallableStatement dataToolStatement = connection.prepareCall("{CALL create_datatools_tables}");
 			cs.execute();
-			dataToolStatement.execute();
 
 				}
 			});

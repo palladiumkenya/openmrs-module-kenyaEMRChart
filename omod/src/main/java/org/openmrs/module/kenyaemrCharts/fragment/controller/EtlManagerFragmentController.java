@@ -31,7 +31,7 @@ public class EtlManagerFragmentController {
     private final Log log = LogFactory.getLog(getClass());
     private int processCount;
 
-    public void controller(FragmentModel model){
+    public void controller(FragmentModel model) {
         DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
 
         final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
@@ -57,30 +57,29 @@ public class EtlManagerFragmentController {
                                 ret.add(SimpleObject.create(
                                         "script_name", row[0],
                                         "start_time", row[1] != null ? row[1].toString() : "",
-                                        "stop_time", row[2] != null? row[2].toString() : "",
-                                        "status", row[3] != null? "Pending": "Success"
+                                        "stop_time", row[2] != null ? row[2].toString() : "",
+                                        "status", row[3] != null ? "Pending" : "Success"
                                 ));
                             }
                         }
-                    }
-                    finally {
+                    } finally {
                         try {
                             if (statement != null) {
                                 statement.close();
                             }
+                        } catch (Exception e) {
                         }
-                        catch (Exception e) {}
                     }
                 }
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Unable to execute query", e);
         }
 
         model.put("logs", ret);
     }
-    public JSONObject fetchDataSets(){
+
+    public JSONObject fetchDataSets() {
 
         List<Patient> allPatients = Context.getPatientService().getAllPatients();
         JSONObject x = new JSONObject();
@@ -100,7 +99,7 @@ public class EtlManagerFragmentController {
             public void execute(Connection connection) throws SQLException {
                 try {
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = 'kenyaemr_etl');");
                     ResultSetMetaData metaData = rs.getMetaData();
 
                     while (rs.next()) {
@@ -143,9 +142,6 @@ public class EtlManagerFragmentController {
                         List<String> coreIncrementalUpdates = procedureBuilder.getCoreIncrementalUpdatesProcedures();
                         List<String> addonIncrementalUpdates = procedureBuilder.getAddonIncrementalUpdatesProcedures();
 
-                        List<String> coreDatatools = procedureBuilder.getCoreDatatoolDatabaseProcedures();
-                        List<String> addonDatatools = procedureBuilder.getAddonDatatoolDatabaseProcedures();
-
                         StringBuilder sb = null;
                         // we want to end up with a string like "{call create_etl_tables}"
                         // we then iterate the various procedures and execute them
@@ -167,24 +163,6 @@ public class EtlManagerFragmentController {
                             sp.execute();
                         }
 
-
-                        for (String spName : coreDatatools) {
-                            sb = new StringBuilder();
-                            sb.append("{call ");
-                            sb.append(spName).append("}");
-                            System.out.println("Core module: currently executing: " + sb);
-                            CallableStatement sp = connection.prepareCall(sb.toString());
-                            sp.execute();
-                        }
-
-                        for (String spName : addonDatatools) {
-                            sb = new StringBuilder();
-                            sb.append("{call ");
-                            sb.append(spName).append("}");
-                            System.out.println("Addon module: currently executing: " + sb);
-                            CallableStatement sp = connection.prepareCall(sb.toString());
-                            sp.execute();
-                        }
                         System.out.println("Successfully completed refreshing ETL procedures ... ");
 
                         // get the dataset for the UI
@@ -244,7 +222,7 @@ public class EtlManagerFragmentController {
             public void execute(Connection connection) throws SQLException {
                 try {
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = 'kenyaemr_etl');");
                     ResultSetMetaData metaData = rs.getMetaData();
 
 
@@ -254,11 +232,11 @@ public class EtlManagerFragmentController {
                             row[i - 1] = rs.getObject(i);
                             rs.getInt("In_use");
                         }
-                        if(rs.getInt("In_use") > 0) {
+                        if (rs.getInt("In_use") > 0) {
                             status.add(SimpleObject.create(
                                     "process", "locked"
                             ));
-                            sampleTypeObject.put("status",status);
+                            sampleTypeObject.put("status", status);
                         }
                     }
                 } catch (Exception e) {
@@ -269,7 +247,7 @@ public class EtlManagerFragmentController {
             }
 
         });
-        if(sampleTypeObject.isEmpty()) {
+        if (sampleTypeObject.isEmpty()) {
 
             final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
 
@@ -292,10 +270,6 @@ public class EtlManagerFragmentController {
 
                         List<String> coreDML = procedureBuilder.getCoreDMLProcedures();
                         List<String> addonDML = procedureBuilder.getAddonDMLProcedures();
-
-
-                        List<String> coreDatatools = procedureBuilder.getCoreDatatoolDatabaseProcedures();
-                        List<String> addonDatatools = procedureBuilder.getAddonDatatoolDatabaseProcedures();
 
                         StringBuilder sb = null;
                         // we want to end up with something like "{call create_etl_tables}"
@@ -336,23 +310,6 @@ public class EtlManagerFragmentController {
                             sp.execute();
                         }
 
-                        for (String spName : coreDatatools) {
-                            sb = new StringBuilder();
-                            sb.append("{call ");
-                            sb.append(spName).append("}");
-                            System.out.println("Core module: currently executing: " + sb);
-                            CallableStatement sp = connection.prepareCall(sb.toString());
-                            sp.execute();
-                        }
-
-                        for (String spName : addonDatatools) {
-                            sb = new StringBuilder();
-                            sb.append("{call ");
-                            sb.append(spName).append("}");
-                            System.out.println("Addon module: currently executing: " + sb);
-                            CallableStatement sp = connection.prepareCall(sb.toString());
-                            sp.execute();
-                        }
                         System.out.println("Successfully completed recreating ETL procedures ... ");
 
                         try {
@@ -393,7 +350,7 @@ public class EtlManagerFragmentController {
             sampleTypeObject.put("data", ret);
 
 
-        }else {
+        } else {
 
             return sampleTypeObject;
 
@@ -401,5 +358,132 @@ public class EtlManagerFragmentController {
 
         return sampleTypeObject;
 
+    }
+
+    public SimpleObject recreateDatatoolsTables(UiUtils ui) {
+        final List<SimpleObject> ret = new ArrayList<SimpleObject>();
+        final List<SimpleObject> status = new ArrayList<SimpleObject>();
+        final SimpleObject sampleTypeObject = new SimpleObject();
+
+        DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
+
+        sf.getCurrentSession().doWork(new Work() {
+            @Override
+            public void execute(Connection connection) throws SQLException {
+                try {
+                    Statement stmt = connection.createStatement();
+                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    ResultSetMetaData metaData = rs.getMetaData();
+
+
+                    while (rs.next()) {
+                        Object[] row = new Object[metaData.getColumnCount()];
+                        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                            row[i - 1] = rs.getObject(i);
+                            rs.getInt("In_use");
+                        }
+                        if (rs.getInt("In_use") > 0) {
+                            status.add(SimpleObject.create(
+                                    "process", "locked"
+                            ));
+                            sampleTypeObject.put("status", status);
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Unable to execute", e);
+                } finally {
+                    Context.closeSession();
+                }
+            }
+
+        });
+        if (sampleTypeObject.isEmpty()) {
+
+            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
+
+            Transaction tx = null;
+            try {
+                Context.openSession();
+                tx = sf.getHibernateSessionFactory().getCurrentSession().beginTransaction();
+                final Transaction finalTx = tx;
+                sf.getCurrentSession().doWork(new Work() {
+
+                    @Override
+                    public void execute(Connection connection) throws SQLException {
+                        PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
+
+                        ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
+                        procedureBuilder.buildProcedures();
+
+                        List<String> coreDatatools = procedureBuilder.getCoreDatatoolDatabaseProcedures();
+                        List<String> addonDatatools = procedureBuilder.getAddonDatatoolDatabaseProcedures();
+
+                        StringBuilder sb = null;
+                        // we want to end up with something like "{call create_etl_tables}"
+                        // iterate through the various procedures and execute them
+                        for (String spName : coreDatatools) {
+                            sb = new StringBuilder();
+                            sb.append("{call ");
+                            sb.append(spName).append("}");
+                            System.out.println("Core module: currently executing++++: " + sb);
+                            CallableStatement sp = connection.prepareCall(sb.toString());
+                            sp.execute();
+                        }
+
+                        for (String spName : addonDatatools) {
+                            sb = new StringBuilder();
+                            sb.append("{call ");
+                            sb.append(spName).append("}");
+                            System.out.println("Addon module: currently executing: " + sb);
+                            CallableStatement sp = connection.prepareCall(sb.toString());
+                            sp.execute();
+                        }
+
+                        System.out.println("Successfully completed recreating Datatools procedures ... ");
+
+                        try {
+
+                            ResultSet resultSet = statement.executeQuery();
+                            if (resultSet != null) {
+                                ResultSetMetaData metaData = resultSet.getMetaData();
+                                while (resultSet.next()) {
+                                    Object[] row = new Object[metaData.getColumnCount()];
+                                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                                        row[i - 1] = resultSet.getObject(i);
+                                    }
+
+                                    ret.add(SimpleObject.create(
+                                            "script_name", row[0],
+                                            "start_time", row[1] != null ? row[1].toString() : "",
+                                            "stop_time", row[2] != null ? row[2].toString() : "",
+                                            "status", row[3] != null ? "Pending" : "Success"
+                                    ));
+                                }
+                            }
+                            finalTx.commit();
+                        } finally {
+                            try {
+                                if (statement != null) {
+                                    statement.close();
+                                }
+                            } catch (Exception e) {
+                            }
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Unable to execute query", e);
+            } finally {
+                Context.closeSession();
+            }
+            sampleTypeObject.put("data", ret);
+
+
+        } else {
+
+            return sampleTypeObject;
+
+        }
+        return sampleTypeObject;
     }
 }
