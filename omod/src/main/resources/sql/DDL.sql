@@ -2115,6 +2115,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     relationship_type      INT(11),
     appointment_date       DATETIME,
     baseline_hiv_status    VARCHAR(255),
+    reported_test_date      DATETIME,
     ipv_outcome            VARCHAR(255),
     marital_status         VARCHAR(100),
     living_with_patient    VARCHAR(100),
