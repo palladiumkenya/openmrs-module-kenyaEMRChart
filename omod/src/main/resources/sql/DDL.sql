@@ -2098,7 +2098,6 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     hpv_treatment_method VARCHAR(255) DEFAULT NULL,
     pap_smear_treatment_method VARCHAR(255) DEFAULT NULL,
     via_vili_treatment_method VARCHAR(255) DEFAULT NULL,
-    treatment_method_other VARCHAR(255) DEFAULT NULL,
     referred_out VARCHAR(100) DEFAULT NULL,
     referral_facility VARCHAR(100) DEFAULT NULL,
     referral_reason VARCHAR(255) DEFAULT NULL,
