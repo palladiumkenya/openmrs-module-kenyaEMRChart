@@ -4414,7 +4414,6 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     hpv_treatment_method,
     pap_smear_treatment_method,
     via_vili_treatment_method,
-    treatment_method_other,
     referred_out,
     referral_facility,
     referral_reason,
@@ -4462,8 +4461,6 @@ select
      max(if(t.hpv_treatment_method is not null, t.hpv_treatment_method, null)) as hpv_treatment_method,
      max(if(t.pap_smear_treatment_method is not null, t.pap_smear_treatment_method, null)) as pap_smear_treatment_method,
      max(if(t.via_vili_treatment_method is not null, t.via_vili_treatment_method, null)) as via_vili_treatment_method,
-      
-      
      max(if(o.concept_id=1169,(case o.value_coded when 664 then "Yes" when 703 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
