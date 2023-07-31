@@ -4593,7 +4593,7 @@ select
      max(if(t.hpv_treatment_method is not null, t.hpv_treatment_method, null)) as hpv_treatment_method,
      max(if(t.pap_smear_treatment_method is not null, t.pap_smear_treatment_method, null)) as pap_smear_treatment_method,
      max(if(t.via_vili_treatment_method is not null, t.via_vili_treatment_method, null)) as via_vili_treatment_method,
-     max(if(o.concept_id=1169,(case o.value_coded when 664 then "Yes" when 703 then "No" else "" end),null)) as referred_out,
+     max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
                                                       when 159008 then 'Large lesion, Suspect cancer'
@@ -4640,8 +4640,8 @@ select
 e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,163042,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
+	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,165267,163042,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
 inner join (
              select
                o.person_id,
@@ -4671,14 +4671,19 @@ inner join (
                max(if(o.concept_id=163589, (case o.value_coded when 160705 then "Colposcopy(for positive HPV,VIA or PAP smear)"  else "" end),null)) as colposcopy_screening_method ,
                max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal" 
                     when 1116 then "Abnormal" when 159008 then "Suspicious for Cancer"  else "" end),null)) as colposcopy_screening_result ,
-                max(if(o.concept_id in (165070,166665,160705), (case o.value_coded when 1065 then "Counseled on negative results" 
+                max(if(o.concept_id in (165070,166665,160705,165266), (case o.value_coded when 1065 then "Counseled on negative results" 
                     when 162812 then "Cryotherapy" when 165395 then "Thermal ablation"
                     when 166620 then "Loop electrosurgical excision" when 1000103 then "Refer for appropraite diagnosis and management"
+                    when 165385 then "Cryotherapy performed (SVA)" when 165381 then "Cryotherapy postponed"
+                    when 162810 then "Cryotherapy performed (previously postponed)" when 1648 then "Referred for cryotherapy"
+                    when 165396 then "LEEP performed" when 165396 then "Cold knife cone"
+                    when 165395 then "Thermal ablation performed (SVA)" when 159837 then "Hysterectomy"
+                    when 165391 then "Referred for cancer treatment"
                     when 165995 then "Other treatment"  else "" end),null)) as colposcopy_treatment_method 
       
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
-             inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee")
+             inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
              where o.concept_id in (163589, 164934, 165070,160705,165266,166937,1272,166665) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
