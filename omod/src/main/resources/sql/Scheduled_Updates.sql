@@ -4567,20 +4567,31 @@ select
                                  when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
      max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
 
-     max(if(t.colposcopy_screening_method is not null, t.colposcopy_screening_method, null)) as colposcopy_screening_method,
-     max(if(t.hpv_screening_method is not null, t.hpv_screening_method, null)) as hpv_screening_method,
-     max(if(t.pap_smear_screening_method is not null, t.pap_smear_screening_method, null)) as pap_smear_screening_method,
-     max(if(t.via_vili_screening_method is not null, t.via_vili_screening_method, null)) as via_vili_screening_method,
+     max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=160705, 'Colposcopy(for positive HPV,VIA or PAP smear)',
+	    if(t.colposcopy_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_method, null))) as colposcopy_screening_method,
+     max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=159859, 'HPV',
+	    if(t.hpv_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_screening_method, null))) as hpv_screening_method,
+     max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=885, 'Pap Smear',
+	    if(t.pap_smear_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.pap_smear_screening_method, null))) as pap_smear_screening_method,
+     max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded in (164805,164977), 'VIA',
+	    if(t.via_vili_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_screening_method, null))) as via_vili_screening_method,
+     max(if(t3.colposcopy_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t3.colposcopy_screening_result,
+	    if(t.colposcopy_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_result, null))) as colposcopy_screening_result,
+	   max(if(t2.hpv_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t2.hpv_screening_result,
+	    if(t.hpv_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_screening_result, null))) as hpv_screening_result,
+     max(if(t4.pap_smear_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t4.pap_smear_screening_result,
+	    if(t.pap_smear_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.pap_smear_screening_result, null))) as pap_smear_screening_result,
+     max(if(t1.via_vili_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t1.via_vili_screening_result,
+	    if(t.via_vili_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_screening_result, null))) as via_vili_screening_result,
+     max(if(t3.colposcopy_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t3.colposcopy_treatment_method,
+	    if(t.colposcopy_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_treatment_method, null))) as colposcopy_treatment_method,
+     max(if(t2.hpv_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t2.hpv_treatment_method,
+	    if(t.hpv_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_treatment_method, null))) as hpv_treatment_method,
+     max(if(t4.pap_smear_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t4.pap_smear_treatment_method,
+	    if(t.pap_smear_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.pap_smear_treatment_method, null))) as pap_smear_treatment_method,
+     max(if(t1.via_vili_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t1.via_vili_treatment_method,
+	    if(t.via_vili_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_treatment_method, null))) as via_vili_treatment_method,
 
-     max(if(t.colposcopy_screening_result is not null, t.colposcopy_screening_result, null)) as colposcopy_screening_result,
-     max(if(t.hpv_screening_result is not null, t.hpv_screening_result, null)) as hpv_screening_result,
-     max(if(t.pap_smear_screening_result is not null, t.pap_smear_screening_result, null)) as pap_smear_screening_result,
-     max(if(t.via_vili_screening_result is not null, t.via_vili_screening_result, null)) as via_vili_screening_result,
-
-     max(if(t.colposcopy_treatment_method is not null, t.colposcopy_treatment_method, null)) as colposcopy_treatment_method,
-     max(if(t.hpv_treatment_method is not null, t.hpv_treatment_method, null)) as hpv_treatment_method,
-     max(if(t.pap_smear_treatment_method is not null, t.pap_smear_treatment_method, null)) as pap_smear_treatment_method,
-     max(if(t.via_vili_treatment_method is not null, t.via_vili_treatment_method, null)) as via_vili_treatment_method,
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
@@ -4629,7 +4640,7 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,165267,163042,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,165267,163589,163042,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
 inner join (
              select
                o.person_id,
@@ -4675,6 +4686,82 @@ inner join (
              where o.concept_id in (163589, 164934, 165070,160705,165266,166937,1272,166665) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
+left join (
+             select
+               o.person_id,
+               o.encounter_id,
+		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+                 when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as via_vili_screening_result,
+               max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as via_vili_treatment_method
+             from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+             where o.concept_id = 163589 and o.value_coded in (164805,164977) and  o.voided=0
+             group by e.encounter_id
+           ) t1 on e.encounter_id = t1.encounter_id -- Getting legacy data for via screening result and treatment method
+left join (
+             select
+               o.person_id,
+               o.encounter_id,
+		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+                 when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as hpv_screening_result,
+               max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as hpv_treatment_method
+             from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+             where o.concept_id = 163589 and o.value_coded=159859 and  o.voided=0
+             group by e.encounter_id
+           ) t2 on e.encounter_id = t2.encounter_id -- Getting legacy data for HPV screening result and treatment method
+left join (
+             select
+               o.person_id,
+               o.encounter_id,
+		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+                 when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as colposcopy_screening_result,
+               max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as colposcopy_treatment_method
+             from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+             where o.concept_id = 163589 and o.value_coded=160705 and  o.voided=0
+             group by e.encounter_id
+           ) t3 on e.encounter_id = t3.encounter_id -- Getting legacy data for colposcopy screening result and treatment method
+left join (
+             select
+               o.person_id,
+               o.encounter_id,
+		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+                 when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as pap_smear_screening_result,
+               max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as pap_smear_treatment_method
+             from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+             where o.concept_id = 163589 and o.value_coded=885 and  o.voided=0
+             group by e.encounter_id
+           ) t4 on e.encounter_id = t4.encounter_id -- Getting legacy data for PAP smear screening result and treatment method
 
 where e.voided=0 and
 (e.date_created >= last_update_time
