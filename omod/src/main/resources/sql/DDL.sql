@@ -68,6 +68,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_breast_cancer_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_colorectal_cancer_screening;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_client_trace;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_contact;

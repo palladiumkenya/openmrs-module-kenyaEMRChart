@@ -4603,7 +4603,7 @@ left join (
 				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
                  when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as colposcopy_screening_result,
                max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
-				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermal Coagulation'
                  when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
                  when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as colposcopy_treatment_method
              from obs o
