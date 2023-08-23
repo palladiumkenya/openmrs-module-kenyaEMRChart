@@ -166,6 +166,7 @@ ever_on_pmtct INT(11),
 ever_on_pep INT(11),
 ever_on_prep INT(11),
 ever_on_haart INT(11),
+who_stage INT(11),
 name_of_treatment_supporter VARCHAR(255),
 relationship_of_treatment_supporter INT(11),
 treatment_supporter_telephone VARCHAR(100),
@@ -362,6 +363,7 @@ test_requested_by INT(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
 created_by INT(11),
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
@@ -498,6 +500,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     discontinuation_reason INT(11),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -624,6 +627,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     clinical_notes VARCHAR(200) DEFAULT NULL,
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -711,7 +715,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     baby_azt_dispensed INT(11),
     baby_nvp_dispensed INT(11),
     clinical_notes VARCHAR(200) DEFAULT NULL,
-
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -745,6 +749,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     referred_from INT(11),
     referred_to INT(11),
     clinical_notes VARCHAR(200) DEFAULT NULL,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -841,6 +846,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     appointment_date DATE DEFAULT NULL,
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -907,6 +913,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     hiv_status_at_exit VARCHAR(50),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -990,6 +997,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     LLIN INT(11),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -1001,7 +1009,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
   -- ------- create table etl_hei_immunization table-----------------------------------------
   SELECT "Creating etl_hei_immunization table";
   CREATE TABLE dwapi_etl.etl_hei_immunization (
-                                                     uuid char(38),
+    uuid char(38),
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
     visit_date DATE,
@@ -1033,6 +1041,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     VitaminA_2_yr VARCHAR(50),
     VitaminA_2_to_5_yr VARCHAR(50),
     fully_immunized INT(11),
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
     INDEX(encounter_id)
@@ -1082,6 +1091,7 @@ date_of_discontinuation DATETIME,
 discontinuation_reason INT(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
@@ -1123,6 +1133,7 @@ hiv_status INT(11),
 next_appointment_date DATE,
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
@@ -1165,6 +1176,7 @@ notes VARCHAR(100),
 person_present int(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
@@ -1175,35 +1187,6 @@ INDEX(confirmed_tb_contact),
 INDEX(noticeable_weight_loss),
 INDEX(night_sweat_for_2wks_or_more),
 INDEX(resulting_tb_status)
-);
-
--- ------------ create table etl_patients_booked_today-----------------------
-
-CREATE TABLE dwapi_etl.etl_patients_booked_today(
-                                                       uuid char(38),
-id INT(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-patient_id INT(11) NOT NULL ,
-last_visit_date DATE,
-date_created DATETIME NOT NULL,
-date_last_modified DATETIME,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
-INDEX(patient_id)
-);
-
--- ------------ create table etl_missed_appointments-----------------------
-
-CREATE TABLE dwapi_etl.etl_missed_appointments(
-id INT(11) NOT NULL PRIMARY KEY,
-patient_id INT(11) NOT NULL ,
-last_tca_date DATE,
-last_visit_date DATE,
-last_encounter_type VARCHAR(100),
-days_since_last_visit INT(11),
-date_table_created DATE,
-date_created DATETIME NOT NULL,
-date_last_modified DATETIME,
-CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
-INDEX(patient_id)
 );
 
 -- --------------------------- CREATE drug_event table ---------------------
@@ -1238,7 +1221,7 @@ INDEX(patient_id)
 -- -------------------------- CREATE hts_test table ---------------------------------
 
 create table dwapi_etl.etl_hts_test (
-                                           uuid char(38),
+uuid char(38),
 patient_id INT(11) not null,
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
@@ -1302,7 +1285,7 @@ index(test_2_kit_name)
 -- ------------- CREATE HTS LINKAGE AND REFERRALS ------------------------
 
 CREATE TABLE dwapi_etl.etl_hts_referral_and_linkage (
-                                                           uuid char(38),
+uuid char(38),
 patient_id INT(11) not null,
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
@@ -1332,7 +1315,7 @@ index(tracing_status)
 -- -------------- create referral form ----------------------------
 
 CREATE TABLE dwapi_etl.etl_hts_referral (
-                                               uuid char(38),
+uuid char(38),
 patient_id INT(11) not null,
 visit_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL primary key,
@@ -1435,6 +1418,7 @@ comments VARCHAR(100),
 booking_date DATE,
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
+voided INT(11),
 CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
 CONSTRAINT unique_uuid UNIQUE(uuid),
 INDEX(visit_date),
@@ -1472,6 +1456,7 @@ CREATE TABLE dwapi_etl.etl_ART_preparation (
   other_support_systems varchar(10),
   date_created DATETIME NOT NULL,
   date_last_modified DATETIME,
+  voided INT(11),
   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
   CONSTRAINT unique_uuid UNIQUE(uuid),
   INDEX(visit_date),
@@ -1525,6 +1510,7 @@ SELECT "Successfully created etl_ART_preparation table";
     next_appointment_date DATE,
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(visit_date),
@@ -2107,6 +2093,7 @@ CREATE TABLE dwapi_etl.etl_patient_program (
     relationship_type      INT(11),
     appointment_date       DATETIME,
     baseline_hiv_status    VARCHAR(255),
+    reported_test_date      DATETIME,
     ipv_outcome            VARCHAR(255),
     marital_status         VARCHAR(100),
     living_with_patient    VARCHAR(100),
@@ -2214,7 +2201,6 @@ CREATE TABLE dwapi_etl.etl_patient_program (
       contact_person_name VARCHAR(255),
       contact_person_alias VARCHAR(255),
       contact_person_phone VARCHAR(255),
-
       voided INT(11),
       constraint foreign key(client_id) references dwapi_etl.etl_patient_demographics(patient_id),
       CONSTRAINT unique_uuid UNIQUE(uuid),
@@ -3175,7 +3161,7 @@ SELECT "Successfully created etl_drug_orders table";
 
 -- Create table etl_preventive_services --
 CREATE TABLE dwapi_etl.etl_preventive_services (
-                                                      uuid char(38),
+  uuid char(38),
   patient_id INT(11) NOT NULL,
   visit_date DATE,
   provider INT(11),
@@ -3216,7 +3202,7 @@ SELECT "Successfully created etl_preventive_services table";
 
 -- Create table etl_overdose_reporting --
 create table dwapi_etl.etl_overdose_reporting (
-    client_id                       INT(11) not null,
+    client_id                        INT(11) not null,
     visit_id                         INT(11) DEFAULT NULL,
     encounter_id                     INT(11) NOT NULL primary key,
     uuid                             CHAR(38) NOT NULL,
