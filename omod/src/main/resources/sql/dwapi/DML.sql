@@ -2354,7 +2354,8 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 		reason_discontinued,
 		reason_discontinued_other,
 		date_created,
-    date_last_modified
+        date_last_modified,
+	    voided
 	)
 		select
 			e.uuid,
@@ -2492,7 +2493,8 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 			max(if(o.concept_id=1252,o.value_coded,null)) as reason_discontinued,
 			max(if(o.concept_id=5622,o.value_text,null)) as reason_discontinued_other,
 			e.date_created as date_created,
-      if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
+      if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+      e.voided as voided
 		from encounter e
 			inner join person p on p.person_id=e.patient_id
 			inner join obs o on e.encounter_id = o.encounter_id
@@ -6679,7 +6681,7 @@ CREATE PROCEDURE sp_dwapi_etl_refresh()
 BEGIN
 DECLARE populate_script_id INT(11);
 SELECT "Beginning first time setup", CONCAT("Time: ", NOW());
-INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('initial_population_of_dwapi_tables', NOW());
+INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('population_of_dwapi_tables', NOW());
 SET populate_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_dwapi_patient_demographics();
