@@ -273,12 +273,12 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 </button>
 
 <button id="recreate-datatools"  style="height:43px;width:185px">
-    <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Recreate Datatools
+    <img src="${ ui.resourceLink("kenyaui", "images/buttons/datatool.png") }" width="32" height="32" /> Recreate Datatools
 </button>
 
 
     <button id="recreate-dwapi"  style="height:43px;width:280px">
-        <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Refresh DWAPI Tables for Upload
+        <img src="${ ui.resourceLink("kenyaui", "images/buttons/cloud-sync.png") }" width="32" height="32" /> Refresh DWAPI Tables for Upload
     </button>
 </div>
 <br/>
