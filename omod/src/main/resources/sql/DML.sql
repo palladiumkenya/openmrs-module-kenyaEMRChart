@@ -4765,12 +4765,12 @@ inner join (
     from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-    where o.concept_id in (163589, 164934, 165070,160705,165266,166937,1272,166665) and o.voided=0
+    where o.concept_id in (1000546, 1000545, 165070,1272,166665,1000145) and o.voided=0
     group by e.encounter_id, o.obs_group_id
 )t on e.encounter_id = t.encounter_id
 where e.voided=0
 group by e.encounter_id;
-SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
+SELECT "Completed processing Breast Cancer Screening", CONCAT("Time: ", NOW());
 END $$
 
 		--------------------------- process patient contact ------------------------
