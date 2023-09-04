@@ -7686,6 +7686,130 @@ BEGIN
                             voided=VALUES(voided);
     SELECT "Completed processing overdose reporting";
 END $$
+
+DROP PROCEDURE IF EXISTS sp_update_etl_art_fast_track $$
+CREATE PROCEDURE sp_update_etl_art_fast_track(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing ART fast track";
+    INSERT INTO kenyaemr_etl.etl_art_fast_track (uuid,
+             provider,
+             patient_id,
+             visit_id,
+             visit_date,
+             location_id,
+             encounter_id,
+             art_refill_model,
+             ctx_dispensed,
+             dapsone_dispensed,
+             oral_contraceptives_dispensed,
+             condoms_distributed,
+             doses_missed,
+             fatigue,
+             cough,
+             fever,
+             rash,
+             nausea_vomiting,
+             genital_sore_discharge,
+             diarrhea,
+             other_symptoms,
+             other_specific_symptoms,
+             pregnant,
+             family_planning_status,
+             family_planning_method,
+             reason_not_on_family_planning,
+             referred_to_clinic,
+             return_visit_date,
+             date_created,
+             date_last_modified,
+             voided)
+    select e.uuid,
+           e.creator                                                                    as provider,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                                   as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 1758, o.value_coded, null))                            as art_refill_model,
+           max(if(o.concept_id = 1282 and o.value_coded = 162229, o.value_coded,
+                  null))                                                                as ctx_dispensed,
+           max(if(o.concept_id = 1282 and o.value_coded = 74250, o.value_coded, null))  as dapsone_dispensed,
+           max(if(o.concept_id = 1282 and o.value_coded = 780, o.value_coded, null))    as oral_contraceptives_dispensed,
+           max(if(o.concept_id = 159777, o.value_coded, null))                          as condoms_distributed,
+           max(if(o.concept_id = 162878, o.value_numeric, null))                        as doses_missed,
+           max(if(o.concept_id = 1284 and o.value_coded = 162626, o.value_coded, null)) as fatigue,
+           max(if(o.concept_id = 1284 and o.value_coded = 143264, o.value_coded, null)) as cough,
+           max(if(o.concept_id = 1284 and o.value_coded = 140238, o.value_coded, null)) as fever,
+           max(if(o.concept_id = 1284 and o.value_coded = 512, o.value_coded, null))    as rash,
+           max(if(o.concept_id = 1284 and o.value_coded = 5978, o.value_coded, null))   as nausea_vomiting,
+           max(if(o.concept_id = 1284 and o.value_coded = 135462, o.value_coded, null)) as genital_sore_discharge,
+           max(if(o.concept_id = 1284 and o.value_coded = 142412, o.value_coded, null)) as diarrhea,
+           max(if(o.concept_id = 1284 and o.value_coded = 5622, o.value_coded, null))   as other_symptoms,
+           max(if(o.concept_id = 160632, o.value_text, null))                           as other_specific_symptoms,
+           max(if(o.concept_id = 5272, o.value_coded, null))                            as pregnant,
+           max(if(o.concept_id = 160653, o.value_coded, null))                          as family_planning_status,
+           concat_ws(',', max(if(o.concept_id = 374 and o.value_coded = 160570, 'Emergency contraceptive pills', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 780, 'Oral Contraceptives Pills', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 5279, 'Injectible', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1359, 'Implant', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 5275, 'Intrauterine Device', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 136163, 'Lactational Amenorhea Method', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 5278, 'Diaphram/Cervical Cap', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 159524, 'Fertility Awareness', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1472, 'Tubal Ligation', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 190, 'Condoms', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1489, 'Vasectomy(Partner)', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1175, 'Undecided', null))) as family_planning_method,
+           concat_ws(',', max(if(o.concept_id = 160575 and o.value_coded = 160572, 'Thinks cannot get pregnant', null)),
+                     max(if(o.concept_id = 160575 and o.value_coded = 160573, 'Not sexually active now',
+                            null)))                                                           as reason_not_on_family_planning,
+           max(if(o.concept_id = 512, o.value_coded, null))                                   as referred_to_clinic,
+           max(if(o.concept_id = 2096, o.value_datetime, null))                               as return_visit_date,
+           e.date_created,
+           if(max(o.date_created) > min(e.date_created), max(o.date_created),
+              NULL)                                                                           as date_last_modified,
+           e.voided
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = '83fb6ab2-faec-4d87-a714-93e77a28a201'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (1758, 1282, 159777, 162878, 1284, 5272,
+                                                                           160653, 374, 160575, 512, 2096)
+        and o.voided = 0
+    where e.voided = 0
+        and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                            provider=VALUES(provider),
+                            art_refill_model=VALUES(art_refill_model),
+                            ctx_dispensed=VALUES(ctx_dispensed),
+                            dapsone_dispensed=VALUES(dapsone_dispensed),
+                            oral_contraceptives_dispensed=VALUES(oral_contraceptives_dispensed),
+                            condoms_distributed=VALUES(condoms_distributed),
+                            doses_missed=VALUES(doses_missed),
+                            fatigue=VALUES(fatigue),
+                            cough=VALUES(cough),
+                            fever=VALUES(fever),
+                            rash=VALUES(rash),
+                            nausea_vomiting=VALUES(nausea_vomiting),
+                            genital_sore_discharge=VALUES(genital_sore_discharge),
+                            diarrhea=VALUES(diarrhea),
+                            other_symptoms=VALUES(other_symptoms),
+                            other_specific_symptoms=VALUES(other_specific_symptoms),
+                            pregnant=VALUES(pregnant),
+                            family_planning_status=VALUES(family_planning_status),
+                            family_planning_method=VALUES(family_planning_method),
+                            reason_not_on_family_planning=VALUES(reason_not_on_family_planning),
+                            referred_to_clinic=VALUES(referred_to_clinic),
+                            return_visit_date=VALUES(return_visit_date),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided=VALUES(voided);
+    SELECT "Completed processing ART fast track";
+END $$
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -7767,6 +7891,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_drug_order(last_update_time);
     CALL sp_update_etl_preventive_services(last_update_time);
     CALL sp_update_etl_overdose_reporting(last_update_time);
+    CALL sp_update_etl_art_fast_track(last_update_time);
 
     CALL sp_update_dashboard_table();
 

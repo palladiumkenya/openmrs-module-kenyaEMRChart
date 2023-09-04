@@ -2619,7 +2619,7 @@ ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(patient_id);
 ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(visit_date);
 SELECT "Successfully created preventive_services table";
 
--- create table preventive_services
+-- create table overdose_reporting
 create table kenyaemr_datatools.overdose_reporting as
 select
     client_id,
@@ -2665,13 +2665,66 @@ select
     date_last_modified,
     voided
 from kenyaemr_etl.etl_overdose_reporting;
-
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(client_id);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(naloxone_provided);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(outcome);
 SELECT "Successfully created overdose_reporting table";
+
+-- Create table ART fast track
+create table kenyaemr_datatools.art_fast_track as
+select patient_id,
+       visit_date,
+       provider,
+       location_id,
+       encounter_id,
+       case art_refill_model
+           when 1744 then 'Fast Track'
+           when 1555 then 'Community ART Distribution - HCW Led'
+           when 5618 then 'Community ART Distribution - Peer Led'
+           when 1537 then 'Facility ART Distribution Group'
+           else null end                                                                              as art_refill_model,
+       case ctx_dispensed when 162229 then 'Yes' else null end                                        as ctx_dispensed,
+       case dapsone_dispensed when 74250 then 'Yes' else null end                                     as dapsone_dispensed,
+       case oral_contraceptives_dispensed when 780 then 'Yes' else null end                           as oral_contraceptives_dispensed,
+       case condoms_distributed
+           when 1065 then 'Yes'
+           when 1066 then 'No'
+           else null end                                                                              as condoms_distributed,
+       doses_missed,
+       case fatigue when 162626 then 'Yes' when 1066 then 'No' else null end                          as fatigue,
+       case cough when 143264 then 'Yes' when 1066 then 'No' else null end                            as cough,
+       case fever when 140238 then 'Yes' when 1066 then 'No' else null end                            as fever,
+       case rash when 512 then 'Yes' when 1066 then 'No' else null end                                as rash,
+       case nausea_vomiting when 5978 then 'Yes' when 1066 then 'No' else null end                    as nausea_vomiting,
+       case genital_sore_discharge
+           when 135462 then 'Yes'
+           when 1066 then 'No'
+           else null end                                                                              as genital_sore_discharge,
+       case diarrhea when 142412 then 'Yes' when 1066 then 'No' else null end                         as diarrhea,
+       case other_symptoms when 5622 then 'Yes' else null end                                         as other_symptoms,
+       other_specific_symptoms,
+       case pregnant when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Not sure' else null end as pregnant,
+       case family_planning_status
+           when 965 then 'On Family Planning'
+           when 160652 then 'Not using Family Planning'
+           when 1360 then 'Wants Family Planning'
+           else null end                                                                              as family_planning_status,
+       family_planning_method,
+       reason_not_on_family_planning,
+       date_created,
+       date_last_modified,
+       voided
+from kenyaemr_etl.etl_art_fast_track;
+ALTER TABLE kenyaemr_datatools.art_fast_track
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.art_fast_track
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.art_fast_track
+    ADD INDEX (visit_date);
+SELECT "Successfully created art_fast_track table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
