@@ -276,7 +276,8 @@ select
     visit_id,
     (case lab_test when 5497 then "CD4 Count" when 167718 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
                    when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" when 1029 then "VDRL Titre" when 1031 then "Treponema Pallidum Hemagglutination Assay"
-                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative"  when 45 then "Urine Pregnancy Test" when 167452 then "Serum Cryptococcal Ag" when 167459 then "TB LAM" else "" end) as lab_test,
+                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative"  when 45 then "Urine Pregnancy Test" when 167452 then "Serum Cryptococcal Ag" when 167459 then "TB LAM"
+        when 307 then "Sputum for Acid Fast Bacilli" else "" end) as lab_test,
     urgency,
     (case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
                        when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
