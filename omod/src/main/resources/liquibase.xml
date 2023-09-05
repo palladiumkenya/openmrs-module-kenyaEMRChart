@@ -108,5 +108,18 @@
         </comment>
         <sqlFile path="sql/Query_DoubleMetaphone_KenyaEMR_003.sql" endDelimiter="\$\$" stripComments="true" />
     </changeSet>
+    <changeSet id="${project.parent.artifactId}-20230613-2303" author="schege">
+        <comment>
+            Execute DWAPI DDL script for ETL
+        </comment>
+        <sqlFile path="sql/dwapi/DDL.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
+
+    <changeSet id="${project.parent.artifactId}-20230613-2305" author="schege">
+        <comment>
+            Execute DWAPI DML script for ETL
+        </comment>
+        <sqlFile path="sql/dwapi/DML.sql" endDelimiter="\$\$" stripComments="true" />
+    </changeSet>
 </databaseChangeLog>
 
