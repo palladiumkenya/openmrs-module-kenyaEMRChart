@@ -4741,33 +4741,67 @@ inner join (
     select o.person_id,
            o.encounter_id,
            o.obs_group_id,
-           max(if(o.concept_id=1000546, (case o.value_coded when 1000090 then "CBE"  else "" end),null)) as cbe_screening_method ,
-           max(if(o.concept_id=1000545, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as cbe_screening_result ,
-           max(if(o.concept_id=165070, (case o.value_coded when 1115 then "Counseled on negative results" when 1116 then "Refer for Tripple Assesment"  else "" end),null)) as cbe_treatment_method ,
-           max(if(o.concept_id=1000546, (case o.value_coded when 1000092 then "Breast Ultrasound"  else "" end),null)) as ultrasound_screening_method ,
-           max(if(o.concept_id=1000545, (case o.value_coded when 1000094 then "Birads 0" when 1000093 then "Birads 1"
-                                                           when 1000095 then "Birads 2" when 1000096 then "Birads 3" when 1000097 then "Birads 4"
-                                                           when 1000098 then "Birads 5" when 1000099 then "Birads 6"  else "" end),null)) as ultrasound_screening_result ,
-           max(if(o.concept_id in (165070,166665,1000145), (case o.value_coded when 1609 then "Recall for additional imaging"
-                                                                                     when 432 then "Routine ultrasound screening" when 164080 then "Short-interval(6 months) follow-up"
-                                                                                     when 136785 then "Tissue Diagnosis(U/S guided biopsy)" when 1000103 then "Refer for further management"
-                                                                                     when 1267 then "Done" when 1118 then "Not done"
-                                                                                     when 1000078 then "Negative-Counsel on negative results and review (provide review date)" when 1000088 then "Date screening done"
-                                                                                     when 160632 then "Reason not done" else "" end),null)) as ultrasound_treatment_method,
-           max(if(o.concept_id=1000546, (case o.value_coded when 163591 then "Mammography"  else "" end),null)) as mammography_screening_method ,
-           max(if(o.concept_id=1000545, (case o.value_coded when 1000094 then "Birads 0" when 1000093 then "Birads 1"
-                                                            when 1000095 then "Birads 2" when 1000096 then "Birads 3" when 1000097 then "Birads 4"
-                                                            when 1000098 then "Birads 5" when 1000099 then "Birads 6"  else "" end),null)) as mammography_screening_result ,
-           max(if(o.concept_id in (165070,166665,1000145), (case o.value_coded when 1609 then "Recall for additional imaging"
-                                                                               when 432 then "Routine mammography screening" when 164080 then "Short-interval(6 months) follow-up"
-                                                                               when 136785 then "Tissue Diagnosis(U/S guided biopsy)" when 1000103 then "Refer for further management" when 159619 then "Surgical excision when clinically appropriate)"
-                                                                               else "" end),null)) as mammography_treatment_method
+           max(if(o.concept_id = 159780, (case o.value_coded when 1000090 then "CBE" else "" end),
+                  null)) as                                                               cbe_screening_method,
+           max(if(o.concept_id = 160606,
+                  (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),
+                  null)) as                                                               cbe_screening_result,
+           max(if(o.concept_id = 165070, (case o.value_coded
+                                              when 1115 then "Counseled on negative results"
+                                              when 1116 then "Refer for Tripple Assesment"
+                                              else "" end), null)) as                     cbe_treatment_method,
+           max(if(o.concept_id = 159780, (case o.value_coded when 1000092 then "Breast Ultrasound" else "" end),
+                  null)) as                                                               ultrasound_screening_method,
+           max(if(o.concept_id = 160606, (case o.value_coded
+                                               when 1000094 then "Birads 0"
+                                               when 1000093 then "Birads 1"
+                                               when 1000095 then "Birads 2"
+                                               when 1000096 then "Birads 3"
+                                               when 1000097 then "Birads 4"
+                                               when 1000098 then "Birads 5"
+                                               when 1000099 then "Birads 6"
+                                               else "" end), null)) as                    ultrasound_screening_result,
+           max(if(o.concept_id in (165070, 166665, 1000145), (case o.value_coded
+                                                                  when 1609 then "Recall for additional imaging"
+                                                                  when 432 then "Routine ultrasound screening"
+                                                                  when 164080 then "Short-interval(6 months) follow-up"
+                                                                  when 136785 then "Tissue Diagnosis(U/S guided biopsy)"
+                                                                  when 1000103 then "Refer for further management"
+                                                                  when 1267 then "Done"
+                                                                  when 1118 then "Not done"
+                                                                  when 1000078
+                                                                      then "Negative-Counsel on negative results and review (provide review date)"
+                                                                  when 1000088 then "Date screening done"
+                                                                  when 160632 then "Reason not done"
+                                                                  else "" end), null)) as ultrasound_treatment_method,
+           max(if(o.concept_id = 159780, (case o.value_coded when 163591 then "Mammography" else "" end),
+                  null)) as                                                               mammography_screening_method,
+           max(if(o.concept_id = 160606, (case o.value_coded
+                                               when 1000094 then "Birads 0"
+                                               when 1000093 then "Birads 1"
+                                               when 1000095 then "Birads 2"
+                                               when 1000096 then "Birads 3"
+                                               when 1000097 then "Birads 4"
+                                               when 1000098 then "Birads 5"
+                                               when 1000099 then "Birads 6"
+                                               else "" end), null)) as                    mammography_screening_result,
+           max(if(o.concept_id in (165070, 166665, 1000145), (case o.value_coded
+                                                                  when 1609 then "Recall for additional imaging"
+                                                                  when 432 then "Routine mammography screening"
+                                                                  when 164080 then "Short-interval(6 months) follow-up"
+                                                                  when 136785 then "Tissue Diagnosis(U/S guided biopsy)"
+                                                                  when 1000103 then "Refer for further management"
+                                                                  when 159619
+                                                                      then "Surgical excision when clinically appropriate)"
+                                                                  else "" end), null)) as mammography_treatment_method
     from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
-             inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-    where o.concept_id in (1000546, 1000545, 165070,1272,166665,1000145) and o.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee",
+                                                                       "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+    where o.concept_id in (159780, 160606, 165070, 1272, 166665, 1000145)
+      and o.voided = 0
     group by e.encounter_id, o.obs_group_id
-)t on e.encounter_id = t.encounter_id
+)
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing Breast Cancer Screening", CONCAT("Time: ", NOW());
