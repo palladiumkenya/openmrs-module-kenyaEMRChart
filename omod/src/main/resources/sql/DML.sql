@@ -4603,7 +4603,7 @@ left join (
 				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
                  when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as colposcopy_screening_result,
                max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
-				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermal Coagulation'
                  when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
                  when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as colposcopy_treatment_method
              from obs o
@@ -4637,6 +4637,176 @@ where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 END $$
+
+        --------------------------- process patient etl_breast_cancer_screening ---
+DROP PROCEDURE IF EXISTS sp_populate_etl_breast_cancer_screening $$
+CREATE PROCEDURE sp_populate_etl_breast_cancer_screening()
+BEGIN
+SELECT "Processing Breast Cancer screening", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_breast_cancer_screening(
+    uuid,
+    encounter_id,
+    encounter_provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    date_created,
+    date_last_modified,
+    visit_type,
+    screening_type,
+    post_treatment_complication_cause,
+    post_treatment_complication_other,
+    cbe_screening_method,
+    ultrasound_screening_method,
+    mammography_smear_screening_method,
+    cbe_screening_result,
+    ultrasound_screening_result,
+    mammography_screening_result,
+    cbe_treatment_method,
+    ultrasound_treatment_method,
+    mammogrphy_treatment_method,
+    referred_out,
+    referral_facility,
+    referral_reason,
+    followup_date,
+    hiv_status,
+    smoke_cigarattes,
+    other_forms_tobacco,
+    take_alcohol,
+    previous_treatment,
+    previous_treatment_specify,
+    signs_symptoms,
+    signs_symptoms_specify,
+    family_history,
+    number_of_years_smoked,
+    number_of_cigarette_per_day,
+    clinical_notes,
+    voided
+)
+select
+    e.uuid,  e.encounter_id,e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id,e.date_created,
+    if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+    max(if(o.concept_id = 160288, (case o.value_coded when 162080 then 'Initial visit'
+                                                      when 161236 then 'Routine visit'
+                                                      when 165381 then 'Post treatment visit'
+                                                      when 1185 then 'Treatment visit'
+                                                      when 165382 then 'Post treatment complication' else "" end), "" )) as visit_type,
+    max(if(o.concept_id = 164181, (case o.value_coded when 164180 then 'First time screening' when 160530 then 'Rescreening'
+                                                      when 165389 then 'Post treatment followup' else "" end), "" )) as screening_type,
+    max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
+    max(if(o.concept_id=5096,o.value_datetime,null)) as followup_date,
+    max(if(o.concept_id=1169,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" else "" end),null)) as hiv_status,
+    max(if(o.concept_id=163201,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 158939 then "Stopped" else "" end),null)) as smoke_cigarattes,
+    max(if(o.concept_id=163731,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 158939 then "Stopped" else "" end),null)) as other_forms_tobacco,
+    max(if(o.concept_id=159449,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 167155 then "Stopped" else "" end),null)) as take_alcohol,
+    concat_ws(',', max(if(o.concept_id = 162964 and o.value_coded = 1107, 'None', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 166917, 'Chemotherapy', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 16117, 'Radiotherapy', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 160345, 'Hormonal therapy', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 5622, 'Other', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 159619, 'Surgery', null))) as previous_treatment,
+    max(if(o.concept_id=160632,trim(o.value_text),null)) as previous_treatment_specify,
+    concat_ws(',', max(if(o.concept_id = 1729 and o.value_coded = 1107, 'None', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 111, 'Dyspepsia', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 117671, 'Blood in stool', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 5192, 'Yellow eyes', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 840, 'Blood in urine', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 132667, 'Nose Bleeding', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 5954, 'Difficulty in swallowing', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 832, 'Weight loss', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 140501, 'Easy fatigability', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 150802, 'Abnormal vaginal bleeding', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 115844, 'Changing/enlarging skin moles', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 120551, 'Chronic skin ulcers', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 115919, 'Lumps/swellings', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 145455, 'Chronic cough', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 115779, 'Persistent headaches', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 129452, 'Post-coital bleeding', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 151903, 'Changing bowel habits', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 5622, 'Other', null))) as signs_symptoms,
+    max(if(o.concept_id=161011,trim(o.value_text),null)) as signs_symptoms_specify,
+    max(if(o.concept_id=160592,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as family_history,
+    max(if(o.concept_id=159931,o.value_numeric,null)) as number_of_years_smoked,
+    max(if(o.concept_id=1546,o.value_numeric,null)) as number_of_cigarette_per_day,
+    max(if(o.concept_id=164879,trim(o.value_text),null)) as clinical_notes,
+
+e.voided
+from encounter e
+         inner join person p on p.person_id=e.patient_id and p.voided=0
+         inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
+inner join (
+    select o.person_id,
+           o.encounter_id,
+           o.obs_group_id,
+           max(if(o.concept_id = 159780, (case o.value_coded when 1000090 then "CBE" else "" end),
+                  null)) as                                                               cbe_screening_method,
+           max(if(o.concept_id = 160606,
+                  (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),
+                  null)) as                                                               cbe_screening_result,
+           max(if(o.concept_id = 165070, (case o.value_coded
+                                              when 1115 then "Counseled on negative results"
+                                              when 1116 then "Refer for Tripple Assesment"
+                                              else "" end), null)) as                     cbe_treatment_method,
+           max(if(o.concept_id = 159780, (case o.value_coded when 1000092 then "Breast Ultrasound" else "" end),
+                  null)) as                                                               ultrasound_screening_method,
+           max(if(o.concept_id = 160606, (case o.value_coded
+                                               when 1000094 then "Birads 0"
+                                               when 1000093 then "Birads 1"
+                                               when 1000095 then "Birads 2"
+                                               when 1000096 then "Birads 3"
+                                               when 1000097 then "Birads 4"
+                                               when 1000098 then "Birads 5"
+                                               when 1000099 then "Birads 6"
+                                               else "" end), null)) as                    ultrasound_screening_result,
+           max(if(o.concept_id in (165070, 166665, 1000145), (case o.value_coded
+                                                                  when 1609 then "Recall for additional imaging"
+                                                                  when 432 then "Routine ultrasound screening"
+                                                                  when 164080 then "Short-interval(6 months) follow-up"
+                                                                  when 136785 then "Tissue Diagnosis(U/S guided biopsy)"
+                                                                  when 1000103 then "Refer for further management"
+                                                                  when 1267 then "Done"
+                                                                  when 1118 then "Not done"
+                                                                  when 1000078
+                                                                      then "Negative-Counsel on negative results and review (provide review date)"
+                                                                  when 1000088 then "Date screening done"
+                                                                  when 160632 then "Reason not done"
+                                                                  else "" end), null)) as ultrasound_treatment_method,
+           max(if(o.concept_id = 159780, (case o.value_coded when 163591 then "Mammography" else "" end),
+                  null)) as                                                               mammography_screening_method,
+           max(if(o.concept_id = 160606, (case o.value_coded
+                                               when 1000094 then "Birads 0"
+                                               when 1000093 then "Birads 1"
+                                               when 1000095 then "Birads 2"
+                                               when 1000096 then "Birads 3"
+                                               when 1000097 then "Birads 4"
+                                               when 1000098 then "Birads 5"
+                                               when 1000099 then "Birads 6"
+                                               else "" end), null)) as                    mammography_screening_result,
+           max(if(o.concept_id in (165070, 166665, 1000145), (case o.value_coded
+                                                                  when 1609 then "Recall for additional imaging"
+                                                                  when 432 then "Routine mammography screening"
+                                                                  when 164080 then "Short-interval(6 months) follow-up"
+                                                                  when 136785 then "Tissue Diagnosis(U/S guided biopsy)"
+                                                                  when 1000103 then "Refer for further management"
+                                                                  when 159619
+                                                                      then "Surgical excision when clinically appropriate)"
+                                                                  else "" end), null)) as mammography_treatment_method
+    from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id = e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee",
+                                                                       "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+    where o.concept_id in (159780, 160606, 165070, 1272, 166665, 1000145)
+      and o.voided = 0
+    group by e.encounter_id, o.obs_group_id
+)
+where e.voided=0
+group by e.encounter_id;
+SELECT "Completed processing Breast Cancer Screening", CONCAT("Time: ", NOW());
+END $$
+
 		--------------------------- process patient contact ------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_patient_contact $$

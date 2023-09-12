@@ -68,6 +68,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_cervical_cancer_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_breast_cancer_screening;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_colorectal_cancer_screening;
 
 DROP TABLE IF EXISTS kenyaemr_etl.etl_client_trace;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_contact;
@@ -2116,6 +2118,101 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     INDEX(patient_id, visit_date)
   );
   SELECT "Successfully created etl_cervical_cancer_screening table";
+
+  ------------------------ creating Breast Cancer Screening Table -----------------------
+    CREATE TABLE kenyaemr_etl.etl_breast_cancer_screening (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    encounter_provider INT(11),
+    patient_id INT(11) NOT NULL,
+    visit_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    visit_type VARCHAR(255) DEFAULT NULL,
+    screening_type VARCHAR(255) DEFAULT NULL,
+    post_treatment_complication_cause VARCHAR(255) DEFAULT NULL,
+    post_treatment_complication_other VARCHAR(255) DEFAULT NULL,
+    cbe_screening_method VARCHAR(255) DEFAULT NULL,
+    ultrasound_screening_method VARCHAR(255) DEFAULT NULL,
+    mammography_screening_method VARCHAR(255) DEFAULT NULL,
+    cbe_screening_result VARCHAR(255) DEFAULT NULL,
+    ultrasound_screening_result VARCHAR(255) DEFAULT NULL,
+    mammography_screening_result VARCHAR(255) DEFAULT NULL,
+    cbe_treatment_method VARCHAR(255) DEFAULT NULL,
+    ultrasound_treatment_method VARCHAR(255) DEFAULT NULL,
+    mammography_treatment_method VARCHAR(255) DEFAULT NULL,
+    referred_out VARCHAR(100) DEFAULT NULL,
+    referral_facility VARCHAR(100) DEFAULT NULL,
+    referral_reason VARCHAR(255) DEFAULT NULL,
+    followup_date DATETIME,
+    hiv_status VARCHAR(100) DEFAULT NULL,
+    smoke_cigarattes VARCHAR(255) DEFAULT NULL,
+    other_forms_tobacco VARCHAR(255) DEFAULT NULL,
+    take_alcohol VARCHAR(255) DEFAULT NULL,
+    previous_treatment VARCHAR(255) DEFAULT NULL,
+    previous_treatment_specify VARCHAR(255) DEFAULT NULL,
+    signs_symptoms VARCHAR(500) DEFAULT NULL,
+    signs_symptoms_specify VARCHAR(500) DEFAULT NULL,
+    family_history VARCHAR(100) DEFAULT NULL,
+    number_of_years_smoked VARCHAR(100) DEFAULT NULL,
+    number_of_cigarette_per_day VARCHAR(100) DEFAULT NULL,
+    clinical_notes VARCHAR(500) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+  SELECT "Successfully created etl_breast_cancer_screening table";
+
+  ------------------------ creating Colorectal Cancer Screening Table -----------------------
+    CREATE TABLE kenyaemr_etl.etl_colorectal_cancer_screening (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    encounter_provider INT(11),
+    patient_id INT(11) NOT NULL,
+    visit_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    visit_type VARCHAR(255) DEFAULT NULL,
+    screening_type VARCHAR(255) DEFAULT NULL,
+    post_treatment_complication_cause VARCHAR(255) DEFAULT NULL,
+    post_treatment_complication_other VARCHAR(255) DEFAULT NULL,
+    fecal_occult_blood_test_screening_method VARCHAR(255) DEFAULT NULL,
+    colonoscopy_screening_method VARCHAR(255) DEFAULT NULL,
+    fecal_occult_blood_test_screening_result VARCHAR(255) DEFAULT NULL,
+    colonoscopy_screening_result VARCHAR(255) DEFAULT NULL,
+    fecal_occult_blood_test_treatment_method VARCHAR(255) DEFAULT NULL,
+    colonoscopy_treatment_method VARCHAR(255) DEFAULT NULL,
+    referred_out VARCHAR(100) DEFAULT NULL,
+    referral_facility VARCHAR(100) DEFAULT NULL,
+    referral_reason VARCHAR(255) DEFAULT NULL,
+    followup_date DATETIME,
+    hiv_status VARCHAR(100) DEFAULT NULL,
+    smoke_cigarattes VARCHAR(255) DEFAULT NULL,
+    other_forms_tobacco VARCHAR(255) DEFAULT NULL,
+    take_alcohol VARCHAR(255) DEFAULT NULL,
+    previous_treatment VARCHAR(255) DEFAULT NULL,
+    previous_treatment_specify VARCHAR(255) DEFAULT NULL,
+    signs_symptoms VARCHAR(500) DEFAULT NULL,
+    signs_symptoms_specify VARCHAR(500) DEFAULT NULL,
+    family_history VARCHAR(100) DEFAULT NULL,
+    number_of_years_smoked VARCHAR(100) DEFAULT NULL,
+    number_of_cigarette_per_day VARCHAR(100) DEFAULT NULL,
+    clinical_notes VARCHAR(500) DEFAULT NULL,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+  SELECT "Successfully created etl_colorectal_cancer_screening table";
 
   -- --------------------- creating patient contact  table -------------------------------
   CREATE TABLE kenyaemr_etl.etl_patient_contact (
