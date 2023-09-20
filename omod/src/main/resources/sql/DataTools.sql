@@ -837,7 +837,7 @@ SELECT "Successfully created post natal visit table";
         when 162563 then '3TC/ABC/EFV'
         when 162562 then 'ABC/LPV/R/TDF'
         when 162559 then 'ABC/DDI/LPV/r' else "" end) as mother_drug_regimen,
-      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "sd NVP+AZT+3TC" when 1149 then "NVP for 6 weeks(Mother on HAART)" when 1107 then "None" else "" end) as infant_prophylaxis,
+      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "AZT/NVP" when 162326 then "NVP for 6 weeks(Mother on HAART)" when 160123 then "AZT Liquid BD for 6 weeks" when 78643 then "3TC Liquid BD" when 1149 then "none" when 1107 then "Other" else "" end) as infant_prophylaxis,
       parent_ccc_number,
       (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" when 1172 then "Breech delivery" when 118159 then "Assisted vaginal delivery" else "" end) as mode_of_delivery,
       (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
