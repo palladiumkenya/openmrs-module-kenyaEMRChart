@@ -7,6 +7,7 @@ BEGIN
 -- update etl_patient_demographics table
 insert into kenyaemr_etl.etl_patient_demographics(
 patient_id,
+uuid,
 given_name,
 middle_name,
 family_name,
@@ -20,6 +21,7 @@ death_date
 )
 select 
 p.person_id,
+p.uuid,
 p.given_name,
 p.middle_name,
 p.family_name,
@@ -33,6 +35,7 @@ p.death_date
 FROM (
 select 
 p.person_id,
+p.uuid,
 pn.given_name,
 pn.middle_name,
 pn.family_name,
@@ -142,7 +145,7 @@ max(if(pit.uuid='ac64e5cb-e3e2-4efa-9060-0dd715a843a1',pi.identifier,null)) uniq
 max(if(pit.uuid='1c7d0e5b-2068-4816-a643-8de83ab65fbf',pi.identifier,null)) alien_no,
 max(if(pit.uuid='ca125004-e8af-445d-9436-a43684150f8b',pi.identifier,null)) driving_license_no,
 max(if(pit.uuid='f85081e2-b4be-4e48-b3a4-7994b69bb101',pi.identifier,null)) national_unique_patient_identifier,
-max(if(pit.uuid='fd52829a-75d2-4732-8e43-4bff8e5b4f1a',pi.identifier,null)) hts_recency_id,
+REPLACE(max(if(pit.uuid='fd52829a-75d2-4732-8e43-4bff8e5b4f1a',pi.identifier,null)),'-','') hts_recency_id,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -303,6 +306,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
   BEGIN
 
     INSERT INTO kenyaemr_etl.etl_patient_hiv_followup(
+      uuid,
       patient_id,
       visit_id,
       visit_date,
@@ -410,6 +414,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       voided
     )
       select
+        e.uuid,
         e.patient_id,
         e.visit_id,
         date(e.encounter_datetime) as visit_date,
@@ -2526,7 +2531,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         od.urgency,
         od.order_reason,
         (case when o.concept_id in(5497,730,654,790,856) then o.value_numeric
-         when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452) then o.value_coded END) AS test_result,
+         when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459) then o.value_coded END) AS test_result,
         od.date_activated as date_test_requested,
         e.encounter_datetime as date_test_result_received,
         e.date_created,
@@ -2538,7 +2543,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
         (
           select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1','de78a6be-bfc5-4634-adc3-5f1a280455cc')
         ) et on et.encounter_type_id=e.encounter_type
-        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452)
+        inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459)
         left join orders od on od.order_id = o.order_id and od.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -3529,7 +3534,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
                max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
                max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
                max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
-               max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" when 168050 then "CAB-LA" when 168049 then "Dapivirine Ring"  else "" end), "" )) as prescribed_regimen,
+               max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end), "" )) as prescribed_regimen,
                 max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
                 max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
@@ -3658,6 +3663,7 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       initial_enrolment_date,
       date_started_prep_trf_facility,
       previously_on_prep,
+      prep_type,
       regimen,
       prep_last_date,
       in_school,
@@ -3682,6 +3688,7 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
                 max(if(o.concept_id = 160555, o.value_datetime, null )) as initial_enrolment_date,
                 max(if(o.concept_id = 159599, o.value_datetime, null )) as date_started_prep_trf_facility,
                 max(if(o.concept_id = 160533, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as previously_on_prep,
+                max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
                 max(if(o.concept_id = 1088, (case o.value_coded when 104567 then "TDF/FTC" when 84795 then "TDF" when 161364 then "TDF/3TC" else "" end), "" )) as regimen,
                 max(if(o.concept_id = 162881, o.value_datetime, null )) as prep_last_date,
                 max(if(o.concept_id = 5629, o.value_coded, null )) as in_school,
@@ -3695,7 +3702,7 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088,162881,5629,160638,165038,160640,160642,160641,164930,160581) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088,162881,5629,166866,160638,165038,160640,160642,160641,164930,160581) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3715,6 +3722,7 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       initial_enrolment_date=VALUES(initial_enrolment_date),
       date_started_prep_trf_facility=VALUES(date_started_prep_trf_facility),
       previously_on_prep=VALUES(previously_on_prep),
+      prep_type=VALUES(prep_type),
       regimen=VALUES(regimen),
       prep_last_date=VALUES(prep_last_date),
       in_school=VALUES(in_school),
@@ -3859,7 +3867,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
         max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
         max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end), "" )) as prescribed_PrEP,
-        max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" when 168050 then "CAB-LA" when 168049 then "Dapivirine Ring" end), "" )) as regimen_prescribed,
+        max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end), "" )) as regimen_prescribed,
         max(if(o.concept_id = 164433, o.value_text, null)) as months_prescribed_regimen,
         max(if(o.concept_id = 159777, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as condoms_issued,
         max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms,

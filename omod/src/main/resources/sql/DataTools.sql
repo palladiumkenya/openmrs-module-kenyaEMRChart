@@ -15,6 +15,7 @@ create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unico
 create table kenyaemr_datatools.patient_demographics as
 select 
 patient_id,
+uuid,
 given_name,
 middle_name,
 family_name,
@@ -133,7 +134,8 @@ SELECT "Successfully created hiv enrollment table";
 
 -- ----------------------------------- create table hiv_followup ----------------------------------------------
 create table kenyaemr_datatools.hiv_followup as
-select 
+select
+uuid,
 patient_id,
 visit_id,
 visit_date,
@@ -274,7 +276,8 @@ select
     visit_id,
     (case lab_test when 5497 then "CD4 Count" when 167718 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
                    when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" when 1029 then "VDRL Titre" when 1031 then "Treponema Pallidum Hemagglutination Assay"
-                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative"  when 45 then "Urine Pregnancy Test" when 167452 then 'Serum Cryptococcal Ag' else "" end) as lab_test,
+                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative"  when 45 then "Urine Pregnancy Test" when 167452 then "Serum Cryptococcal Ag" when 167459 then "TB LAM"
+        when 307 then "Sputum for Acid Fast Bacilli" when 162202 then "GeneXpert" else "" end) as lab_test,
     urgency,
     (case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
                        when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
@@ -301,7 +304,8 @@ select
                             if(lab_test=1619, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
                             if(lab_test=45, (case test_result when 703 then "Positive" when 664 then "Negative" when 1138 then "Indeterminate" when 1304 then "Poor Quality Sample" end),
                             if(lab_test=167452, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
-                               test_result ))))))))))))))) AS test_result,
+                            if(lab_test=167459, (case test_result when 163747 then "Absent" when 163748 then "Present" end),
+                               test_result )))))))))))))))) AS test_result,
     date_created,
     created_by
 from kenyaemr_etl.etl_laboratory_extract;
@@ -810,12 +814,30 @@ SELECT "Successfully created post natal visit table";
       (case mother_on_pmtct_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_pmtct_drugs,
       (case mother_on_drug when 80586 then "Sd NVP Only" when 1652 then "AZT+NVP+3TC" when 1149 then "HAART" when 1107 then "None" else "" end) as mother_on_drug,
       (case mother_on_art_at_infant_enrollment when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_art_at_infant_enrollment,
-      (case mother_drug_regimen when 164968 then "AZT/3TC/DTG" when 164969 then "TDF/3TC/DTG" when 164970 then "ABC/3TC/DTG" when 164505 then "TDF/3TC/EFV" when 792 then "D4T/3TC/NVP" when 160124 then "AZT/3TC/EFV" when 160104 then "D4T/3TC/EFV" when 1652 then "3TC/NVP/AZT"
-       when 161361 then "EDF/3TC/EFV" when 104565 then "EFV/FTC/TDF" when 162201 then "3TC/LPV/TDF/r" when 817 then "ABC/3TC/AZT"
-       when 162199 then "ABC/NVP/3TC" when 162200 then "3TC/ABC/LPV/r" when 162565 then "3TC/NVP/TDF" when 1652 then "3TC/NVP/AZT"
-       when 162561 then "3TC/AZT/LPV/r" when 164511 then "AZT-3TC-ATV/r" when 164512 then "TDF-3TC-ATV/r" when 162560 then "3TC/D4T/LPV/r"
-       when 162563 then "3TC/ABC/EFV" when 162562 then "ABC/LPV/R/TDF" when 162559 then "ABC/DDI/LPV/r"  else "" end) as mother_drug_regimen,
-      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "sd NVP+AZT+3TC" when 1149 then "NVP for 6 weeks(Mother on HAART)" when 1107 then "None" else "" end) as infant_prophylaxis,
+        (case mother_drug_regimen when 164968 then 'AZT/3TC/DTG'
+        when 164969 then 'TDF/3TC/DTG'
+        when 164970 then 'ABC/3TC/DTG'
+        when 164505 then 'TDF-3TC-EFV'
+        when 792 then 'D4T/3TC/NVP'
+        when 160124 then 'AZT/3TC/EFV'
+        when 160104 then 'D4T/3TC/EFV'
+        when 1652 then '3TC/NVP/AZT'
+        when 161361 then 'EDF/3TC/EFV'
+        when 104565 then 'EFV/FTC/TDF'
+        when 162201 then '3TC/LPV/TDF/r'
+        when 817 then 'ABC/3TC/AZT'
+        when 162199 then 'ABC/NVP/3TC'
+        when 162200 then '3TC/ABC/LPV/r'
+        when 162565 then '3TC/NVP/TDF'
+        when 1652 then '3TC/NVP/AZT'
+        when 162561 then '3TC/AZT/LPV/r'
+        when 164511 then 'AZT-3TC-ATV/r'
+        when 164512 then 'TDF-3TC-ATV/r'
+        when 162560 then '3TC/D4T/LPV/r'
+        when 162563 then '3TC/ABC/EFV'
+        when 162562 then 'ABC/LPV/R/TDF'
+        when 162559 then 'ABC/DDI/LPV/r' else "" end) as mother_drug_regimen,
+      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "AZT/NVP" when 162326 then "NVP for 6 weeks(Mother on HAART)" when 160123 then "AZT Liquid BD for 6 weeks" when 78643 then "3TC Liquid BD" when 1149 then "none" when 1107 then "Other" else "" end) as infant_prophylaxis,
       parent_ccc_number,
       (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" when 1172 then "Breech delivery" when 118159 then "Assisted vaginal delivery" else "" end) as mode_of_delivery,
       (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
@@ -1224,6 +1246,7 @@ SELECT "Successfully created enhanced adherence table";
         (case relationship_type when 970 then "Mother" when 971 then "Father" when 1528 then "Child" when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 162221 then "Co-wife" when 163565 then "Sexual partner" when 157351 then "Injectable drug user" when 166606 then "SNS" when 5622 then "Other" else "" end) as relationship_type,
         appointment_date,
         baseline_hiv_status,
+        reported_test_date,
         ipv_outcome,
        (case marital_status when 1057 then "Single" when 5555 then "Married Monogamous" when 159715 then "Married Polygamous" when 1058 then "Divorced" when 1059 then "Widowed" else "" end) as marital_status,
        (case living_with_patient when 1065 then "Yes" when 1066 then "No" when 162570 then "Declined to Answer" else "" end) as living_with_patient,
@@ -1828,6 +1851,7 @@ create table kenyaemr_datatools.prep_enrolment as
          initial_enrolment_date,
          date_started_prep_trf_facility,
          previously_on_prep,
+         prep_type,
          regimen,
          prep_last_date,
          case in_school when 1 then 'Yes' when 2 then 'No' end as in_school,
