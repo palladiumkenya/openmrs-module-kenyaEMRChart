@@ -30,6 +30,7 @@ alien_no,
 driving_license_no,
 national_unique_patient_identifier,
 hts_recency_id,
+nhif_number,
 patient_clinic_number,
 Tb_no,
 CPIMS_unique_identifier,
@@ -247,7 +248,10 @@ refill_date,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
-when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care
+when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care,
+(case insurance_type when 1917 then "NHIF" when 1107 then "None" when 5622 then "Other" else "" end) as insurance_type,
+other_insurance_specify,
+(case insurance_status when 161636 then "Active" when 1118 then "Inactive" else "" end) as insurance_status
 from kenyaemr_etl.etl_patient_hiv_followup;
 
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
