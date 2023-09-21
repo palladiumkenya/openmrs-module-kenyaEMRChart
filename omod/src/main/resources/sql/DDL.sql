@@ -1714,6 +1714,7 @@ SELECT "Successfully created etl_ART_preparation table";
     initial_enrolment_date DATE,
     date_started_prep_trf_facility DATE,
     previously_on_prep VARCHAR(10),
+    prep_type VARCHAR(10),
     regimen VARCHAR(255),
     prep_last_date DATE,
     in_school VARCHAR(10),
