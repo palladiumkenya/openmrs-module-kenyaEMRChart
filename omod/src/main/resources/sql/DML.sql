@@ -2556,6 +2556,7 @@ final_test_result,
 syphillis_test_result,
 patient_given_result,
 couple_discordant,
+referred,
 referral_for,
 referral_facility,
 other_referral_facility,
@@ -2609,6 +2610,7 @@ max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664
 max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
 max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as couple_discordant,
+max(if(o.concept_id=165093,o.value_coded,null)) as referred,
 max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
 max(if(o.concept_id=160481,(case o.value_coded when 163266 then "This health facility" when 164407 then "Other health facility" else "" end),null)) as referral_facility,
 max(if(o.concept_id=161550,trim(o.value_text),null)) as other_referral_facility,
@@ -2632,7 +2634,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093)
 inner join (
              select
                o.person_id,

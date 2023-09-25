@@ -2610,6 +2610,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       syphillis_test_result,
       patient_given_result,
       couple_discordant,
+      referred,
       referral_for,
       referral_facility,
       other_referral_facility,
@@ -2663,6 +2664,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_given_result,
         max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as couple_discordant,
+        max(if(o.concept_id=165093,o.value_coded,null)) as referred,
         max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
         max(if(o.concept_id=160481,(case o.value_coded when 163266 then "This health facility" when 164407 then "Other health facility" else "" end),null)) as referral_facility,
         max(if(o.concept_id=161550,trim(o.value_text),null)) as other_referral_facility,
@@ -2686,7 +2688,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
         inner join obs o on o.encounter_id = e.encounter_id and o.voided=0 and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,299,167163,167162)
+                                                                                                        159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,299,167163,167162,165093)
         inner join (
                      select
                        o.person_id,
@@ -2719,7 +2721,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       test_1_kit_name=VALUES(test_1_kit_name), test_1_kit_lot_no=VALUES(test_1_kit_lot_no),
       test_1_kit_expiry=VALUES(test_1_kit_expiry), test_1_result=VALUES(test_1_result), test_2_kit_name=VALUES(test_2_kit_name),
       test_2_kit_lot_no=VALUES(test_2_kit_lot_no), test_2_kit_expiry=VALUES(test_2_kit_expiry), test_2_result=VALUES(test_2_result),
-      final_test_result=VALUES(final_test_result), patient_given_result=VALUES(patient_given_result), couple_discordant=VALUES(couple_discordant),
+      final_test_result=VALUES(final_test_result), patient_given_result=VALUES(patient_given_result), couple_discordant=VALUES(couple_discordant),referred=VALUES(referred),
       tb_screening=VALUES(tb_screening), neg_referral_for=VALUES(neg_referral_for), patient_had_hiv_self_test=VALUES(patient_had_hiv_self_test),
       remarks=VALUES(remarks), voided=VALUES(voided)
     ;
