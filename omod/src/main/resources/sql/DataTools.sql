@@ -1448,6 +1448,7 @@ create table kenyaemr_datatools.gbv_screening_action as
 select
 patient_id,
 uuid,
+encounter_id,
 provider,
 visit_id,
 visit_date,
@@ -1475,6 +1476,7 @@ location_id,
         when 1185 then "Treatment"
         when 5622 then "Other"
         else "" end) as action_taken,
+    action_date as action_date,
 (case reason_for_not_reporting when 1067 then "Did not know where to report"
        when 1811 then "Distance"
        when 140923 then "Exhaustion/Lack of energy"
