@@ -4447,7 +4447,7 @@ select
                                  when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
      max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
 
-     max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=160705, 'Colposcopy(for positive HPV,VIA or PAP smear)',
+     max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=160705, 'Colposcopy)',
 	    if(t.colposcopy_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_method, null))) as colposcopy_screening_method,
      max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=159859, 'HPV',
 	    if(t.hpv_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_screening_method, null))) as hpv_screening_method,
@@ -4547,7 +4547,7 @@ inner join (
                     when 155208 then "AGUS"  else "" end),null)) as pap_smear_screening_result ,
                max(if(o.concept_id in (165070,1272), (case o.value_coded when 1065 then "Counseled on negative results" 
                     when 160705 then "Refer for colposcopy" when 161826 then "Refer for biopsy"  else "" end),null)) as pap_smear_treatment_method ,
-               max(if(o.concept_id=163589, (case o.value_coded when 160705 then "Colposcopy(for positive HPV,VIA or PAP smear)"  else "" end),null)) as colposcopy_screening_method ,
+               max(if(o.concept_id=163589, (case o.value_coded when 160705 then "Colposcopy"  else "" end),null)) as colposcopy_screening_method ,
                max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal" 
                     when 1116 then "Abnormal" when 159008 then "Suspicious for Cancer"  else "" end),null)) as colposcopy_screening_result ,
                 max(if(o.concept_id in (165070,166665,160705,165266), (case o.value_coded when 1065 then "Counseled on negative results" 
