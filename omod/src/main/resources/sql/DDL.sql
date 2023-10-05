@@ -97,6 +97,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_eligibility_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_drug_order;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_preventive_services;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_art_fast_track;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -3264,6 +3265,49 @@ create table kenyaemr_etl.etl_overdose_reporting (
     index(outcome)
 );
 SELECT "Successfully created etl_overdose_reporting table";
+
+-- Create etl_overdose_reporting table";
+CREATE TABLE kenyaemr_etl.etl_art_fast_track
+(
+    uuid                              char(38),
+    provider                          INT(11),
+    patient_id                        INT(11)  NOT NULL,
+    visit_id                          INT(11),
+    visit_date                        DATE,
+    location_id                       INT(11) DEFAULT NULL,
+    encounter_id                      INT(11)  NOT NULL,
+    art_refill_model                  INT(11),
+    ctx_dispensed                     INT(11),
+    dapsone_dispensed                 INT(11),
+    oral_contraceptives_dispensed     INT(11),
+    condoms_distributed               INT(11),
+    missed_arv_doses_since_last_visit INT(11),
+    doses_missed                      INT(11),
+    fatigue                           INT(11),
+    cough                             INT(11),
+    fever                             INT(11),
+    rash                              INT(11),
+    nausea_vomiting                   INT(11),
+    genital_sore_discharge            INT(11),
+    diarrhea                          INT(11),
+    other_symptoms                    INT(11),
+    other_specific_symptoms           INT(11),
+    pregnant                          INT(11),
+    family_planning_status            INT(11),
+    family_planning_method            varchar(250),
+    reason_not_on_family_planning     varchar(250),
+    referred_to_clinic                INT(11),
+    return_visit_date                 DATE,
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    voided                            INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date),
+    INDEX (patient_id),
+    INDEX (encounter_id)
+);
+SELECT "Successfully created etl_art_fast_track table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
