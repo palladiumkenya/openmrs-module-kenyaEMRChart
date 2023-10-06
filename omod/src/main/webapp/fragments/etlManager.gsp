@@ -7,9 +7,10 @@
             jq("#msgSpan").text("Refreshing ETL Tables");
             jq("#showStatus").show();
             jq("#msg").text("");
-
             jq("#refresh").prop("disabled", true);
             jq("#recreate").prop("disabled", true);
+            jq("#recreate-datatools").prop("disabled", true);
+            jq("#recreate-dwapi").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("refreshTables") }')
                 .success(function(data) {
                     if(data.status) {
@@ -23,6 +24,8 @@
                         jq("#msg").text("ETL tables refreshed successfully");
                         jq("#refresh").prop("disabled", false);
                         jq("#recreate").prop("disabled", false);
+                        jq("#recreate-datatools").prop("disabled", false);
+                        jq("#recreate-dwapi").prop("disabled", false);
                         if(data.data) {
                             var processedData = data.data;
                             for (index in processedData) {
@@ -42,15 +45,14 @@
                         }
 
                     }
-
-
-
                 })
                 .error(function(xhr, status, err) {
                     jq("#showStatus").hide();
                     jq("#msg").text("There was an error refreshing ETL tables. (" + err + ")");
                     jq("#refresh").prop("disabled", false);
                     jq("#recreate").prop("disabled", false);
+                    jq("#recreate-datatools").prop("disabled", false);
+                    jq("#recreate-dwapi").prop("disabled", false);
 
                     alert('AJAX error ' + err);
                 })
@@ -63,6 +65,8 @@
             jq("#showStatus").show();
             jq("#recreate").prop("disabled", true);
             jq("#refresh").prop("disabled", true);
+            jq("#recreate-datatools").prop("disabled", true);
+            jq("#recreate-dwapi").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("recreateTables") }')
                 .success(function(data) {
                     if(data.status) {
@@ -77,6 +81,8 @@
                         jq("#msg").text("ETL tables recreated successfully");
                         jq("#recreate").prop("disabled", false);
                         jq("#refresh").prop("disabled", false);
+                        jq("#recreate-datatools").prop("disabled", false);
+                        jq("#recreate-dwapi").prop("disabled", false);
                         if(data.data) {
                             var processedData = data.data;
                             for (index in processedData) {
@@ -101,10 +107,122 @@
                     jq("#msg").text("There was an error recreating ETL tables");
                     jq("#recreate").prop("disabled", false);
                     jq("#refresh").prop("disabled", false);
+                    jq("#recreate-datatools").prop("disabled", false);
+                    jq("#recreate-dwapi").prop("disabled", false);
+                    alert('AJAX error ' + err);
+                })
+        });
+        jq('#recreate-datatools').click(function() {
+            jq("#recreate").attr("disabled", true);
+            jq("#msgSpan").text("Recreating Datatools Tables");
+            jq("#msg").text("");
+            jq("#showStatus").show();
+            jq("#recreate").prop("disabled", true);
+            jq("#refresh").prop("disabled", true);
+            jq("#recreate-datatools").prop("disabled", true);
+            jq("#recreate-dwapi").prop("disabled", true);
+            jq.getJSON('${ ui.actionLink("recreateDatatoolsTables") }')
+                .success(function(data) {
+                    if(data.status) {
+                        if(data.status[0].process ==="locked") {
+                            jq( "#dialog-1" ).dialog( "open" );
+                            jq("#showStatus").hide();
+
+                        }
+
+                    }else {
+                        jq("#showStatus").hide();
+                        jq("#msg").text("Datatools tables recreated successfully");
+                        jq("#recreate").prop("disabled", false);
+                        jq("#refresh").prop("disabled", false);
+                        jq("#recreate-datatools").prop("disabled", false);
+                        jq("#recreate-dwapi").prop("disabled", false);
+                        if(data.data) {
+                            var processedData = data.data;
+                            for (index in processedData) {
+                                jq('#log_table > tbody > tr').remove();
+                                var tbody = jq('#log_table > tbody');
+                                for (index in processedData) {
+                                    var item = processedData[index];
+                                    var row = '<tr>';
+                                    row += '<td width="35%">' + item.script_name + '</td>';
+                                    row += '<td width="20%">' + item.start_time + '</td>';
+                                    row += '<td width="20%">' + item.stop_time + '</td>';
+                                    row += '<td width="20%">' + item.status + '</td>';
+                                    row += '</tr>';
+                                    tbody.append(row);
+                                }
+                            }
+                        }
+                    }
+                })
+                .error(function(xhr, status, err) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("There was an error recreating ETL tables");
+                    jq("#recreate").prop("disabled", false);
+                    jq("#refresh").prop("disabled", false);
+                    jq("#recreate-datatools").prop("disabled", false);
+                    jq("#recreate-dwapi").prop("disabled", false);
                     alert('AJAX error ' + err);
                 })
         });
 
+        jq('#recreate-dwapi').click(function() {
+            jq("#recreate").attr("disabled", true);
+            jq("#refresh").attr("disabled", true);
+            jq("#msgSpan").text("Recreating DWAPI Tables");
+            jq("#msg").text("");
+            jq("#showStatus").show();
+            jq("#refresh").prop("disabled", true);
+            jq("#recreate").prop("disabled", true);
+            jq("#recreate-datatools").prop("disabled", true);
+            jq("#recreate-dwapi").prop("disabled", true);
+            jq(this).prop("disabled", true);
+            jq.getJSON('${ ui.actionLink("recreateDwapiTables") }')
+                .success(function(data) {
+                    if(data.status) {
+                        if(data.status[0].process ==="locked") {
+                            jq( "#dialog-1" ).dialog( "open" );
+                            jq("#showStatus").hide();
+
+                        }
+
+                    }else {
+                        jq("#showStatus").hide();
+                        jq("#msg").text("DWAPI tables recreated successfully");
+                        jq("#recreate").prop("disabled", false);
+                        jq("#refresh").prop("disabled", false);
+                        jq('#recreate-datatools').prop("disabled", false);
+                        jq('#recreate-dwapi').prop("disabled", false);
+                        if(data.data) {
+                            var processedData = data.data;
+                            for (index in processedData) {
+                                jq('#log_table > tbody > tr').remove();
+                                var tbody = jq('#log_table > tbody');
+                                for (index in processedData) {
+                                    var item = processedData[index];
+                                    var row = '<tr>';
+                                    row += '<td width="35%">' + item.script_name + '</td>';
+                                    row += '<td width="20%">' + item.start_time + '</td>';
+                                    row += '<td width="20%">' + item.stop_time + '</td>';
+                                    row += '<td width="20%">' + item.status + '</td>';
+                                    row += '</tr>';
+                                    tbody.append(row);
+                                }
+                            }
+                        }
+                    }
+                })
+                .error(function(xhr, status, err) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("There was an error recreating DWAPI tables");
+                    jq("#recreate").prop("disabled", false);
+                    jq("#refresh").prop("disabled", false);
+                    jq('#recreate-datatools').prop("disabled", false);
+                    jq('#recreate-dwapi').prop("disabled", false);
+                    alert('AJAX error ' + err);
+                })
+        });
         jq(function() {
             jq( "#dialog-1" ).dialog({
                 autoOpen: false,
@@ -151,6 +269,16 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 
     <button id="recreate"  style="height:43px;width:185px">
         <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Recreate Tables
+    </button>
+</button>
+
+<button id="recreate-datatools"  style="height:43px;width:185px">
+    <img src="${ ui.resourceLink("kenyaui", "images/buttons/datatool.png") }" width="32" height="32" /> Recreate Datatools
+</button>
+
+
+    <button id="recreate-dwapi"  style="height:43px;width:280px">
+        <img src="${ ui.resourceLink("kenyaui", "images/buttons/cloud-sync.png") }" width="32" height="32" /> Refresh DWAPI Tables for Upload
     </button>
 </div>
 <br/>

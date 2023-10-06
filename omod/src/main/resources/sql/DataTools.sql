@@ -15,6 +15,7 @@ create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unico
 create table kenyaemr_datatools.patient_demographics as
 select 
 patient_id,
+uuid,
 given_name,
 middle_name,
 family_name,
@@ -29,6 +30,7 @@ alien_no,
 driving_license_no,
 national_unique_patient_identifier,
 hts_recency_id,
+nhif_number,
 patient_clinic_number,
 Tb_no,
 CPIMS_unique_identifier,
@@ -107,6 +109,7 @@ facility_confirmed_hiv_positive,
 (case ever_on_pep when 1 then "Yes" else "" end) as ever_on_pep,
 (case ever_on_prep when 1065 then "Yes" else "" end) as ever_on_prep,
 (case ever_on_haart when 1185 then "Yes" else "" end) as ever_on_haart,
+IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 name_of_treatment_supporter,
 (case relationship_of_treatment_supporter when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" 
   when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end) as relationship_of_treatment_supporter,
@@ -132,7 +135,8 @@ SELECT "Successfully created hiv enrollment table";
 
 -- ----------------------------------- create table hiv_followup ----------------------------------------------
 create table kenyaemr_datatools.hiv_followup as
-select 
+select
+uuid,
 patient_id,
 visit_id,
 visit_date,
@@ -244,7 +248,10 @@ refill_date,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
 (case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
-when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care
+when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care,
+(case insurance_type when 1917 then "NHIF" when 1107 then "None" when 5622 then "Other" else "" end) as insurance_type,
+other_insurance_specify,
+(case insurance_status when 161636 then "Active" when 1118 then "Inactive" else "" end) as insurance_status
 from kenyaemr_etl.etl_patient_hiv_followup;
 
 ALTER TABLE kenyaemr_datatools.hiv_followup ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
@@ -273,7 +280,8 @@ select
     visit_id,
     (case lab_test when 5497 then "CD4 Count" when 167718 then "CD4 Count" when 730 then "CD4 PERCENT " when 654 then "ALT" when 790 then "Serum creatinine (umol/L)"
                    when 856 then "HIV VIRAL LOAD" when 1305 then "HIV VIRAL LOAD" when 21 then "Hemoglobin (HGB)" when 1029 then "VDRL Titre" when 1031 then "Treponema Pallidum Hemagglutination Assay"
-                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative"  when 45 then "Urine Pregnancy Test" when 167452 then 'Serum Cryptococcal Ag' else "" end) as lab_test,
+                   when 1619 then "Rapid Plasma Reagin" when 1032 then "Treponema Pallidum Hemagglutination Assay, Qualitative"  when 45 then "Urine Pregnancy Test" when 167452 then "Serum Cryptococcal Ag" when 167459 then "TB LAM"
+        when 307 then "Sputum for Acid Fast Bacilli" when 162202 then "GeneXpert" else "" end) as lab_test,
     urgency,
     (case order_reason when 843 then 'Confirmation of treatment failure (repeat VL)' when 1259 then 'Single Drug Substitution' when 1434 then 'Pregnancy'
                        when 159882 then 'Breastfeeding' when 160566 then 'Immunologic failure' when 160569 then 'Virologic failure'
@@ -300,7 +308,8 @@ select
                             if(lab_test=1619, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
                             if(lab_test=45, (case test_result when 703 then "Positive" when 664 then "Negative" when 1138 then "Indeterminate" when 1304 then "Poor Quality Sample" end),
                             if(lab_test=167452, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
-                               test_result ))))))))))))))) AS test_result,
+                            if(lab_test=167459, (case test_result when 163747 then "Absent" when 163748 then "Present" end),
+                               test_result )))))))))))))))) AS test_result,
     date_created,
     created_by
 from kenyaemr_etl.etl_laboratory_extract;
@@ -809,12 +818,30 @@ SELECT "Successfully created post natal visit table";
       (case mother_on_pmtct_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_pmtct_drugs,
       (case mother_on_drug when 80586 then "Sd NVP Only" when 1652 then "AZT+NVP+3TC" when 1149 then "HAART" when 1107 then "None" else "" end) as mother_on_drug,
       (case mother_on_art_at_infant_enrollment when 1065 then "Yes" when 1066 then "No" else "" end) as mother_on_art_at_infant_enrollment,
-      (case mother_drug_regimen when 792 then "D4T/3TC/NVP" when 160124 then "AZT/3TC/EFV" when 160104 then "D4T/3TC/EFV" when 1652 then "3TC/NVP/AZT"
-       when 161361 then "EDF/3TC/EFV" when 104565 then "EFV/FTC/TDF" when 162201 then "3TC/LPV/TDF/r" when 817 then "ABC/3TC/AZT"
-       when 162199 then "ABC/NVP/3TC" when 162200 then "3TC/ABC/LPV/r" when 162565 then "3TC/NVP/TDF" when 1652 then "3TC/NVP/AZT"
-       when 162561 then "3TC/AZT/LPV/r" when 164511 then "AZT-3TC-ATV/r" when 164512 then "TDF-3TC-ATV/r" when 162560 then "3TC/D4T/LPV/r"
-       when 162563 then "3TC/ABC/EFV" when 162562 then "ABC/LPV/R/TDF" when 162559 then "ABC/DDI/LPV/r"  else "" end) as mother_drug_regimen,
-      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "sd NVP+AZT+3TC" when 1149 then "NVP for 6 weeks(Mother on HAART)" when 1107 then "None" else "" end) as infant_prophylaxis,
+        (case mother_drug_regimen when 164968 then 'AZT/3TC/DTG'
+        when 164969 then 'TDF/3TC/DTG'
+        when 164970 then 'ABC/3TC/DTG'
+        when 164505 then 'TDF-3TC-EFV'
+        when 792 then 'D4T/3TC/NVP'
+        when 160124 then 'AZT/3TC/EFV'
+        when 160104 then 'D4T/3TC/EFV'
+        when 1652 then '3TC/NVP/AZT'
+        when 161361 then 'EDF/3TC/EFV'
+        when 104565 then 'EFV/FTC/TDF'
+        when 162201 then '3TC/LPV/TDF/r'
+        when 817 then 'ABC/3TC/AZT'
+        when 162199 then 'ABC/NVP/3TC'
+        when 162200 then '3TC/ABC/LPV/r'
+        when 162565 then '3TC/NVP/TDF'
+        when 1652 then '3TC/NVP/AZT'
+        when 162561 then '3TC/AZT/LPV/r'
+        when 164511 then 'AZT-3TC-ATV/r'
+        when 164512 then 'TDF-3TC-ATV/r'
+        when 162560 then '3TC/D4T/LPV/r'
+        when 162563 then '3TC/ABC/EFV'
+        when 162562 then 'ABC/LPV/R/TDF'
+        when 162559 then 'ABC/DDI/LPV/r' else "" end) as mother_drug_regimen,
+      (case infant_prophylaxis when 80586 then "Sd NVP Only" when 1652 then "AZT/NVP" when 162326 then "NVP for 6 weeks(Mother on HAART)" when 160123 then "AZT Liquid BD for 6 weeks" when 78643 then "3TC Liquid BD" when 1149 then "none" when 1107 then "Other" else "" end) as infant_prophylaxis,
       parent_ccc_number,
       (case mode_of_delivery when 1170 then "SVD" when 1171 then "C-Section" when 1172 then "Breech delivery" when 118159 then "Assisted vaginal delivery" else "" end) as mode_of_delivery,
       (case place_of_delivery when 1589 then "Facility" when 1536 then "Home" when 5622 then "Other" else "" end) as place_of_delivery,
@@ -1223,6 +1250,7 @@ SELECT "Successfully created enhanced adherence table";
         (case relationship_type when 970 then "Mother" when 971 then "Father" when 1528 then "Child" when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 162221 then "Co-wife" when 163565 then "Sexual partner" when 157351 then "Injectable drug user" when 166606 then "SNS" when 5622 then "Other" else "" end) as relationship_type,
         appointment_date,
         baseline_hiv_status,
+        reported_test_date,
         ipv_outcome,
        (case marital_status when 1057 then "Single" when 5555 then "Married Monogamous" when 159715 then "Married Polygamous" when 1058 then "Divorced" when 1059 then "Widowed" else "" end) as marital_status,
        (case living_with_patient when 1065 then "Yes" when 1066 then "No" when 162570 then "Declined to Answer" else "" end) as living_with_patient,
@@ -1827,6 +1855,7 @@ create table kenyaemr_datatools.prep_enrolment as
          initial_enrolment_date,
          date_started_prep_trf_facility,
          previously_on_prep,
+         prep_type,
          regimen,
          prep_last_date,
          case in_school when 1 then 'Yes' when 2 then 'No' end as in_school,
@@ -2597,7 +2626,7 @@ ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(patient_id);
 ALTER TABLE kenyaemr_datatools.preventive_services ADD INDEX(visit_date);
 SELECT "Successfully created preventive_services table";
 
--- create table preventive_services
+-- create table overdose_reporting
 create table kenyaemr_datatools.overdose_reporting as
 select
     client_id,
@@ -2643,13 +2672,66 @@ select
     date_last_modified,
     voided
 from kenyaemr_etl.etl_overdose_reporting;
-
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(client_id);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(naloxone_provided);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(outcome);
 SELECT "Successfully created overdose_reporting table";
+
+-- Create table ART fast track
+create table kenyaemr_datatools.art_fast_track as
+select patient_id,
+       visit_date,
+       provider,
+       location_id,
+       encounter_id,
+       case art_refill_model
+           when 1744 then 'Fast Track'
+           when 1555 then 'Community ART Distribution - HCW Led'
+           when 5618 then 'Community ART Distribution - Peer Led'
+           when 1537 then 'Facility ART Distribution Group'
+           else null end                                                                              as art_refill_model,
+       case ctx_dispensed when 162229 then 'Yes' else null end                                        as ctx_dispensed,
+       case dapsone_dispensed when 74250 then 'Yes' else null end                                     as dapsone_dispensed,
+       case oral_contraceptives_dispensed when 780 then 'Yes' else null end                           as oral_contraceptives_dispensed,
+       case condoms_distributed
+           when 1065 then 'Yes'
+           when 1066 then 'No'
+           else null end                                                                              as condoms_distributed,
+       doses_missed,
+       case fatigue when 162626 then 'Yes' when 1066 then 'No' else null end                          as fatigue,
+       case cough when 143264 then 'Yes' when 1066 then 'No' else null end                            as cough,
+       case fever when 140238 then 'Yes' when 1066 then 'No' else null end                            as fever,
+       case rash when 512 then 'Yes' when 1066 then 'No' else null end                                as rash,
+       case nausea_vomiting when 5978 then 'Yes' when 1066 then 'No' else null end                    as nausea_vomiting,
+       case genital_sore_discharge
+           when 135462 then 'Yes'
+           when 1066 then 'No'
+           else null end                                                                              as genital_sore_discharge,
+       case diarrhea when 142412 then 'Yes' when 1066 then 'No' else null end                         as diarrhea,
+       case other_symptoms when 5622 then 'Yes' else null end                                         as other_symptoms,
+       other_specific_symptoms,
+       case pregnant when 1065 then 'Yes' when 1066 then 'No' when 1067 then 'Not sure' else null end as pregnant,
+       case family_planning_status
+           when 965 then 'On Family Planning'
+           when 160652 then 'Not using Family Planning'
+           when 1360 then 'Wants Family Planning'
+           else null end                                                                              as family_planning_status,
+       family_planning_method,
+       reason_not_on_family_planning,
+       date_created,
+       date_last_modified,
+       voided
+from kenyaemr_etl.etl_art_fast_track;
+ALTER TABLE kenyaemr_datatools.art_fast_track
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.art_fast_track
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.art_fast_track
+    ADD INDEX (visit_date);
+SELECT "Successfully created art_fast_track table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
