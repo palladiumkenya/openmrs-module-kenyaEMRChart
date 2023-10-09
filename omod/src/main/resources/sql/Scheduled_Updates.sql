@@ -334,6 +334,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       who_stage,
       who_stage_associated_oi,
       presenting_complaints,
+      patient_admitted,
+      patient_date_admitted,
       clinical_notes,
       on_anti_tb_drugs,
       on_ipt,
@@ -499,6 +501,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
                   nullif(max(if(o.concept_id=167394 and o.value_coded =146518,'Candida of trachea, bronchi or lungs','')),''),
                   nullif(max(if(o.concept_id=167394 and o.value_coded =143744,'Acquired recto-vesicular fistula','')),'')) as who_stage_associated_oi,
         max(if(o.concept_id=1154,o.value_coded,null)) as presenting_complaints ,
+        max(if(o.concept_id=166970,o.value_coded,null)) as patient_admitted ,
+        max(if(o.concept_id=159948,date(o.value_datetime),null)) as patient_date_admitted,
         null as clinical_notes, -- max(if(o.concept_id=160430,left(trim(o.value_text),600),null)) as clinical_notes ,
         max(if(o.concept_id=164948,o.value_coded,null)) as on_anti_tb_drugs ,
         max(if(o.concept_id=164949,o.value_coded,null)) as on_ipt ,
@@ -603,14 +607,14 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
                                  and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
                                  1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
                                  164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
+                                 121764,166970,159948, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
             or o.date_created >= last_update_time
             or o.date_voided >= last_update_time
       group by e.patient_id, visit_date
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),visit_scheduled=VALUES(visit_scheduled),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),visit_scheduled=VALUES(visit_scheduled),patient_admitted=VALUES(patient_admitted),patient_date_admitted =VALUES(patient_date_admitted),
       person_present=VALUES(person_present),weight=VALUES(weight),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),height=VALUES(height),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
       oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac), nutritional_status=VALUES(nutritional_status), population_type=VALUES(population_type), key_population_type=VALUES(key_population_type), who_stage=VALUES(who_stage),who_stage_associated_oi=VALUES(who_stage_associated_oi),presenting_complaints = VALUES(presenting_complaints),
       clinical_notes = VALUES(clinical_notes),on_anti_tb_drugs=VALUES(on_anti_tb_drugs),on_ipt=VALUES(on_ipt),ever_on_ipt=VALUES(ever_on_ipt),cough=VALUES(cough),fever=VALUES(fever),weight_loss_poor_gain=VALUES(weight_loss_poor_gain),night_sweats=VALUES(night_sweats),tb_case_contact=VALUES(tb_case_contact),lethargy=VALUES(lethargy),screened_for_tb=VALUES(screened_for_tb),
@@ -3277,6 +3281,8 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       date_created,
       date_last_modified,
       visit_reason,
+      complaint_today,
+      complaint_duration,
       weight,
       height,
       systolic_pressure,
@@ -3304,6 +3310,8 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
+        max(if(o.concept_id=1154,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as complaint_today,
+        max(if(o.concept_id=159368,o.value_numeric,null)) as complaint_duration,
         max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
         max(if(o.concept_id=5090,o.value_numeric,null)) as height,
         max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
@@ -3326,7 +3334,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
+                                 and o.concept_id in (159368,1154,160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3334,7 +3342,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),weight=VALUES(weight),height=VALUES(height),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),
-      temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
+      temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),complaint_today=VALUES(complaint_today),complaint_duration=VALUES(complaint_duration),
       oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score=VALUES(z_score),nutritional_status=VALUES(nutritional_status),last_menstrual_period=VALUES(last_menstrual_period),hpv_vaccinated=VALUES(hpv_vaccinated),voided=VALUES(voided),z_score_absolute=VALUES(z_score_absolute);
 
     END $$
@@ -6205,6 +6213,8 @@ allergy_causative_agent,
 allergy_reaction,
 allergy_severity,
 allergy_onset_date,
+complaint,
+complaint_date,
 date_created,
 date_last_modified,
 voided
@@ -6218,17 +6228,19 @@ select
    max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
    max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
    max(if(o1.obs_group =121689 and o1.concept_id = 160753,date(o1.value_datetime),null)) as allergy_onset_date,
+   max(if(o1.obs_group =160531 and o1.concept_id = 5219,o1.value_coded,null)) as complaint,
+   max(if(o1.obs_group =160531 and o1.concept_id = 159948,date(o1.value_datetime),null)) as complaint_date,
    e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b','d1059fb9-a079-4feb-a749-eedd709ae542')
               ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.date_voided as date_voided,
                           o1.date_created as date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                           and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937)
-                          and o.concept_id in (159392,121689)) o1 on o1.encounter_id = e.encounter_id and o1.voided=0
+                           and o1.concept_id in (5219,159948,1284,159948,160643,159935,162760,160753,166937)
+                          and o.concept_id in (160531,159392,121689)) o1 on o1.encounter_id = e.encounter_id and o1.voided=0
 where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time
                 or e.date_voided >= last_update_time
@@ -6245,6 +6257,8 @@ order by e.patient_id
         allergy_reaction=VALUES(allergy_reaction),
         allergy_severity=VALUES(allergy_severity),
         allergy_onset_date=VALUES(allergy_onset_date),
+        complaint=VALUES(complaint),
+        complaint_date=VALUES(complaint_date),
         voided=VALUES(voided);
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
 END $$

@@ -160,7 +160,9 @@ muac,
 (case key_population_type when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end) as key_population_type,
 IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 who_stage_associated_oi,
-(case presenting_complaints when 1 then "Yes" when 0 then "No" else "" end) as presenting_complaints, 
+(case presenting_complaints when 1 then "Yes" when 0 then "No" else "" end) as presenting_complaints,
+(case patient_admitted when 1 then "Yes" when 0 then "No" else "" end) as patient_admitted,
+patient_date_admitted,
 clinical_notes,
 (case on_anti_tb_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as on_anti_tb_drugs,
 (case on_ipt when 1065 then "Yes" when 1066 then "No" else "" end) as on_ipt,
@@ -1210,6 +1212,8 @@ SELECT "Successfully created enhanced adherence table";
       encounter_provider,
       date_created,
       visit_reason,
+      complaint_today,
+      complaint_duration,
       weight,
       height,
       systolic_pressure,
@@ -1629,6 +1633,25 @@ when 121 then 'Rash'
 when 512 then 'Other' end) as allergy_reaction,
 (case allergy_severity when 160754 then 'Mild' when 160755 then 'Moderate' when 160756 then 'Severe' when 160758 then 'Fatal' when 1067 then 'Unknown' end) as allergy_severity,
 allergy_onset_date,
+(case complaint when 151 then "Abdominal pain"
+     when 141631 then "Abnormal Uterine Bleeding" when 121543 then "Anxiety"
+     when 119537 then "Depression" when 148035 then "Back pain" when 840 then "Bloody Urine"
+     when 131021 then "Breast Pain" when 120749 then "Chest Pain" when 871 then "Cold and Chills"
+     when 120345 then "Confusion" when 119574 then "Delirium" when 113054 then "Convulsions"
+     when 206 then "Seizure" when 143264 then "Cough" when 143129 then "Crying Infant" when 142412 then "Diarrhea"
+     when 122496 then "Difficult in breathing" when 118789 then "Difficulty in swallowing" when 141830 then "Dizziness"
+     when 141585 then "Ear Pain" when 141128 then "Epigastric Pain" when 131040 then "Eye pain" when 114399 then "Facial Pain"
+     when 162626 then "Fatigue/weakness" when 140238 then "Fever" when 140070 then "Flank Pain" when 123396 then "Vaginal Discharge"
+     when 142247 then "Discharge from Penis" when 135462 then "Genital Ulcer" when 139084 then "Headache" when 117698 then "Hearing Loss"
+     when 116214 then "Hypotension" when 112989 then "Shock" when 879 then "Itchiness/Pruritus" when 116558 then "Joint Pain" when 114395 then "Leg Pain"
+     when  135595 then "Loss of Appetite" when 135488 then "Lymphadenopathy" when 121657 then "Memory Loss" when 144576 then "Coma" when 116334 then "Lethargy"
+     when 131015 then "Mouth Pain" when 111721 then "Mouth Ulceration" when 133028 then "Muscle cramps" when 133632 then "Muscle Pain" when 5978 then "Nausea"
+     when 133469 then "Neck Pain" when 133027 then "Night sweats" when 132653 then "Numbness" when 125225 then "Pain when Swallowing" when 131034 then "Pelvic Pain"
+     when 5953 then "Poor Vision" when 512 then "Rash" when 127777 then "Red Eye" when 113224 then "Running/Blocked nose" when 131032 then "Scrotal Pain"
+     when 126535 then "Shoulder Pain" when 141597 then "Sleep Disturbance" when 158843 then "Sore Throat" when 140941 then "Excessive Sweating"
+     when 125198 then "Swollen Legs" when 112200 then  "Tremors" when 160208 then "Urinary Symptoms" when 111525 then "Vertigo" when 122983 then "Vomiting"
+     when 832 then "Weight Loss" when 121 then "Myalgia" when 6017 then "Refusal to feed" when 132494 then "blood in stool"   else "" end) as complaint,
+complaint_date,
 voided,
 date_created,
 date_last_modified
