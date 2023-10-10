@@ -2086,6 +2086,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     screening_type VARCHAR(255) DEFAULT NULL,
     post_treatment_complication_cause VARCHAR(255) DEFAULT NULL,
     post_treatment_complication_other VARCHAR(255) DEFAULT NULL,
+    cancer_type VARCHAR(255) DEFAULT NULL,
     colposcopy_screening_method VARCHAR(255) DEFAULT NULL,
     hpv_screening_method VARCHAR(255) DEFAULT NULL,
     pap_smear_screening_method VARCHAR(255) DEFAULT NULL,
