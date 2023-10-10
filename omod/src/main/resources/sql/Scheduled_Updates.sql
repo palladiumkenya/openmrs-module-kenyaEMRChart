@@ -4534,6 +4534,7 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
     screening_type,
     post_treatment_complication_cause,
     post_treatment_complication_other,
+    cancer_type,
     colposcopy_screening_method,
     hpv_screening_method,
     pap_smear_screening_method,
@@ -4578,7 +4579,12 @@ select
                                  when 162810 then 'LEEP'
                                  when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
      max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
-
+  concat_ws(',', max(if(o.concept_id = 116030 and o.value_coded = 116023, 'Cervical', null)),
+            max(if(o.concept_id = 116030 and o.value_coded = 116026, 'Breast', null)),
+            max(if(o.concept_id = 116030 and o.value_coded = 133350, 'Colorectal', null)),
+            max(if(o.concept_id = 116030 and o.value_coded = 127527, 'Retinoblastoma', null)),
+            max(if(o.concept_id = 116030 and o.value_coded = 146221, 'Prostate', null)),
+            max(if(o.concept_id = 116030 and o.value_coded = 115355, 'Oral', null))) as cancer_type,
      max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=160705, 'Colposcopy(for positive HPV,VIA or PAP smear)',
 	    if(t.colposcopy_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_method, null))) as colposcopy_screening_method,
      max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=159859, 'HPV',
@@ -4652,7 +4658,7 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,165267,163589,163042,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,165267,163589,163042,116030,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
 inner join (
              select
                o.person_id,
@@ -4784,7 +4790,7 @@ where e.voided=0 and
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), encounter_provider=VALUES(encounter_provider),
 visit_type=VALUES(visit_type),screening_type=VALUES(screening_type),
-post_treatment_complication_cause=VALUES(post_treatment_complication_cause),post_treatment_complication_other=VALUES(post_treatment_complication_other),
+post_treatment_complication_cause=VALUES(post_treatment_complication_cause),post_treatment_complication_other=VALUES(post_treatment_complication_other),cancer_type=VALUES(cancer_type),
 colposcopy_screening_method=VALUES(colposcopy_screening_method),hpv_screening_method=VALUES(hpv_screening_method),
 pap_smear_screening_method=VALUES(pap_smear_screening_method),via_vili_screening_method=VALUES(via_vili_screening_method),
 colposcopy_screening_result=VALUES(colposcopy_screening_result),hpv_screening_result=VALUES(hpv_screening_result),

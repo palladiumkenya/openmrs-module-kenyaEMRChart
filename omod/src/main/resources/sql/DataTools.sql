@@ -1887,6 +1887,7 @@ create table kenyaemr_datatools.cervical_cancer_screening as
     screening_type,
     post_treatment_complication_cause,
     post_treatment_complication_other,
+    cancer_type,
     colposcopy_screening_method,
     hpv_screening_method,
     pap_smear_screening_method,
