@@ -4512,7 +4512,19 @@ select
                                   when 1000143 then 'Refer for biopsy'
                                   when 1000103 then 'Referred for further management'
                                   when 162907 then 'Refer to surgical resection' else '' end),null)) as colonoscopy_method_treatment,
-            -- Getting breast cancer screening data
+  -- Getting retinoblastoma cancer screening data
+  max(if(o.concept_id = 116030 and o.value_coded = 127527, 'Yes', null))as retinoblastoma_cancer,
+  max(if(o.concept_id = 163589 and o.value_coded = 1000149, 'EUA(Examination Under Anesthesia)', null))as retinoblastoma_eua_screening_method,
+  max(if(o.concept_id = 163589 and o.value_coded = 1000105, 'Retinoblastoma gene (RB1 gene)', null))as retinoblastoma_gene_method,
+  max(if(o.concept_id=1000149, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as retinoblastoma_eua_screening_results ,
+  max(if(o.concept_id=1000105, (case o.value_coded when 703 then "Negative"
+                                when 664 then "Positive" else "" end),null)) as retinoblastoma_gene_method_results,
+  max(if(o.concept_id = 1000149, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_eua_treatment,
+  max(if(o.concept_id = 1000150, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_gene_treatment,
+
+  -- Getting breast cancer screening data
   max(if(o.concept_id = 116030 and o.value_coded = 116026, 'Yes', null))as breast_cancer,
   max(if(o.concept_id = 1000090 and o.value_coded = 1065, 'clinical breast examination', null))as clinical_breast_examination_screening_method,
   max(if(o.concept_id = 1000090 and o.value_coded = 1000092, 'ultrasound', null))as ultrasound_screening_method,
@@ -4547,17 +4559,6 @@ select
                                   when 159619 then 'Surgical excision when clinically appropriate)'
                                   when 1000103 then 'Referred for further management'
                                   else '' end),null)) as mammography_treatment_method,
-
-      max(if(o.concept_id = 116030 and o.value_coded = 127527, 'Yes', null))as retinoblastoma_cancer,
-      max(if(o.concept_id = 163589 and o.value_coded = 1000149, 'EUA(Examination Under Anesthesia)', null))as retinoblastoma_eua_screening_method,
-      max(if(o.concept_id = 163589 and o.value_coded = 1000105, 'Retinoblastoma gene (RB1 gene)', null))as retinoblastoma_gene_method,
-      max(if(o.concept_id=1000149, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as retinoblastoma_eua_screening_results ,
-      max(if(o.concept_id=1000105, (case o.value_coded when 703 then "Negative"
-                                   when 664 then "Positive" else "" end),null)) as retinoblastoma_gene_method_results,
-     max(if(o.concept_id = 1000149, (case o.value_coded when 1000078 then "Counsel on negative findings"
-                                    when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_eua_treatment,
-     max(if(o.concept_id = 1000150, (case o.value_coded when 1000078 then "Counsel on negative findings"
-                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_gene_treatment,
 
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
