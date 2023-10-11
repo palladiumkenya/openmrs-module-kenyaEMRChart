@@ -4402,7 +4402,7 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     screening_type,
     post_treatment_complication_cause,
     post_treatment_complication_other,
-    cancer_type,
+    cervical_cancer,
     colposcopy_screening_method,
     hpv_screening_method,
     pap_smear_screening_method,
@@ -4415,6 +4415,13 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     hpv_treatment_method,
     pap_smear_treatment_method,
     via_vili_treatment_method,
+    colorectal_cancer,
+    fecal_occult_screening_method,
+    colonoscopy_method,
+    fecal_occult_screening_results,
+    colonoscopy_method_results,
+    fecal_occult_screening_treatment,
+    colonoscopy_method_treatment,
     referred_out,
     referral_facility,
     referral_reason,
@@ -4447,12 +4454,7 @@ select
                                  when 162810 then 'LEEP'
                                  when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
      max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
-     concat_ws(',', max(if(o.concept_id = 116030 and o.value_coded = 116023, 'Cervical', null)),
-            max(if(o.concept_id = 116030 and o.value_coded = 116026, 'Breast', null)),
-            max(if(o.concept_id = 116030 and o.value_coded = 133350, 'Colorectal', null)),
-            max(if(o.concept_id = 116030 and o.value_coded = 127527, 'Retinoblastoma', null)),
-            max(if(o.concept_id = 116030 and o.value_coded = 146221, 'Prostate', null)),
-            max(if(o.concept_id = 116030 and o.value_coded = 115355, 'Oral', null))) as cancer_type,
+     max(if(o.concept_id = 116030 and o.value_coded = 116023, 'Yes', null))as cervical_cancer,
      max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=160705, 'Colposcopy)',
 	    if(t.colposcopy_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_method, null))) as colposcopy_screening_method,
      max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=159859, 'HPV',
@@ -4478,6 +4480,21 @@ select
      max(if(t1.via_vili_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t1.via_vili_treatment_method,
 	    if(t.via_vili_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_treatment_method, null))) as via_vili_treatment_method,
 
+      max(if(o.concept_id = 116030 and o.value_coded = 133350, 'Yes', null))as colorectal_cancer,
+      max(if(o.concept_id = 164959 and o.value_coded = 159362, 'fecal occult', null))as fecal_occult_screening_method,
+      max(if(o.concept_id = 164959 and o.value_coded = 1000148, 'colonoscopy', null))as colonoscopy_method,
+      max(if(o.concept_id=166664, (case o.value_coded when 703 then "Positive" when 664 then "Negative" else "" end),null)) as fecal_occult_screening_results ,
+      max(if(o.concept_id=166664, (case o.value_coded when 1115 then "No abnormality"
+                                   when 148910 then "Polyps"
+                                   when 133350 then "Suspicious for cancer"
+                                   when 118606 then "Inflammation"
+                                   when 5622 then "Other abnormalities" else "" end),null)) as colonoscopy_method_results,
+     max(if(o.concept_id = 1000147, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                    when 1000102 then "Referred for colonoscopy" else "" end),null)) as fecal_occult_screening_treatment,
+     max(if(o.concept_id = 1000148, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000143 then "Refer for biopsy"
+                                  when 1000103 then "Referred for further management"
+                                  when 162907 then "Refer to surgical resection" else "" end),null)) as colonoscopy_method_treatment,
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
@@ -4526,7 +4543,7 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,116030,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,116030,164959,166664,1000147,1000148,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
 inner join (
              select
                o.person_id,
@@ -4569,7 +4586,7 @@ inner join (
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-             where o.concept_id in (163589, 164934, 165070,160705,165266,166937,1272,166665) and o.voided=0
+             where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 left join (
