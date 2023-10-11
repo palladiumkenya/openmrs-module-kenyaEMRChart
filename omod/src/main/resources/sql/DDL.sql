@@ -2106,7 +2106,6 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     colonoscopy_method_results VARCHAR(255) DEFAULT NULL,
     fecal_occult_screening_treatment VARCHAR(255) DEFAULT NULL,
     colonoscopy_method_treatment VARCHAR(255) DEFAULT NULL,
-
     retinoblastoma_cancer VARCHAR(255) DEFAULT NULL,
     retinoblastoma_eua_screening_method VARCHAR(255) DEFAULT NULL,
     retinoblastoma_gene_method VARCHAR(255) DEFAULT NULL,
@@ -2114,7 +2113,13 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     retinoblastoma_gene_method_results VARCHAR(255) DEFAULT NULL,
     retinoblastoma_eua_treatment VARCHAR(255) DEFAULT NULL,
     retinoblastoma_gene_treatment VARCHAR(255) DEFAULT NULL,
-
+    prostate_cancer VARCHAR(255) DEFAULT NULL,
+    digital_rectal_prostate_examination VARCHAR(255) DEFAULT NULL,
+    digital_rectal_prostate_results VARCHAR(255) DEFAULT NULL,
+    digital_rectal_prostate_treatment VARCHAR(255) DEFAULT NULL,
+    prostatic_specific_antigen_test VARCHAR(255) DEFAULT NULL,
+    prostatic_specific_antigen_results VARCHAR(255) DEFAULT NULL,
+    prostatic_specific_antigen_treatment VARCHAR(255) DEFAULT NULL,
     breast_cancer VARCHAR(50) DEFAULT NULL,
     clinical_breast_examination_screening_method VARCHAR(255) DEFAULT NULL,
     ultrasound_screening_method VARCHAR(255) DEFAULT NULL,
