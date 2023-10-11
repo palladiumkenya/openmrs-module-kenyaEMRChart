@@ -4554,6 +4554,23 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
     retinoblastoma_gene_method_results,
     retinoblastoma_eua_treatment,
     retinoblastoma_gene_treatment,
+    colorectal_cancer,
+    fecal_occult_screening_method,
+    colonoscopy_method,
+    fecal_occult_screening_results,
+    colonoscopy_method_results,
+    fecal_occult_screening_treatment,
+    colonoscopy_method_treatment,
+    breast_cancer,
+    clinical_breast_examination_screening_method,
+    ultrasound_screening_method,
+    mammography_smear_screening_method,
+    clinical_breast_examination_screening_result,
+    ultrasound_screening_result,
+    mammography_screening_result,
+    clinical_breast_examination_treatment_method,
+    ultrasound_treatment_method,
+    mammography_treatment_method,
     referred_out,
     referral_facility,
     referral_reason,
@@ -4622,6 +4639,57 @@ select
      max(if(o.concept_id = 1000150, (case o.value_coded when 1000078 then "Counsel on negative findings"
                                   when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_gene_treatment,
 
+  -- Getting colorectal cancer screening data
+  max(if(o.concept_id = 116030 and o.value_coded = 133350, 'Yes', null))as colorectal_cancer,
+  max(if(o.concept_id = 164959 and o.value_coded = 159362, 'fecal occult', null))as fecal_occult_screening_method,
+  max(if(o.concept_id = 164959 and o.value_coded = 1000148, 'colonoscopy', null))as colonoscopy_method,
+  max(if(o.concept_id=166664, (case o.value_coded when 703 then 'Positive' when 664 then 'Negative' else '' end),null)) as fecal_occult_screening_results ,
+  max(if(o.concept_id=166664, (case o.value_coded when 1115 then 'No abnormality'
+                               when 148910 then 'Polyps'
+                               when 133350 then 'Suspicious for cancer'
+                               when 118606 then 'Inflammation'
+                               when 5622 then 'Other abnormalities' else '' end),null)) as colonoscopy_method_results,
+  max(if(o.concept_id = 1000147, (case o.value_coded when 1000078 then 'Counsel on negative findings'
+                                  when 1000102 then 'Referred for colonoscopy' else '' end),null)) as fecal_occult_screening_treatment,
+  max(if(o.concept_id = 1000148, (case o.value_coded when 1000078 then 'Counsel on negative findings'
+                                  when 1000143 then 'Refer for biopsy'
+                                  when 1000103 then 'Referred for further management'
+                                  when 162907 then 'Refer to surgical resection' else '' end),null)) as colonoscopy_method_treatment,
+  -- Getting breast cancer screening data
+  max(if(o.concept_id = 116030 and o.value_coded = 116026, 'Yes', null))as breast_cancer,
+  max(if(o.concept_id = 1000090 and o.value_coded = 1065, 'clinical breast examination', null))as clinical_breast_examination_screening_method,
+  max(if(o.concept_id = 1000090 and o.value_coded = 1000092, 'ultrasound', null))as ultrasound_screening_method,
+  max(if(o.concept_id = 159780 and o.value_coded = 163591, 'mammography', null))as mammography_smear_screening_method,
+  max(if(o.concept_id=166664, (case o.value_coded when 1115 then 'Normal' when 1116 then 'Abnormal' else '' end),null)) as clinical_breast_examination_screening_result,
+  max(if(o.concept_id=166664, (case o.value_coded when 1000094 then 'BIRADS 0(Incomplete Need additional imaging evaluation)'
+                               when 1000093 then 'BIRADS 1(Negative),BIRADS 2(Benign)'
+                               when 1000095 then 'BIRADS 2(Benign),'
+                               when 1000096 then 'BIRADS 3(Probably Benign)'
+                               when 1000097 then 'BIRADS 4(Suspicious)'
+                               when 1000098 then 'BIRADS 5(Highly Suggestive of Malignancy)'
+                               when 1000099 then 'BIRADS 6(Known Biopsy-Proven Malignancy)' else "" end),null)) as ultrasound_screening_result,
+  max(if(o.concept_id=166664, (case o.value_coded when 1000094 then 'BIRADS 0(Incomplete Need additional imaging evaluation)'
+                               when 1000093 then 'BIRADS 1(Negative),BIRADS 2(Benign)'
+                               when 1000095 then 'BIRADS 2(Benign),'
+                               when 1000096 then 'BIRADS 3(Probably Benign)'
+                               when 1000097 then 'BIRADS 4(Suspicious)'
+                               when 1000098 then 'BIRADS 5(Highly Suggestive of Malignancy)'
+                               when 1000099 then 'BIRADS 6(Known Biopsy-Proven Malignancy)' else "" end),null)) as mammography_screening_result,
+  max(if(o.concept_id = 1000091,(case o.value_coded when 1000078 then 'Counsel on negative findings'
+                                 when 1609 then 'refer for triple assessment' else '' end),null))as clinical_breast_examination_treatment_method,
+  max(if(o.concept_id = 1000145, (case o.value_coded when 1609 then 'Recall for additional imaging'
+                                  when 432 then 'Routine mammography screening'
+                                  when 164080 then 'Short-interval(6 months) follow-up'
+                                  when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
+                                  when 1000103 then 'Referred for further management'
+                                  else '' end),null)) as ultrasound_treatment_method,
+  max(if(o.concept_id = 1000145, (case o.value_coded when 1609 then 'Recall for additional imaging'
+                                  when 432 then 'Routine Ultra sound screening'
+                                  when 164080 then 'Short-interval(6 months) follow-up'
+                                  when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
+                                  when 159619 then 'Surgical excision when clinically appropriate)'
+                                  when 1000103 then 'Referred for further management'
+                                  else '' end),null)) as mammography_treatment_method,
 
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
@@ -4671,8 +4739,8 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,165267,163589,163042,116030,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879,163589,1000149, 1000105,1000150)
-inner join (
+  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,116030,164959,166664,1000147,1000148,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879,1000090,159780,1000091,1000145,163589,1000149, 1000105,1000150)
+  inner join (
              select
                o.person_id,
                o.encounter_id,
@@ -4714,8 +4782,8 @@ inner join (
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-             where o.concept_id in (163589, 164934, 165070,160705,165266,166937,1272,166665, 1000149,1000105) and o.voided=0
-             group by e.encounter_id, o.obs_group_id
+             where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,159780,1000092,1000149,1000105) and o.voided=0
+                 group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 left join (
              select
@@ -4819,6 +4887,15 @@ retinoblastoma_gene_method_results=VALUES(retinoblastoma_gene_method_results),
 retinoblastoma_eua_treatment=VALUES(retinoblastoma_eua_treatment),
 retinoblastoma_gene_treatment=VALUES(retinoblastoma_gene_treatment),
 referral_facility=VALUES(referral_facility),
+colorectal_cancer=VALUES(colorectal_cancer),fecal_occult_screening_method=VALUES(fecal_occult_screening_method),
+colonoscopy_method=VALUES(colonoscopy_method),fecal_occult_screening_results=VALUES(fecal_occult_screening_results),
+colonoscopy_method_results=VALUES(colonoscopy_method_results),fecal_occult_screening_treatment=VALUES(fecal_occult_screening_treatment),
+colonoscopy_method_treatment=VALUES(colonoscopy_method_treatment),breast_cancer=VALUES(breast_cancer),
+clinical_breast_examination_screening_method=VALUES(clinical_breast_examination_screening_method),ultrasound_screening_method=VALUES(ultrasound_screening_method),
+mammography_smear_screening_method=VALUES(mammography_smear_screening_method),clinical_breast_examination_screening_result=VALUES(clinical_breast_examination_screening_result),
+ultrasound_screening_result=VALUES(ultrasound_screening_result),mammography_screening_result=VALUES(mammography_screening_result),
+clinical_breast_examination_treatment_method=VALUES(clinical_breast_examination_treatment_method),ultrasound_treatment_method=VALUES(ultrasound_treatment_method),
+mammography_treatment_method=VALUES(mammography_treatment_method),referral_facility=VALUES(referral_facility),
 referral_reason=VALUES(referral_reason),followup_date=VALUES(followup_date),hiv_status=VALUES(hiv_status),
 smoke_cigarattes=VALUES(smoke_cigarattes),other_forms_tobacco=VALUES(other_forms_tobacco),
 take_alcohol=VALUES(take_alcohol),previous_treatment=VALUES(previous_treatment),
