@@ -4422,6 +4422,13 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     colonoscopy_method_results,
     fecal_occult_screening_treatment,
     colonoscopy_method_treatment,
+    retinoblastoma_cancer,
+    retinoblastoma_eua_screening_method,
+    retinoblastoma_gene_method,
+    retinoblastoma_eua_screening_results,
+    retinoblastoma_gene_method_results,
+    retinoblastoma_eua_treatment,
+    retinoblastoma_gene_treatment,
     referred_out,
     referral_facility,
     referral_reason,
@@ -4495,6 +4502,18 @@ select
                                   when 1000143 then "Refer for biopsy"
                                   when 1000103 then "Referred for further management"
                                   when 162907 then "Refer to surgical resection" else "" end),null)) as colonoscopy_method_treatment,
+
+      max(if(o.concept_id = 116030 and o.value_coded = 127527, 'Yes', null))as retinoblastoma_cancer,
+      max(if(o.concept_id = 163589 and o.value_coded = 1000149, 'EUA(Examination Under Anesthesia)', null))as retinoblastoma_eua_screening_method,
+      max(if(o.concept_id = 163589 and o.value_coded = 1000105, 'Retinoblastoma gene (RB1 gene)', null))as retinoblastoma_gene_method,
+      max(if(o.concept_id=1000149, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as retinoblastoma_eua_screening_results ,
+      max(if(o.concept_id=1000105, (case o.value_coded when 703 then "Negative"
+                                   when 664 then "Positive" else "" end),null)) as retinoblastoma_gene_method_results,
+     max(if(o.concept_id = 1000149, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                    when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_eua_treatment,
+     max(if(o.concept_id = 1000150, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_gene_treatment,
+
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
@@ -4543,7 +4562,8 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,116030,164959,166664,1000147,1000148,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,160288,161011,1729,160632,162964,160592,159931,1546,164879)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,116030,164959,166664,1000147,1000148,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,
+160288,161011,1729,160632,162964,160592,159931,1546,164879,163589,1000149, 1000105,1000150)
 inner join (
              select
                o.person_id,
@@ -4586,7 +4606,7 @@ inner join (
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-             where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591) and o.voided=0
+             where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,1000149,1000105) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 left join (

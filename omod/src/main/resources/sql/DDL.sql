@@ -2106,6 +2106,15 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     colonoscopy_method_results VARCHAR(255) DEFAULT NULL,
     fecal_occult_screening_treatment VARCHAR(255) DEFAULT NULL,
     colonoscopy_method_treatment VARCHAR(255) DEFAULT NULL,
+
+    retinoblastoma_cancer VARCHAR(255) DEFAULT NULL,
+    retinoblastoma_eua_screening_method VARCHAR(255) DEFAULT NULL,
+    retinoblastoma_gene_method VARCHAR(255) DEFAULT NULL,
+    retinoblastoma_eua_screening_results VARCHAR(255) DEFAULT NULL,
+    retinoblastoma_gene_method_results VARCHAR(255) DEFAULT NULL,
+    retinoblastoma_eua_treatment VARCHAR(255) DEFAULT NULL,
+    retinoblastoma_gene_treatment VARCHAR(255) DEFAULT NULL,
+
     referred_out VARCHAR(100) DEFAULT NULL,
     referral_facility VARCHAR(100) DEFAULT NULL,
     referral_reason VARCHAR(255) DEFAULT NULL,
