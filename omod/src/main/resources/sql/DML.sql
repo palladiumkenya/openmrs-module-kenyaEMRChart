@@ -4533,7 +4533,7 @@ select
      max(if(o.concept_id = 116030 and o.value_coded = 146221, 'Yes', null)) as prostate_cancer,
      max(if(o.concept_id = 1000107, 'Yes',null)) as digital_rectal_prostate_examination,
      max(if(o.concept_id = 1000107, case o.value_coded when 1115 then 'Normal' when 1000108 then 'Enlarged' when 1000109 then 'Hard/lampy' end, null)) as  digital_rectal_prostate_results,
-     concat_ws(',',max(if(o.concept_id = 1000111 and o.value_coded in (1712,1000078,1000121), case o.value_coded when 1712 then 'Patient education' when 1000078 then 'Counseled on -ve findings, after (DRE, PSA test and TRUS)' when 1000121 then 'Performed/reffered for further evaluation(PSA,TRUS Biopsy)' end, null))) as digital_rectal_prostate_treatment,
+     concat_ws(',',max(if(o.concept_id = 1000111 and o.value_coded = 1712,'Patient education',null)), max(if(o.concept_id = 1000111 and o.value_coded = 1000078,'Counseled on -ve findings, after (DRE, PSA test and TRUS)',null)), max(if(o.concept_id = 1000111 and o.value_coded = 1000121,'Performed/reffered for further evaluation(PSA,TRUS Biopsy)',null))) as digital_rectal_prostate_treatment,
      max(if(o.concept_id = 1169, 'Yes',null)) as prostatic_specific_antigen_test,
      max(if(o.concept_id = 1169, case o.value_coded when 1000113 then '0-4ng/ml' when 1000114 then '4-10ng/ml' when 1000115 then '>10ng/ml' end, null)) as prostatic_specific_antigen_results,
      max(if(o.concept_id = 1000111 and o.value_coded in (1000081,1000121,1000143), case o.value_coded when 1000081 then 'Routine follow up after 2 years' when 1000121 then 'Further evaluation' when 1000121 then 'Further evaluation' when 1000143 then 'Perform/refer for biopsy' end, null)) as prostatic_specific_antigen_treatment,
