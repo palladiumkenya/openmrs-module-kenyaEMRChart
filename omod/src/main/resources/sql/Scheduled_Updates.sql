@@ -6429,7 +6429,7 @@ from encounter e
 where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time
                 or e.date_voided >= last_update_time
-                or o1.date_created >= last_update_time
+              --  or o1.date_created >= last_update_time
                 or o1.date_voided >= last_update_time
 group by o.id
 order by e.patient_id
