@@ -3084,6 +3084,7 @@ missed_appointment_date,
 reason_for_missed_appointment,
 non_coded_missed_appointment_reason,
 tracing_outcome,
+reason_not_contacted,
 attempt_number,
 is_final_trace,
 true_status,
@@ -3100,6 +3101,7 @@ max(if(o.concept_id=164093,date(o.value_datetime),null)) as missed_appointment_d
 max(if(o.concept_id = 1801, o.value_coded, null )) as reason_for_missed_appointment,
 max(if(o.concept_id = 163513, o.value_text, "" )) as non_coded_missed_appointment_reason,
 max(if(o.concept_id = 160721, o.value_coded, null )) as tracing_outcome,
+max(if(o.concept_id = 166541, o.value_coded, null )) as reason_not_contacted,
 max(if(o.concept_id = 1639, value_numeric, "" )) as attempt_number,
 max(if(o.concept_id = 163725, o.value_coded, "" )) as is_final_trace,
 max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
@@ -3111,7 +3113,7 @@ if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_l
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966,164093,1801, 163513, 160721, 1639, 163725, 160433, 1599, 160716,163526) and o.voided=0
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966,164093,1801, 163513, 160721, 1639, 163725, 160433, 1599, 160716,163526,166541) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing CCC defaulter tracing forms", CONCAT("Time: ", NOW());
