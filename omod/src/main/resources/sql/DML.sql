@@ -4433,6 +4433,21 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     retinoblastoma_gene_method_results,
     retinoblastoma_eua_treatment,
     retinoblastoma_gene_treatment,
+
+    oral_cancer,
+    oral_cancer_visual_exam_method,
+    oral_cancer_cytology_method,
+    oral_cancer_imaging_method,
+    oral_cancer_biopsy_method,
+    oral_cancer_visual_exam_results,
+    oral_cancer_cytology_results,
+    oral_cancer_imaging_results,
+    oral_cancer_biopsy_results,
+    oral_cancer_visual_exam_treatment,
+    oral_cancer_cytology_treatment,
+    oral_cancer_imaging_treatment,
+    oral_cancer_biopsy_treatment,
+
     prostate_cancer,
     digital_rectal_prostate_examination,
     digital_rectal_prostate_results,
@@ -4542,6 +4557,25 @@ select
      max(if(o.concept_id = 1169, case o.value_coded when 1000113 then '0-4ng/ml' when 1000114 then '4-10ng/ml' when 1000115 then '>10ng/ml' end, null)) as prostatic_specific_antigen_results,
      max(if(o.concept_id = 1000111 and o.value_coded in (1000081,1000121,1000143), case o.value_coded when 1000081 then 'Routine follow up after 2 years' when 1000121 then 'Further evaluation' when 1000121 then 'Further evaluation' when 1000143 then 'Perform/refer for biopsy' end, null)) as prostatic_specific_antigen_treatment,
 
+ -- Getting oral cancer screening data
+ max(if(o.concept_id = 116030 and o.value_coded = 115355, 'Yes', null))as oral_cancer,
+ max(if(o.concept_id = 163589 and o.value_coded = 162737, 'Oral Visual Exam', null))as oral_cancer_visual_exam_method,
+ max(if(o.concept_id = 163589 and o.value_coded = 161199, 'Oral cytology', null))as oral_cancer_cytology_method,
+ max(if(o.concept_id = 163589 and o.value_coded = 161347, 'Oral Imaging', null))as oral_cancer_imaging_method,
+ max(if(o.concept_id = 163589 and o.value_coded = 161657, 'Oral Biopsy', null))as oral_cancer_biopsy_method,
+ max(if(o.concept_id = 162737, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as oral_cancer_visual_exam_results,
+ max(if(o.concept_id = 132679, (case o.value_coded when 703 then 'Positive' when 664 then 'Negative' else '' end),null)) as oral_cancer_cytology_results,
+ max(if(o.concept_id = 1392, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as oral_cancer_imaging_results,
+ max(if(o.concept_id = 166664, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as oral_cancer_biopsy_results,
+ max(if(o.concept_id = 160049, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_visual_exam_treatment,
+ max(if(o.concept_id = 160049, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_cytology_treatment,
+ max(if(o.concept_id = 160049, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_imaging_treatment,
+ max(if(o.concept_id = 160049, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                  when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_biopsy_treatment,
+
   -- Getting breast cancer screening data
   max(if(o.concept_id = 116030 and o.value_coded = 116026, 'Yes', null))as breast_cancer,
   max(if(o.concept_id = 1000090 and o.value_coded = 1065, 'clinical breast examination', null))as clinical_breast_examination_screening_method,
@@ -4627,7 +4661,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165383,1788,163042,116030,164959,166664,1000147,1000148,165267,163589,163731,159449,163201,1169,5096,1887,165268,1169,164181,
-160288,161011,1729,160632,162964,160592,159931,1546,164879,163589,1000149, 1000105,1000150,116030,1000107,1000111,1169,1000090,159780,1000091,1000145)
+160288,161011,1729,160632,162964,160592,159931,1546,164879,163589,1000149,1000105,1000150,116030,1000107,1000111,1169,1000090,159780,1000091,1000145,116030,163589,162737,132679,1392,166664,160049)
 inner join (
              select
                o.person_id,
@@ -4670,7 +4704,7 @@ inner join (
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-             where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,1000149,1000105) and o.voided=0
+             where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,1000149,1000105,116030,163589,162737,132679,1392,166664,160049) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 left join (
