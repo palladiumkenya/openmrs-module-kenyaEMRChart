@@ -8206,7 +8206,7 @@ CREATE PROCEDURE sp_scheduled_updates()
   BEGIN
     DECLARE update_script_id INT(11);
     DECLARE last_update_time DATETIME;
-    SELECT max(start_time) into last_update_time from kenyaemr_etl.etl_script_status where stop_time is not null or stop_time !="";
+    SELECT max(start_time) into last_update_time from kenyaemr_etl.etl_script_status where stop_time is not null;
 
     INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('scheduled_updates', NOW());
     SET update_script_id = LAST_INSERT_ID();
