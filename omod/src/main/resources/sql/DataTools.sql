@@ -1353,6 +1353,7 @@ t.hts_risk_score,
   t.syphillis_test_result,
   t.patient_given_result,
   t.couple_discordant,
+  case t.referred when 1065 then 'Yes' when 1066 then 'No' end as referred,
   t.referral_for,
   t.referral_facility,
   t.other_referral_facility,
@@ -1448,6 +1449,7 @@ create table kenyaemr_datatools.gbv_screening_action as
 select
 patient_id,
 uuid,
+encounter_id,
 provider,
 visit_id,
 visit_date,
@@ -1475,6 +1477,7 @@ location_id,
         when 1185 then "Treatment"
         when 5622 then "Other"
         else "" end) as action_taken,
+    action_date as action_date,
 (case reason_for_not_reporting when 1067 then "Did not know where to report"
        when 1811 then "Distance"
        when 140923 then "Exhaustion/Lack of energy"
@@ -1874,28 +1877,63 @@ SELECT "Successfully created prep_enrolment table";
 -- Create table cervical_cancer_screening
 create table kenyaemr_datatools.cervical_cancer_screening as
   select
-      uuid,
-      encounter_id,
-      encounter_provider,
-      patient_id,
-      visit_id,
-      visit_date,
-      location_id,
-      date_created,
-      date_last_modified,
-      visit_type,
-      screening_type,
-      post_treatment_complication_cause,
-      post_treatment_complication_other,
-      screening_method,
-      screening_result,
-      treatment_method,
-      treatment_method_other,
-      referred_out,
-      referral_facility,
-      referral_reason,
-      next_appointment_date,
-      voided
+    uuid,
+    encounter_id,
+    encounter_provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    date_created,
+    date_last_modified,
+    visit_type,
+    screening_type,
+    post_treatment_complication_cause,
+    post_treatment_complication_other,
+    cervical_cancer,
+    colposcopy_screening_method,
+    hpv_screening_method,
+    pap_smear_screening_method,
+    via_vili_screening_method,
+    colposcopy_screening_result,
+    hpv_screening_result,
+    pap_smear_screening_result,
+    via_vili_screening_result,
+    colposcopy_treatment_method,
+    hpv_treatment_method,
+    pap_smear_treatment_method,
+    via_vili_treatment_method,
+    retinoblastoma_cancer,
+    retinoblastoma_eua_screening_method,
+    retinoblastoma_gene_method,
+    retinoblastoma_eua_screening_results,
+    retinoblastoma_gene_method_results,
+    retinoblastoma_eua_treatment,
+    retinoblastoma_gene_treatment,
+    prostate_cancer,
+    digital_rectal_prostate_examination,
+    digital_rectal_prostate_results,
+    digital_rectal_prostate_treatment,
+    prostatic_specific_antigen_test,
+    prostatic_specific_antigen_results,
+    prostatic_specific_antigen_treatment,
+    referred_out,
+    referral_facility,
+    referral_reason,
+    followup_date,
+    hiv_status,
+    smoke_cigarattes,
+    other_forms_tobacco,
+    take_alcohol,
+    previous_treatment,
+    previous_treatment_specify,
+    signs_symptoms,
+    signs_symptoms_specify,
+    family_history,
+    number_of_years_smoked,
+    number_of_cigarette_per_day,
+    clinical_notes,
+    voided
   from kenyaemr_etl.etl_cervical_cancer_screening;
 
 ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
@@ -2678,6 +2716,77 @@ ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(visit_date);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(naloxone_provided);
 ALTER TABLE kenyaemr_datatools.overdose_reporting ADD INDEX(outcome);
 SELECT "Successfully created overdose_reporting table";
+
+-- Create table ccc_defaulter_tracing
+create table kenyaemr_datatools.ccc_defaulter_tracing as
+select uuid,
+       provider,
+       patient_id,
+       visit_id,
+       visit_date,
+       location_id,
+       encounter_id,
+       (case f.tracing_type
+            when 1650 then 'Client Called'
+            when 164965 then 'Physical Tracing'
+            when 161642 then 'Treatment supporter' end)                                as tracing_type,
+       case f.tracing_outcome when 1267 then 'Contact' when 1118 then 'No Contact' end as tracing_outcome,
+       missed_appointment_date,
+       (case f.reason_for_missed_appointment
+            when 165609 then 'Client has covid-19 infection'
+            when 165610 then 'COVID-19 restrictions'
+            when 164407 then 'Client refilled drugs from another facility'
+            when 159367 then 'Client has enough drugs'
+            when 162619 then 'Client travelled'
+            when 126240 then 'Client could not get an off from work/school'
+            when 160583 then 'Client is sharing drugs with partner'
+            when 162192 then 'Client forgot clinic dates'
+            when 164349 then 'Client stopped medications'
+            when 1654 then 'Client sick at home/admitted'
+            when 5622
+                then 'Other' end)                                                      as reason_for_missed_appointment,
+       non_coded_missed_appointment_reason,
+       (case f.reason_not_contacted
+            when 166538 then 'No locator information'
+            when 165075 then 'Inaccurate locator information'
+            when 160034 then 'Died'
+            when 1302 then 'Calls not going through'
+            when 1567 then 'Not picking calls'
+            when 160415 then 'Migrated from reported location'
+            when 1706 then 'Not found at home'
+            when 5622 then 'Other' end)                                                as reason_not_contacted,
+       attempt_number,
+       (case f.is_final_trace when 1267 then 'Yes' when 163339 then 'No' end)          as is_final_trace,
+       (case f.true_status
+            when 160432 then 'Dead'
+            when 1693 then 'Receiving ART from another clinic/Transferred'
+            when 160037 then 'Still in care at CCC'
+            when 5240 then 'Lost to follow up'
+            when 164435 then 'Stopped treatment'
+            when 142917 then 'Other' end)                                                as true_status,
+       (case f.cause_of_death
+            when 165609 then 'Infection due to COVID-19'
+            when 162574 then 'Death related to HIV infection'
+            when 116030 then 'Cancer'
+            when 164500 then 'TB'
+            when 151522 then 'Other infectious and parasitic diseases'
+            when 133481 then 'Natural cause'
+            when 1603 then 'Unnatural Cause'
+            when 5622 then 'Unknown cause' end)                                        as cause_of_death,
+       comments,
+       booking_date,
+       date_created,
+       date_last_modified
+from kenyaemr_etl.etl_ccc_defaulter_tracing f;
+Alter table kenyaemr_datatools.ccc_defaulter_tracing
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.ccc_defaulter_tracing ADD INDEX (visit_date);
+ALTER TABLE kenyaemr_datatools.ccc_defaulter_tracing ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.ccc_defaulter_tracing ADD INDEX (missed_appointment_date);
+ALTER TABLE kenyaemr_datatools.ccc_defaulter_tracing ADD INDEX (true_status);
+ALTER TABLE kenyaemr_datatools.ccc_defaulter_tracing ADD INDEX (cause_of_death);
+ALTER TABLE kenyaemr_datatools.ccc_defaulter_tracing ADD INDEX (tracing_type);
+SELECT "Successfully created ccc_defaulter_tracing table";
 
 -- Create table ART fast track
 create table kenyaemr_datatools.art_fast_track as

@@ -2565,6 +2565,7 @@ final_test_result,
 syphillis_test_result,
 patient_given_result,
 couple_discordant,
+referred,
 referral_for,
 referral_facility,
 other_referral_facility,
@@ -2619,6 +2620,7 @@ max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664
 max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
 max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 max(if(o.concept_id=6096,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as couple_discordant,
+max(if(o.concept_id=165093,o.value_coded,null)) as referred,
 max(if(o.concept_id=1887,(case o.value_coded when 162082 then "Confirmatory test" when 162050 then "Comprehensive care center" when 164461 then "DBS for PCR" else "" end),null)) as referral_for,
 max(if(o.concept_id=160481,(case o.value_coded when 163266 then "This health facility" when 164407 then "Other health facility" else "" end),null)) as referral_facility,
 max(if(o.concept_id=161550,trim(o.value_text),null)) as other_referral_facility,
@@ -2642,7 +2644,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093)
 inner join (
              select
                o.person_id,
@@ -2932,6 +2934,7 @@ missed_appointment_date,
 reason_for_missed_appointment,
 non_coded_missed_appointment_reason,
 tracing_outcome,
+reason_not_contacted,
 attempt_number,
 is_final_trace,
 true_status,
@@ -2949,6 +2952,7 @@ max(if(o.concept_id=164093,date(o.value_datetime),null)) as missed_appointment_d
 max(if(o.concept_id = 1801, o.value_coded, null )) as reason_for_missed_appointment,
 max(if(o.concept_id = 163513, o.value_text, "" )) as non_coded_missed_appointment_reason,
 max(if(o.concept_id = 160721, o.value_coded, null )) as tracing_outcome,
+max(if(o.concept_id = 166541, o.value_coded, null )) as reason_not_contacted,
 max(if(o.concept_id = 1639, value_numeric, "" )) as attempt_number,
 max(if(o.concept_id = 163725, o.value_coded, "" )) as is_final_trace,
 max(if(o.concept_id = 160433, o.value_coded, "" )) as true_status,
@@ -2961,7 +2965,7 @@ e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id
 	inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966,164093,1801, 163513, 160721, 1639, 163725, 160433, 1599, 160716,163526)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966,164093,1801, 163513, 160721, 1639, 163725, 160433, 1599, 160716,163526,166541)
 group by e.encounter_id;
 SELECT "Completed processing CCC defaulter tracing forms", CONCAT("Time: ", NOW());
 END $$
@@ -3505,6 +3509,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
         initial_enrolment_date,
         date_started_prep_trf_facility,
         previously_on_prep,
+        prep_type,
         regimen,
         prep_last_date,
         in_school,
@@ -3529,6 +3534,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
            max(if(o.concept_id = 160555, o.value_datetime, null )) as initial_enrolment_date,
            max(if(o.concept_id = 159599, o.value_datetime, null )) as date_started_prep_trf_facility,
            max(if(o.concept_id = 160533, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as previously_on_prep,
+           max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
            max(if(o.concept_id = 1088, (case o.value_coded when 104567 then "TDF/FTC" when 84795 then "TDF" when 161364 then "TDF/3TC" else "" end), "" )) as regimen,
            max(if(o.concept_id = 162881, o.value_datetime, null )) as prep_last_date,
            max(if(o.concept_id = 5629, o.value_coded, null )) as in_school,
@@ -3541,7 +3547,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
     from encounter e
 			inner join person p on p.person_id=e.patient_id
 			inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581)
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581,166866)
     group by e.encounter_id;
     SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
   END $$
@@ -3673,7 +3679,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
                   max(if(o.concept_id = 165106 and o.value_coded = 155589, "Renal impairment",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 127750, "Not willing",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
-        max(if(o.concept_id = 165109, (case o.value_coded when 159836 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 159835 then "Continue" else "" end), "" )) as treatment_plan,
+        max(if(o.concept_id = 165109, (case o.value_coded when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 1257 then "Continue" else "" end), "" )) as treatment_plan,
         max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
         max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
         max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
@@ -5039,7 +5045,7 @@ e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id
  max(if(o.concept_id=165071,(case o.value_coded when 165078 THEN "Contact information illegible" when 165073 then "Location listed too general to make tracking possible"
  when 165072 then "Contact information missing" when 163777 then "Cohort register or peer outreach calendar reviewed and client not lost to follow up" when 5622 then "other" else "" end),null)) as tracing_not_attempted_reason,
  max(if(o.concept_id = 1639, o.value_numeric, "" )) as attempt_number,
- max(if(o.concept_id = 160753, o.value_datetime, "" )) as tracing_date,
+ max(if(o.concept_id = 160753, o.value_datetime, null )) as tracing_date,
  max(if(o.concept_id = 164966, (case o.value_coded when 1650 THEN "Phone" when 164965 then "Physical" else "" end),null)) as tracing_type,
  max(if(o.concept_id = 160721, (case o.value_coded when 160718 THEN "KP reached" when 160717 then "KP not reached but other informant reached" when 160720 then "KP not reached" else "" end),null)) as tracing_outcome,
  max(if(o.concept_id = 163725, (case o.value_coded when 1267 THEN "Yes" when 163339 then "No" else "" end),null)) as is_final_trace,
@@ -5104,11 +5110,11 @@ voided
 )
 select
 e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
-max(if(o.concept_id = 159948, o.value_datetime, "" )) as date_diagnosed_with_hiv,
+max(if(o.concept_id = 159948, o.value_datetime, null )) as date_diagnosed_with_hiv,
 max(if(o.concept_id = 162724, o.value_text, "" )) as art_health_facility,
 max(if(o.concept_id = 162053, o.value_numeric, "" )) as ccc_number,
 max(if(o.concept_id=1768,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as is_pepfar_site,
-max(if(o.concept_id = 159599, o.value_datetime, "" )) as date_initiated_art,
+max(if(o.concept_id = 159599, o.value_datetime, null )) as date_initiated_art,
 max(if(o.concept_id = 164515,(case o.value_coded
  when 162565 then 'TDF/3TC/NVP'
        when 164505 then 'TDF/3TC/EFV'
@@ -5142,24 +5148,24 @@ max(if(o.concept_id = 164515,(case o.value_coded
        when 165370 then 'TDF/3TC/RAL/DRV/r'
        when 165371 then 'TDF/3TC/DTG/EFV/DRV/r' else "" end),null)) as current_regimen,
 max(if(o.concept_id = 162568, (case o.value_coded when 162969 THEN "SMS" when 163787 then "Verbal report"  when 1238 then "Written record" when 162189 then "Phone call" when 160526 then "EID Dashboard" when 165048 then "Appointment card" else "" end),null)) as information_source,
-max(if(o.concept_id = 160103, o.value_datetime, "" )) as cd4_test_date,
+max(if(o.concept_id = 160103, o.value_datetime, null )) as cd4_test_date,
 max(if(o.concept_id = 5497, o.value_numeric, "" )) as cd4,
-max(if(o.concept_id = 163281, o.value_datetime, "" )) as vl_test_date,
+max(if(o.concept_id = 163281, o.value_datetime, null )) as vl_test_date,
 max(if(o.concept_id = 160632, o.value_numeric, "" )) as viral_load,
 max(if(o.concept_id = 163524, (case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as disclosed_status,
 max(if(o.concept_id = 5616, (case o.value_coded when 159423 THEN "Sexual Partner" when 1560 then "Family member" when 161642 then "Treatment partner" when 160639 then "Spiritual Leader" when 5622 then "Other" else "" end),null)) as person_disclosed_to,
 max(if(o.concept_id = 163101, o.value_text, "" )) as other_person_disclosed_to,
-max(if(o.concept_id = 162320, o.value_datetime, "" )) as IPT_start_date,
-max(if(o.concept_id = 162279, o.value_datetime, "" )) as IPT_completion_date,
+max(if(o.concept_id = 162320, o.value_datetime, null )) as IPT_start_date,
+max(if(o.concept_id = 162279, o.value_datetime, null )) as IPT_completion_date,
 max(if(o.concept_id=164947,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as on_diff_care,
 max(if(o.concept_id=165302,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as in_support_group,
 max(if(o.concept_id = 165137, o.value_text, "" )) as support_group_name,
 max(if(o.concept_id = 162634, (case o.value_coded when 112141 THEN "Tuberculosis" when 990 then "Toxoplasmosis" when 130021 then "Pneumocystosis carinii pneumonia" when 114100 then "Pneumonia" when 136326 then "Kaposi Sarcoma"
 when 123118 then "HIV encephalitis" when 117543 then "Herpes Zoster" when 154119 then "Cytomegalovirus (CMV)" when 1219 then "Cryptococcosis" when 120939 then "Candidiasis" when 116104 then "Lymphoma" when 5622 then "Other" else "" end),null)) as opportunistic_infection,
-max(if(o.concept_id = 159948, o.value_datetime, "" )) as oi_diagnosis_date,
-max(if(o.concept_id = 160753, o.value_datetime, "" )) as oi_treatment_end_date,
-max(if(o.concept_id = 162868, o.value_datetime, "" )) as oi_treatment_end_date,
-max(if(o.concept_id = 161011, o.value_datetime, "" )) as comment,
+max(if(o.concept_id = 159948, o.value_datetime, null )) as oi_diagnosis_date,
+max(if(o.concept_id = 160753, o.value_datetime, null )) as oi_treatment_end_date,
+max(if(o.concept_id = 162868, o.value_datetime, null )) as oi_treatment_end_date,
+max(if(o.concept_id = 161011, o.value_datetime, null )) as comment,
 e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
@@ -5232,7 +5238,7 @@ max(if(o.concept_id=165230, o.value_text, "" )) as other_unrelated_perpetrator,
 max(if(o.concept_id=162871,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as sought_help,
 max(if(o.concept_id=162886,(case o.value_coded when 1589 THEN "Hospital" when 165284 then "Police" when 165037 then "Peer Educator" when 1560 then "Family" when 165294 then "Peers" when 5618 then "Friends"
                           when 165290 then "Religious Leader" when 165350 then "Dice" when 162690 then "Chief" when 5622 then "Other" else "" end),null)) as help_provider,
-max(if(o.concept_id = 160753, o.value_datetime, "" )) as date_helped,
+max(if(o.concept_id = 160753, o.value_datetime, null )) as date_helped,
 max(if(o.concept_id=162875,(case o.value_coded when 1066 then "No action taken"
         when 165070 then "Counselling"
         when 160570 then "Emergency pills"
@@ -5311,18 +5317,18 @@ voided
 )
 select
 e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id, e.encounter_id,
-max(if(o.concept_id = 163526, o.value_datetime, "" )) as date_enrolled,
+max(if(o.concept_id = 163526, o.value_datetime, null )) as date_enrolled,
 max(if(o.concept_id = 162724, o.value_text, "" )) as health_facility_accessing_PrEP,
 max(if(o.concept_id=1768,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end),null)) as is_pepfar_site,
-max(if(o.concept_id = 160555, o.value_datetime, "" )) as date_initiated_PrEP,
+max(if(o.concept_id = 160555, o.value_datetime, null )) as date_initiated_PrEP,
 max(if(o.concept_id=164515,(case o.value_coded when 161364 THEN "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end),null)) as PrEP_regimen,
 max(if(o.concept_id = 162568, (case o.value_coded when 163787 then "Verbal report" when 162969 THEN "SMS" when 1662 then "Apointment card"  when 1650 then "Phone call" when 1238 then "Written record" when 160526 then "EID Dashboard" else "" end),null)) as information_source,
-max(if(o.concept_id = 162079, o.value_datetime, "" )) as verification_date,
+max(if(o.concept_id = 162079, o.value_datetime, null )) as verification_date,
 max(if(o.concept_id=165109,(case o.value_coded when 1256 THEN "Start" when 1257 then "Continue" when 162904 then "Restart" when 1260 then "Discontinue" else "" end),null)) as PrEP_status,
 max(if(o.concept_id=161555,(case o.value_coded when 138571 THEN "HIV test is positive" when 1302 then "Viral suppression of HIV+ Partner" when
 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests" when 162696 then "Client request" when 5622 then "Other" else "" end),null)) as discontinuation_reason,
 max(if(o.concept_id = 165230, o.value_text, "" )) as other_discontinuation_reason,
-max(if(o.concept_id = 159948, o.value_datetime, "" )) as appointment_date,
+max(if(o.concept_id = 159948, o.value_datetime, null )) as appointment_date,
 e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
@@ -5424,21 +5430,24 @@ insert into dwapi_etl.etl_gbv_screening_action(
     uuid,
     provider,
     patient_id,
+    encounter_id,
     visit_id,
     visit_date,
     location_id,
     obs_id,
     help_provider,
     action_taken,
+    action_date,
     reason_for_not_reporting,
     date_created,
     date_last_modified,
     voided
     )
 select
-       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, o.id as obs_id,
+       e.uuid,e.creator,e.patient_id,e.encounter_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, o.id as obs_id,
        max(if(o.obs_group = 1562 and o.concept_id = 162886,o.value_coded, NULL)) as help_provider,
        max(if(o.obs_group = 159639 and o.concept_id = 162875,o.value_coded, NULL)) as action_taken,
+       max(if(o.obs_group = 1562 and o.concept_id = 160753,o.value_datetime, NULL)) as action_date,
        max(if(o.obs_group = 1743 and o.concept_id = 6098,o.value_coded,NULL)) as reason_for_not_reporting,
        e.date_created as date_created,
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
@@ -5446,8 +5455,8 @@ select
 from encounter e
        inner join person p on p.person_id=e.patient_id
        inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
-       inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o1.obs_id as id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
-                   from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id in (162871,162886,162875,6098) and o.concept_id in(1562,159639,1743))o on o.encounter_id = e.encounter_id
+       inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o1.obs_id as id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.value_datetime as value_datetime,o1.date_created,o1.voided
+                   from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id in (162871,162886,162875,6098,160753) and o.concept_id in(1562,159639,1743))o on o.encounter_id = e.encounter_id
 group by o.id order by o.concept_id;
 
 SELECT "Completed processing gbv screening action data ", CONCAT("Time: ", NOW());
