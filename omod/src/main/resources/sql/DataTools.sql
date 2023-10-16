@@ -1874,6 +1874,45 @@ ALTER TABLE kenyaemr_datatools.prep_enrolment ADD FOREIGN KEY (patient_id) REFER
 ALTER TABLE kenyaemr_datatools.prep_enrolment ADD INDEX(visit_date);
 SELECT "Successfully created prep_enrolment table";
 
+-- Create table prep_monthly_refill
+create table kenyaemr_datatools.prep_monthly_refill as
+select
+    uuid,
+    provider,
+    patient_id,
+    visit_id,
+    visit_date,
+    location_id,
+    encounter_id,
+    date_created,
+    date_last_modified,
+    assessed_for_behavior_risk,
+    risk_for_hiv_positive_partner,
+    client_assessment,
+    adherence_assessment,
+    poor_adherence_reasons,
+    other_poor_adherence_reasons,
+    adherence_counselling_done,
+    prep_status,
+    switching_option,
+    switching_date,
+    prep_type,
+    prescribed_prep_today,
+    prescribed_regimen,
+    prescribed_regimen_months,
+    number_of_condoms_issued,
+    prep_discontinue_reasons,
+    prep_discontinue_other_reasons,
+    appointment_given,
+    next_appointment,
+    remarks,
+    voided
+from kenyaemr_etl.etl_prep_monthly_refill;
+
+ALTER TABLE kenyaemr_datatools.prep_monthly_refill ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.prep_monthly_refill ADD INDEX(visit_date);
+SELECT "Successfully created prep_monthly_refill table";
+
 -- Create table cervical_cancer_screening
 create table kenyaemr_datatools.cervical_cancer_screening as
   select

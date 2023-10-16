@@ -3373,6 +3373,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
         encounter_id,
         date_created,
         date_last_modified,
+        assessed_for_behavior_risk,
         risk_for_hiv_positive_partner,
         client_assessment,
         adherence_assessment,
@@ -3386,6 +3387,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
         prescribed_prep_today,
         prescribed_regimen,
         prescribed_regimen_months,
+        number_of_condoms_issued,
         prep_discontinue_reasons,
         prep_discontinue_other_reasons,
         appointment_given,
@@ -3396,6 +3398,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
     select
            e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
            if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+           max(if(o.concept_id = 138643, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end),null)) as assessed_for_behavior_risk,
            max(if(o.concept_id = 1169, (case o.value_coded when 160571 then "Couple is trying to conceive" when 159598 then "Suspected poor adherence"
                                                            when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
            max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
@@ -3416,6 +3419,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
            max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
            max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" when 168050 then "CAB-LA" when 168049 then "Dapivirine Ring"  else "" end), "" )) as prescribed_regimen,
            max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
+           max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms_issued,
            max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                              when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
                                                              when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
@@ -3427,7 +3431,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
     from encounter e
            inner join person p on p.person_id=e.patient_id
            inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096)
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055)
     group by e.encounter_id;
     SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
   END $$
