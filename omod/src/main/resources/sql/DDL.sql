@@ -3337,7 +3337,7 @@ create table kenyaemr_etl.etl_overdose_reporting (
 );
 SELECT "Successfully created etl_overdose_reporting table";
 
--- Create etl_overdose_reporting table";
+-- Create etl_art_fast_track table";
 CREATE TABLE kenyaemr_etl.etl_art_fast_track
 (
     uuid                              char(38),
