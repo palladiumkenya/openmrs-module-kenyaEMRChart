@@ -3070,6 +3070,14 @@ CREATE PROCEDURE sp_populate_dwapi_enhanced_adherence()
 			session_number,
 			first_session_date,
 			pill_count,
+            MMAS4_1_forgets_to_take_meds,
+            MMAS4_2_careless_taking_meds,
+            MMAS4_3_stops_on_reactive_meds,
+            MMAS4_4_stops_meds_on_feeling_good,
+            MMSA8_1_took_meds_yesterday,
+            MMSA8_2_stops_meds_on_controlled_symptoms,
+            MMSA8_3_struggles_to_comply_tx_plan,
+            MMSA8_4_struggles_remembering_taking_meds,
 			arv_adherence,
 			has_vl_results,
 			vl_results_suppressed,
@@ -3116,6 +3124,14 @@ CREATE PROCEDURE sp_populate_dwapi_enhanced_adherence()
 				max(if(o.concept_id=1639,o.value_numeric,null)) as session_number,
 				max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
 				max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
+                max(if(o.concept_id=167321,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_1_forgets_to_take_meds,
+                max(if(o.concept_id=163088,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_2_careless_taking_meds,
+                max(if(o.concept_id=6098,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_3_stops_on_reactive_meds,
+                max(if(o.concept_id=164998,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_4_stops_meds_on_feeling_good,
+                max(if(o.concept_id=162736,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_1_took_meds_yesterday,
+                max(if(o.concept_id=1743,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_2_stops_meds_on_controlled_symptoms,
+                max(if(o.concept_id=1779,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_3_struggles_to_comply_tx_plan,
+                max(if(o.concept_id=166365,(case o.value_coded when 1090 then "Never/rarely" when 1358 then "Once in a while" when 1385 then "Sometimes" when 161236 then "Usually" when 162135 then "All the time" end), null)) as MMSA8_4_struggles_remembering_taking_meds,
 				max(if(o.concept_id=1658,(case o.value_coded when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end), "" )) as arv_adherence,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
 				max(if(o.concept_id=163310,(case o.value_coded when 1302 then "Suppressed" when 1066 then "Unsuppresed" else "" end), "" )) as vl_results_suppressed,
@@ -3153,7 +3169,7 @@ e.voided as voided
 			from encounter e
 				inner join person p on p.person_id=e.patient_id
 				inner join obs o on e.encounter_id = o.encounter_id
-																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
+																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096,167321,163088,6098,164998,162736,1743,1779,166365)
 				inner join
 				(
 					select form_id, uuid,name from form where
