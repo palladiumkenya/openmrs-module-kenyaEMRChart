@@ -25,6 +25,7 @@ jobs:
           cd /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
           git clone -b master https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
           git status
+          bash /apps/workflowConfigs/clearCharts.sh
           mvn license:format
           mvn clean install -DskipTests
           sudo rm -rf /var/lib/OpenMRS/modules/kenyaEMRChart-*.omod
