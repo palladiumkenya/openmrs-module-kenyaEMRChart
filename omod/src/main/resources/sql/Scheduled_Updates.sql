@@ -3507,6 +3507,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       encounter_id,
       date_created,
       date_last_modified,
+      assessed_for_behavior_risk,
       risk_for_hiv_positive_partner,
       client_assessment,
       adherence_assessment,
@@ -3520,6 +3521,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       prescribed_prep_today,
       prescribed_regimen,
       prescribed_regimen_months,
+      number_of_condoms_issued,
       prep_discontinue_reasons,
       prep_discontinue_other_reasons,
       appointment_given,
@@ -3530,6 +3532,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       select
         e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
                 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+                max(if(o.concept_id = 138643, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end),null)) as assessed_for_behavior_risk,
                 max(if(o.concept_id = 1169, (case o.value_coded when 160571 then "Couple is trying to conceive" when 159598 then "Suspected poor adherence"
                                              when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
                 max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
@@ -3550,6 +3553,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
                max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
                max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end), "" )) as prescribed_regimen,
                 max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
+                max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms_issued,
                 max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
                                                when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
@@ -3561,7 +3565,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,165144,166866,167788,160632,164425,161641,1417,164515,164433,161555,164999,161011,5096) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,165144,166866,167788,160632,164425,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3570,6 +3574,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
       provider=VALUES(provider),
+      assessed_for_behavior_risk=VALUES(assessed_for_behavior_risk),
       risk_for_hiv_positive_partner=VALUES(risk_for_hiv_positive_partner),
       client_assessment=VALUES(client_assessment),
       adherence_assessment=VALUES(adherence_assessment),
@@ -3583,6 +3588,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       prescribed_prep_today=VALUES(prescribed_prep_today),
       prescribed_regimen=VALUES(prescribed_regimen),
       prescribed_regimen_months=VALUES(prescribed_regimen_months),
+      number_of_condoms_issued=VALUES(number_of_condoms_issued),
       prep_discontinue_reasons=VALUES(prep_discontinue_reasons),
       prep_discontinue_other_reasons=VALUES(prep_discontinue_other_reasons),
       appointment_given=VALUES(appointment_given),
