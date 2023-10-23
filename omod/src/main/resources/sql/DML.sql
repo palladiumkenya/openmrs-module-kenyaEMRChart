@@ -3414,7 +3414,60 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END $$
 
+-- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
+DROP PROCEDURE IF EXISTS sp_populate_etl_generalized_anxiety_disorder $$
+CREATE PROCEDURE sp_populate_etl_generalized_anxiety_disorder()
+  BEGIN
+    SELECT "Processing Generalized Anxiety Disorder form", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_generalized_anxiety_disorder(
+			uuid,
+			patient_id,
+			visit_id,
+			visit_date,
+			location_id,
+			encounter_id,
+			encounter_provider,
+			date_created,
+            feeling_nervous_anxious,
+            control_worrying,
+            worrying_much,
+            trouble_relaxing,
+            being_restless,
+            feeling_bad,
+            feeling_afraid,
+            assessment_outcome,
+            date_last_modified,
+			voided
+        )
+    select
+		e.uuid,
+		e.patient_id,
+		e.visit_id,
+		date(e.encounter_datetime) as visit_date,
+		e.location_id,
+		e.encounter_id as encounter_id,
+		e.creator,
+		e.date_created as date_created,
+		max(if(o.concept_id=167003,trim(o.value_coded),null)) as feeling_nervous_anxious,
+		max(if(o.concept_id=167005,trim(o.value_coded),null)) as control_worrying,
+		max(if(o.concept_id=166482,trim(o.value_coded),null)) as worrying_much,
+		max(if(o.concept_id=167064,trim(o.value_coded),null)) as trouble_relaxing,
+		max(if(o.concept_id=167065,trim(o.value_coded),null)) as being_restless,
+		max(if(o.concept_id=167066,trim(o.value_coded),null)) as feeling_bad,
+		max(if(o.concept_id=167067,trim(o.value_coded),null)) as feeling_afraid,
+		max(if(o.concept_id=167267,trim(o.value_coded),null)) as assessment_outcome,
+		if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided as voided
+
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ("524d078e-936a-4543-9ca6-7a8d9ed4db06")
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167003,167005,166482,167064,167065,167066,167067,167267) and o.voided=0
+    where e.voided=0
+    group by e.encounter_id;
+    SELECT "Completed processing Processing Generalized Anxiety Disorder forms", CONCAT("Time: ", NOW());
+  END $$
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_prep_behaviour_risk_assessment $$
@@ -7406,6 +7459,7 @@ CALL sp_populate_etl_mch_delivery();
 CALL sp_populate_etl_mch_discharge();
 CALL sp_drug_event();
 CALL sp_populate_hts_test();
+CALL sp_populate_etl_generalized_anxiety_disorder();
 CALL sp_populate_hts_linkage_and_referral();
 CALL sp_populate_hts_referral();
 CALL sp_populate_etl_ccc_defaulter_tracing();
