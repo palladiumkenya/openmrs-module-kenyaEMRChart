@@ -1239,6 +1239,32 @@ SELECT "Successfully created enhanced adherence table";
   ALTER TABLE kenyaemr_datatools.triage ADD INDEX(visit_date);
   SELECT "Successfully created triage table";
 
+ -- create table generalized_anxiety_disorder
+  create table kenyaemr_datatools.generalized_anxiety_disorder as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+      (case feeling_nervous_anxious when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as feeling_nervous_anxious,
+      (case control_worrying when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as control_worrying,
+      (case worrying_much when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as worrying_much,
+      (case trouble_relaxing when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as trouble_relaxing,
+      (case being_restless when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as being_restless,
+      (case feeling_bad when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as feeling_bad,
+      (case feeling_afraid when 160215 then "Not at all" when 167000 then "More than half the days" when 167001 then "Moderate acute malnutrition" when 167002 then "Nearly every day" else "" end) as feeling_afraid,
+      (case assessment_outcome when 159410 then "Minimal Anxiety" when 1498 then "Mild Anxiety" when 1499 then "Moderate Anxiety" when 1500 then "Severe Anxiety" else "" end) as assessment_outcome,
+      voided
+    from kenyaemr_etl.etl_generalized_anxiety_disorder;
+
+  ALTER TABLE kenyaemr_datatools.generalized_anxiety_disorder ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.generalized_anxiety_disorder ADD INDEX(visit_date);
+  SELECT "Successfully created generalized anxiety disorder table";
+
 
   -- create table datatools_patient_contact
   create table kenyaemr_datatools.patient_contact as
