@@ -328,6 +328,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       respiratory_rate,
       oxygen_saturation,
       muac,
+      z_score_absolute,
+      z_score,
       nutritional_status,
       population_type,
       key_population_type,
@@ -439,6 +441,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
         max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
         max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+        max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
+        max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
         max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
         max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
         max(if(o.concept_id=160581,o.value_coded,null)) as key_population_type,
@@ -600,7 +604,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid ='a0034eee-1940-4e35-847f-97537a35d05e'
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
+                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
                                  1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
                                  164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
                                  121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
@@ -612,7 +616,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),visit_scheduled=VALUES(visit_scheduled),
       person_present=VALUES(person_present),weight=VALUES(weight),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),height=VALUES(height),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
-      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac), nutritional_status=VALUES(nutritional_status), population_type=VALUES(population_type), key_population_type=VALUES(key_population_type), who_stage=VALUES(who_stage),who_stage_associated_oi=VALUES(who_stage_associated_oi),presenting_complaints = VALUES(presenting_complaints),
+      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score_absolute=VALUES(z_score_absolute),z_score=VALUES(z_score), nutritional_status=VALUES(nutritional_status), population_type=VALUES(population_type), key_population_type=VALUES(key_population_type), who_stage=VALUES(who_stage),who_stage_associated_oi=VALUES(who_stage_associated_oi),presenting_complaints = VALUES(presenting_complaints),
       clinical_notes = VALUES(clinical_notes),on_anti_tb_drugs=VALUES(on_anti_tb_drugs),on_ipt=VALUES(on_ipt),ever_on_ipt=VALUES(ever_on_ipt),cough=VALUES(cough),fever=VALUES(fever),weight_loss_poor_gain=VALUES(weight_loss_poor_gain),night_sweats=VALUES(night_sweats),tb_case_contact=VALUES(tb_case_contact),lethargy=VALUES(lethargy),screened_for_tb=VALUES(screened_for_tb),
       spatum_smear_ordered=VALUES(spatum_smear_ordered),chest_xray_ordered=VALUES(chest_xray_ordered),genexpert_ordered=VALUES(genexpert_ordered),
       spatum_smear_result=VALUES(spatum_smear_result), chest_xray_result=VALUES(chest_xray_result),genexpert_result=VALUES(genexpert_result),referral=VALUES(referral),clinical_tb_diagnosis=VALUES(clinical_tb_diagnosis),contact_invitation=VALUES(contact_invitation),
