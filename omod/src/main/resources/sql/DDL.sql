@@ -759,7 +759,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     counselled_on_feeding INT(11),
     baby_status INT(11),
     vitamin_A_dispensed INT(11),
-    birth_notification_number INT(50),
+    birth_notification_number VARCHAR(100),
     condition_of_mother VARCHAR(100),
     discharge_date DATE,
     referred_from INT(11),
