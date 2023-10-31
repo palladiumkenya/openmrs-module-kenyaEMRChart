@@ -4539,6 +4539,9 @@ insert into kenyaemr_etl.etl_cervical_cancer_screening(
     mammography_screening_result,
     clinical_breast_examination_treatment_method,
     ultrasound_treatment_method,
+    breast_tissue_diagnosis,
+    breast_tissue_diagnosis_date,
+    reason_tissue_diagnosis_not_done,
     mammography_treatment_method,
     referred_out,
     referral_facility,
@@ -4677,8 +4680,12 @@ select
                                   when 432 then 'Routine mammography screening'
                                   when 164080 then 'Short-interval(6 months) follow-up'
                                   when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
+                                  when 1000078 then 'Negative-Counsel on negative results and review'
                                   when 1000103 then 'Referred for further management'
                                    else '' end),null)) as ultrasound_treatment_method,
+    max(if(o.concept_id = 1000516, case o.value_coded when 1267 then 'Done' when 1118 then 'Not done' end, null)) as breast_tissue_diagnosis,
+    max(if(o.concept_id = 1000088, o.value_datetime, null)) as breast_tissue_diagnosis_date,
+    max(if(o.concept_id = 160632, o.value_text, null)) as reason_tissue_diagnosis_not_done,
   max(if(o.concept_id = 1000145, (case o.value_coded when 1609 then 'Recall for additional imaging'
                                   when 432 then 'Routine Ultra sound screening'
                                   when 164080 then 'Short-interval(6 months) follow-up'
@@ -4686,7 +4693,6 @@ select
                                   when 159619 then 'Surgical excision when clinically appropriate)'
                                   when 1000103 then 'Referred for further management'
                                   else '' end),null)) as mammography_treatment_method,
-
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
@@ -4730,12 +4736,11 @@ select
         max(if(o.concept_id=159931,o.value_numeric,null)) as number_of_years_smoked,
         max(if(o.concept_id=1546,o.value_numeric,null)) as number_of_cigarette_per_day,
         max(if(o.concept_id=164879,trim(o.value_text),null)) as clinical_notes,
-
 e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,1000516,1000088,160632,
                                                                          160288,160592,160632,161011,162737,162964,163042,163201,163308,163589,163731,164181,164879,164959,165267,165268,165383,166664,
                                                                          167139,1000090,1000091,1000105,1000107,1000111,1000135,1000136,1000145,1000147,1000148,1000149,1000150,1000151,1000152,1000153,1000154)
 inner join (
@@ -4769,7 +4774,7 @@ inner join (
                     when 1116 then "Abnormal" when 159008 then "Suspicious for Cancer"  else "" end),null)) as colposcopy_screening_result ,
                 max(if(o.concept_id in (165070,166665,160705,165266), (case o.value_coded when 1065 then "Counseled on negative results" 
                     when 162812 then "Cryotherapy" when 165395 then "Thermal ablation"
-                    when 166620 then "Loop electrosurgical excision" when 1000103 then "Refer for appropraite diagnosis and management"
+                    when 166620 then "Loop electrosurgical excision" when 1000103 then "Refer for appropriate diagnosis and management"
                     when 165385 then "Cryotherapy performed (SVA)" when 165381 then "Cryotherapy postponed"
                     when 162810 then "Cryotherapy performed (previously postponed)" when 1648 then "Referred for cryotherapy"
                     when 165396 then "LEEP performed" when 165396 then "Cold knife cone"
