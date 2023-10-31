@@ -4680,7 +4680,6 @@ select
                                   when 432 then 'Routine mammography screening'
                                   when 164080 then 'Short-interval(6 months) follow-up'
                                   when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
-                                  when 1000078 then 'Negative-Counsel on negative results and review'
                                   when 1000103 then 'Referred for further management'
                                    else '' end),null)) as ultrasound_treatment_method,
     max(if(o.concept_id = 1000516, case o.value_coded when 1267 then 'Done' when 1118 then 'Not done' end, null)) as breast_tissue_diagnosis,
@@ -4740,7 +4739,7 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,1000516,1000088,160632,
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,1000516,1000088,
                                                                          160288,160592,160632,161011,162737,162964,163042,163201,163308,163589,163731,164181,164879,164959,165267,165268,165383,166664,
                                                                          167139,1000090,1000091,1000105,1000107,1000111,1000135,1000136,1000145,1000147,1000148,1000149,1000150,1000151,1000152,1000153,1000154)
 inner join (
