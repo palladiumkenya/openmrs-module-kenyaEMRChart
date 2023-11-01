@@ -2155,7 +2155,7 @@ CREATE TABLE dwapi_etl.etl_patient_program (
    number_of_cigarette_per_day VARCHAR(100) DEFAULT NULL,
    clinical_notes VARCHAR(500) DEFAULT NULL,
    voided INT(11),
-   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
    CONSTRAINT unique_uuid UNIQUE(uuid),
    INDEX(visit_date),
    INDEX(patient_id),
