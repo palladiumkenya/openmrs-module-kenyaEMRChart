@@ -37,6 +37,7 @@ DROP TABLE if exists dwapi_etl.etl_person_address;
 DROP TABLE IF EXISTS dwapi_etl.etl_drug_event;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_test;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_referral_and_linkage;
+DROP TABLE IF EXISTS dwapi_etl.etl_generalized_anxiety_disorder;
 DROP TABLE IF EXISTS dwapi_etl.tmp_regimen_events_ordered;
 DROP TABLE IF EXISTS dwapi_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS dwapi_etl.etl_ART_preparation;
@@ -65,7 +66,6 @@ DROP TABLE IF EXISTS dwapi_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS dwapi_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS dwapi_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS dwapi_etl.etl_peer_tracking;
---DROP TABLE IF EXISTS dwapi_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS dwapi_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS dwapi_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS dwapi_etl.etl_alcohol_drug_abuse_screening;
@@ -141,9 +141,8 @@ index(DOB)
 );
 
 SELECT "Successfully created etl_patient_demographics table";
+
 -- create table etl_hiv_enrollment
-
-
 create table dwapi_etl.etl_hiv_enrollment(
 uuid char(38) ,
 patient_id INT(11) NOT NULL,
@@ -1570,6 +1569,36 @@ SELECT "Successfully created etl_ART_preparation table";
   );
 
   SELECT "Successfully created etl_patient_triage table";
+
+-- ------------ create table etl_generalized_anxiety_disorder-----------------------
+CREATE TABLE dwapi_etl.etl_generalized_anxiety_disorder (
+   uuid CHAR(38),
+   encounter_id INT(11) NOT NULL PRIMARY KEY,
+   patient_id INT(11) NOT NULL ,
+   location_id INT(11) DEFAULT NULL,
+   visit_date DATE,
+   visit_id INT(11),
+   encounter_provider INT(11),
+   date_created DATETIME NOT NULL,
+   date_last_modified DATETIME,
+   feeling_nervous_anxious INT(11),
+   control_worrying INT(11),
+   worrying_much INT(11),
+   trouble_relaxing INT(11),
+   being_restless INT(11),
+   feeling_bad INT(11),
+   feeling_afraid INT(11),
+   assessment_outcome INT(11),
+   voided INT(11),
+   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
+   CONSTRAINT unique_uuid UNIQUE(uuid),
+   INDEX(visit_date),
+   INDEX(encounter_id),
+   INDEX(patient_id),
+   INDEX(patient_id, visit_date)
+);
+
+SELECT "Successfully created etl_generalized_anxiety_disorder table";
 
   -- ------------ create table etl_prep_behaviour_risk_assessment-----------------------
 
