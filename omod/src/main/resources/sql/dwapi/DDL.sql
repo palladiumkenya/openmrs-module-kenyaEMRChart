@@ -37,7 +37,7 @@ DROP TABLE if exists dwapi_etl.etl_person_address;
 DROP TABLE IF EXISTS dwapi_etl.etl_drug_event;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_test;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_referral_and_linkage;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_generalized_anxiety_disorder;
+DROP TABLE IF EXISTS dwapi_etl.etl_generalized_anxiety_disorder;
 DROP TABLE IF EXISTS dwapi_etl.tmp_regimen_events_ordered;
 DROP TABLE IF EXISTS dwapi_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS dwapi_etl.etl_ART_preparation;
@@ -66,7 +66,6 @@ DROP TABLE IF EXISTS dwapi_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS dwapi_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS dwapi_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS dwapi_etl.etl_peer_tracking;
---DROP TABLE IF EXISTS dwapi_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS dwapi_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS dwapi_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS dwapi_etl.etl_alcohol_drug_abuse_screening;
@@ -142,9 +141,8 @@ index(DOB)
 );
 
 SELECT "Successfully created etl_patient_demographics table";
+
 -- create table etl_hiv_enrollment
-
-
 create table dwapi_etl.etl_hiv_enrollment(
 uuid char(38) ,
 patient_id INT(11) NOT NULL,
@@ -1573,7 +1571,7 @@ SELECT "Successfully created etl_ART_preparation table";
   SELECT "Successfully created etl_patient_triage table";
 
 -- ------------ create table etl_generalized_anxiety_disorder-----------------------
-CREATE TABLE kenyaemr_etl.etl_generalized_anxiety_disorder (
+CREATE TABLE dwapi_etl.etl_generalized_anxiety_disorder (
    uuid CHAR(38),
    encounter_id INT(11) NOT NULL PRIMARY KEY,
    patient_id INT(11) NOT NULL ,
@@ -1592,7 +1590,7 @@ CREATE TABLE kenyaemr_etl.etl_generalized_anxiety_disorder (
    feeling_afraid INT(11),
    assessment_outcome INT(11),
    voided INT(11),
-   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
    CONSTRAINT unique_uuid UNIQUE(uuid),
    INDEX(visit_date),
    INDEX(encounter_id),
@@ -2211,7 +2209,6 @@ CREATE TABLE dwapi_etl.etl_patient_program (
     relationship_type      INT(11),
     appointment_date       DATETIME,
     baseline_hiv_status    VARCHAR(255),
-    reported_test_date      DATETIME,
     reported_test_date      DATETIME,
     ipv_outcome            VARCHAR(255),
     marital_status         VARCHAR(100),

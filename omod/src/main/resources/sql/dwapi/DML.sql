@@ -634,45 +634,10 @@ from encounter e
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc','bcc6da85-72f2-4291-b206-789b8186a021')
 ) et on et.encounter_type_id=e.encounter_type
-inner join obs o on e.encounter_id=o.encounter_id and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459) and o.voided=0
-left join orders od on od.order_id = o.order_id
+inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459) and o.voided=0
+left join orders od on od.order_id = o.order_id and od.voided=0
 group by o.obs_id;
 
-/*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
-insert into dwapi_etl.etl_laboratory_extract(
-encounter_id,
-patient_id,
-visit_date,
-visit_id,
-lab_test,
-test_result,
--- date_test_requested,
--- date_test_result_received,
--- test_requested_by,
-date_created,
-created_by
-)
-select
-e.encounter_id,
-e.patient_id,
-e.encounter_datetime as visit_date,
-e.visit_id,
-o.concept_id,
-(CASE when o.concept_id in(5497,730,654,790,856,21) then o.value_numeric
-when o.concept_id in(299,1030,302,32) then o.value_coded
-END) AS test_result,
--- date requested,
--- date result received
--- test requested by
-e.date_created,
-e.creator
-from encounter e, obs o, encounter_type et
-where e.encounter_id=o.encounter_id and o.voided=0
-and o.concept_id in (5497,730,299,654,790,856,1030,21,302,32) and et.encounter_type_id=e.encounter_type
-group by e.encounter_id;
-
--- --------<<<<<<<<<<<<<<<<<<<< ------------------------------------------------------------------------------------------------------
-*/
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
 END $$
 
@@ -733,7 +698,7 @@ from obs o
 left outer join encounter_type et on et.encounter_type_id = e.encounter_type
 left outer join concept_name cn on o.value_coded = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED' -- SHORT'
 left outer join concept_set cs on o.value_coded = cs.concept_id
-where o.concept_id in(1282,1732,159368,1443,1444)
+where o.voided=0 and o.concept_id in(1282,1732,159368,1443,1444)
 group by o.obs_group_id, o.person_id, encounter_id
 having drug_dispensed is not null and obs_group_id is not null;
 
@@ -1218,77 +1183,76 @@ DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_delivery $$
 CREATE PROCEDURE sp_populate_dwapi_mch_delivery()
 	BEGIN
 		SELECT "Processing MCH Delivery visits", CONCAT("Time: ", NOW());
-		insert into dwapi_etl.etl_mchs_delivery(
-			patient_id,
-			uuid,
-			provider,
-			visit_id,
-			visit_date,
-			location_id,
-			encounter_id,
-			date_created,
-			date_last_modified,
-			number_of_anc_visits,
-			vaginal_examination,
-      uterotonic_given,
-      chlohexidine_applied_on_code_stump,
-      vitamin_K_given,
-      kangaroo_mother_care_given,
-      testing_done_in_the_maternity_hiv_status,
-      infant_provided_with_arv_prophylaxis,
-      mother_on_haart_during_anc,
-      mother_started_haart_at_maternity,
-      vdrl_rpr_results,
-      date_of_last_menstrual_period,
-      estimated_date_of_delivery,
-      reason_for_referral,
-			admission_number,
-			duration_of_pregnancy,
-			mode_of_delivery,
-			date_of_delivery,
-			blood_loss,
-			condition_of_mother,
-			delivery_outcome,
-			apgar_score_1min,
-			apgar_score_5min,
-			apgar_score_10min,
-			resuscitation_done,
-			place_of_delivery,
-			delivery_assistant,
-			counseling_on_infant_feeding ,
-			counseling_on_exclusive_breastfeeding,
-			counseling_on_infant_feeding_for_hiv_infected,
-			mother_decision,
-			placenta_complete,
-			maternal_death_audited,
-			cadre,
-			delivery_complications,
-			coded_delivery_complications,
-			other_delivery_complications,
-			duration_of_labor,
-			baby_sex,
-			baby_condition,
-			teo_given,
-			birth_weight,
-			bf_within_one_hour,
-			birth_with_deformity,
-			test_1_kit_name,
-			test_1_kit_lot_no,
-			test_1_kit_expiry,
-			test_1_result,
-			test_2_kit_name,
-			test_2_kit_lot_no,
-			test_2_kit_expiry,
-			test_2_result,
-			final_test_result,
-			patient_given_result,
-			partner_hiv_tested,
-			partner_hiv_status,
-			prophylaxis_given,
-			baby_azt_dispensed,
-			baby_nvp_dispensed,
-			clinical_notes,
-		                                        voided
+insert into dwapi_etl.etl_mchs_delivery(patient_id,
+            uuid,
+            provider,
+            visit_id,
+            visit_date,
+            location_id,
+            encounter_id,
+            date_created,
+            date_last_modified,
+            number_of_anc_visits,
+            vaginal_examination,
+            uterotonic_given,
+            chlohexidine_applied_on_code_stump,
+            vitamin_K_given,
+            kangaroo_mother_care_given,
+            testing_done_in_the_maternity_hiv_status,
+            infant_provided_with_arv_prophylaxis,
+            mother_on_haart_during_anc,
+            mother_started_haart_at_maternity,
+            vdrl_rpr_results,
+            date_of_last_menstrual_period,
+            estimated_date_of_delivery,
+            reason_for_referral,
+            admission_number,
+            duration_of_pregnancy,
+            mode_of_delivery,
+            date_of_delivery,
+            blood_loss,
+            condition_of_mother,
+            delivery_outcome,
+            apgar_score_1min,
+            apgar_score_5min,
+            apgar_score_10min,
+            resuscitation_done,
+            place_of_delivery,
+            delivery_assistant,
+            counseling_on_infant_feeding,
+            counseling_on_exclusive_breastfeeding,
+            counseling_on_infant_feeding_for_hiv_infected,
+            mother_decision,
+            placenta_complete,
+            maternal_death_audited,
+            cadre,
+            delivery_complications,
+            coded_delivery_complications,
+            other_delivery_complications,
+            duration_of_labor,
+            baby_sex,
+            baby_condition,
+            teo_given,
+            birth_weight,
+            bf_within_one_hour,
+            birth_with_deformity,
+            test_1_kit_name,
+            test_1_kit_lot_no,
+            test_1_kit_expiry,
+            test_1_result,
+            test_2_kit_name,
+            test_2_kit_lot_no,
+            test_2_kit_expiry,
+            test_2_result,
+            final_test_result,
+            patient_given_result,
+            partner_hiv_tested,
+            partner_hiv_status,
+            prophylaxis_given,
+            baby_azt_dispensed,
+            baby_nvp_dispensed,
+            clinical_notes,
+            voided
 		)
 			select
 				e.patient_id,
@@ -1416,7 +1380,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_discharge()
 			referred_from,
 			referred_to,
 			clinical_notes,
-		                                         voided
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1542,7 +1506,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 			appointment_date,
 			date_created,
             date_last_modified,
-		                                              voided
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1715,11 +1679,11 @@ CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
 			permanent_registration_serial,
 			mother_facility_registered,
 			exit_date,
-      exit_reason,
-      hiv_status_at_exit,
-      date_created,
-      date_last_modified,
-		                                         voided
+            exit_reason,
+            hiv_status_at_exit,
+            date_created,
+            date_last_modified,
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1856,12 +1820,12 @@ CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
 			referred_to,
 			counselled_on,
 			MNPS_Supplementation,
-      LLIN,
+            LLIN,
 			comments,
 			next_appointment_date,
 			date_created,
-      date_last_modified,
-		                                              voided
+            date_last_modified,
+		    voided
 		)
 			select
 				e.patient_id,
@@ -2039,13 +2003,13 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
                      select e.uuid as enc_uuid,o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime,e.voided
                      from obs o
                               inner join encounter e on e.encounter_id=o.encounter_id
-                              inner join person p on p.person_id=o.person_id
+                              inner join person p on p.person_id=o.person_id and p.voided=0
                               inner join
                           (
                               select encounter_type_id, uuid, name from encounter_type where
                                       uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
                           ) et on et.encounter_type_id=e.encounter_type
-                     where concept_id in(1282,1418,164134) group by obs_group_id,concept_id
+                     where concept_id in(1282,1418,164134) and o.voided=0 group by obs_group_id,concept_id
                  ) t
             group by ifnull(obs_group_id,1)
             having (vaccine != "" or fully_immunized !='')
@@ -2073,19 +2037,19 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
                         select e.uuid as enc_uuid,o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name,e.voided
                         from obs o
                                  inner join encounter e on e.encounter_id=o.encounter_id
-                                 inner join person p on p.person_id=o.person_id
+                                 inner join person p on p.person_id=o.person_id and p.voided=0
                                  inner join
                              (
                                  select encounter_type_id, uuid, name from encounter_type where
                                          uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
                              ) et on et.encounter_type_id=e.encounter_type
-                        where concept_id in(984,1418,1410,164134) group by obs_group_id,concept_id
+                        where concept_id in(984,1418,1410,164134) and o.voided=0 group by obs_group_id,concept_id
                     ) t
                group by ifnull(obs_group_id,1)
                having (vaccine != "" or fully_immunized !='')
            )
        ) y
-           left join obs o on y.encounter_id = o.encounter_id
+           left join obs o on y.encounter_id = o.encounter_id and o.voided=0
   group by patient_id;
 
  SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
@@ -2131,7 +2095,7 @@ has_extra_pulmonary_skeleton,
 has_extra_pulmonary_abdominal,
 date_created,
 date_last_modified,
-                                        voided
+voided
 -- has_extra_pulmonary_other,
 -- treatment_outcome,
 -- treatment_outcome_date
@@ -2223,7 +2187,7 @@ hiv_status,
 next_appointment_date,
 date_created,
 date_last_modified,
-                                             voided
+voided
 )
 select
 e.patient_id,
@@ -2307,7 +2271,7 @@ insert into dwapi_etl.etl_tb_screening(
     person_present,
     date_created,
     date_last_modified,
-                                       voided
+    voided
     )
 select
        e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
@@ -2347,8 +2311,8 @@ END $$
 
 -- ------------------------------------------- drug event ---------------------------
 
-DROP PROCEDURE IF EXISTS sp_dwapi_drug_event $$
-CREATE PROCEDURE sp_dwapi_drug_event()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_drug_event $$
+CREATE PROCEDURE sp_populate_dwapi_drug_event()
 BEGIN
 SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 	INSERT INTO dwapi_etl.etl_drug_event(
@@ -2694,15 +2658,15 @@ INSERT INTO dwapi_etl.etl_hts_referral_and_linkage (
   tracing_status,
   referral_facility,
   facility_linked_to,
-	enrollment_date,
-	art_start_date,
+  enrollment_date,
+  art_start_date,
   ccc_number,
   provider_handed_to,
   cadre,
   voided
 )
   select
-      e.uuid,
+    e.uuid,
     e.patient_id,
     e.visit_id,
     e.encounter_id,
@@ -3191,6 +3155,7 @@ e.voided as voided
 										from obs o
 											inner join encounter e on e.encounter_id = o.encounter_id
 											inner join form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
+                                        where o.voided=0
 										group by e.encounter_id, o.obs_group_id
 									) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id;
@@ -4564,7 +4529,7 @@ from encounter e
     from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
-    where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,1000149,1000105,116030,163589,162737,132679,1392,166664,160049)
+    where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,1000149,1000105,116030,163589,162737,132679,1392,166664,160049) and o.voided=0
     group by e.encounter_id, o.obs_group_id
 ) t on e.encounter_id = t.encounter_id
          left join (
@@ -4583,7 +4548,7 @@ from encounter e
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
              LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
-    where o.concept_id = 163589 and o.value_coded in (164805,164977)
+    where o.concept_id = 163589 and o.value_coded in (164805,164977) and o.voided=0
     group by e.encounter_id
 ) t1 on e.encounter_id = t1.encounter_id -- Getting legacy data for via screening result and treatment method
          left join (
@@ -4602,7 +4567,7 @@ from encounter e
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
              LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
-    where o.concept_id = 163589 and o.value_coded=159859
+    where o.concept_id = 163589 and o.value_coded=159859 and o.voided=0
     group by e.encounter_id
 ) t2 on e.encounter_id = t2.encounter_id -- Getting legacy data for HPV screening result and treatment method
          left join (
@@ -4621,7 +4586,7 @@ from encounter e
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
              LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
-    where o.concept_id = 163589 and o.value_coded=160705
+    where o.concept_id = 163589 and o.value_coded=160705 and o.voided=0
     group by e.encounter_id
 ) t3 on e.encounter_id = t3.encounter_id -- Getting legacy data for colposcopy screening result and treatment method
          left join (
@@ -4640,7 +4605,7 @@ from encounter e
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
              LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
-    where o.concept_id = 163589 and o.value_coded=885
+    where o.concept_id = 163589 and o.value_coded=885 and o.voided=0
     group by e.encounter_id
 ) t4 on e.encounter_id = t4.encounter_id -- Getting legacy data for PAP smear screening result and treatment method
 group by e.encounter_id;
@@ -4680,30 +4645,30 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
       voided
 		)
 			select
-			  pc.id,
-			  pc.uuid,
-        pc.date_created,
-        pc.date_changed as date_last_modified,
-        pc.first_name,
-        pc.middle_name,
-        pc.last_name,
-        pc.sex,
-        pc.birth_date,
-        pc.physical_address,
-        pc.phone_contact,
-        pc.patient_related_to,
-        pc.patient_id,
-        pc.relationship_type,
-        pc.appointment_date,
-        pc.baseline_hiv_status,
-        pc.reported_test_date,
-        pc.ipv_outcome,
-        pc.marital_status,
-        pc.living_with_patient,
-        pc.pns_approach,
-        pc.contact_listing_decline_reason,
-        pc.consented_contact_listing,
-        pc.voided
+			pc.id,
+			pc.uuid,
+            pc.date_created,
+            pc.date_changed as date_last_modified,
+            pc.first_name,
+            pc.middle_name,
+            pc.last_name,
+            pc.sex,
+            pc.birth_date,
+            pc.physical_address,
+            pc.phone_contact,
+            pc.patient_related_to,
+            pc.patient_id,
+            pc.relationship_type,
+            pc.appointment_date,
+            pc.baseline_hiv_status,
+            pc.reported_test_date,
+            pc.ipv_outcome,
+            pc.marital_status,
+            pc.living_with_patient,
+            pc.pns_approach,
+            pc.contact_listing_decline_reason,
+            pc.consented_contact_listing,
+            pc.voided
 			from kenyaemr_hiv_testing_patient_contact pc
 				inner join dwapi_etl.etl_patient_demographics dm on dm.patient_id=pc.patient_related_to and dm.voided=0
         where pc.voided=0
@@ -4716,8 +4681,8 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_client_trace $$
 CREATE PROCEDURE sp_populate_dwapi_client_trace()
 	BEGIN
-		SELECT "Processing client trace ", CONCAT("Time: ", NOW());
-		INSERT INTO dwapi_etl.etl_client_trace(
+    SELECT "Processing client trace ", CONCAT("Time: ", NOW());
+    INSERT INTO dwapi_etl.etl_client_trace(
       id,
       uuid,
       date_created,
@@ -4733,8 +4698,8 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
       appointment_date,
       voided
 		)
-			select
-			  ct.id,
+		select
+		ct.id,
         ct.uuid,
         ct.date_created,
         ct.date_changed as date_last_modified,
@@ -6064,38 +6029,38 @@ CREATE PROCEDURE sp_populate_dwapi_covid_19_assessment()
 BEGIN
 SELECT "Processing covid_19_assessment", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_covid19_assessment (uuid,
-                                                 provider,
-                                                 patient_id,
-                                                 visit_id,
-                                                 visit_date,
-                                                 location_id,
-                                                 encounter_id,
-                                                 obs_id,
-                                                 ever_vaccinated,
-                                                 first_vaccine_type,
-                                                 second_vaccine_type,
-                                                 first_dose,
-                                                 second_dose,
-                                                 first_dose_date,
-                                                 second_dose_date,
-                                                 first_vaccination_verified,
-                                                 second_vaccination_verified,
-                                                 final_vaccination_status,
-                                                 ever_received_booster,
-                                                 booster_vaccine_taken,
-                                                 date_taken_booster_vaccine,
-                                                 booster_sequence,
-                                                 booster_dose_verified,
-                                                 ever_tested_covid_19_positive,
-                                                 symptomatic,
-                                                 date_tested_positive,
-                                                 hospital_admission,
-                                                 admission_unit,
-                                                 on_ventillator,
-                                                 on_oxygen_supplement,
-                                                 date_created,
-                                                 date_last_modified,
-                                                 voided)
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         obs_id,
+         ever_vaccinated,
+         first_vaccine_type,
+         second_vaccine_type,
+         first_dose,
+         second_dose,
+         first_dose_date,
+         second_dose_date,
+         first_vaccination_verified,
+         second_vaccination_verified,
+         final_vaccination_status,
+         ever_received_booster,
+         booster_vaccine_taken,
+         date_taken_booster_vaccine,
+         booster_sequence,
+         booster_dose_verified,
+         ever_tested_covid_19_positive,
+         symptomatic,
+         date_tested_positive,
+         hospital_admission,
+         admission_unit,
+         on_ventillator,
+         on_oxygen_supplement,
+         date_created,
+         date_last_modified,
+         voided)
 select o3.uuid                                                                             as uuid,
        o3.creator                                                                          as provider,
        o3.person_id                                                                        as patient_id,
@@ -6237,7 +6202,6 @@ from (select e.uuid,
                                         o1.voided = 0
                                           and o.concept_id in (1421, 1184)
                   order by o1.obs_id) o1 on o1.encounter_id = y.encounter_id
-
 where o3.voided = 0
 group by o3.visit_id;
 
@@ -6559,28 +6523,28 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
     BEGIN
         SELECT "Processing post vmmc operation assessment", CONCAT("Time: ", NOW());
         insert into dwapi_etl.etl_vmmc_post_operation_assessment(uuid,
-                                                                    provider,
-                                                                    patient_id,
-                                                                    visit_id,
-                                                                    visit_date,
-                                                                    location_id,
-                                                                    encounter_id,
-                                                                    blood_pressure,
-                                                                    pulse_rate,
-                                                                    temperature,
-                                                                    penis_elevated,
-                                                                    given_post_procedure_instruction,
-                                                                    post_procedure_instructions,
-                                                                    given_post_operation_medication,
-                                                                    medication_given,
-                                                                    other_medication_given,
-                                                                    removal_date,
-                                                                    next_appointment_date,
-                                                                    discharged_by,
-                                                                    cadre,
-                                                                    date_created,
-                                                                    date_last_modified,
-                                                                    voided)
+                provider,
+                patient_id,
+                visit_id,
+                visit_date,
+                location_id,
+                encounter_id,
+                blood_pressure,
+                pulse_rate,
+                temperature,
+                penis_elevated,
+                given_post_procedure_instruction,
+                post_procedure_instructions,
+                given_post_operation_medication,
+                medication_given,
+                other_medication_given,
+                removal_date,
+                next_appointment_date,
+                discharged_by,
+                cadre,
+                date_created,
+                date_last_modified,
+                voided)
         select e.uuid,
                e.creator,
                e.patient_id,
@@ -6805,7 +6769,7 @@ CREATE PROCEDURE sp_populate_dwapi_hts_eligibility_screening()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
         from encounter e
-                      inner join person p on p.person_id=e.patient_id
+                      inner join person p on p.person_id=e.patient_id and p.voided = 0
                       inner join form f on f.form_id = e.form_id and f.uuid = '04295648-7606-11e8-adc0-fa7ae01bbebc'
                       left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                       (164930,160581,138643,159936,164932,5619,166570,164401,165215,159427,
@@ -7099,36 +7063,36 @@ CREATE PROCEDURE sp_populate_dwapi_art_fast_track()
 BEGIN
     SELECT "Processing ART fast track";
     INSERT INTO dwapi_etl.etl_art_fast_track (uuid,
-                                                 provider,
-                                                 patient_id,
-                                                 visit_id,
-                                                 visit_date,
-                                                 location_id,
-                                                 encounter_id,
-                                                 art_refill_model,
-                                                 ctx_dispensed,
-                                                 dapsone_dispensed,
-                                                 oral_contraceptives_dispensed,
-                                                 condoms_distributed,
-                                                 doses_missed,
-                                                 fatigue,
-                                                 cough,
-                                                 fever,
-                                                 rash,
-                                                 nausea_vomiting,
-                                                 genital_sore_discharge,
-                                                 diarrhea,
-                                                 other_symptoms,
-                                                 other_specific_symptoms,
-                                                 pregnant,
-                                                 family_planning_status,
-                                                 family_planning_method,
-                                                 reason_not_on_family_planning,
-                                                 referred_to_clinic,
-                                                 return_visit_date,
-                                                 date_created,
-                                                 date_last_modified,
-                                                 voided)
+             provider,
+             patient_id,
+             visit_id,
+             visit_date,
+             location_id,
+             encounter_id,
+             art_refill_model,
+             ctx_dispensed,
+             dapsone_dispensed,
+             oral_contraceptives_dispensed,
+             condoms_distributed,
+             doses_missed,
+             fatigue,
+             cough,
+             fever,
+             rash,
+             nausea_vomiting,
+             genital_sore_discharge,
+             diarrhea,
+             other_symptoms,
+             other_specific_symptoms,
+             pregnant,
+             family_planning_status,
+             family_planning_method,
+             reason_not_on_family_planning,
+             referred_to_clinic,
+             return_visit_date,
+             date_created,
+             date_last_modified,
+             voided)
     select e.uuid,
            e.creator                                                                    as provider,
            e.patient_id,
@@ -7216,9 +7180,9 @@ CALL sp_populate_dwapi_hei_immunization();
 CALL sp_populate_dwapi_hei_follow_up();
 CALL sp_populate_dwapi_mch_delivery();
 CALL sp_populate_dwapi_mch_discharge();
-CALL sp_dwapi_drug_event();
+CALL sp_populate_dwapi_drug_event();
 CALL sp_populate_dwapi_hts_test();
-CALL sp_populate_etl_generalized_anxiety_disorder();
+CALL sp_populate_dwapi_generalized_anxiety_disorder();
 CALL sp_populate_dwapi_hts_linkage_and_referral();
 CALL sp_populate_dwapi_hts_referral();
 CALL sp_populate_dwapi_ccc_defaulter_tracing();
