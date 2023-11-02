@@ -7145,7 +7145,7 @@ BEGIN
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (1758, 1282, 159777, 162878, 1284, 5272,
                                                                            160653, 374, 160575, 512, 2096) and o.voided=0
-    group by e.patient_id;
+    group by e.patient_id,e.encounter_id;
     SELECT "Completed processing ART fast track";
 END $$
 
@@ -7195,7 +7195,6 @@ CALL sp_populate_dwapi_ipt_outcome();
 CALL sp_populate_dwapi_prep_enrolment();
 CALL sp_populate_dwapi_prep_followup();
 CALL sp_populate_dwapi_prep_behaviour_risk_assessment();
-CALL sp_populate_dwapi_generalized_anxiety_disorder();
 CALL sp_populate_dwapi_prep_monthly_refill();
 CALL sp_populate_dwapi_prep_discontinuation();
 CALL sp_populate_dwapi_hts_linkage_tracing();
