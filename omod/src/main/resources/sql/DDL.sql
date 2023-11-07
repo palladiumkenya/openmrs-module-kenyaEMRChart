@@ -53,6 +53,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ART_preparation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_linkage_tracing;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_generalized_anxiety_disorder;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_initiation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_follow_up;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_outcome;
@@ -230,6 +231,8 @@ pulse_rate DOUBLE,
 respiratory_rate DOUBLE,
 oxygen_saturation DOUBLE,
 muac DOUBLE,
+z_score_absolute DOUBLE DEFAULT NULL,
+z_score INT(11),
 nutritional_status INT(11) DEFAULT NULL,
 population_type INT(11) DEFAULT NULL,
 key_population_type INT(11) DEFAULT NULL,
@@ -756,7 +759,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     counselled_on_feeding INT(11),
     baby_status INT(11),
     vitamin_A_dispensed INT(11),
-    birth_notification_number INT(50),
+    birth_notification_number VARCHAR(100),
     condition_of_mother VARCHAR(100),
     discharge_date DATE,
     referred_from INT(11),
@@ -1506,6 +1509,14 @@ SELECT "Successfully created etl_ART_preparation table";
     session_number INT(11),
     first_session_date DATE,
     pill_count INT(11),
+    MMAS4_1_forgets_to_take_meds varchar(255),
+    MMAS4_2_careless_taking_meds varchar(255),
+    MMAS4_3_stops_on_reactive_meds varchar(255),
+    MMAS4_4_stops_meds_on_feeling_good varchar(255),
+    MMSA8_1_took_meds_yesterday varchar(255),
+    MMSA8_2_stops_meds_on_controlled_symptoms varchar(255),
+    MMSA8_3_struggles_to_comply_tx_plan varchar(255),
+    MMSA8_4_struggles_remembering_taking_meds varchar(255),
     arv_adherence varchar(50),
     has_vl_results varchar(10),
     vl_results_suppressed varchar(10),
@@ -1583,6 +1594,39 @@ SELECT "Successfully created etl_ART_preparation table";
 
   SELECT "Successfully created etl_patient_triage table";
 
+  -- ------------ create table etl_generalized_anxiety_disorder-----------------------
+  CREATE TABLE kenyaemr_etl.etl_generalized_anxiety_disorder (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    visit_id INT(11),
+    encounter_provider INT(11),
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    feeling_nervous_anxious INT(11),
+    control_worrying INT(11),
+    worrying_much INT(11),
+    trouble_relaxing INT(11),
+    being_restless INT(11),
+    feeling_bad INT(11),
+    feeling_afraid INT(11),
+    assessment_outcome INT(11),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_generalized_anxiety_disorder table";
+
+
+
+
   -- ------------ create table etl_prep_behaviour_risk_assessment-----------------------
 
   CREATE TABLE kenyaemr_etl.etl_prep_behaviour_risk_assessment (
@@ -1646,6 +1690,7 @@ SELECT "Successfully created etl_ART_preparation table";
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    assessed_for_behavior_risk     varchar(255),
     risk_for_hiv_positive_partner  varchar(255),
     client_assessment  varchar(255),
     adherence_assessment varchar(255),
@@ -1659,6 +1704,7 @@ SELECT "Successfully created etl_ART_preparation table";
     prescribed_prep_today varchar(10),
     prescribed_regimen varchar(10),
     prescribed_regimen_months varchar(10),
+    number_of_condoms_issued INT(11),
     prep_discontinue_reasons varchar(255),
     prep_discontinue_other_reasons varchar(255),
     appointment_given varchar(10),
@@ -2146,6 +2192,9 @@ CREATE TABLE kenyaemr_etl.etl_patient_program (
     mammography_screening_result VARCHAR(255) DEFAULT NULL,
     clinical_breast_examination_treatment_method VARCHAR(255) DEFAULT NULL,
     ultrasound_treatment_method VARCHAR(255) DEFAULT NULL,
+    breast_tissue_diagnosis VARCHAR(255) DEFAULT NULL,
+    breast_tissue_diagnosis_date DATE,
+    reason_tissue_diagnosis_not_done VARCHAR(255) DEFAULT NULL,
     mammography_treatment_method VARCHAR(255) DEFAULT NULL,
     referred_out VARCHAR(100) DEFAULT NULL,
     referral_facility VARCHAR(100) DEFAULT NULL,
@@ -3337,7 +3386,7 @@ create table kenyaemr_etl.etl_overdose_reporting (
 );
 SELECT "Successfully created etl_overdose_reporting table";
 
--- Create etl_overdose_reporting table";
+-- Create etl_art_fast_track table";
 CREATE TABLE kenyaemr_etl.etl_art_fast_track
 (
     uuid                              char(38),

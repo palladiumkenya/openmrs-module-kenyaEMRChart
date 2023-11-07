@@ -50,7 +50,8 @@ FROM (
             p.death_date
      from person p
             left join patient pa on pa.patient_id=p.person_id
-            left join person_name pn on pn.person_id = p.person_id
+            left join person_name pn on pn.person_id = p.person_id and pn.voided=0
+     where p.voided=0
      GROUP BY p.person_id
      ) p
 ON DUPLICATE KEY UPDATE given_name = p.given_name, middle_name=p.middle_name, family_name=p.family_name;
@@ -99,6 +100,7 @@ from person_attribute pa
         '9f1f8254-20ea-4be4-a14d-19201fe217bf' -- rank
 
         )
+where pa.voided=0
 group by pa.person_id
 ) att on att.person_id = d.patient_id
 set d.phone_number=att.phone_number,
@@ -140,6 +142,7 @@ join (select pi.patient_id,
              greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
       from patient_identifier pi
              join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
+      where voided=0
       group by pi.patient_id) pid on pid.patient_id=d.patient_id
 set d.unique_patient_no=pid.upn,
     d.national_id_no=pid.National_id,
@@ -172,7 +175,7 @@ join (select o.person_id as patient_id,
                    from obs o
              join concept_name cn on cn.concept_id=o.value_coded and cn.concept_name_type='FULLY_SPECIFIED'
                                        and cn.locale='en'
-      where o.concept_id in (1054,1712,1542)
+      where o.concept_id in (1054,1712,1542) and o.voided=0
       group by person_id) pstatus on pstatus.patient_id=d.patient_id
 set d.marital_status=pstatus.marital_status,
     d.education_level=pstatus.education_level,
@@ -265,8 +268,8 @@ from encounter e
          (
          select encounter_type_id, uuid, name from encounter_type where uuid='de78a6be-bfc5-4634-adc3-5f1a280455cc'
          ) et on et.encounter_type_id=e.encounter_type
-       inner join person p on p.person_id=e.patient_id
-       left outer join obs o on o.encounter_id=e.encounter_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                   and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356)
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
@@ -299,6 +302,8 @@ pulse_rate,
 respiratory_rate,
 oxygen_saturation,
 muac,
+z_score_absolute,
+z_score,
 nutritional_status,
 population_type,
 key_population_type,
@@ -410,6 +415,8 @@ max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
 max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
 max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
 max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
+max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
 max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
 max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
 max(if(o.concept_id=160581,o.value_coded,null)) as key_population_type,
@@ -565,10 +572,10 @@ max(if(o.concept_id=161011,o.value_text,null)) as other_insurance_specify,
 max(if(o.concept_id=165911,o.value_coded,null)) as insurance_status,
 e.voided as voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','23b4ebbd-29ad-455e-be0e-04aa6bc30798')
-left outer join obs o on o.encounter_id=e.encounter_id
-	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
+	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
 group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
@@ -622,50 +629,15 @@ if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_l
 e.creator,
 e.voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28', 'a0034eee-1940-4e35-847f-97537a35d05e','e1406e88-e9a9-11e8-9f32-f2801f1b9fd1', 'de78a6be-bfc5-4634-adc3-5f1a280455cc','bcc6da85-72f2-4291-b206-789b8186a021')
 ) et on et.encounter_type_id=e.encounter_type
-inner join obs o on e.encounter_id=o.encounter_id and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459)
-left join orders od on od.order_id = o.order_id
+inner join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459) and o.voided=0
+left join orders od on od.order_id = o.order_id and od.voided=0
 group by o.obs_id;
 
-/*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
-insert into dwapi_etl.etl_laboratory_extract(
-encounter_id,
-patient_id,
-visit_date,
-visit_id,
-lab_test,
-test_result,
--- date_test_requested,
--- date_test_result_received,
--- test_requested_by,
-date_created,
-created_by
-)
-select
-e.encounter_id,
-e.patient_id,
-e.encounter_datetime as visit_date,
-e.visit_id,
-o.concept_id,
-(CASE when o.concept_id in(5497,730,654,790,856,21) then o.value_numeric
-when o.concept_id in(299,1030,302,32) then o.value_coded
-END) AS test_result,
--- date requested,
--- date result received
--- test requested by
-e.date_created,
-e.creator
-from encounter e, obs o, encounter_type et
-where e.encounter_id=o.encounter_id and o.voided=0
-and o.concept_id in (5497,730,299,654,790,856,1030,21,302,32) and et.encounter_type_id=e.encounter_type
-group by e.encounter_id;
-
--- --------<<<<<<<<<<<<<<<<<<<< ------------------------------------------------------------------------------------------------------
-*/
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
 END $$
 
@@ -721,12 +693,12 @@ select
 	o.date_voided,
 	e.creator
 from obs o
-	inner join person p on p.person_id=o.person_id
+	inner join person p on p.person_id=o.person_id and p.voided=0
 	left outer join encounter e on e.encounter_id = o.encounter_id
 left outer join encounter_type et on et.encounter_type_id = e.encounter_type
 left outer join concept_name cn on o.value_coded = cn.concept_id and cn.locale='en' and cn.concept_name_type='FULLY_SPECIFIED' -- SHORT'
 left outer join concept_set cs on o.value_coded = cs.concept_id
-where o.concept_id in(1282,1732,159368,1443,1444)
+where o.voided=0 and o.concept_id in(1282,1732,159368,1443,1444)
 group by o.obs_group_id, o.person_id, encounter_id
 having drug_dispensed is not null and obs_group_id is not null;
 
@@ -799,8 +771,8 @@ max(if(o.concept_id=160218, left(trim(o.value_text),200), null)) as non_natural_
 e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
 from encounter e
-	inner join person p on p.person_id=e.patient_id
-	inner join obs o on o.encounter_id=e.encounter_id and o.concept_id in (161555,159786,159787,164384,1543,159495,160649,1285,164133,1599,1748,162580,160218)
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on o.encounter_id=e.encounter_id and o.voided=0 and o.concept_id in (161555,159786,159787,164384,1543,159495,160649,1285,164133,1599,1748,162580,160218)
 inner join
 (
 	select encounter_type_id, uuid, name from encounter_type where
@@ -911,8 +883,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_enrollment()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(163530,163547,5624,160080,1823,160598,1427,162095,5596,300,299,160108,32,159427,160554,1436,160082,159599,164855,162724,56,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,161555,160478)
 				inner join
 				(
@@ -1175,8 +1147,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,299)
 				inner join
 				(
@@ -1195,9 +1167,9 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
-                                             inner join person p on p.person_id = o.person_id
+                                             inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.patient_id,visit_date;
@@ -1211,77 +1183,76 @@ DROP PROCEDURE IF EXISTS sp_populate_dwapi_mch_delivery $$
 CREATE PROCEDURE sp_populate_dwapi_mch_delivery()
 	BEGIN
 		SELECT "Processing MCH Delivery visits", CONCAT("Time: ", NOW());
-		insert into dwapi_etl.etl_mchs_delivery(
-			patient_id,
-			uuid,
-			provider,
-			visit_id,
-			visit_date,
-			location_id,
-			encounter_id,
-			date_created,
-			date_last_modified,
-			number_of_anc_visits,
-			vaginal_examination,
-      uterotonic_given,
-      chlohexidine_applied_on_code_stump,
-      vitamin_K_given,
-      kangaroo_mother_care_given,
-      testing_done_in_the_maternity_hiv_status,
-      infant_provided_with_arv_prophylaxis,
-      mother_on_haart_during_anc,
-      mother_started_haart_at_maternity,
-      vdrl_rpr_results,
-      date_of_last_menstrual_period,
-      estimated_date_of_delivery,
-      reason_for_referral,
-			admission_number,
-			duration_of_pregnancy,
-			mode_of_delivery,
-			date_of_delivery,
-			blood_loss,
-			condition_of_mother,
-			delivery_outcome,
-			apgar_score_1min,
-			apgar_score_5min,
-			apgar_score_10min,
-			resuscitation_done,
-			place_of_delivery,
-			delivery_assistant,
-			counseling_on_infant_feeding ,
-			counseling_on_exclusive_breastfeeding,
-			counseling_on_infant_feeding_for_hiv_infected,
-			mother_decision,
-			placenta_complete,
-			maternal_death_audited,
-			cadre,
-			delivery_complications,
-			coded_delivery_complications,
-			other_delivery_complications,
-			duration_of_labor,
-			baby_sex,
-			baby_condition,
-			teo_given,
-			birth_weight,
-			bf_within_one_hour,
-			birth_with_deformity,
-			test_1_kit_name,
-			test_1_kit_lot_no,
-			test_1_kit_expiry,
-			test_1_result,
-			test_2_kit_name,
-			test_2_kit_lot_no,
-			test_2_kit_expiry,
-			test_2_result,
-			final_test_result,
-			patient_given_result,
-			partner_hiv_tested,
-			partner_hiv_status,
-			prophylaxis_given,
-			baby_azt_dispensed,
-			baby_nvp_dispensed,
-			clinical_notes,
-		                                        voided
+insert into dwapi_etl.etl_mchs_delivery(patient_id,
+            uuid,
+            provider,
+            visit_id,
+            visit_date,
+            location_id,
+            encounter_id,
+            date_created,
+            date_last_modified,
+            number_of_anc_visits,
+            vaginal_examination,
+            uterotonic_given,
+            chlohexidine_applied_on_code_stump,
+            vitamin_K_given,
+            kangaroo_mother_care_given,
+            testing_done_in_the_maternity_hiv_status,
+            infant_provided_with_arv_prophylaxis,
+            mother_on_haart_during_anc,
+            mother_started_haart_at_maternity,
+            vdrl_rpr_results,
+            date_of_last_menstrual_period,
+            estimated_date_of_delivery,
+            reason_for_referral,
+            admission_number,
+            duration_of_pregnancy,
+            mode_of_delivery,
+            date_of_delivery,
+            blood_loss,
+            condition_of_mother,
+            delivery_outcome,
+            apgar_score_1min,
+            apgar_score_5min,
+            apgar_score_10min,
+            resuscitation_done,
+            place_of_delivery,
+            delivery_assistant,
+            counseling_on_infant_feeding,
+            counseling_on_exclusive_breastfeeding,
+            counseling_on_infant_feeding_for_hiv_infected,
+            mother_decision,
+            placenta_complete,
+            maternal_death_audited,
+            cadre,
+            delivery_complications,
+            coded_delivery_complications,
+            other_delivery_complications,
+            duration_of_labor,
+            baby_sex,
+            baby_condition,
+            teo_given,
+            birth_weight,
+            bf_within_one_hour,
+            birth_with_deformity,
+            test_1_kit_name,
+            test_1_kit_lot_no,
+            test_1_kit_expiry,
+            test_1_result,
+            test_2_kit_name,
+            test_2_kit_lot_no,
+            test_2_kit_expiry,
+            test_2_result,
+            final_test_result,
+            patient_given_result,
+            partner_hiv_tested,
+            partner_hiv_status,
+            prophylaxis_given,
+            baby_azt_dispensed,
+            baby_nvp_dispensed,
+            clinical_notes,
+            voided
 		)
 			select
 				e.patient_id,
@@ -1355,8 +1326,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_delivery()
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
 				e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
@@ -1375,9 +1346,9 @@ CREATE PROCEDURE sp_populate_dwapi_mch_delivery()
 											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
-                                             inner join person p on p.person_id = o.person_id
+                                             inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id ;
@@ -1409,7 +1380,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_discharge()
 			referred_from,
 			referred_to,
 			clinical_notes,
-		                                         voided
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1432,8 +1403,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_discharge()
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
 				e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(161651,159926,161534,162051,162093,1641,160481,163145,159395)
 				inner join
 				(
@@ -1535,7 +1506,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 			appointment_date,
 			date_created,
             date_last_modified,
-		                                              voided
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1624,8 +1595,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
                                                                             1724,167017,163783,162642,166665,165218,160632,299)
 				inner join
@@ -1645,9 +1616,9 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
-                                             inner join person p on p.person_id = o.person_id
+                                             inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id;
@@ -1708,11 +1679,11 @@ CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
 			permanent_registration_serial,
 			mother_facility_registered,
 			exit_date,
-      exit_reason,
-      hiv_status_at_exit,
-      date_created,
-      date_last_modified,
-		                                         voided
+            exit_reason,
+            hiv_status_at_exit,
+            date_created,
+            date_last_modified,
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1768,8 +1739,8 @@ CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(5303,162054,5916,1409,162140,162051,162052,161630,161601,160540,160563,160534,160535,161551,160555,1282,159941,1282,152460,160429,1148,1086,162055,1088,1282,162053,5630,1572,161555,159427,1503,163460,162724,164130,164129,164140,1646,160753,161555,159427,159949)
 
 				inner join
@@ -1849,12 +1820,12 @@ CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
 			referred_to,
 			counselled_on,
 			MNPS_Supplementation,
-      LLIN,
+            LLIN,
 			comments,
 			next_appointment_date,
 			date_created,
-      date_last_modified,
-		                                              voided
+            date_last_modified,
+		    voided
 		)
 			select
 				e.patient_id,
@@ -1924,8 +1895,8 @@ CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159855,159402,164142,164088,1788,164359,159860)
 				inner join
 				(
@@ -2032,13 +2003,13 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
                      select e.uuid as enc_uuid,o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime,e.voided
                      from obs o
                               inner join encounter e on e.encounter_id=o.encounter_id
-                              inner join person p on p.person_id=o.person_id
+                              inner join person p on p.person_id=o.person_id and p.voided=0
                               inner join
                           (
                               select encounter_type_id, uuid, name from encounter_type where
                                       uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
                           ) et on et.encounter_type_id=e.encounter_type
-                     where concept_id in(1282,1418,164134) group by obs_group_id,concept_id
+                     where concept_id in(1282,1418,164134) and o.voided=0 group by obs_group_id,concept_id
                  ) t
             group by ifnull(obs_group_id,1)
             having (vaccine != "" or fully_immunized !='')
@@ -2066,19 +2037,19 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
                         select e.uuid as enc_uuid,o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name,e.voided
                         from obs o
                                  inner join encounter e on e.encounter_id=o.encounter_id
-                                 inner join person p on p.person_id=o.person_id
+                                 inner join person p on p.person_id=o.person_id and p.voided=0
                                  inner join
                              (
                                  select encounter_type_id, uuid, name from encounter_type where
                                          uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
                              ) et on et.encounter_type_id=e.encounter_type
-                        where concept_id in(984,1418,1410,164134) group by obs_group_id,concept_id
+                        where concept_id in(984,1418,1410,164134) and o.voided=0 group by obs_group_id,concept_id
                     ) t
                group by ifnull(obs_group_id,1)
                having (vaccine != "" or fully_immunized !='')
            )
        ) y
-           left join obs o on y.encounter_id = o.encounter_id
+           left join obs o on y.encounter_id = o.encounter_id and o.voided=0
   group by patient_id;
 
  SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
@@ -2124,7 +2095,7 @@ has_extra_pulmonary_skeleton,
 has_extra_pulmonary_abdominal,
 date_created,
 date_last_modified,
-                                        voided
+voided
 -- has_extra_pulmonary_other,
 -- treatment_outcome,
 -- treatment_outcome_date
@@ -2169,8 +2140,8 @@ e.voided
 -- max(if(o.concept_id=159787,o.value_coded,null)) as treatment_outcome_date
 
 from encounter e
-	inner join person p on p.person_id=e.patient_id
-	inner join obs o on e.encounter_id = o.encounter_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 and o.concept_id in(160540,161561,160534,160535,161551,161552,5089,5090,160638,160640,160641,160642,160040,159871,159982,161356)
 inner join
 (
@@ -2216,7 +2187,7 @@ hiv_status,
 next_appointment_date,
 date_created,
 date_last_modified,
-                                             voided
+voided
 )
 select
 e.patient_id,
@@ -2248,8 +2219,8 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
-	inner join obs o on e.encounter_id = o.encounter_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
+	inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 and o.concept_id in(159961,307,159968,160023,159964,159982,159952,159956,159958,159964,1169,5096)
 inner join
 (
@@ -2300,7 +2271,7 @@ insert into dwapi_etl.etl_tb_screening(
     person_present,
     date_created,
     date_last_modified,
-                                       voided
+    voided
     )
 select
        e.patient_id, e.uuid, e.creator, e.visit_id, date(e.encounter_datetime) as visit_date, e.encounter_id, e.location_id,
@@ -2330,9 +2301,9 @@ select
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
        e.voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce","23b4ebbd-29ad-455e-be0e-04aa6bc30798","72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7")
-       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632,161643,1729,1271,307,12,162202,1272,163752,163414,162275,162309,1109)
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632,161643,1729,1271,307,12,162202,1272,163752,163414,162275,162309,1109) and o.voided=0
 group by e.patient_id,visit_date;
 
 SELECT "Completed processing TB Screening data ", CONCAT("Time: ", NOW());
@@ -2340,8 +2311,8 @@ END $$
 
 -- ------------------------------------------- drug event ---------------------------
 
-DROP PROCEDURE IF EXISTS sp_dwapi_drug_event $$
-CREATE PROCEDURE sp_dwapi_drug_event()
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_drug_event $$
+CREATE PROCEDURE sp_populate_dwapi_drug_event()
 BEGIN
 SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 	INSERT INTO dwapi_etl.etl_drug_event(
@@ -2504,8 +2475,8 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
       e.voided as voided
 		from encounter e
-			inner join person p on p.person_id=e.patient_id
-			inner join obs o on e.encounter_id = o.encounter_id
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 													and o.concept_id in(1193,1252,5622,1191,1255,1268,163104)
 			inner join
 			(
@@ -2641,7 +2612,7 @@ max(if(o.concept_id=164952,(case o.value_coded when 1065 then "Yes" when 1066 th
 max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
 e.voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
                                                                                  160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093)
@@ -2658,7 +2629,7 @@ inner join (
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-             where o.concept_id in (1040, 1326, 164962, 164964, 162502)
+             where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 group by e.encounter_id;
@@ -2687,15 +2658,15 @@ INSERT INTO dwapi_etl.etl_hts_referral_and_linkage (
   tracing_status,
   referral_facility,
   facility_linked_to,
-	enrollment_date,
-	art_start_date,
+  enrollment_date,
+  art_start_date,
   ccc_number,
   provider_handed_to,
   cadre,
   voided
 )
   select
-      e.uuid,
+    e.uuid,
     e.patient_id,
     e.visit_id,
     e.encounter_id,
@@ -2721,9 +2692,9 @@ INSERT INTO dwapi_etl.etl_hts_referral_and_linkage (
                                 when 5622 then "Other" else "" end),null)) as cadre,
     e.voided
   from encounter e
-		inner join person p on p.person_id=e.patient_id
+		inner join person p on p.person_id=e.patient_id and p.voided=0
 		inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","15ed03d2-c972-11e9-a32f-2a2ae2dbcce4")
-  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481)
+  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481) and o.voided=0
   group by e.patient_id,e.visit_id;
   SELECT "Completed processing hts linkages";
 
@@ -2768,9 +2739,9 @@ CREATE PROCEDURE sp_populate_dwapi_hts_referral()
         max(if(o.concept_id=163042,o.value_text,null)) as remarks,
         e.voided
       from encounter e
-				inner join person p on p.person_id=e.patient_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join form f on f.form_id = e.form_id and f.uuid = "9284828e-ce55-11e9-a32f-2a2ae2dbcce4"
-        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550, 161561, 163042)
+        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550, 161561, 163042) and o.voided=0
       group by e.encounter_id;
     SELECT "Completed processing hts referrals";
 
@@ -2851,13 +2822,13 @@ select
        e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join (
                   select encounter_type_id, uuid, name from encounter_type where uuid in ('a0034eee-1940-4e35-847f-97537a35d05e', 'ed6dacc9-0827-4c82-86be-53c0d8c449be')
                   ) et on et.encounter_type_id=e.encounter_type
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                                                                                and o1.concept_id =1729
+                                                                                and o1.concept_id =1729 and o1.voided=0
                                                                                 and o.concept_id in(160108,1727)) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
@@ -2902,12 +2873,12 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join
 (
 select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
 ) et on et.encounter_type_id=e.encounter_type
-left outer join obs o on o.encounter_id=e.encounter_id
+left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 and o.concept_id in (164073,164074,159098,118983,512,164075,160632)
 group by e.encounter_id;
 
@@ -2963,9 +2934,9 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("a1a62d1e-2def-11e9-b210-d663bd873d93")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966,164093,1801, 163513, 160721, 1639, 163725, 160433, 1599, 160716,163526,166541)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966,164093,1801, 163513, 160721, 1639, 163725, 160433, 1599, 160716,163526,166541) and o.voided=0
 group by e.encounter_id;
 SELECT "Completed processing CCC defaulter tracing forms", CONCAT("Time: ", NOW());
 END $$
@@ -3030,8 +3001,8 @@ voided
    if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
    e.voided
     from encounter e
-			inner join person p on p.person_id=e.patient_id
-			inner join obs o on e.encounter_id = o.encounter_id
+			inner join person p on p.person_id=e.patient_id and p.voided=0
+			inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
  and o.concept_id in(1729,160246,159891,1048,164425,121764,5619,159707,163089,162695,160119,164886,163766,163164,164360)
    inner join
      (
@@ -3045,8 +3016,9 @@ voided
     o.obs_group_id
      from obs o
     inner join encounter e on e.encounter_id = o.encounter_id
-    inner join person p on p.person_id = o.person_id
+    inner join person p on p.person_id = o.person_id and p.voided=0
     inner join form f on f.form_id=e.form_id and f.uuid in ('782a4263-3ac9-4ce8-b316-534571233f12')
+     where o.voided=0
      group by e.encounter_id, o.obs_group_id
      ) t on e.encounter_id = t.encounter_id
     group by e.encounter_id;
@@ -3070,6 +3042,14 @@ CREATE PROCEDURE sp_populate_dwapi_enhanced_adherence()
 			session_number,
 			first_session_date,
 			pill_count,
+            MMAS4_1_forgets_to_take_meds,
+            MMAS4_2_careless_taking_meds,
+            MMAS4_3_stops_on_reactive_meds,
+            MMAS4_4_stops_meds_on_feeling_good,
+            MMSA8_1_took_meds_yesterday,
+            MMSA8_2_stops_meds_on_controlled_symptoms,
+            MMSA8_3_struggles_to_comply_tx_plan,
+            MMSA8_4_struggles_remembering_taking_meds,
 			arv_adherence,
 			has_vl_results,
 			vl_results_suppressed,
@@ -3116,6 +3096,14 @@ CREATE PROCEDURE sp_populate_dwapi_enhanced_adherence()
 				max(if(o.concept_id=1639,o.value_numeric,null)) as session_number,
 				max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
 				max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
+                max(if(o.concept_id=167321,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_1_forgets_to_take_meds,
+                max(if(o.concept_id=163088,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_2_careless_taking_meds,
+                max(if(o.concept_id=6098,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_3_stops_on_reactive_meds,
+                max(if(o.concept_id=164998,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_4_stops_meds_on_feeling_good,
+                max(if(o.concept_id=162736,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_1_took_meds_yesterday,
+                max(if(o.concept_id=1743,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_2_stops_meds_on_controlled_symptoms,
+                max(if(o.concept_id=1779,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_3_struggles_to_comply_tx_plan,
+                max(if(o.concept_id=166365,(case o.value_coded when 1090 then "Never/rarely" when 1358 then "Once in a while" when 1385 then "Sometimes" when 161236 then "Usually" when 162135 then "All the time" end), null)) as MMSA8_4_struggles_remembering_taking_meds,
 				max(if(o.concept_id=1658,(case o.value_coded when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end), "" )) as arv_adherence,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
 				max(if(o.concept_id=163310,(case o.value_coded when 1302 then "Suppressed" when 1066 then "Unsuppresed" else "" end), "" )) as vl_results_suppressed,
@@ -3151,9 +3139,9 @@ CREATE PROCEDURE sp_populate_dwapi_enhanced_adherence()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id
-																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
+																		and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096,167321,163088,6098,164998,162736,1743,1779,166365)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -3167,6 +3155,7 @@ e.voided as voided
 										from obs o
 											inner join encounter e on e.encounter_id = o.encounter_id
 											inner join form f on f.form_id=e.form_id and f.uuid in ('c483f10f-d9ee-4b0d-9b8c-c24c1ec24701')
+                                        where o.voided=0
 										group by e.encounter_id, o.obs_group_id
 									) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id;
@@ -3233,18 +3222,69 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 				e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
-				left outer join obs o on o.encounter_id=e.encounter_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
 			group by e.patient_id, visit_date
 		;
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END $$
 
+
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_generalized_anxiety_disorder $$
+CREATE PROCEDURE sp_populate_dwapi_generalized_anxiety_disorder()
+  BEGIN
+    SELECT "Processing Generalized Anxiety Disorder form", CONCAT("Time: ", NOW());
+    insert into dwapi_etl.etl_generalized_anxiety_disorder(
+        uuid,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        encounter_provider,
+        date_created,
+        feeling_nervous_anxious,
+        control_worrying,
+        worrying_much,
+        trouble_relaxing,
+        being_restless,
+        feeling_bad,
+        feeling_afraid,
+        assessment_outcome,
+        date_last_modified,
+        voided
+        )
+    select
+		e.uuid,
+		e.patient_id,
+		e.visit_id,
+		date(e.encounter_datetime) as visit_date,
+		e.location_id,
+		e.encounter_id as encounter_id,
+		e.creator,
+		e.date_created as date_created,
+		max(if(o.concept_id=167003,trim(o.value_coded),null)) as feeling_nervous_anxious,
+		max(if(o.concept_id=167005,trim(o.value_coded),null)) as control_worrying,
+		max(if(o.concept_id=166482,trim(o.value_coded),null)) as worrying_much,
+		max(if(o.concept_id=167064,trim(o.value_coded),null)) as trouble_relaxing,
+		max(if(o.concept_id=167065,trim(o.value_coded),null)) as being_restless,
+		max(if(o.concept_id=167066,trim(o.value_coded),null)) as feeling_bad,
+		max(if(o.concept_id=167067,trim(o.value_coded),null)) as feeling_afraid,
+		max(if(o.concept_id=167267,trim(o.value_coded),null)) as assessment_outcome,
+		if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided as voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ("524d078e-936a-4543-9ca6-7a8d9ed4db06")
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167003,167005,166482,167064,167065,167066,167067,167267) and o.voided=0
+    group by e.encounter_id;
+    SELECT "Completed processing Processing Generalized Anxiety Disorder forms", CONCAT("Time: ", NOW());
+  END $$
 
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
@@ -3350,9 +3390,9 @@ CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
            e.voided as voided
 
     from encounter e
-             inner join person p on p.person_id=e.patient_id
+             inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825,164393,165356)
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825,164393,165356) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
   END $$
@@ -3373,6 +3413,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
         encounter_id,
         date_created,
         date_last_modified,
+        assessed_for_behavior_risk,
         risk_for_hiv_positive_partner,
         client_assessment,
         adherence_assessment,
@@ -3386,6 +3427,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
         prescribed_prep_today,
         prescribed_regimen,
         prescribed_regimen_months,
+        number_of_condoms_issued,
         prep_discontinue_reasons,
         prep_discontinue_other_reasons,
         appointment_given,
@@ -3396,6 +3438,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
     select
            e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
            if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+           max(if(o.concept_id = 138643, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end),null)) as assessed_for_behavior_risk,
            max(if(o.concept_id = 1169, (case o.value_coded when 160571 then "Couple is trying to conceive" when 159598 then "Suspected poor adherence"
                                                            when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
            max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
@@ -3416,6 +3459,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
            max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
            max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" when 168050 then "CAB-LA" when 168049 then "Dapivirine Ring"  else "" end), "" )) as prescribed_regimen,
            max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
+           max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms_issued,
            max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                              when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
                                                              when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
@@ -3425,9 +3469,9 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
            max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
            e.voided as voided
     from encounter e
-           inner join person p on p.person_id=e.patient_id
+           inner join person p on p.person_id=e.patient_id and p.voided=0
            inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096)
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
   END $$
@@ -3475,9 +3519,9 @@ CREATE PROCEDURE sp_populate_dwapi_prep_discontinuation()
            max(if(o.concept_id = 162549, o.value_datetime, null )) as last_prep_dose_date,
            e.voided
     from encounter e
-			inner join person p on p.person_id=e.patient_id
+			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join form f on f.form_id=e.form_id and f.uuid in ("467c4cc3-25eb-4330-9cf6-e41b9b14cc10")
-      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073,162549)
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161555,164073,162549) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing PrEP discontinuation", CONCAT("Time: ", NOW());
   END $$
@@ -3545,9 +3589,9 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
            max(if(o.concept_id = 160641, o.value_text, null )) as buddy_alt_phone,
            e.voided as voided
     from encounter e
-			inner join person p on p.person_id=e.patient_id
+			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581,166866)
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581,166866) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
   END $$
@@ -3694,11 +3738,11 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
         max(if(o.concept_id = 163042, o.value_text, null )) as clinical_notes,
         e.voided
     from encounter e
-             inner join person p on p.person_id=e.patient_id
+             inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
-                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354)
+                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354) and o.voided=0
     group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
   END $$
@@ -3734,8 +3778,8 @@ CREATE PROCEDURE sp_populate_dwapi_ipt_initiation()
 				max(if(o.concept_id=161552,o.value_datetime,null)) as sub_county_reg_date,
 				e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id and o.concept_id in(162276,161552)
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id in(162276,161552)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -3796,12 +3840,12 @@ CREATE PROCEDURE sp_populate_dwapi_ipt_followup()
 				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
 				e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
 				) et on et.encounter_type_id=e.encounter_type
-				left outer join obs o on o.encounter_id=e.encounter_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 																 and o.concept_id in (164073,164074,159098,5089,118983,512,164075,160632)
 			group by e.patient_id, e.encounter_id, visit_date
 		;
@@ -3836,8 +3880,8 @@ CREATE PROCEDURE sp_populate_dwapi_ipt_outcome()
 				max(if(o.concept_id=161555,o.value_coded,null)) as ipt_outcome,
 				e.voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
-				inner join obs o on e.encounter_id = o.encounter_id and o.concept_id=161555
+				inner join person p on p.person_id=e.patient_id and p.voided=0
+				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0 and o.concept_id=161555
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
@@ -3880,13 +3924,13 @@ CREATE PROCEDURE sp_populate_dwapi_hts_linkage_tracing()
 				max(if(o.concept_id=1779,o.value_coded,null)) as reason_not_contacted,
 				e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('15ed03d2-c972-11e9-a32f-2a2ae2dbcce4')
 				) f on f.form_id=e.form_id
-				left outer join obs o on o.encounter_id=e.encounter_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 																 and o.concept_id in (164966,159811,1779)
 			group by e.patient_id, e.encounter_id, visit_date
 		;
@@ -3932,8 +3976,9 @@ CREATE PROCEDURE sp_populate_dwapi_patient_program()
 				pp.date_changed as date_last_modified,
 				pp.voided
 			from patient_program pp
-				inner join person pt on pt.person_id=pp.patient_id
-				inner join program p on p.program_id=pp.program_id
+				inner join person pt on pt.person_id=pp.patient_id and pt.voided=0
+				inner join program p on p.program_id=pp.program_id and p.retired=0
+        where pp.voided=0
 		;
 		SELECT "Completed processing patient program data ", CONCAT("Time: ", NOW());
 		END $$
@@ -3970,7 +4015,8 @@ CREATE PROCEDURE sp_populate_dwapi_person_address()
         pa.address2 land_mark,
         pa.voided voided
       from person_address pa
-        inner join person pt on pt.person_id=pa.person_id
+        inner join person pt on pt.person_id=pa.person_id and pt.voided=0
+      where pa.voided=0
     ;
     SELECT "Completed processing person_address data ", CONCAT("Time: ", NOW());
     END $$
@@ -4021,13 +4067,13 @@ CREATE PROCEDURE sp_populate_dwapi_otz_enrollment()
 				max(if(o.concept_id=160563,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as transfer_in,
 				e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('3ae95898-0464-11ea-8d71-362b9e155667')
 				) f on f.form_id=e.form_id
-				left outer join obs o on o.encounter_id=e.encounter_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 																 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,160563)
 			group by e.patient_id, e.encounter_id, visit_date
 		;
@@ -4084,13 +4130,13 @@ CREATE PROCEDURE sp_populate_dwapi_otz_activity()
 				max(if(o.concept_id=161011,trim(o.value_text),null)) as remarks,
 				e.voided as voided
 			from encounter e
-				inner join person p on p.person_id=e.patient_id
+				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('3ae95d48-0464-11ea-8d71-362b9e155667')
 				) f on f.form_id=e.form_id
-				left outer join obs o on o.encounter_id=e.encounter_id
+				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 																 and o.concept_id in (165359,165361,165360,165364,165363,165362,165365,165366,165302,161011)
 			group by e.patient_id, e.encounter_id, visit_date
 		;
@@ -4146,13 +4192,13 @@ CREATE PROCEDURE sp_populate_dwapi_ovc_enrolment()
            max(if(o.concept_id=163775 and o.value_coded=164128,"Yes",null)) as ovc_preventive_program,
            e.voided as voided
     from encounter e
-           inner join person p on p.person_id=e.patient_id
+           inner join person p on p.person_id=e.patient_id and p.voided=0
            inner join
              (
              select form_id, uuid,name from form where
                  uuid in('5cf01528-09da-11ea-8d71-362b9e155667')
              ) f on f.form_id=e.form_id
-           left outer join obs o on o.encounter_id=e.encounter_id
+           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                       and o.concept_id in (163777,163258,1533,164352,160642,163766,165347,163775)
     group by e.patient_id, e.encounter_id, visit_date
     ;
@@ -4181,72 +4227,388 @@ insert into dwapi_etl.etl_cervical_cancer_screening(
     screening_type,
     post_treatment_complication_cause,
     post_treatment_complication_other,
-    screening_method,
-    screening_result,
-    treatment_method,
-    treatment_method_other,
+    cervical_cancer,
+    colposcopy_screening_method,
+    hpv_screening_method,
+    pap_smear_screening_method,
+    via_vili_screening_method,
+    colposcopy_screening_result,
+    hpv_screening_result,
+    pap_smear_screening_result,
+    via_vili_screening_result,
+    colposcopy_treatment_method,
+    hpv_treatment_method,
+    pap_smear_treatment_method,
+    via_vili_treatment_method,
+    colorectal_cancer,
+    fecal_occult_screening_method,
+    colonoscopy_method,
+    fecal_occult_screening_results,
+    colonoscopy_method_results,
+    fecal_occult_screening_treatment,
+    colonoscopy_method_treatment,
+    retinoblastoma_cancer,
+    retinoblastoma_eua_screening_method,
+    retinoblastoma_gene_method,
+    retinoblastoma_eua_screening_results,
+    retinoblastoma_gene_method_results,
+    retinoblastoma_eua_treatment,
+    retinoblastoma_gene_treatment,
+    prostate_cancer,
+    digital_rectal_prostate_examination,
+    digital_rectal_prostate_results,
+    digital_rectal_prostate_treatment,
+    prostatic_specific_antigen_test,
+    prostatic_specific_antigen_results,
+    prostatic_specific_antigen_treatment,
+    oral_cancer,
+    oral_cancer_visual_exam_method,
+    oral_cancer_cytology_method,
+    oral_cancer_imaging_method,
+    oral_cancer_biopsy_method,
+    oral_cancer_visual_exam_results,
+    oral_cancer_cytology_results,
+    oral_cancer_imaging_results,
+    oral_cancer_biopsy_results,
+    oral_cancer_visual_exam_treatment,
+    oral_cancer_cytology_treatment,
+    oral_cancer_imaging_treatment,
+    oral_cancer_biopsy_treatment,
+    breast_cancer,
+    clinical_breast_examination_screening_method,
+    ultrasound_screening_method,
+    mammography_smear_screening_method,
+    clinical_breast_examination_screening_result,
+    ultrasound_screening_result,
+    mammography_screening_result,
+    clinical_breast_examination_treatment_method,
+    ultrasound_treatment_method,
+    breast_tissue_diagnosis,
+    breast_tissue_diagnosis_date,
+    reason_tissue_diagnosis_not_done,
+    mammography_treatment_method,
     referred_out,
     referral_facility,
     referral_reason,
-    next_appointment_date,
+    followup_date,
+    hiv_status,
+    smoke_cigarattes,
+    other_forms_tobacco,
+    take_alcohol,
+    previous_treatment,
+    previous_treatment_specify,
+    signs_symptoms,
+    signs_symptoms_specify,
+    family_history,
+    number_of_years_smoked,
+    number_of_cigarette_per_day,
+    clinical_notes,
     voided
-    )
+)
 select
-       e.uuid,  e.encounter_id,e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id,e.date_created,
-       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
-       max(if(o.concept_id = 160288, (case o.value_coded when 162080 then 'Initial visit'
-                                                         when 161236 then 'Routine visit'
-                                                         when 165381 then 'Post treatment visit'
-                                                         when 1185 then 'Treatment visit'
-                                                         when 165382 then 'Post treatment complication' else "" end), "" )) as visit_type,
-       max(if(o.concept_id = 164181, (case o.value_coded when 164180 then 'First time screening'
-                                 when 160530 then 'Rescreening'
-                                 when 165389 then 'Post treatment followup' else "" end), "" )) as screening_type,
-       max(if(o.concept_id = 165383, (case o.value_coded when 162816 then 'Cryotherapy'
-                                 when 162810 then 'LEEP'
-                                 when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
-        max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
-        max(if(o.concept_id = 163589, (case o.value_coded when 885 then 'Pap Smear'
-                                                          when 164805 then 'VIA'
-                                                          when 164977 then 'VIA/VILI'
-                                                          when 160705 then 'Colposcopy'
-                                                          when 159859 then 'HPV Test'
-                                                          when 5622 then 'Other' else "" end), "" )) as screening_method,
-       max(if(o.concept_id = 164934, (case o.value_coded when 703 then 'Positive'
-                                                         when 1116 then 'Positive'
-                                                         when 145805 then 'Positive'
-                                                         when 155424 then 'Positive'
-                                                         when 145808  then 'Presumed'
-                                                         when 159393 then 'Presumed'
-                                                         when 159008 then 'Presumed'
-                                                         when 5622 then 'Other'
-                                                         when 1115  then 'Negative'
-                                                         when 664  then 'Negative' else NULL end), '' )) as screening_result,
-       max(if(o.concept_id = 165266, (case o.value_coded when 165381 then 'Cryotherapy postponed'
-                                                       when 165386 then 'Cryotherapy performed'
-                                                       when 162810 then 'LEEP'
-                                                       when 165396 then 'Cold knife cone'
-                                                       when 165395 then 'Thermocoagulation'
-                                                       when 165385 then 'Cryotherapy performed (single Visit)'
-                                                       when 159837 then 'Hysterectomy'
-                                                       when 165391 then 'Referred for cancer treatment'
-                                                       when 1107 then 'None'
-                                                       when 5622 then 'Other' else "" end), "" )) as treatment_method,
-      max(if(o.concept_id=160632,o.value_text,null)) as treatment_method_other,
-      max(if(o.concept_id=165267,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
-      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
-      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
-                                                      when 159008 then 'Large lesion, Suspect cancer'
-                                                      when 5622 then 'Other' else "" end), "" )) as referral_reason,
-      max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
-       e.voided as voided
-from encounter e
-	inner join person p on p.person_id=e.patient_id
-	inner join form f on f.form_id=e.form_id and f.uuid ='0c93b93c-bfef-4d2a-9fbe-16b59ee366e7'
-  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164934,163589,160288,164181,165383,163042,165266,160632,165267,165268,1887,5096)
-group by e.encounter_id
-having screening_result is not null;
+    e.uuid,  e.encounter_id,e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id,e.date_created,
+    if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+    max(if(o.concept_id = 160288, (case o.value_coded when 162080 then 'Initial visit'
+                                                      when 161236 then 'Routine visit'
+                                                      when 165381 then 'Post treatment visit'
+                                                      when 1185 then 'Treatment visit'
+                                                      when 165382 then 'Post treatment complication' else "" end), "" )) as visit_type,
+    max(if(o.concept_id = 164181, (case o.value_coded when 164180 then 'First time screening' when 160530 then 'Rescreening'
+                                                      when 165389 then 'Post treatment followup' else "" end), "" )) as screening_type,
+    max(if(o.concept_id = 165383, (case o.value_coded when 162816 then 'Cryotherapy'
+                                                      when 162810 then 'LEEP'
+                                                      when 5622 then 'Others' else "" end), "" )) as post_treatment_complication_cause,
+    max(if(o.concept_id=163042,o.value_text,null)) as post_treatment_complication_other,
+    max(if(o.concept_id = 116030 and o.value_coded = 116023, 'Yes', null))as cervical_cancer,
+    max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=160705, 'Colposcopy)',
+           if(t.colposcopy_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_method, null))) as colposcopy_screening_method,
+    max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=159859, 'HPV',
+           if(t.hpv_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_screening_method, null))) as hpv_screening_method,
+    max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded=885, 'Pap Smear',
+           if(t.pap_smear_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.pap_smear_screening_method, null))) as pap_smear_screening_method,
+    max(if(o.concept_id = 163589 and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7" and o.value_coded in (164805,164977), 'VIA',
+           if(t.via_vili_screening_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_screening_method, null))) as via_vili_screening_method,
+    max(if(t3.colposcopy_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t3.colposcopy_screening_result,
+           if(t.colposcopy_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_screening_result, null))) as colposcopy_screening_result,
+    max(if(t2.hpv_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t2.hpv_screening_result,
+           if(t.hpv_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_screening_result, null))) as hpv_screening_result,
+    max(if(t4.pap_smear_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t4.pap_smear_screening_result,
+           if(t.pap_smear_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.pap_smear_screening_result, null))) as pap_smear_screening_result,
+    max(if(t1.via_vili_screening_result is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t1.via_vili_screening_result,
+           if(t.via_vili_screening_result is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_screening_result, null))) as via_vili_screening_result,
+    max(if(t3.colposcopy_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t3.colposcopy_treatment_method,
+           if(t.colposcopy_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.colposcopy_treatment_method, null))) as colposcopy_treatment_method,
+    max(if(t2.hpv_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t2.hpv_treatment_method,
+           if(t.hpv_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.hpv_treatment_method, null))) as hpv_treatment_method,
+    max(if(t4.pap_smear_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t4.pap_smear_treatment_method,
+           if(t.pap_smear_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.pap_smear_treatment_method, null))) as pap_smear_treatment_method,
+    max(if(t1.via_vili_treatment_method is not null and f.uuid = "0c93b93c-bfef-4d2a-9fbe-16b59ee366e7", t1.via_vili_treatment_method,
+           if(t.via_vili_treatment_method is not null and f.uuid="be5c5602-0a1d-11eb-9e20-37d2e56925ee", t.via_vili_treatment_method, null))) as via_vili_treatment_method,
+    -- Getting colorectal cancer screening data
+    max(if(o.concept_id = 116030 and o.value_coded = 133350, 'Yes', null))as colorectal_cancer,
+    max(if(o.concept_id = 164959 and o.value_coded = 159362, 'fecal occult', null))as fecal_occult_screening_method,
+    max(if(o.concept_id = 164959 and o.value_coded = 1000148, 'colonoscopy', null))as colonoscopy_method,
+    max(if(o.concept_id=166664, (case o.value_coded when 703 then 'Positive' when 664 then 'Negative' else '' end),null)) as fecal_occult_screening_results ,
+    max(if(o.concept_id=166664, (case o.value_coded when 1115 then 'No abnormality'
+                                                    when 148910 then 'Polyps'
+                                                    when 133350 then 'Suspicious for cancer'
+                                                    when 118606 then 'Inflammation'
+                                                    when 5622 then 'Other abnormalities' else '' end),null)) as colonoscopy_method_results,
+    max(if(o.concept_id = 1000147, (case o.value_coded when 1000078 then 'Counsel on negative findings'
+                                                       when 1000102 then 'Referred for colonoscopy' else '' end),null)) as fecal_occult_screening_treatment,
+    max(if(o.concept_id = 1000148, (case o.value_coded when 1000078 then 'Counsel on negative findings'
+                                                       when 1000143 then 'Refer for biopsy'
+                                                       when 1000103 then 'Referred for further management'
+                                                       when 162907 then 'Refer to surgical resection' else '' end),null)) as colonoscopy_method_treatment,
+    -- Getting retinoblastoma cancer screening data
+    max(if(o.concept_id = 116030 and o.value_coded = 127527, 'Yes', null))as retinoblastoma_cancer,
+    max(if(o.concept_id = 163589 and o.value_coded = 1000149, 'EUA(Examination Under Anesthesia)', null))as retinoblastoma_eua_screening_method,
+    max(if(o.concept_id = 163589 and o.value_coded = 1000105, 'Retinoblastoma gene (RB1 gene)', null))as retinoblastoma_gene_method,
+    max(if(o.concept_id=1000149, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as retinoblastoma_eua_screening_results ,
+    max(if(o.concept_id=1000105, (case o.value_coded when 703 then "Negative"
+                                                     when 664 then "Positive" else "" end),null)) as retinoblastoma_gene_method_results,
+    max(if(o.concept_id = 1000149, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                                       when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_eua_treatment,
+    max(if(o.concept_id = 1000150, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                                       when 1000121 then "Referred for further evaluation" else "" end),null)) as retinoblastoma_gene_treatment,
+    max(if(o.concept_id = 116030 and o.value_coded = 146221, 'Yes', null)) as prostate_cancer,
+    max(if(o.concept_id = 1000107, 'Yes',null)) as digital_rectal_prostate_examination,
+    max(if(o.concept_id = 1000107, case o.value_coded when 1115 then 'Normal' when 1000108 then 'Enlarged' when 1000109 then 'Hard/lampy' end, null)) as  digital_rectal_prostate_results,
+    concat_ws(',',max(if(o.concept_id = 1000111 and o.value_coded = 1712,'Patient education',null)), max(if(o.concept_id = 1000111 and o.value_coded = 1000078,'Counseled on -ve findings, after (DRE, PSA test and TRUS)',null)), max(if(o.concept_id = 1000111 and o.value_coded = 1000121,'Performed/reffered for further evaluation(PSA,TRUS Biopsy)',null))) as digital_rectal_prostate_treatment,
+    max(if(o.concept_id = 1169, 'Yes',null)) as prostatic_specific_antigen_test,
+    max(if(o.concept_id = 1169, case o.value_coded when 1000113 then '0-4ng/ml' when 1000114 then '4-10ng/ml' when 1000115 then '>10ng/ml' end, null)) as prostatic_specific_antigen_results,
+    max(if(o.concept_id = 1000111 and o.value_coded in (1000081,1000121,1000143), case o.value_coded when 1000081 then 'Routine follow up after 2 years' when 1000121 then 'Further evaluation' when 1000121 then 'Further evaluation' when 1000143 then 'Perform/refer for biopsy' end, null)) as prostatic_specific_antigen_treatment,
 
+    -- Getting oral cancer screening data
+    max(if(o.concept_id = 116030 and o.value_coded = 115355, 'Yes', null))as oral_cancer,
+    max(if(o.concept_id = 163308, 'Yes', null))as oral_cancer_visual_exam_method,
+    max(if(o.concept_id = 167139, 'Yes', null))as oral_cancer_cytology_method,
+    max(if(o.concept_id = 1000135, 'Yes', null))as oral_cancer_imaging_method,
+    max(if(o.concept_id = 1000136,'Yes', null))as oral_cancer_biopsy_method,
+    max(if(o.concept_id = 163308, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as oral_cancer_visual_exam_results,
+    max(if(o.concept_id = 167139, (case o.value_coded when 703 then 'Positive' when 664 then 'Negative' else '' end),null)) as oral_cancer_cytology_results,
+    max(if(o.concept_id = 1000135, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as oral_cancer_imaging_results,
+    max(if(o.concept_id = 1000136, (case o.value_coded when 1115 then "Normal" when 1116 then "Abnormal" else "" end),null)) as oral_cancer_biopsy_results,
+    max(if(o.concept_id = 1000151, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                                       when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_visual_exam_treatment,
+    max(if(o.concept_id = 1000152, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                                       when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_cytology_treatment,
+    max(if(o.concept_id = 1000153, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                                       when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_imaging_treatment,
+    max(if(o.concept_id = 1000154, (case o.value_coded when 1000078 then "Counsel on negative findings"
+                                                       when 1000121 then "Referred for further evaluation" else "" end),null)) as oral_cancer_biopsy_treatment,
+
+    -- Getting breast cancer screening data
+    max(if(o.concept_id = 116030 and o.value_coded = 116026, 'Yes', null))as breast_cancer,
+    max(if(o.concept_id = 1000090 and o.value_coded = 1065, 'clinical breast examination', null))as clinical_breast_examination_screening_method,
+    max(if(o.concept_id = 1000090 and o.value_coded = 1000092, 'ultrasound', null))as ultrasound_screening_method,
+    max(if(o.concept_id = 159780 and o.value_coded = 163591, 'mammography', null))as mammography_smear_screening_method,
+    max(if(o.concept_id=166664, (case o.value_coded when 1115 then 'Normal' when 1116 then 'Abnormal' else '' end),null)) as clinical_breast_examination_screening_result,
+    max(if(o.concept_id=166664, (case o.value_coded when 1000094 then 'BIRADS 0(Incomplete Need additional imaging evaluation)'
+                                                    when 1000093 then 'BIRADS 1(Negative),BIRADS 2(Benign)'
+                                                    when 1000095 then 'BIRADS 2(Benign),'
+                                                    when 1000096 then 'BIRADS 3(Probably Benign)'
+                                                    when 1000097 then 'BIRADS 4(Suspicious)'
+                                                    when 1000098 then 'BIRADS 5(Highly Suggestive of Malignancy)'
+                                                    when 1000099 then 'BIRADS 6(Known Biopsy-Proven Malignancy)' else "" end),null)) as ultrasound_screening_result,
+    max(if(o.concept_id=166664, (case o.value_coded when 1000094 then 'BIRADS 0(Incomplete Need additional imaging evaluation)'
+                                                    when 1000093 then 'BIRADS 1(Negative),BIRADS 2(Benign)'
+                                                    when 1000095 then 'BIRADS 2(Benign),'
+                                                    when 1000096 then 'BIRADS 3(Probably Benign)'
+                                                    when 1000097 then 'BIRADS 4(Suspicious)'
+                                                    when 1000098 then 'BIRADS 5(Highly Suggestive of Malignancy)'
+                                                    when 1000099 then 'BIRADS 6(Known Biopsy-Proven Malignancy)' else "" end),null)) as mammography_screening_result,
+    max(if(o.concept_id = 1000091,(case o.value_coded when 1000078 then 'Counsel on negative findings'
+                                                      when 1609 then 'refer for triple assessment' else '' end),null))as clinical_breast_examination_treatment_method,
+    max(if(o.concept_id = 1000145, (case o.value_coded when 1609 then 'Recall for additional imaging'
+                                                       when 432 then 'Routine mammography screening'
+                                                       when 164080 then 'Short-interval(6 months) follow-up'
+                                                       when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
+                                                       when 1000103 then 'Referred for further management'
+                                                       else '' end),null)) as ultrasound_treatment_method,
+    max(if(o.concept_id = 1000516, case o.value_coded when 1267 then 'Done' when 1118 then 'Not done' end, null)) as breast_tissue_diagnosis,
+    max(if(o.concept_id = 1000088, o.value_datetime, null)) as breast_tissue_diagnosis_date,
+    max(if(o.concept_id = 160632, o.value_text, null)) as reason_tissue_diagnosis_not_done,
+    max(if(o.concept_id = 1000145, (case o.value_coded when 1609 then 'Recall for additional imaging'
+                                                       when 432 then 'Routine Ultra sound screening'
+                                                       when 164080 then 'Short-interval(6 months) follow-up'
+                                                       when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
+                                                       when 159619 then 'Surgical excision when clinically appropriate)'
+                                                       when 1000103 then 'Referred for further management'
+                                                       else '' end),null)) as mammography_treatment_method,
+
+    max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
+    max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
+    max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
+                                                    when 159008 then 'Large lesion, Suspect cancer'
+                                                    when 1000103 then 'Further evaluation'
+                                                    when 161194 then 'Diagnostic work up'
+                                                    when 1185 then 'Treatment'
+                                                    when 5622 then 'Other' else "" end), "" )) as referral_reason,
+    max(if(o.concept_id=5096,o.value_datetime,null)) as followup_date,
+    max(if(o.concept_id=1169,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" else "" end),null)) as hiv_status,
+    max(if(o.concept_id=163201,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 158939 then "Stopped" else "" end),null)) as smoke_cigarattes,
+    max(if(o.concept_id=163731,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 158939 then "Stopped" else "" end),null)) as other_forms_tobacco,
+    max(if(o.concept_id=159449,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 167155 then "Stopped" else "" end),null)) as take_alcohol,
+    concat_ws(',', max(if(o.concept_id = 162964 and o.value_coded = 1107, 'None', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 166917, 'Chemotherapy', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 16117, 'Radiotherapy', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 160345, 'Hormonal therapy', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 5622, 'Other', null)),
+              max(if(o.concept_id = 162964 and o.value_coded = 159619, 'Surgery', null))) as previous_treatment,
+    max(if(o.concept_id=160632,trim(o.value_text),null)) as previous_treatment_specify,
+    concat_ws(',', max(if(o.concept_id = 1729 and o.value_coded = 1107, 'None', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 111, 'Dyspepsia', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 117671, 'Blood in stool', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 5192, 'Yellow eyes', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 840, 'Blood in urine', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 132667, 'Nose Bleeding', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 5954, 'Difficulty in swallowing', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 832, 'Weight loss', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 140501, 'Easy fatigability', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 150802, 'Abnormal vaginal bleeding', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 115844, 'Changing/enlarging skin moles', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 120551, 'Chronic skin ulcers', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 115919, 'Lumps/swellings', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 145455, 'Chronic cough', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 115779, 'Persistent headaches', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 129452, 'Post-coital bleeding', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 151903, 'Changing bowel habits', null)),
+              max(if(o.concept_id = 1729 and o.value_coded = 5622, 'Other', null))) as signs_symptoms,
+    max(if(o.concept_id=161011,trim(o.value_text),null)) as signs_symptoms_specify,
+    max(if(o.concept_id=160592,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as family_history,
+    max(if(o.concept_id=159931,o.value_numeric,null)) as number_of_years_smoked,
+    max(if(o.concept_id=1546,o.value_numeric,null)) as number_of_cigarette_per_day,
+    max(if(o.concept_id=164879,trim(o.value_text),null)) as clinical_notes,
+    e.voided
+from encounter e
+         inner join person p on p.person_id=e.patient_id and p.voided=0
+         inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,1000516,1000088,
+                                                                                  160288,160592,160632,161011,162737,162964,163042,163201,163308,163589,163731,164181,164879,164959,165267,165268,165383,166664,
+                                                                                  167139,1000090,1000091,1000105,1000107,1000111,1000135,1000136,1000145,1000147,1000148,1000149,1000150,1000151,1000152,1000153,1000154)
+         inner join (
+    select
+        o.person_id,
+        o.encounter_id,
+        o.obs_group_id,
+        max(if(o.concept_id=163589, (case o.value_coded when 159859 then "HPV"  else "" end),null)) as hpv_screening_method ,
+        max(if(o.concept_id=164934, (case o.value_coded when 703 then "Positive"
+                                                        when 664 then "Negative" when 159393 then "Suspicious for Cancer"  else "" end),null)) as hpv_screening_result ,
+        max(if(o.concept_id in (165070,160705), (case o.value_coded when 1065 then "Counseled on negative results"
+                                                                    when 703 then "Do a VIA or colposcopy"  else "" end),null)) as hpv_treatment_method ,
+        max(if(o.concept_id=163589, (case o.value_coded when 164977 then "VIA"  else "" end),null)) as via_vili_screening_method ,
+        max(if(o.concept_id=164934, (case o.value_coded when 703 then "Positive" when 664 then "Negative"
+                                                        when 159008 then "Suspicious for Cancer"  else "" end),null)) as via_vili_screening_result ,
+
+        max(if(o.concept_id in (165070,165266,166937), (case o.value_coded when 1065 then "Counseled on negative results"
+                                                                           when 165385 then "Cryotherapy performed (SVA)" when 165381 then "Cryotherapy postponed"
+                                                                           when 165386 then "Cryotherapy performed (previously postponed)" when 1648 then "Referred for cryotherapy"
+                                                                           when 162810 then "LEEP performed" when 165396 then "Cold knife cone"
+                                                                           when 165395 then "Thermal ablation performed (SVA)" when  159837 then "Hysterectomy" when  165391 then "Referred for cancer treatment"
+                                                                           when 161826 then "Perform biopsy and/or refer for further management" else "" end),null)) as via_vili_treatment_method ,
+        max(if(o.concept_id=163589, (case o.value_coded when 885 then "Pap Smear"  else "" end),null)) as pap_smear_screening_method ,
+        max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal" when 145808 then "Low grade lesion"
+                                                        when 145805 then "High grade lesion" when 155424 then "Invasive Cancer" when 145822 then "Atypical squamous cells(ASC-US/ASC-H)"
+                                                        when 155208 then "AGUS"  else "" end),null)) as pap_smear_screening_result ,
+        max(if(o.concept_id in (165070,1272), (case o.value_coded when 1065 then "Counseled on negative results"
+                                                                  when 160705 then "Refer for colposcopy" when 161826 then "Refer for biopsy"  else "" end),null)) as pap_smear_treatment_method ,
+        max(if(o.concept_id=163589, (case o.value_coded when 160705 then "Colposcopy"  else "" end),null)) as colposcopy_screening_method ,
+        max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal"
+                                                        when 1116 then "Abnormal" when 159008 then "Suspicious for Cancer"  else "" end),null)) as colposcopy_screening_result ,
+        max(if(o.concept_id in (165070,166665,160705,165266), (case o.value_coded when 1065 then "Counseled on negative results"
+                                                                                  when 162812 then "Cryotherapy" when 165395 then "Thermal ablation"
+                                                                                  when 166620 then "Loop electrosurgical excision" when 1000103 then "Refer for appropraite diagnosis and management"
+                                                                                  when 165385 then "Cryotherapy performed (SVA)" when 165381 then "Cryotherapy postponed"
+                                                                                  when 162810 then "Cryotherapy performed (previously postponed)" when 1648 then "Referred for cryotherapy"
+                                                                                  when 165396 then "LEEP performed" when 165396 then "Cold knife cone"
+                                                                                  when 165395 then "Thermal ablation performed (SVA)" when 159837 then "Hysterectomy"
+                                                                                  when 165391 then "Referred for cancer treatment"
+                                                                                  when 165995 then "Other treatment"  else "" end),null)) as colposcopy_treatment_method
+
+    from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+    where o.concept_id in (163589, 164934, 116030, 165070,160705,165266,166937,1272,166665,159362,1000148,163591,1000149,1000105,116030,163589,162737,132679,1392,166664,160049) and o.voided=0
+    group by e.encounter_id, o.obs_group_id
+) t on e.encounter_id = t.encounter_id
+         left join (
+    select
+        o.person_id,
+        o.encounter_id,
+        max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+                                                            when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+                                                            when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
+                                                            when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as via_vili_screening_result,
+        max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+                                                            when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                                                            when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
+                                                            when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as via_vili_treatment_method
+    from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+    where o.concept_id = 163589 and o.value_coded in (164805,164977) and o.voided=0
+    group by e.encounter_id
+) t1 on e.encounter_id = t1.encounter_id -- Getting legacy data for via screening result and treatment method
+         left join (
+    select
+        o.person_id,
+        o.encounter_id,
+        max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+                                                            when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+                                                            when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
+                                                            when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as hpv_screening_result,
+        max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+                                                            when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                                                            when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
+                                                            when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as hpv_treatment_method
+    from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+    where o.concept_id = 163589 and o.value_coded=159859 and o.voided=0
+    group by e.encounter_id
+) t2 on e.encounter_id = t2.encounter_id -- Getting legacy data for HPV screening result and treatment method
+         left join (
+    select
+        o.person_id,
+        o.encounter_id,
+        max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+                                                            when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+                                                            when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
+                                                            when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as colposcopy_screening_result,
+        max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+                                                            when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                                                            when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
+                                                            when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as colposcopy_treatment_method
+    from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+    where o.concept_id = 163589 and o.value_coded=160705 and o.voided=0
+    group by e.encounter_id
+) t3 on e.encounter_id = t3.encounter_id -- Getting legacy data for colposcopy screening result and treatment method
+         left join (
+    select
+        o.person_id,
+        o.encounter_id,
+        max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
+                                                            when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
+                                                            when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
+                                                            when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as pap_smear_screening_result,
+        max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
+                                                            when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
+                                                            when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
+                                                            when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as pap_smear_treatment_method
+    from obs o
+             inner join encounter e on e.encounter_id = o.encounter_id
+             inner join form f on f.form_id=e.form_id and f.uuid in ("0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+             LEFT JOIN obs o1 ON e.encounter_id = o1.encounter_id AND o1.concept_id in (165266,164934)
+    where o.concept_id = 163589 and o.value_coded=885 and o.voided=0
+    group by e.encounter_id
+) t4 on e.encounter_id = t4.encounter_id -- Getting legacy data for PAP smear screening result and treatment method
+group by e.encounter_id;
 SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
 END $$
@@ -4273,6 +4635,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
       relationship_type,
       appointment_date,
       baseline_hiv_status,
+      reported_test_date,
       ipv_outcome,
       marital_status,
       living_with_patient,
@@ -4282,31 +4645,33 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
       voided
 		)
 			select
-			  pc.id,
-			  pc.uuid,
-        pc.date_created,
-        pc.date_changed as date_last_modified,
-        pc.first_name,
-        pc.middle_name,
-        pc.last_name,
-        pc.sex,
-        pc.birth_date,
-        pc.physical_address,
-        pc.phone_contact,
-        pc.patient_related_to,
-        pc.patient_id,
-        pc.relationship_type,
-        pc.appointment_date,
-        pc.baseline_hiv_status,
-        pc.ipv_outcome,
-        pc.marital_status,
-        pc.living_with_patient,
-        pc.pns_approach,
-        pc.contact_listing_decline_reason,
-        pc.consented_contact_listing,
-        pc.voided
+			pc.id,
+			pc.uuid,
+            pc.date_created,
+            pc.date_changed as date_last_modified,
+            pc.first_name,
+            pc.middle_name,
+            pc.last_name,
+            pc.sex,
+            pc.birth_date,
+            pc.physical_address,
+            pc.phone_contact,
+            pc.patient_related_to,
+            pc.patient_id,
+            pc.relationship_type,
+            pc.appointment_date,
+            pc.baseline_hiv_status,
+            pc.reported_test_date,
+            pc.ipv_outcome,
+            pc.marital_status,
+            pc.living_with_patient,
+            pc.pns_approach,
+            pc.contact_listing_decline_reason,
+            pc.consented_contact_listing,
+            pc.voided
 			from kenyaemr_hiv_testing_patient_contact pc
-				inner join dwapi_etl.etl_patient_demographics dm on dm.patient_id=pc.patient_related_to
+				inner join dwapi_etl.etl_patient_demographics dm on dm.patient_id=pc.patient_related_to and dm.voided=0
+        where pc.voided=0
 		;
 		SELECT "Completed processing patient contact data ", CONCAT("Time: ", NOW());
 		END $$
@@ -4316,8 +4681,8 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_client_trace $$
 CREATE PROCEDURE sp_populate_dwapi_client_trace()
 	BEGIN
-		SELECT "Processing client trace ", CONCAT("Time: ", NOW());
-		INSERT INTO dwapi_etl.etl_client_trace(
+    SELECT "Processing client trace ", CONCAT("Time: ", NOW());
+    INSERT INTO dwapi_etl.etl_client_trace(
       id,
       uuid,
       date_created,
@@ -4333,8 +4698,8 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
       appointment_date,
       voided
 		)
-			select
-			  ct.id,
+		select
+		ct.id,
         ct.uuid,
         ct.date_created,
         ct.date_changed as date_last_modified,
@@ -4349,7 +4714,7 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
         ct.appointment_date,
         ct.voided
 			from kenyaemr_hiv_testing_client_trace ct
-                inner join person p on p.person_id = ct.client_id
+                inner join person p on p.person_id = ct.client_id and p.voided=0
 				inner join dwapi_etl.etl_patient_contact pc on pc.id=ct.client_id
 		;
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());
@@ -4453,8 +4818,8 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                  (
                  select encounter_type_id, uuid, name from encounter_type where uuid='ea68aad6-4655-4dc5-80f2-780e33055a9e'
                  ) et on et.encounter_type_id=e.encounter_type
-               join person p on p.person_id=e.patient_id
-               left outer join obs o on o.encounter_id=e.encounter_id
+               join person p on p.person_id=e.patient_id and p.voided=0
+               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                           and o.concept_id in (164932,160534,160555,160535,164929,138643,167131,161551,161550,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
         group by e.patient_id, e.encounter_id;
 
@@ -4546,8 +4911,8 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
              (
              select encounter_type_id, uuid, name from encounter_type where uuid='c7f47a56-207b-11e9-ab14-d663bd873d93'
              ) et on et.encounter_type_id=e.encounter_type
-           join person p on p.person_id=e.patient_id
-           left outer join obs o on o.encounter_id=e.encounter_id
+           join person p on p.person_id=e.patient_id and p.voided=0
+           left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                       and o.concept_id in (165004,165027,165030,165031,165032,123160,165034,164401,164956,165153,165154,159803,159811,
             162724,162053,164437,163281,165036,164966,160638,160642)
     group by e.patient_id, e.encounter_id;
@@ -4821,12 +5186,12 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
                e.voided as voided
         from encounter e
-               inner join person p on p.person_id=e.patient_id
+               inner join person p on p.person_id=e.patient_id and p.voided=0
                inner join
                  (
                  select encounter_type_id, uuid, name from encounter_type where uuid in('92e03f22-9686-11e9-bc42-526af7764f64')
                  ) et on et.encounter_type_id=e.encounter_type
-               left outer join obs o on o.encounter_id=e.encounter_id
+               left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                           and o.concept_id in (165347,164181,164082,160540,161558,165199,165200,165249,165250,165197,165198,1111,162310,163323,165040,1322,165251,165252,165253,
                 165041,161471,165254,165255,165256,165042,165046,165257,165201,165258,165259,165044,165051,165260,165261,165262,165043,165047,165263,165264,165265,
                 164934,165196,165266,165267,165268,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
@@ -4904,12 +5269,12 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                    max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
                    e.voided as voided
             from encounter e
-                   inner join person p on p.person_id=e.patient_id
+                   inner join person p on p.person_id=e.patient_id and p.voided=0
                    inner join
                      (
                      select encounter_type_id, uuid, name from encounter_type where uuid in('2cc8c535-bbfa-4668-98c7-b12e3550ee7b')
                      ) et on et.encounter_type_id=e.encounter_type
-                   left outer join obs o on o.encounter_id=e.encounter_id
+                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                               and o.concept_id in (164082,1169,165138,165200,163101,163743,1272,163042,1788,162724,165128,165127,163169,
                     159777,165055,162749,1473,5096)
             group by e.patient_id, e.encounter_id, visit_date;
@@ -4995,12 +5360,12 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                    max(if(o.concept_id=160632,o.value_text,null)) as remarks,
                    e.voided as voided
             from encounter e
-                   inner join person p on p.person_id=e.patient_id
+                   inner join person p on p.person_id=e.patient_id and p.voided=0
                    inner join
                      (
                      select encounter_type_id, uuid, name from encounter_type where uuid in('c4f9db39-2c18-49a6-bf9b-b243d673c64d')
                      ) et on et.encounter_type_id=e.encounter_type
-                   left outer join obs o on o.encounter_id=e.encounter_id
+                   left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                               and o.concept_id in (165006,165005,165298,165007,165299,165008,165301,165302,165341,165343,165057,165344,165345,
                                               1774,123160,1749,165346,160632,165272)
             group by e.patient_id, e.encounter_id, visit_date;
@@ -5059,9 +5424,9 @@ e.uuid, e.creator, e.patient_id, e.visit_id, e.encounter_datetime, e.location_id
   if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
   e.voided as voided
   from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("63917c60-3fea-11e9-b210-d663bd873d93")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568,160632)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165004,165071,1639,160753,164966,160721,163725,160433,160716,161641,162568,160632) and o.voided=0
 group by e.encounter_id;
 SELECT "Completed processing peer tracking form", CONCAT("Time: ", NOW());
 END $$
@@ -5170,11 +5535,11 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
 from encounter e
-inner join person p on p.person_id=e.patient_id
+inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join form f on f.form_id=e.form_id and f.uuid in ("a70a1132-75b3-11ea-bc55-0242ac130003")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159948,162724,162053,1768,
 159599,164515,162568,657,5497,163281,160632,163524,5616,5497,160716,161641,162568,163101,162320,162279,164947,
-165302,165137,162634,159948,160753,162868,161011)
+165302,165137,162634,159948,160753,162868,161011) and o.voided=0
 group by e.encounter_id;
 SELECT "Completed processing treatment verification form", CONCAT("Time: ", NOW());
 END $$
@@ -5277,9 +5642,9 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
 from encounter e
-inner join person p on p.person_id=e.patient_id
+inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join form f on f.form_id=e.form_id and f.uuid in ("94eec122-83a1-11ea-bc55-0242ac130003")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,159449,165230,160658,164352,162871,162886,160753,162875,6098) and o.voided=0
 group by e.encounter_id;
 SELECT "Completed processing gender based violence form", CONCAT("Time: ", NOW());
 
@@ -5333,9 +5698,9 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
 from encounter e
-inner join person p on p.person_id=e.patient_id
+inner join person p on p.person_id=e.patient_id and p.voided=0
 inner join form f on f.form_id=e.form_id and f.uuid in ("5c64e61a-7fdc-11ea-bc55-0242ac130003")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (163526,162724,1768,160555,164515,162568,162079,165109,161555,165230,5096)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (163526,162724,1768,160555,164515,162568,162079,165109,161555,165230,5096) and o.voided=0
 group by e.encounter_id;
 SELECT "Completed processing PrEP verification form", CONCAT("Time: ", NOW());
 END $$
@@ -5370,9 +5735,9 @@ e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 e.voided as voided
 from encounter e
-	inner join person p on p.person_id=e.patient_id
+	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ('7b1ec2d5-a4ad-4ffc-a0d3-ff1ea68e293c')
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159449, 163201, 112603)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (159449, 163201, 112603) and o.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT) data ", CONCAT("Time: ", NOW());
@@ -5411,10 +5776,10 @@ select
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
 inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
-            from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id
+            from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id and o.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing gbv screening data ", CONCAT("Time: ", NOW());
@@ -5453,10 +5818,10 @@ select
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
        inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o1.obs_id as id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.value_datetime as value_datetime,o1.date_created,o1.voided
-                   from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id in (162871,162886,162875,6098,160753) and o.concept_id in(1562,159639,1743))o on o.encounter_id = e.encounter_id
+                   from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id in (162871,162886,162875,6098,160753) and o.concept_id in(1562,159639,1743))o on o.encounter_id = e.encounter_id and o.voided=0
 group by o.id order by o.concept_id;
 
 SELECT "Completed processing gbv screening action data ", CONCAT("Time: ", NOW());
@@ -5487,9 +5852,9 @@ select
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('5fe533ee-0c40-4a1f-a071-dc4d0fbb0c17')
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165110)
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165110) and o.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing depression screening data ", CONCAT("Time: ", NOW());
@@ -5538,7 +5903,7 @@ select
        e.date_created as date_created,
        if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified
       from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.retired=0
        inner join (
                     select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e',
@@ -5549,7 +5914,7 @@ select
                   ) et on et.encounter_type_id=e.encounter_type
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                                                                                and o1.concept_id in (1193,159935,162875,162760,160753,1255)
+                                                                                and o1.concept_id in (1193,159935,162875,162760,160753,1255) and o1.voided=0
                                                                                 and o.concept_id =121760) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
@@ -5593,13 +5958,13 @@ select
    e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
-   inner join person p on p.person_id=e.patient_id
+   inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
               select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b')
               ) et on et.encounter_type_id=e.encounter_type
    inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                       o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937)
+                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937) and o1.voided=0
                        and o.concept_id in(159392,121689)) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
@@ -5645,13 +6010,13 @@ select
        e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id
+       inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join (
                   select encounter_type_id, uuid, name from encounter_type where uuid ='de78a6be-bfc5-4634-adc3-5f1a280455cc'
                   ) et on et.encounter_type_id=e.encounter_type
        inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                           o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                                                                                and o1.concept_id in (1148,966,1691,1088,1087,1181,165269)
+                                                                                and o1.concept_id in (1148,966,1691,1088,1087,1181,165269) and o1.voided=0
                                                                                 and o.concept_id in(160741,1085)) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
@@ -5664,38 +6029,38 @@ CREATE PROCEDURE sp_populate_dwapi_covid_19_assessment()
 BEGIN
 SELECT "Processing covid_19_assessment", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_covid19_assessment (uuid,
-                                                 provider,
-                                                 patient_id,
-                                                 visit_id,
-                                                 visit_date,
-                                                 location_id,
-                                                 encounter_id,
-                                                 obs_id,
-                                                 ever_vaccinated,
-                                                 first_vaccine_type,
-                                                 second_vaccine_type,
-                                                 first_dose,
-                                                 second_dose,
-                                                 first_dose_date,
-                                                 second_dose_date,
-                                                 first_vaccination_verified,
-                                                 second_vaccination_verified,
-                                                 final_vaccination_status,
-                                                 ever_received_booster,
-                                                 booster_vaccine_taken,
-                                                 date_taken_booster_vaccine,
-                                                 booster_sequence,
-                                                 booster_dose_verified,
-                                                 ever_tested_covid_19_positive,
-                                                 symptomatic,
-                                                 date_tested_positive,
-                                                 hospital_admission,
-                                                 admission_unit,
-                                                 on_ventillator,
-                                                 on_oxygen_supplement,
-                                                 date_created,
-                                                 date_last_modified,
-                                                 voided)
+         provider,
+         patient_id,
+         visit_id,
+         visit_date,
+         location_id,
+         encounter_id,
+         obs_id,
+         ever_vaccinated,
+         first_vaccine_type,
+         second_vaccine_type,
+         first_dose,
+         second_dose,
+         first_dose_date,
+         second_dose_date,
+         first_vaccination_verified,
+         second_vaccination_verified,
+         final_vaccination_status,
+         ever_received_booster,
+         booster_vaccine_taken,
+         date_taken_booster_vaccine,
+         booster_sequence,
+         booster_dose_verified,
+         ever_tested_covid_19_positive,
+         symptomatic,
+         date_tested_positive,
+         hospital_admission,
+         admission_unit,
+         on_ventillator,
+         on_oxygen_supplement,
+         date_created,
+         date_last_modified,
+         voided)
 select o3.uuid                                                                             as uuid,
        o3.creator                                                                          as provider,
        o3.person_id                                                                        as patient_id,
@@ -5759,13 +6124,14 @@ from (select e.uuid,
              e.voided
       from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
-             inner join person p on p.person_id = o.person_id
+             inner join person p on p.person_id = o.person_id and p.voided = 0
              inner join (select encounter_type_id, uuid, name
                          from encounter_type
                          where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
                on et.encounter_type_id = e.encounter_type
       where o.concept_id in
             (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932, 159640)
+        and o.voided = 0
       group by obs_id)o3
        left join (select person_id                                       as patient_id,
                          date(encounter_datetime)                        as visit_date,
@@ -5807,13 +6173,14 @@ from (select e.uuid,
                                e.location_id
                         from obs o
                                inner join encounter e on e.encounter_id = o.encounter_id
-                               inner join person p on p.person_id = o.person_id
+                               inner join person p on p.person_id = o.person_id and p.voided = 0
                                inner join (select encounter_type_id, uuid, name
                                            from encounter_type
                                            where uuid = '86709cfc-1490-11ec-82a8-0242ac130003') et
                                  on et.encounter_type_id = e.encounter_type
                                inner join obs o2 on o.obs_id = o2.obs_group_id
                         where o2.concept_id in (984, 1418, 1410, 164464)
+                          and o2.voided = 0
                         group by o2.obs_id) t
                   group by obs_group_id
                   having vaccine_type != "") y on o3.encounter_id = y.encounter_id
@@ -5829,11 +6196,13 @@ from (select e.uuid,
                          o1.voided
                   from obs o
                          join obs o1 on o.obs_id = o1.obs_group_id
-                         inner join person p on p.person_id = o1.person_id
+                         inner join person p on p.person_id = o1.person_id and p.voided = 0
                                           and o1.concept_id in
-                                              (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932)
+                                              (163100, 984, 1418, 1410, 164464, 164134, 166063, 166638, 159948, 162477, 161010, 165864, 165932) and
+                                        o1.voided = 0
                                           and o.concept_id in (1421, 1184)
                   order by o1.obs_id) o1 on o1.encounter_id = y.encounter_id
+where o3.voided = 0
 group by o3.visit_id;
 
 SELECT "Completed processing covid_19 assessment data ", CONCAT("Time: ", NOW());
@@ -5872,9 +6241,9 @@ BEGIN
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided as voided
     from encounter e
-             inner join person p on p.person_id=e.patient_id
+             inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ('a74e3e4a-9e2a-41fb-8e64-4ba8a71ff984')
-             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,167094,160632,167131)
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,167094,160632,167131) and o.voided=0
     group by e.patient_id,date(e.encounter_datetime);
 
     SELECT "Completed processing vmmc enrolment data ", CONCAT("Time: ", NOW());
@@ -5951,9 +6320,9 @@ BEGIN
             if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
             e.voided as voided
         from encounter e
-                 inner join person p on p.person_id=e.patient_id
+                 inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
-                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164964,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133)
+                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164964,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133) and o.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
         SELECT "Completed processing vmmc circumcision procedure data ", CONCAT("Time: ", NOW());
@@ -6014,9 +6383,9 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
                          if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
                           e.voided as voided
       from encounter e
-        inner join person p on p.person_id=e.patient_id
+        inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ('08873f91-7161-4f90-931d-65b131f2b12b')
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,162871,162875,162760,162749,159369,161011,1473,1542,160632)
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,162871,162875,162760,162749,159369,161011,1473,1542,160632) and o.voided=0
       group by e.patient_id,date(e.encounter_datetime);
 
     SELECT "Completed processing vmmc client followup data ", CONCAT("Time: ", NOW());
@@ -6137,11 +6506,11 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
             if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
             e.voided as voided
         from encounter e
-                 inner join person p on p.person_id=e.patient_id
+                 inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('d42aeb3d-d5d2-4338-a154-f75ddac78b59')
                  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
                                                                                           5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
-                                                                                          1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272)
+                                                                                          1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272) and o.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
         SELECT "Completed processing vmmc medical examination form data ", CONCAT("Time: ", NOW());
@@ -6154,28 +6523,28 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
     BEGIN
         SELECT "Processing post vmmc operation assessment", CONCAT("Time: ", NOW());
         insert into dwapi_etl.etl_vmmc_post_operation_assessment(uuid,
-                                                                    provider,
-                                                                    patient_id,
-                                                                    visit_id,
-                                                                    visit_date,
-                                                                    location_id,
-                                                                    encounter_id,
-                                                                    blood_pressure,
-                                                                    pulse_rate,
-                                                                    temperature,
-                                                                    penis_elevated,
-                                                                    given_post_procedure_instruction,
-                                                                    post_procedure_instructions,
-                                                                    given_post_operation_medication,
-                                                                    medication_given,
-                                                                    other_medication_given,
-                                                                    removal_date,
-                                                                    next_appointment_date,
-                                                                    discharged_by,
-                                                                    cadre,
-                                                                    date_created,
-                                                                    date_last_modified,
-                                                                    voided)
+                provider,
+                patient_id,
+                visit_id,
+                visit_date,
+                location_id,
+                encounter_id,
+                blood_pressure,
+                pulse_rate,
+                temperature,
+                penis_elevated,
+                given_post_procedure_instruction,
+                post_procedure_instructions,
+                given_post_operation_medication,
+                medication_given,
+                other_medication_given,
+                removal_date,
+                next_appointment_date,
+                discharged_by,
+                cadre,
+                date_created,
+                date_last_modified,
+                voided)
         select e.uuid,
                e.creator,
                e.patient_id,
@@ -6204,13 +6573,13 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
                if(max(o.date_created) > min(e.date_created), max(o.date_created),NULL) as date_last_modified,
                e.voided                                                                          as voided
         from encounter e
-                 inner join person p on p.person_id = e.patient_id
+                 inner join person p on p.person_id = e.patient_id and p.voided = 0
                  inner join form f
                             on f.form_id = e.form_id and f.uuid in ('620b3404-9ae5-11ec-b909-0242ac120002')
                  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                          (5085, 5086, 5087, 5088, 162871,
                                                                           160632, 159369, 161011, 160753, 5096,
-                                                                          1473, 1542)
+                                                                          1473, 1542) and o.voided=0
         group by e.patient_id, date(e.encounter_datetime);
 
         END $$
@@ -6400,14 +6769,14 @@ CREATE PROCEDURE sp_populate_dwapi_hts_eligibility_screening()
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
         from encounter e
-                      inner join person p on p.person_id=e.patient_id
+                      inner join person p on p.person_id=e.patient_id and p.voided = 0
                       inner join form f on f.form_id = e.form_id and f.uuid = '04295648-7606-11e8-adc0-fa7ae01bbebc'
                       left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                       (164930,160581,138643,159936,164932,5619,166570,164401,165215,159427,
                        164400,165240,162053,160109,167144,1436,6096,5568,5570,165088,160579,
                        166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
                        165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
-                       5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396,5569,164956)
+                       5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396,5569,164956) and o.voided=0
                       group by e.patient_id,date(e.encounter_datetime);
     SELECT "Completed processing hts eligibility screening";
   END $$
@@ -6481,7 +6850,7 @@ BEGIN
     from orders o
              inner join drug_order do on o.order_id = do.order_id
              inner join encounter e on e.encounter_id = o.encounter_id and e.patient_id = o.patient_id
-             inner join person p on p.person_id = e.patient_id
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
              left outer join encounter_type et on et.encounter_type_id = e.encounter_type
              left outer join concept_name cn0
                              on o.concept_id = cn0.concept_id and cn0.locale = 'en' and cn0.concept_name_type = 'SHORT'
@@ -6494,7 +6863,7 @@ BEGIN
              left outer join concept_name cn3 on do.route = cn3.concept_id and cn3.locale = 'en' and
                                                  cn3.concept_name_type = 'FULLY_SPECIFIED'
              left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
-    where o.order_type_id = 2
+    where o.voided = 0 and o.order_type_id = 2
       and ((o.order_action = 'NEW' and o.date_stopped is not null) or (o.order_reason_non_coded = 'previously existing orders'))
     group by o.order_group_id,o.patient_id, o.encounter_id;
 
@@ -6595,9 +6964,9 @@ BEGIN
                       select o.person_id,e.visit_id,e.uuid,o.concept_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.value_coded, o.value_numeric,o.value_text, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, e.voided,e.location_id
                       from obs o
                                inner join encounter e on e.encounter_id=o.encounter_id
-                               inner join person p on p.person_id=o.person_id
+                               inner join person p on p.person_id=o.person_id and p.voided=0
                                inner join form f on f.form_id=e.form_id and f.uuid = 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30'
-                      where concept_id in(984,1418,161011,1410,5096)
+                      where concept_id in(984,1418,161011,1410,5096) and o.voided=0
                       group by o.obs_group_id,o.concept_id, e.encounter_datetime
                   ) t
              group by t.obs_group_id
@@ -6680,13 +7049,106 @@ BEGIN
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
     from encounter e
-             inner join person p on p.person_id=e.patient_id
+             inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid in ('92fd9c5a-c84a-483b-8d78-d4d7a600db30','d753bab3-0bbb-43f5-9796-5e95a5d641f3')
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (162725,165146,165133,165006,165005,165136,165140,1193,163101,165141,160632,1473,165144,165143,160753)
+                                                                          (162725,165146,165133,165006,165005,165136,165140,1193,163101,165141,160632,1473,165144,165143,160753) and o.voided=0
     group by e.patient_id,e.encounter_type;
     SELECT "Completed processing overdose reporting";
 END $$
+
+-- Procedure sp_populate_dwapi_art_fast_track --
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_art_fast_track $$
+CREATE PROCEDURE sp_populate_dwapi_art_fast_track()
+BEGIN
+    SELECT "Processing ART fast track";
+    INSERT INTO dwapi_etl.etl_art_fast_track (uuid,
+             provider,
+             patient_id,
+             visit_id,
+             visit_date,
+             location_id,
+             encounter_id,
+             art_refill_model,
+             ctx_dispensed,
+             dapsone_dispensed,
+             oral_contraceptives_dispensed,
+             condoms_distributed,
+             doses_missed,
+             fatigue,
+             cough,
+             fever,
+             rash,
+             nausea_vomiting,
+             genital_sore_discharge,
+             diarrhea,
+             other_symptoms,
+             other_specific_symptoms,
+             pregnant,
+             family_planning_status,
+             family_planning_method,
+             reason_not_on_family_planning,
+             referred_to_clinic,
+             return_visit_date,
+             date_created,
+             date_last_modified,
+             voided)
+    select e.uuid,
+           e.creator                                                                    as provider,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                                   as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 1758, o.value_coded, null))                            as art_refill_model,
+           max(if(o.concept_id = 1282 and o.value_coded = 162229, o.value_coded,
+                  null))                                                                as ctx_dispensed,
+           max(if(o.concept_id = 1282 and o.value_coded = 74250, o.value_coded, null))  as dapsone_dispensed,
+           max(if(o.concept_id = 1282 and o.value_coded = 780, o.value_coded, null))    as oral_contraceptives_dispensed,
+           max(if(o.concept_id = 159777, o.value_coded, null))                          as condoms_distributed,
+           max(if(o.concept_id = 162878, o.value_numeric, null))                        as doses_missed,
+           max(if(o.concept_id = 1284 and o.value_coded = 162626, o.value_coded, null)) as fatigue,
+           max(if(o.concept_id = 1284 and o.value_coded = 143264, o.value_coded, null)) as cough,
+           max(if(o.concept_id = 1284 and o.value_coded = 140238, o.value_coded, null)) as fever,
+           max(if(o.concept_id = 1284 and o.value_coded = 512, o.value_coded, null))    as rash,
+           max(if(o.concept_id = 1284 and o.value_coded = 5978, o.value_coded, null))   as nausea_vomiting,
+           max(if(o.concept_id = 1284 and o.value_coded = 135462, o.value_coded, null)) as genital_sore_discharge,
+           max(if(o.concept_id = 1284 and o.value_coded = 142412, o.value_coded, null)) as diarrhea,
+           max(if(o.concept_id = 1284 and o.value_coded = 5622, o.value_coded, null))   as other_symptoms,
+           max(if(o.concept_id = 160632, o.value_text, null))                           as other_specific_symptoms,
+           max(if(o.concept_id = 5272, o.value_coded, null))                            as pregnant,
+           max(if(o.concept_id = 160653, o.value_coded, null))                          as family_planning_status,
+           concat_ws(',', max(if(o.concept_id = 374 and o.value_coded = 160570, 'Emergency contraceptive pills', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 780, 'Oral Contraceptives Pills', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 5279, 'Injectible', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1359, 'Implant', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 5275, 'Intrauterine Device', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 136163, 'Lactational Amenorhea Method', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 5278, 'Diaphram/Cervical Cap', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 159524, 'Fertility Awareness', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1472, 'Tubal Ligation', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 190, 'Condoms', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1489, 'Vasectomy(Partner)', null)),
+                     max(if(o.concept_id = 374 and o.value_coded = 1175, 'Undecided', null))) as family_planning_method,
+           concat_ws(',', max(if(o.concept_id = 160575 and o.value_coded = 160572, 'Thinks cannot get pregnant', null)),
+                     max(if(o.concept_id = 160575 and o.value_coded = 160573, 'Not sexually active now',
+                            null)))                                                           as reason_not_on_family_planning,
+           max(if(o.concept_id = 512, o.value_coded, null))                                   as referred_to_clinic,
+           max(if(o.concept_id = 2096, o.value_datetime, null))                               as return_visit_date,
+           e.date_created,
+           if(max(o.date_created) > min(e.date_created), max(o.date_created),
+              NULL)                                                                           as date_last_modified,
+           e.voided
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = '83fb6ab2-faec-4d87-a714-93e77a28a201'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (1758, 1282, 159777, 162878, 1284, 5272,
+                                                                           160653, 374, 160575, 512, 2096) and o.voided=0
+    group by e.patient_id,e.encounter_id;
+    SELECT "Completed processing ART fast track";
+END $$
+
     -- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -6718,8 +7180,9 @@ CALL sp_populate_dwapi_hei_immunization();
 CALL sp_populate_dwapi_hei_follow_up();
 CALL sp_populate_dwapi_mch_delivery();
 CALL sp_populate_dwapi_mch_discharge();
-CALL sp_dwapi_drug_event();
+CALL sp_populate_dwapi_drug_event();
 CALL sp_populate_dwapi_hts_test();
+CALL sp_populate_dwapi_generalized_anxiety_disorder();
 CALL sp_populate_dwapi_hts_linkage_and_referral();
 CALL sp_populate_dwapi_hts_referral();
 CALL sp_populate_dwapi_ccc_defaulter_tracing();
@@ -6770,6 +7233,7 @@ CALL sp_populate_dwapi_drug_order();
 CALL sp_populate_dwapi_preventive_services();
 CALL sp_populate_dwapi_overdose_reporting();
 CALL sp_populate_dwapi_hts_patient_contact();
+CALL sp_populate_dwapi_art_fast_track();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

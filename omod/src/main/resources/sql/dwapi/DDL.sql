@@ -37,6 +37,7 @@ DROP TABLE if exists dwapi_etl.etl_person_address;
 DROP TABLE IF EXISTS dwapi_etl.etl_drug_event;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_test;
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_referral_and_linkage;
+DROP TABLE IF EXISTS dwapi_etl.etl_generalized_anxiety_disorder;
 DROP TABLE IF EXISTS dwapi_etl.tmp_regimen_events_ordered;
 DROP TABLE IF EXISTS dwapi_etl.etl_ccc_defaulter_tracing;
 DROP TABLE IF EXISTS dwapi_etl.etl_ART_preparation;
@@ -65,7 +66,6 @@ DROP TABLE IF EXISTS dwapi_etl.etl_clinical_visit;
 DROP TABLE IF EXISTS dwapi_etl.etl_peer_calendar;
 DROP TABLE IF EXISTS dwapi_etl.etl_sti_treatment;
 DROP TABLE IF EXISTS dwapi_etl.etl_peer_tracking;
---DROP TABLE IF EXISTS dwapi_etl.etl_gender_based_violence;
 DROP TABLE IF EXISTS dwapi_etl.etl_treatment_verification;
 DROP TABLE IF EXISTS dwapi_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS dwapi_etl.etl_alcohol_drug_abuse_screening;
@@ -141,9 +141,8 @@ index(DOB)
 );
 
 SELECT "Successfully created etl_patient_demographics table";
+
 -- create table etl_hiv_enrollment
-
-
 create table dwapi_etl.etl_hiv_enrollment(
 uuid char(38) ,
 patient_id INT(11) NOT NULL,
@@ -218,6 +217,8 @@ pulse_rate DOUBLE,
 respiratory_rate DOUBLE,
 oxygen_saturation DOUBLE,
 muac DOUBLE,
+z_score_absolute DOUBLE DEFAULT NULL,
+z_score INT(11),
 nutritional_status INT(11) DEFAULT NULL,
 population_type INT(11) DEFAULT NULL,
 key_population_type INT(11) DEFAULT NULL,
@@ -1483,6 +1484,14 @@ SELECT "Successfully created etl_ART_preparation table";
     session_number INT(11),
     first_session_date DATE,
     pill_count INT(11),
+    MMAS4_1_forgets_to_take_meds varchar(255),
+    MMAS4_2_careless_taking_meds varchar(255),
+    MMAS4_3_stops_on_reactive_meds varchar(255),
+    MMAS4_4_stops_meds_on_feeling_good varchar(255),
+    MMSA8_1_took_meds_yesterday varchar(255),
+    MMSA8_2_stops_meds_on_controlled_symptoms varchar(255),
+    MMSA8_3_struggles_to_comply_tx_plan varchar(255),
+    MMSA8_4_struggles_remembering_taking_meds varchar(255),
     arv_adherence varchar(50),
     has_vl_results varchar(10),
     vl_results_suppressed varchar(10),
@@ -1561,6 +1570,36 @@ SELECT "Successfully created etl_ART_preparation table";
 
   SELECT "Successfully created etl_patient_triage table";
 
+-- ------------ create table etl_generalized_anxiety_disorder-----------------------
+CREATE TABLE dwapi_etl.etl_generalized_anxiety_disorder (
+   uuid CHAR(38),
+   encounter_id INT(11) NOT NULL PRIMARY KEY,
+   patient_id INT(11) NOT NULL ,
+   location_id INT(11) DEFAULT NULL,
+   visit_date DATE,
+   visit_id INT(11),
+   encounter_provider INT(11),
+   date_created DATETIME NOT NULL,
+   date_last_modified DATETIME,
+   feeling_nervous_anxious INT(11),
+   control_worrying INT(11),
+   worrying_much INT(11),
+   trouble_relaxing INT(11),
+   being_restless INT(11),
+   feeling_bad INT(11),
+   feeling_afraid INT(11),
+   assessment_outcome INT(11),
+   voided INT(11),
+   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
+   CONSTRAINT unique_uuid UNIQUE(uuid),
+   INDEX(visit_date),
+   INDEX(encounter_id),
+   INDEX(patient_id),
+   INDEX(patient_id, visit_date)
+);
+
+SELECT "Successfully created etl_generalized_anxiety_disorder table";
+
   -- ------------ create table etl_prep_behaviour_risk_assessment-----------------------
 
   CREATE TABLE dwapi_etl.etl_prep_behaviour_risk_assessment (
@@ -1624,6 +1663,7 @@ SELECT "Successfully created etl_ART_preparation table";
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
+    assessed_for_behavior_risk     varchar(255) null,
     risk_for_hiv_positive_partner  varchar(255),
     client_assessment  varchar(255),
     adherence_assessment varchar(255),
@@ -1637,6 +1677,7 @@ SELECT "Successfully created etl_ART_preparation table";
     prescribed_prep_today varchar(10),
     prescribed_regimen varchar(10),
     prescribed_regimen_months varchar(10),
+    number_of_condoms_issued INT(11),
     prep_discontinue_reasons varchar(255),
     prep_discontinue_other_reasons varchar(255),
     appointment_given varchar(10),
@@ -2053,34 +2094,102 @@ CREATE TABLE dwapi_etl.etl_patient_program (
 
       -- --------------------- creating Cervical cancer screening table -------------------------------
   CREATE TABLE dwapi_etl.etl_cervical_cancer_screening (
-    uuid CHAR(38),
-    encounter_id INT(11) NOT NULL PRIMARY KEY,
-    encounter_provider INT(11),
-    patient_id INT(11) NOT NULL,
-    visit_id INT(11) DEFAULT NULL,
-    visit_date DATE,
-    location_id INT(11) DEFAULT NULL,
-    date_created DATETIME NOT NULL,
-    date_last_modified DATETIME,
-    visit_type VARCHAR(255) DEFAULT NULL,
-    screening_type VARCHAR(255) DEFAULT NULL,
-    post_treatment_complication_cause VARCHAR(255) DEFAULT NULL,
-    post_treatment_complication_other VARCHAR(255) DEFAULT NULL,
-    screening_method VARCHAR(255) DEFAULT NULL,
-    screening_result VARCHAR(255) DEFAULT NULL,
-    treatment_method VARCHAR(255) DEFAULT NULL,
-    treatment_method_other VARCHAR(255) DEFAULT NULL,
-    referred_out VARCHAR(100) DEFAULT NULL,
-    referral_facility VARCHAR(100) DEFAULT NULL,
-    referral_reason VARCHAR(255) DEFAULT NULL,
-    next_appointment_date DATETIME,
-    voided INT(11),
-    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
-    CONSTRAINT unique_uuid UNIQUE(uuid),
-    INDEX(visit_date),
-    INDEX(patient_id),
-    INDEX(patient_id, visit_date)
-  );
+   uuid CHAR(38),
+   encounter_id INT(11) NOT NULL PRIMARY KEY,
+   encounter_provider INT(11),
+   patient_id INT(11) NOT NULL,
+   visit_id INT(11) DEFAULT NULL,
+   visit_date DATE,
+   location_id INT(11) DEFAULT NULL,
+   date_created DATETIME NOT NULL,
+   date_last_modified DATETIME,
+   visit_type VARCHAR(255) DEFAULT NULL,
+   screening_type VARCHAR(255) DEFAULT NULL,
+   post_treatment_complication_cause VARCHAR(255) DEFAULT NULL,
+   post_treatment_complication_other VARCHAR(255) DEFAULT NULL,
+   cervical_cancer VARCHAR(255) DEFAULT NULL,
+   colposcopy_screening_method VARCHAR(255) DEFAULT NULL,
+   hpv_screening_method VARCHAR(255) DEFAULT NULL,
+   pap_smear_screening_method VARCHAR(255) DEFAULT NULL,
+   via_vili_screening_method VARCHAR(255) DEFAULT NULL,
+   colposcopy_screening_result VARCHAR(255) DEFAULT NULL,
+   hpv_screening_result VARCHAR(255) DEFAULT NULL,
+   pap_smear_screening_result VARCHAR(255) DEFAULT NULL,
+   via_vili_screening_result VARCHAR(255) DEFAULT NULL,
+   colposcopy_treatment_method VARCHAR(255) DEFAULT NULL,
+   hpv_treatment_method VARCHAR(255) DEFAULT NULL,
+   pap_smear_treatment_method VARCHAR(255) DEFAULT NULL,
+   via_vili_treatment_method VARCHAR(255) DEFAULT NULL,
+   colorectal_cancer VARCHAR(255) DEFAULT NULL,
+   fecal_occult_screening_method VARCHAR(255) DEFAULT NULL,
+   colonoscopy_method VARCHAR(255) DEFAULT NULL,
+   fecal_occult_screening_results VARCHAR(255) DEFAULT NULL,
+   colonoscopy_method_results VARCHAR(255) DEFAULT NULL,
+   fecal_occult_screening_treatment VARCHAR(255) DEFAULT NULL,
+   colonoscopy_method_treatment VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_cancer VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_eua_screening_method VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_gene_method VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_eua_screening_results VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_gene_method_results VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_eua_treatment VARCHAR(255) DEFAULT NULL,
+   retinoblastoma_gene_treatment VARCHAR(255) DEFAULT NULL,
+   oral_cancer VARCHAR(255) DEFAULT NULL,
+   oral_cancer_visual_exam_method VARCHAR(255) DEFAULT NULL,
+   oral_cancer_cytology_method VARCHAR(255) DEFAULT NULL,
+   oral_cancer_imaging_method VARCHAR(255) DEFAULT NULL,
+   oral_cancer_biopsy_method VARCHAR(255) DEFAULT NULL,
+   oral_cancer_visual_exam_results VARCHAR(255) DEFAULT NULL,
+   oral_cancer_cytology_results VARCHAR(255) DEFAULT NULL,
+   oral_cancer_imaging_results VARCHAR(255) DEFAULT NULL,
+   oral_cancer_biopsy_results VARCHAR(255) DEFAULT NULL,
+   oral_cancer_visual_exam_treatment VARCHAR(255) DEFAULT NULL,
+   oral_cancer_cytology_treatment VARCHAR(255) DEFAULT NULL,
+   oral_cancer_imaging_treatment VARCHAR(255) DEFAULT NULL,
+   oral_cancer_biopsy_treatment VARCHAR(255) DEFAULT NULL,
+   prostate_cancer VARCHAR(255) DEFAULT NULL,
+   digital_rectal_prostate_examination VARCHAR(255) DEFAULT NULL,
+   digital_rectal_prostate_results VARCHAR(255) DEFAULT NULL,
+   digital_rectal_prostate_treatment VARCHAR(255) DEFAULT NULL,
+   prostatic_specific_antigen_test VARCHAR(255) DEFAULT NULL,
+   prostatic_specific_antigen_results VARCHAR(255) DEFAULT NULL,
+   prostatic_specific_antigen_treatment VARCHAR(255) DEFAULT NULL,
+   breast_cancer VARCHAR(50) DEFAULT NULL,
+   clinical_breast_examination_screening_method VARCHAR(255) DEFAULT NULL,
+   ultrasound_screening_method VARCHAR(255) DEFAULT NULL,
+   mammography_smear_screening_method VARCHAR(255) DEFAULT NULL,
+   clinical_breast_examination_screening_result VARCHAR(255) DEFAULT NULL,
+   ultrasound_screening_result VARCHAR(255) DEFAULT NULL,
+   mammography_screening_result VARCHAR(255) DEFAULT NULL,
+   clinical_breast_examination_treatment_method VARCHAR(255) DEFAULT NULL,
+   ultrasound_treatment_method VARCHAR(255) DEFAULT NULL,
+   breast_tissue_diagnosis VARCHAR(255) DEFAULT NULL,
+   breast_tissue_diagnosis_date DATE,
+   reason_tissue_diagnosis_not_done VARCHAR(255) DEFAULT NULL,
+   mammography_treatment_method VARCHAR(255) DEFAULT NULL,
+   referred_out VARCHAR(100) DEFAULT NULL,
+   referral_facility VARCHAR(100) DEFAULT NULL,
+   referral_reason VARCHAR(255) DEFAULT NULL,
+   followup_date DATETIME,
+   hiv_status VARCHAR(100) DEFAULT NULL,
+   smoke_cigarattes VARCHAR(255) DEFAULT NULL,
+   other_forms_tobacco VARCHAR(255) DEFAULT NULL,
+   take_alcohol VARCHAR(255) DEFAULT NULL,
+   previous_treatment VARCHAR(255) DEFAULT NULL,
+   previous_treatment_specify VARCHAR(255) DEFAULT NULL,
+   signs_symptoms VARCHAR(500) DEFAULT NULL,
+   signs_symptoms_specify VARCHAR(500) DEFAULT NULL,
+   family_history VARCHAR(100) DEFAULT NULL,
+   number_of_years_smoked VARCHAR(100) DEFAULT NULL,
+   number_of_cigarette_per_day VARCHAR(100) DEFAULT NULL,
+   clinical_notes VARCHAR(500) DEFAULT NULL,
+   voided INT(11),
+   CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
+   CONSTRAINT unique_uuid UNIQUE(uuid),
+   INDEX(visit_date),
+   INDEX(patient_id),
+   INDEX(patient_id, visit_date)
+);
   SELECT "Successfully created etl_cervical_cancer_screening table";
 
   -- --------------------- creating patient contact  table -------------------------------
@@ -3247,6 +3356,49 @@ create table dwapi_etl.etl_overdose_reporting (
     index(outcome)
 );
 SELECT "Successfully created etl_overdose_reporting table";
+
+-- creating etl_art_fast_track
+CREATE TABLE dwapi_etl.etl_art_fast_track
+(
+    uuid                              char(38),
+    provider                          INT(11),
+    patient_id                        INT(11)  NOT NULL,
+    visit_id                          INT(11),
+    visit_date                        DATE,
+    location_id                       INT(11) DEFAULT NULL,
+    encounter_id                      INT(11)  NOT NULL,
+    art_refill_model                  INT(11),
+    ctx_dispensed                     INT(11),
+    dapsone_dispensed                 INT(11),
+    oral_contraceptives_dispensed     INT(11),
+    condoms_distributed               INT(11),
+    missed_arv_doses_since_last_visit INT(11),
+    doses_missed                      INT(11),
+    fatigue                           INT(11),
+    cough                             INT(11),
+    fever                             INT(11),
+    rash                              INT(11),
+    nausea_vomiting                   INT(11),
+    genital_sore_discharge            INT(11),
+    diarrhea                          INT(11),
+    other_symptoms                    INT(11),
+    other_specific_symptoms           INT(11),
+    pregnant                          INT(11),
+    family_planning_status            INT(11),
+    family_planning_method            varchar(250),
+    reason_not_on_family_planning     varchar(250),
+    referred_to_clinic                INT(11),
+    return_visit_date                 DATE,
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    voided                            INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date),
+    INDEX (patient_id),
+    INDEX (encounter_id)
+);
+SELECT "Successfully created etl_art_fast_track table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

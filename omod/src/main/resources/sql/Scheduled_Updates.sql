@@ -328,6 +328,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       respiratory_rate,
       oxygen_saturation,
       muac,
+      z_score_absolute,
+      z_score,
       nutritional_status,
       population_type,
       key_population_type,
@@ -439,6 +441,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
         max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
         max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
+        max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
+        max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
         max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
         max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
         max(if(o.concept_id=160581,o.value_coded,null)) as key_population_type,
@@ -600,7 +604,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid ='a0034eee-1940-4e35-847f-97537a35d05e'
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
+                                 and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
                                  1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
                                  164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
                                  121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
@@ -612,7 +616,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),visit_scheduled=VALUES(visit_scheduled),
       person_present=VALUES(person_present),weight=VALUES(weight),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),height=VALUES(height),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),
-      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac), nutritional_status=VALUES(nutritional_status), population_type=VALUES(population_type), key_population_type=VALUES(key_population_type), who_stage=VALUES(who_stage),who_stage_associated_oi=VALUES(who_stage_associated_oi),presenting_complaints = VALUES(presenting_complaints),
+      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score_absolute=VALUES(z_score_absolute),z_score=VALUES(z_score), nutritional_status=VALUES(nutritional_status), population_type=VALUES(population_type), key_population_type=VALUES(key_population_type), who_stage=VALUES(who_stage),who_stage_associated_oi=VALUES(who_stage_associated_oi),presenting_complaints = VALUES(presenting_complaints),
       clinical_notes = VALUES(clinical_notes),on_anti_tb_drugs=VALUES(on_anti_tb_drugs),on_ipt=VALUES(on_ipt),ever_on_ipt=VALUES(ever_on_ipt),cough=VALUES(cough),fever=VALUES(fever),weight_loss_poor_gain=VALUES(weight_loss_poor_gain),night_sweats=VALUES(night_sweats),tb_case_contact=VALUES(tb_case_contact),lethargy=VALUES(lethargy),screened_for_tb=VALUES(screened_for_tb),
       spatum_smear_ordered=VALUES(spatum_smear_ordered),chest_xray_ordered=VALUES(chest_xray_ordered),genexpert_ordered=VALUES(genexpert_ordered),
       spatum_smear_result=VALUES(spatum_smear_result), chest_xray_result=VALUES(chest_xray_result),genexpert_result=VALUES(genexpert_result),referral=VALUES(referral),clinical_tb_diagnosis=VALUES(clinical_tb_diagnosis),contact_invitation=VALUES(contact_invitation),
@@ -3159,6 +3163,14 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
       session_number,
       first_session_date,
       pill_count,
+      MMAS4_1_forgets_to_take_meds,
+      MMAS4_2_careless_taking_meds,
+      MMAS4_3_stops_on_reactive_meds,
+      MMAS4_4_stops_meds_on_feeling_good,
+      MMSA8_1_took_meds_yesterday,
+      MMSA8_2_stops_meds_on_controlled_symptoms,
+      MMSA8_3_struggles_to_comply_tx_plan,
+      MMSA8_4_struggles_remembering_taking_meds,
       arv_adherence,
       has_vl_results,
       vl_results_suppressed,
@@ -3204,6 +3216,14 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
         max(if(o.concept_id=1639,o.value_numeric,null)) as session_number,
         max(if(o.concept_id=164891,o.value_datetime,null)) as first_session_date,
         max(if(o.concept_id=162846,o.value_numeric,null)) as pill_count,
+        max(if(o.concept_id=167321,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_1_forgets_to_take_meds,
+        max(if(o.concept_id=163088,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_2_careless_taking_meds,
+        max(if(o.concept_id=6098,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_3_stops_on_reactive_meds,
+        max(if(o.concept_id=164998,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMAS4_4_stops_meds_on_feeling_good,
+        max(if(o.concept_id=162736,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_1_took_meds_yesterday,
+        max(if(o.concept_id=1743,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_2_stops_meds_on_controlled_symptoms,
+        max(if(o.concept_id=1779,(case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null)) as MMSA8_3_struggles_to_comply_tx_plan,
+        max(if(o.concept_id=166365,(case o.value_coded when 1090 then "Never/rarely" when 1358 then "Once in a while" when 1385 then "Sometimes" when 161236 then "Usually" when 162135 then "All the time" end), null)) as MMSA8_4_struggles_remembering_taking_meds,
         max(if(o.concept_id=1658,(case o.value_coded when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end), "" )) as arv_adherence,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as has_vl_results,
         max(if(o.concept_id=163310,(case o.value_coded when 1302 then "Suppressed" when 1066 then "Unsuppresed" else "" end), "" )) as vl_results_suppressed,
@@ -3240,7 +3260,7 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096)
+                            and o.concept_id in(1639,164891,162846,1658,164848,163310,164981,164982,160632,164983,164984,164985,164986,164987,164988,164989,164990,164991,164992,164993,164994,164995,164996,164997,164998,1898,160110,163108,1272,164999,165000,165001,165002,5096,167321,163088,6098,164998,162736,1743,1779,166365)
 
         inner join
         (
@@ -3262,7 +3282,10 @@ CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
       patient_treated_differently=VALUES(patient_treated_differently),
       stigma_hinders_adherence=VALUES(stigma_hinders_adherence),patient_tried_faith_healing=VALUES(patient_tried_faith_healing),patient_adherence_improved=VALUES(patient_adherence_improved),
       patient_doses_missed=VALUES(patient_doses_missed),other_referrals=VALUES(other_referrals),appointments_honoured=VALUES(appointments_honoured),
-      home_visit_benefit=VALUES(home_visit_benefit),next_appointment_date=VALUES(next_appointment_date);
+      home_visit_benefit=VALUES(home_visit_benefit),next_appointment_date=VALUES(next_appointment_date),MMAS4_1_forgets_to_take_meds=VALUES(MMAS4_1_forgets_to_take_meds), MMAS4_2_careless_taking_meds=VALUES(MMAS4_2_careless_taking_meds),
+      MMAS4_3_stops_on_reactive_meds=VALUES(MMAS4_3_stops_on_reactive_meds),MMAS4_4_stops_meds_on_feeling_good=VALUES(MMAS4_3_stops_on_reactive_meds),
+      MMSA8_1_took_meds_yesterday=VALUES(MMAS4_3_stops_on_reactive_meds),MMSA8_2_stops_meds_on_controlled_symptoms=VALUES(MMAS4_3_stops_on_reactive_meds),
+      MMSA8_3_struggles_to_comply_tx_plan=VALUES(MMAS4_3_stops_on_reactive_meds),MMSA8_4_struggles_remembering_taking_meds=VALUES(MMAS4_3_stops_on_reactive_meds);
 
     END $$
 -- ------------- update etl_patient_triage-------------------------
@@ -3343,7 +3366,73 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score=VALUES(z_score),nutritional_status=VALUES(nutritional_status),last_menstrual_period=VALUES(last_menstrual_period),hpv_vaccinated=VALUES(hpv_vaccinated),voided=VALUES(voided),z_score_absolute=VALUES(z_score_absolute);
 
     END $$
+-- ------------- populate etl_generalized_anxiety_disorder-------------------------
 
+DROP PROCEDURE IF EXISTS sp_update_etl_generalized_anxiety_disorder $$
+CREATE PROCEDURE sp_update_etl_generalized_anxiety_disorder(IN last_update_time DATETIME)
+  BEGIN
+    SELECT "Processing General anxiety disorder", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_generalized_anxiety_disorder(
+		uuid,
+		patient_id,
+		visit_id,
+		visit_date,
+		location_id,
+		encounter_id,
+		encounter_provider,
+		date_created,
+        feeling_nervous_anxious,
+        control_worrying,
+        worrying_much,
+        trouble_relaxing,
+        being_restless,
+        feeling_bad,
+        feeling_afraid,
+        assessment_outcome,
+        date_last_modified,
+        voided
+    )
+      select
+        e.uuid,
+        e.patient_id,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.location_id,
+        e.encounter_id as encounter_id,
+        e.creator,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+		max(if(o.concept_id=167003,trim(o.value_coded),null)) as feeling_nervous_anxious,
+		max(if(o.concept_id=167005,trim(o.value_coded),null)) as control_worrying,
+		max(if(o.concept_id=166482,trim(o.value_coded),null)) as worrying_much,
+		max(if(o.concept_id=167064,trim(o.value_coded),null)) as trouble_relaxing,
+		max(if(o.concept_id=167065,trim(o.value_coded),null)) as being_restless,
+		max(if(o.concept_id=167066,trim(o.value_coded),null)) as feeling_bad,
+		max(if(o.concept_id=167067,trim(o.value_coded),null)) as feeling_afraid,
+		max(if(o.concept_id=167267,trim(o.value_coded),null)) as assessment_outcome,
+        e.voided as voided
+
+      from encounter e
+        inner join person p on p.person_id=e.patient_id and p.voided=0
+        inner join form f on f.form_id=e.form_id and f.uuid in ("524d078e-936a-4543-9ca6-7a8d9ed4db06")
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167003,167005,166482,167064,167065,167066,167067,167267) and o.voided=0
+      where e.voided=0 and e.date_created >= last_update_time
+            or e.date_changed >= last_update_time
+            or e.date_voided >= last_update_time
+            or o.date_created >= last_update_time
+            or o.date_voided >= last_update_time
+      group by e.patient_id, visit_date
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),
+    feeling_nervous_anxious=VALUES(feeling_nervous_anxious),
+    control_worrying=VALUES(control_worrying),
+    worrying_much=VALUES(worrying_much),
+    trouble_relaxing=VALUES(trouble_relaxing),
+    being_restless=VALUES(being_restless),
+    feeling_bad=VALUES(feeling_bad),
+    feeling_afraid=VALUES(feeling_afraid),
+    assessment_outcome=VALUES(assessment_outcome),
+    voided=VALUES(voided);
+    END $$
 
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
@@ -3507,6 +3596,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       encounter_id,
       date_created,
       date_last_modified,
+      assessed_for_behavior_risk,
       risk_for_hiv_positive_partner,
       client_assessment,
       adherence_assessment,
@@ -3520,6 +3610,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       prescribed_prep_today,
       prescribed_regimen,
       prescribed_regimen_months,
+      number_of_condoms_issued,
       prep_discontinue_reasons,
       prep_discontinue_other_reasons,
       appointment_given,
@@ -3530,6 +3621,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       select
         e.uuid, e.creator as provider,e.patient_id, e.visit_id, e.encounter_datetime as visit_date, e.location_id, e.encounter_id,e.date_created,
                 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+                max(if(o.concept_id = 138643, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end),null)) as assessed_for_behavior_risk,
                 max(if(o.concept_id = 1169, (case o.value_coded when 160571 then "Couple is trying to conceive" when 159598 then "Suspected poor adherence"
                                              when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
                 max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
@@ -3550,6 +3642,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
                max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
                max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end), "" )) as prescribed_regimen,
                 max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
+                max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms_issued,
                 max(if(o.concept_id = 161555, (case o.value_coded when 138571 then "HIV test is positive" when 113338 then "Renal dysfunction"
                                                when 1302 then "Viral suppression of HIV+" when 159598 then "Not adherent to PrEP" when 164401 then "Too many HIV tests"
                                                when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
@@ -3561,7 +3654,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,165144,166866,167788,160632,164425,161641,1417,164515,164433,161555,164999,161011,5096) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,165144,166866,167788,160632,164425,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3570,6 +3663,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       group by e.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
       provider=VALUES(provider),
+      assessed_for_behavior_risk=VALUES(assessed_for_behavior_risk),
       risk_for_hiv_positive_partner=VALUES(risk_for_hiv_positive_partner),
       client_assessment=VALUES(client_assessment),
       adherence_assessment=VALUES(adherence_assessment),
@@ -3583,6 +3677,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       prescribed_prep_today=VALUES(prescribed_prep_today),
       prescribed_regimen=VALUES(prescribed_regimen),
       prescribed_regimen_months=VALUES(prescribed_regimen_months),
+      number_of_condoms_issued=VALUES(number_of_condoms_issued),
       prep_discontinue_reasons=VALUES(prep_discontinue_reasons),
       prep_discontinue_other_reasons=VALUES(prep_discontinue_other_reasons),
       appointment_given=VALUES(appointment_given),
@@ -4595,6 +4690,12 @@ CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(IN last_update_time DAT
     mammography_screening_result,
     clinical_breast_examination_treatment_method,
     ultrasound_treatment_method,
+<<<<<<< HEAD
+=======
+    breast_tissue_diagnosis,
+    breast_tissue_diagnosis_date,
+    reason_tissue_diagnosis_not_done,
+>>>>>>> master
     mammography_treatment_method,
     referred_out,
     referral_facility,
@@ -4736,6 +4837,12 @@ select
                                   when 136785 then 'Tissue Diagnosis(U/S guided biopsy)'
                                   when 1000103 then 'Referred for further management'
                                   else '' end),null)) as ultrasound_treatment_method,
+<<<<<<< HEAD
+=======
+       max(if(o.concept_id = 1000516, case o.value_coded when 1267 then 'Done' when 1118 then 'Not done' end, null)) as breast_tissue_diagnosis,
+       max(if(o.concept_id = 1000088, o.value_datetime, null)) as breast_tissue_diagnosis_date,
+       max(if(o.concept_id = 160632, o.value_text, null)) as reason_tissue_diagnosis_not_done,
+>>>>>>> master
   max(if(o.concept_id = 1000145, (case o.value_coded when 1609 then 'Recall for additional imaging'
                                   when 432 then 'Routine Ultra sound screening'
                                   when 164080 then 'Short-interval(6 months) follow-up'
@@ -4743,7 +4850,10 @@ select
                                   when 159619 then 'Surgical excision when clinically appropriate)'
                                   when 1000103 then 'Referred for further management'
                                   else '' end),null)) as mammography_treatment_method,
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
      max(if(o.concept_id in (1788,165267),(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as referred_out,
      max(if(o.concept_id=165268,o.value_text,null)) as referral_facility,
      max(if(o.concept_id = 1887, (case o.value_coded when 165388 then 'Site does not have cryotherapy machine'
@@ -4792,7 +4902,11 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
+<<<<<<< HEAD
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,
+=======
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,1392,1546,1729,1788,1887,5096,116030,132679,159449,159780,159931,160049,1000516,1000088,
+>>>>>>> master
                                                                          160288,160592,160632,161011,162737,162964,163042,163201,163308,163589,163731,164181,164879,164959,165267,165268,165383,166664,
                                                                          167139,1000090,1000091,1000105,1000107,1000111,1000135,1000136,1000145,1000147,1000148,1000149,1000150,1000151,1000152,1000153,1000154)
 inner join (
@@ -4972,6 +5086,10 @@ clinical_breast_examination_screening_method=VALUES(clinical_breast_examination_
 mammography_smear_screening_method=VALUES(mammography_smear_screening_method),clinical_breast_examination_screening_result=VALUES(clinical_breast_examination_screening_result),
 ultrasound_screening_result=VALUES(ultrasound_screening_result),mammography_screening_result=VALUES(mammography_screening_result),
 clinical_breast_examination_treatment_method=VALUES(clinical_breast_examination_treatment_method),ultrasound_treatment_method=VALUES(ultrasound_treatment_method),
+<<<<<<< HEAD
+=======
+breast_tissue_diagnosis=VALUES(breast_tissue_diagnosis),breast_tissue_diagnosis_date=VALUES(breast_tissue_diagnosis_date),reason_tissue_diagnosis_not_done=VALUES(reason_tissue_diagnosis_not_done),
+>>>>>>> master
 mammography_treatment_method=VALUES(mammography_treatment_method),referral_facility=VALUES(referral_facility),
 referral_reason=VALUES(referral_reason),followup_date=VALUES(followup_date),hiv_status=VALUES(hiv_status),
 smoke_cigarattes=VALUES(smoke_cigarattes),other_forms_tobacco=VALUES(other_forms_tobacco),
@@ -8206,7 +8324,11 @@ CREATE PROCEDURE sp_scheduled_updates()
   BEGIN
     DECLARE update_script_id INT(11);
     DECLARE last_update_time DATETIME;
+<<<<<<< HEAD
     SELECT max(start_time) into last_update_time from kenyaemr_etl.etl_script_status where stop_time is not null;
+=======
+    SELECT max(start_time) into @last_update_time from kenyaemr_etl.etl_script_status where stop_time is not null or stop_time !="";
+>>>>>>> master
 
     INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('scheduled_updates', NOW());
     SET update_script_id = LAST_INSERT_ID();
@@ -8217,6 +8339,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_mch_enrollment(last_update_time);
     CALL sp_update_etl_mch_antenatal_visit(last_update_time);
     CALL sp_update_etl_mch_postnatal_visit(last_update_time);
+    CALL sp_update_etl_generalized_anxiety_disorder(last_update_time);
     CALL sp_update_etl_tb_enrollment(last_update_time);
     CALL sp_update_etl_tb_follow_up_visit(last_update_time);
     CALL sp_update_etl_tb_screening(last_update_time);
