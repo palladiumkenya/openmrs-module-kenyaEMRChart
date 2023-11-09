@@ -1545,7 +1545,7 @@ SELECT "Successfully created etl_ART_preparation table";
     );
   SELECT "Successfully created etl_enhanced_adherence table";
 
-  -- ------------ create table etl_patient_triage-----------------------
+  -- ------------ create table etl_patient_triage----------------------
   CREATE TABLE kenyaemr_etl.etl_patient_triage (
     uuid CHAR(38),
     encounter_id INT(11) NOT NULL PRIMARY KEY,
