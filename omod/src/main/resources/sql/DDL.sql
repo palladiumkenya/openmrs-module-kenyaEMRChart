@@ -239,6 +239,8 @@ key_population_type INT(11) DEFAULT NULL,
 who_stage INT(11),
 who_stage_associated_oi VARCHAR(1000),
 presenting_complaints INT(11) DEFAULT NULL,
+patient_admitted INT(11) DEFAULT NULL,
+patient_date_admitted DATE,
 clinical_notes VARCHAR(600) DEFAULT NULL,
 on_anti_tb_drugs INT(11) DEFAULT NULL,
 on_ipt INT(11) DEFAULT NULL,
@@ -1557,7 +1559,7 @@ SELECT "Successfully created etl_ART_preparation table";
     );
   SELECT "Successfully created etl_enhanced_adherence table";
 
-  -- ------------ create table etl_patient_triage-----------------------
+  -- ------------ create table etl_patient_triage----------------------
   CREATE TABLE kenyaemr_etl.etl_patient_triage (
     uuid CHAR(38),
     encounter_id INT(11) NOT NULL PRIMARY KEY,
@@ -1569,6 +1571,8 @@ SELECT "Successfully created etl_ART_preparation table";
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     visit_reason VARCHAR(255),
+    complaint_today varchar(10),
+    complaint_duration DOUBLE,
     weight DOUBLE,
     height DOUBLE,
     systolic_pressure DOUBLE,
@@ -2905,6 +2909,8 @@ allergy_causative_agent INT(11),
 allergy_reaction INT(11),
 allergy_severity INT(11),
 allergy_onset_date DATE,
+complaint INT(11),
+complaint_date DATE,
 voided int(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,

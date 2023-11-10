@@ -310,6 +310,8 @@ key_population_type,
 who_stage,
 who_stage_associated_oi,
 presenting_complaints,
+patient_admitted,
+patient_date_admitted,
 clinical_notes,
 on_anti_tb_drugs,
 on_ipt,
@@ -477,6 +479,8 @@ max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
             nullif(max(if(o.concept_id=167394 and o.value_coded =146518,'Candida of trachea, bronchi or lungs','')),''),
             nullif(max(if(o.concept_id=167394 and o.value_coded =143744,'Acquired recto-vesicular fistula','')),'')) as who_stage_associated_oi,
 max(if(o.concept_id=1154,o.value_coded,null)) as presenting_complaints,
+max(if(o.concept_id=166970,o.value_coded,null)) as patient_admitted,
+max(if(o.concept_id=159948,date(o.value_datetime),null)) as patient_date_admitted,
 null as clinical_notes, -- max(if(o.concept_id=160430,left(trim(o.value_text),600),null)) as clinical_notes ,
 max(if(o.concept_id=164948,o.value_coded,null)) as on_anti_tb_drugs ,
 max(if(o.concept_id=164949,o.value_coded,null)) as on_ipt ,
@@ -5942,6 +5946,8 @@ allergy_causative_agent,
 allergy_reaction,
 allergy_severity,
 allergy_onset_date,
+complaint,
+complaint_date,
 date_created,
 date_last_modified,
 voided
@@ -5955,17 +5961,19 @@ select
    max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
    max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
    max(if(o1.obs_group =121689 and o1.concept_id = 160753,date(o1.value_datetime),null)) as allergy_onset_date,
+   max(if(o1.obs_group =160531 and o1.concept_id = 5219,o1.value_coded,null)) as complaint,
+   max(if(o1.obs_group =160531 and o1.concept_id = 159948,date(o1.value_datetime),null)) as complaint_date,
    e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b','d1059fb9-a079-4feb-a749-eedd709ae542')
               ) et on et.encounter_type_id=e.encounter_type
    inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
                       o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937) and o1.voided=0
-                       and o.concept_id in(159392,121689)) o1 on o1.encounter_id = e.encounter_id
+                       and o1.concept_id in (5219,159948,1284,159948,160643,159935,162760,160753,166937)
+                       and o.concept_id in(160531,159392,121689)) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
