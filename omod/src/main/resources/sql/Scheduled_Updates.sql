@@ -2392,6 +2392,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
           when 1194 then "RH"
           when 159851 then "RHE"
           when 1108 then "EH"
+          when 164968 then "AZT/3TC/DTG"
           else ""
           end ),null)) as regimen_name,
         max(if(o.concept_id=163104,(
