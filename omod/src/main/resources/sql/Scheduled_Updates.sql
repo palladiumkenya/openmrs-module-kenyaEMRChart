@@ -2327,6 +2327,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
           when 165372 then "ABC+3TC+RAL"
           when 165373 then "AZT+3TC+RAL+DRV/r"
           when 165374 then "ABC+3TC+RAL+DRV/r"
+          when 167442 then "AZT/3TC/DTG/DRV/r"
           when 1675 then "RHZE"
           when 768 then "RHZ"
           when 1674 then "SRHZE"
@@ -2379,6 +2380,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
           when 165372 then "ABC+3TC+RAL"
           when 165373 then "AZT+3TC+RAL+DRV/r"
           when 165374 then "ABC+3TC+RAL+DRV/r"
+          when 167442 then "AZT/3TC/DTG/DRV/r"
           when 1675 then "RHZE"
           when 768 then "RHZ"
           when 1674 then "SRHZE"
@@ -2390,6 +2392,7 @@ CREATE PROCEDURE sp_update_drug_event(IN last_update_time DATETIME)
           when 1194 then "RH"
           when 159851 then "RHE"
           when 1108 then "EH"
+          when 164968 then "AZT/3TC/DTG"
           else ""
           end ),null)) as regimen_name,
         max(if(o.concept_id=163104,(
