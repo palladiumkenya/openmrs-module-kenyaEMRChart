@@ -264,4 +264,17 @@
         </pluginRepository>
     </pluginRepositories>
 
+	<distributionManagement>
+		<repository>
+			<id>mks-nexus</id>
+			<name>Mekom Nexus Releases</name>
+			<url>https://nexus.mekomsolutions.net/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>mks-nexus</id>
+			<name>Mekom Nexus Snapshots</name>
+			<url>https://nexus.mekomsolutions.net/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 </project>
