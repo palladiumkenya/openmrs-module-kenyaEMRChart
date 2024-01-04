@@ -266,14 +266,14 @@
 
 	<distributionManagement>
 		<repository>
-			<id>mks-nexus</id>
-			<name>Mekom Nexus Releases</name>
-			<url>https://nexus.mekomsolutions.net/releases</url>
+			<id>mks-repo</id>
+			<name>Mekom Solutions Nexus Releases</name>
+			<url>https://nexus.mekomsolutions.net/repository/maven-releases</url>
 		</repository>
 		<snapshotRepository>
-			<id>mks-nexus</id>
-			<name>Mekom Nexus Snapshots</name>
-			<url>https://nexus.mekomsolutions.net/snapshots</url>
+			<id>mks-repo-snapshots</id>
+			<name>Mekom Solutions Nexus Snapshots</name>
+			<url>https://nexus.mekomsolutions.net/repository/maven-snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
 
