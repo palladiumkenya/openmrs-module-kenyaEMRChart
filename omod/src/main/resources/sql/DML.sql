@@ -2409,6 +2409,7 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 165372 then "ABC/3TC/RAL"
 				when 165373 then "AZT/3TC/RAL/DRV/r"
 				when 165374 then "ABC/3TC/RAL/DRV/r"
+				when 167442 then "AZT/3TC/DTG/DRV/r"
          -- TB
 				when 1675 then "RHZE"
 				when 768 then "RHZ"
@@ -2464,6 +2465,8 @@ SELECT "Processing Drug Event Data", CONCAT("Time: ", NOW());
 				when 165372 then "ABC+3TC+RAL"
 				when 165373 then "AZT+3TC+RAL+DRV/r"
 				when 165374 then "ABC+3TC+RAL+DRV/r"
+                when 167442 then "AZT/3TC/DTG/DRV/r"
+                when 164968 then "AZT/3TC/DTG"
 					-- TB
 				when 1675 then "RHZE"
 				when 768 then "RHZ"
