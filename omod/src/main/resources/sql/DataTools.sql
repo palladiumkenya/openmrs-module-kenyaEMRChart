@@ -2949,6 +2949,43 @@ ALTER TABLE kenyaemr_datatools.art_fast_track
     ADD INDEX (visit_date);
 SELECT "Successfully created art_fast_track table";
 
+-- Create table Clinical Encounter
+create table kenyaemr_datatools.clinical_encounter as
+select  patient_id,
+     visit_id,
+     encounter_id,
+     location_id,
+     provider,
+     visit_date,
+     visit_type,
+     therapy_ordered,
+     other_therapy_ordered ,
+     counselling_ordered ,
+     other_counselling_ordered,
+     procedures_prescribed,
+     procedures_ordered,
+     admission_needed,
+     date_of_patient_admission,
+     admission_reason,
+     admission_type,
+     priority_of_admission,
+     admission_ward,
+     hospital_stay,
+     referral_needed,
+     refferal_ordered,
+     referral_to,
+     other_facility,
+     this_facility,
+     voided
+from kenyaemr_etl.etl_clinical_encounter;
+ALTER TABLE kenyaemr_datatools.clinical_encounter
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.clinical_encounter
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.clinical_encounter
+    ADD INDEX (visit_date);
+SELECT "Successfully created clinical_encounter table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
