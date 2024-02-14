@@ -6024,7 +6024,7 @@ from encounter e
 group by o1.obs_id;
 
 SELECT "Completed processing pre hiv enrollment ART data ", CONCAT("Time: ", NOW());
-END$$
+END $$
 
 -- ------------- populate etl_covid_19_assessment-------------------------
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_covid_19_assessment $$
