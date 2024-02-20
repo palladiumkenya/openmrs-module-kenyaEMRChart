@@ -3181,6 +3181,8 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 			encounter_provider,
 			date_created,
 			visit_reason,
+            complaint_today,
+            complaint_duration,
 			weight,
 			height,
 			systolic_pressure,
@@ -3208,6 +3210,8 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 				e.creator,
 				e.date_created as date_created,
 				max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
+                max(if(o.concept_id=1154,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as complaint_today,
+                max(if(o.concept_id=159368,o.value_numeric,null)) as complaint_duration,
 				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
 				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
 				max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
@@ -3231,7 +3235,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
+				and o.concept_id in (160430,1154,159368,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
 			group by e.patient_id, visit_date
 		;
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
@@ -5945,6 +5949,9 @@ allergy_causative_agent,
 allergy_reaction,
 allergy_severity,
 allergy_onset_date,
+complaint,
+complaint_date,
+complaint_duration,
 date_created,
 date_last_modified,
 voided
@@ -5958,6 +5965,9 @@ select
    max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
    max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
    max(if(o1.obs_group =121689 and o1.concept_id = 160753,date(o1.value_datetime),null)) as allergy_onset_date,
+   max(if(o1.obs_group =160531 and o1.concept_id = 5219,o1.value_coded,null)) as complaint,
+   max(if(o1.obs_group =160531 and o1.concept_id = 159948,date(o1.value_datetime),null)) as complaint_date,
+   max(if(o1.obs_group =160531 and o1.concept_id = 159368,o1.value_numeric,null)) as complaint_duration,
    e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
@@ -5965,10 +5975,10 @@ from encounter e
    inner join (
               select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b')
               ) et on et.encounter_type_id=e.encounter_type
-   inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
+   inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.value_numeric,
                       o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937) and o1.voided=0
-                       and o.concept_id in(159392,121689)) o1 on o1.encounter_id = e.encounter_id
+                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937,5219,159948,159368) and o1.voided=0
+                       and o.concept_id in(159392,121689,160531)) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
