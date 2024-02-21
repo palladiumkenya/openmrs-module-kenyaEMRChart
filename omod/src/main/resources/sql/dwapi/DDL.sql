@@ -86,6 +86,8 @@ DROP TABLE IF EXISTS dwapi_etl.etl_hts_eligibility_screening;
 DROP TABLE IF EXISTS dwapi_etl.etl_drug_order;
 DROP TABLE IF EXISTS dwapi_etl.etl_preventive_services;
 DROP TABLE IF EXISTS dwapi_etl.etl_overdose_reporting;
+DROP TABLE IF EXISTS dwapi_etl.etl_art_fast_track;
+DROP TABLE IF EXISTS dwapi_etl.etl_clinical_encounter;
 
 -- create table etl_patient_demographics
 create table dwapi_etl.etl_patient_demographics (
@@ -1545,6 +1547,8 @@ SELECT "Successfully created etl_ART_preparation table";
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     visit_reason VARCHAR(255),
+    complaint_today varchar(10),
+    complaint_duration DOUBLE,
     weight DOUBLE,
     height DOUBLE,
     systolic_pressure DOUBLE,
@@ -2875,6 +2879,9 @@ allergy_causative_agent INT(11),
 allergy_reaction INT(11),
 allergy_severity INT(11),
 allergy_onset_date DATE,
+complaint INT(11),
+complaint_date DATE,
+complaint_duration int(11),
 voided int(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
@@ -3399,6 +3406,46 @@ CREATE TABLE dwapi_etl.etl_art_fast_track
     INDEX (encounter_id)
 );
 SELECT "Successfully created etl_art_fast_track table";
+
+-- Create etl_clinical_encounter table";
+CREATE TABLE dwapi_etl.etl_clinical_encounter (
+   patient_id 			    INT(11) NOT NULL,
+   visit_id 				INT(11) DEFAULT NULL,
+   encounter_id 			INT(11) NOT NULL PRIMARY KEY,
+   uuid 					CHAR(38) NOT NULL,
+   location_id 			    INT(11) NOT NULL,
+   provider 				INT(11) NOT NULL,
+   visit_date 			    DATE,
+   visit_type 			    VARCHAR(100),
+   therapy_ordered 		    VARCHAR(100),
+   other_therapy_ordered 	VARCHAR(100),
+   counselling_ordered 		VARCHAR(100),
+   other_counselling_ordered VARCHAR(100),
+   procedures_prescribed 	INT(11),
+   procedures_ordered 		VARCHAR(100),
+   admission_needed		    INT(11),
+   date_of_patient_admission	DATE,
+   admission_reason		    VARCHAR(100),
+   admission_type			VARCHAR(100),
+   priority_of_admission	VARCHAR(100),
+   admission_ward			VARCHAR(100),
+   hospital_stay			VARCHAR(100),
+   referral_needed		    VARCHAR(100),
+   refferal_ordered		    VARCHAR(100),
+   referral_to			    VARCHAR(100),
+   other_facility			VARCHAR(100),
+   this_facility			VARCHAR(100),
+   date_created             DATETIME NOT NULL,
+   date_last_modified       DATETIME,
+   voided 				    INT(11),
+   CONSTRAINT FOREIGN KEY (patient_id)
+       REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+   CONSTRAINT unique_uuid UNIQUE (uuid),
+   INDEX (patient_id),
+   INDEX (visit_id),
+   INDEX (visit_date)
+);
+SELECT "Successfully created etl_clinical_encounter table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
