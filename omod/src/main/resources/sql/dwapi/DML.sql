@@ -573,7 +573,7 @@ max(if(o.concept_id=165911,o.value_coded,null)) as insurance_status,
 e.voided as voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','23b4ebbd-29ad-455e-be0e-04aa6bc30798')
+inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','23b4ebbd-29ad-455e-be0e-04aa6bc30798','465a92f2-baf8-42e9-9612-53064be868e8')
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
@@ -3181,6 +3181,8 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 			encounter_provider,
 			date_created,
 			visit_reason,
+            complaint_today,
+            complaint_duration,
 			weight,
 			height,
 			systolic_pressure,
@@ -3208,6 +3210,8 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 				e.creator,
 				e.date_created as date_created,
 				max(if(o.concept_id=160430,trim(o.value_text),null)) as visit_reason,
+                max(if(o.concept_id=1154,(case o.value_coded when 1 then "Yes" when 0 then "No" else "" end), "" )) as complaint_today,
+                max(if(o.concept_id=159368,o.value_numeric,null)) as complaint_duration,
 				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
 				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
 				max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
@@ -3231,7 +3235,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-				and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
+				and o.concept_id in (160430,1154,159368,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
 			group by e.patient_id, visit_date
 		;
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
@@ -5945,6 +5949,9 @@ allergy_causative_agent,
 allergy_reaction,
 allergy_severity,
 allergy_onset_date,
+complaint,
+complaint_date,
+complaint_duration,
 date_created,
 date_last_modified,
 voided
@@ -5958,17 +5965,20 @@ select
    max(if(o1.obs_group =121689 and o1.concept_id = 159935,o1.value_coded,null)) as allergy_reaction,
    max(if(o1.obs_group =121689 and o1.concept_id = 162760,o1.value_coded,null)) as allergy_severity,
    max(if(o1.obs_group =121689 and o1.concept_id = 160753,date(o1.value_datetime),null)) as allergy_onset_date,
+   max(if(o1.obs_group =160531 and o1.concept_id = 5219,o1.value_coded,null)) as complaint,
+   max(if(o1.obs_group =160531 and o1.concept_id = 159948,date(o1.value_datetime),null)) as complaint_date,
+   max(if(o1.obs_group =160531 and o1.concept_id = 159368,o1.value_numeric,null)) as complaint_duration,
    e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b','d1059fb9-a079-4feb-a749-eedd709ae542','465a92f2-baf8-42e9-9612-53064be868e8')
               ) et on et.encounter_type_id=e.encounter_type
-   inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,
+   inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.value_numeric,
                       o1.date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937) and o1.voided=0
-                       and o.concept_id in(159392,121689)) o1 on o1.encounter_id = e.encounter_id
+                       and o1.concept_id in (1284,159948,160643,159935,162760,160753,166937,5219,159948,159368) and o1.voided=0
+                       and o.concept_id in(159392,121689,160531)) o1 on o1.encounter_id = e.encounter_id
 group by o1.obs_id;
 
 SELECT "Completed processing allergy and chronic illness data ", CONCAT("Time: ", NOW());
@@ -7152,6 +7162,147 @@ BEGIN
     SELECT "Completed processing ART fast track";
 END $$
 
+-- Procedure sp_populate_dwapi_clinical_encounter() --
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_clinical_encounter $$
+CREATE PROCEDURE sp_populate_dwapi_clinical_encounter()
+BEGIN
+SELECT "Processing clinical encounter";
+INSERT INTO dwapi_etl.etl_clinical_encounter (
+    patient_id,
+    visit_id,
+    encounter_id,
+    uuid,
+    location_id,
+    provider,
+    visit_date,
+    visit_type,
+    therapy_ordered,
+    other_therapy_ordered,
+    counselling_ordered,
+    other_counselling_ordered,
+    procedures_prescribed,
+    procedures_ordered,
+    admission_needed,
+    date_of_patient_admission,
+    admission_reason,
+    admission_type,
+    priority_of_admission,
+    admission_ward,
+    hospital_stay,
+    referral_needed,
+    refferal_ordered,
+    referral_to,
+    other_facility,
+    this_facility,
+    date_created,
+    date_last_modified,
+    voided
+)
+select
+    e.patient_id,
+    e.visit_id,
+    e.encounter_id,
+    e.uuid,
+    e.location_id,
+    e.creator,
+    date(e.encounter_datetime) as visit_date,
+    max(if(o.concept_id=164181,(case o.value_coded when 164180 then 'New visit' when 160530 THEN 'Revisit' when 160563 THEN 'Transfer in' else '' end),null)) as visit_type,
+    concat_ws(',',nullif(max(if(o.concept_id=164174 and o.value_coded = 1107,'None','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 165225,'Support service provided','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 163319,'Behavioural activation therapy','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000209,'Occupational Therapy','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 131022,'Pain Management','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000579,'Physiotherapy','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 135797,'Lifestyle Modification Programs','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000528,'Respiratory Therapy','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 5622,'Other','')),''),
+    nullif(max(if(o.concept_id=164174,o.value_text,'')),'')) as therapy_ordered,
+    max(if(o.concept_id = 160632, o.value_text, null )) as other_therapy_ordered,
+    concat_ws(',',nullif(max(if(o.concept_id=165104 and o.value_coded = 1107,'None','')),''),
+    nullif(max(if(o.concept_id=165104 and o.value_coded = 5490,'Psychosocial therapy','')),''),
+    nullif(max(if(o.concept_id=165104 and o.value_coded = 165151,'Substance Abuse Counseling','')),''),
+    nullif(max(if(o.concept_id=165104 and o.value_coded = 1380,'Nutritional and Diatary','')),''),
+    nullif(max(if(o.concept_id=165104 and o.value_coded = 156277,'Family Counseling','')),''),
+    nullif(max(if(o.concept_id=165104 and o.value_coded = 5622,'Other','')),''),
+    nullif(max(if(o.concept_id=165104,o.value_text,'')),'')) as counselling_ordered,
+    max(if(o.concept_id = 160632, o.value_text, null )) as other_counselling_ordered,
+    max(if(o.concept_id=1651,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as procedures_prescribed,
+    concat_ws(',',nullif(max(if(o.concept_id=164174 and o.value_coded = 166715,'Incision and Drainage(I&D)','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 527,'Splinting and Casting','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000254,'Nebulization','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000361,'Nasogastric Tube Insertion','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 113223,'Ear Irrigation','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000238,'Urethral Catheterization','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 161797,'Suprapubic Catheterization','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000359,'Nasal Cauterization','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000248,'Gastric Lavage','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000247,'Removal of Foreign Body','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 166941,'Thoraxic Drainage','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 162809,'Batholin Gland marsupialization','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 166741,'Intra-articular Injection','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 161773,'Haemorrhoids Injections','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 164913,'Joints Aspiration','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 149977,'Release of trigger finger','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 161623,'Surgical toilet and suturing','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1935,'Wound Dressing','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 159728,'Manual Vacuum Aspiration','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1637,'Dilatation and Curetage','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 159842,'Episiotomy Repair','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 161663,'Skin Lesion Excision','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000136,'Biopsy','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 161803,'Circumcision','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 161284,'Paracentesis','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 165893,'Cannulation','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 162651,'Iv fluids management','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 441,'Bandaging','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 1000222,'Enema Administration','')),''),
+    nullif(max(if(o.concept_id=164174 and o.value_coded = 127896,'Lumbar Puncture','')),''),
+    nullif(max(if(o.concept_id=164174,o.value_text,'')),'')) as procedures_ordered,
+    max(if(o.concept_id=1651,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as admission_needed,
+    max(if(o.concept_id = 1640,o.value_datetime,null)) as date_of_patient_admission,
+    max(if(o.concept_id=164174,o.value_text,null)) as admission_reason,
+    max(if(o.concept_id=162477,(case o.value_coded when 164180 then 'New' when 159833 THEN 'Readmission' else '' end),null)) as admission_type,
+    max(if(o.concept_id=1655,(case o.value_coded when 160473 then 'Emergency' when 159310 THEN 'Direct' when 1000139 THEN 'Scheduled' else '' end),null)) as priority_of_admission,
+    concat_ws(',',nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000039,'Female medical','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000035,'Female Surgical','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000040,'Male Medical','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000041,'Male Surgical','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000032,'Maternity Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000061,'Pediatric Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000038,'Child Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 164835,'Labor and Delivery Unit','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 161629,'Observation Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 162680,'Recovery Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000054,'Psychiatric Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000056,'Isolation Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 161936,'Intensive Care Unit','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000199,'Amenity Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000201,'Gynaecological Ward','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 1000059,'Nursery Unit/Newborn Unit','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 167396,'High Dependecy Unit','')),''),
+    nullif(max(if(o.concept_id=1000075 and o.value_coded = 165644,'Neonatal Intensive Care Unit','')),''),
+    nullif(max(if(o.concept_id=1000075,o.value_text,'')),'')) as admission_ward,
+    max(if(o.concept_id=1896,(case o.value_coded when 1072 then 'Daycase' when 161018 THEN 'Overnight' when 1275 THEN 'Longer stay' else '' end),null)) as hospital_stay,
+    max(if(o.concept_id=1272,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as referral_needed,
+    max(if(o.concept_id=160632,o.value_text,null)) as refferal_ordered,
+    max(if(o.concept_id=162724,(case o.value_coded when 164407 then 'Other health facility' when 163266 THEN 'This health facility' else '' end),null)) as referral_to,
+    max(if(o.concept_id=162724,o.value_text,null)) as other_facility,
+    max(if(o.concept_id=162724,o.value_text,null)) as this_facility,
+    e.date_created,
+    if(max(o.date_created) > min(e.date_created), max(o.date_created),
+    NULL)                                                                           as date_last_modified,
+    e.voided
+from encounter e
+    inner join person p on p.person_id=e.patient_id and p.voided=0
+    inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
+    left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+    (164174,160632,165104,1651,1640,162477,1655,1000075,1896,1272,162724)
+    and o.voided=0
+where e.voided=0
+group by e.patient_id,date(e.encounter_datetime);
+SELECT "Completed processing Clinical Encounter";
+END $$
+
     -- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -7237,6 +7388,7 @@ CALL sp_populate_dwapi_preventive_services();
 CALL sp_populate_dwapi_overdose_reporting();
 CALL sp_populate_dwapi_hts_patient_contact();
 CALL sp_populate_dwapi_art_fast_track();
+CALL sp_populate_dwapi_clinical_encounter();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
