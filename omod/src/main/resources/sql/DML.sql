@@ -2892,19 +2892,17 @@ CREATE TABLE kenyaemr_etl.etl_viral_load_tracker (
 
 insert into kenyaemr_etl.etl_viral_load_tracker
 select t.patient_id,vl.vl_date,vl.vl_result,vl.urgency from (select fup.visit_date,fup.patient_id, max(e.visit_date) as enroll_date,
-mid(max(concat(e.visit_date, e.patient_type)), 11)  as patient_type,
 greatest(max(fup.visit_date), ifnull(max(d.visit_date),'0000-00-00')) as latest_vis_date,
 greatest(mid(max(concat(fup.visit_date,fup.next_appointment_date)),11), ifnull(max(d.visit_date),'0000-00-00')) as latest_tca,
 d.patient_id as disc_patient,
 d.effective_disc_date as effective_disc_date,
 max(d.visit_date) as date_discontinued,
 de.patient_id as started_on_drugs,
-mid(max(concat(date(de.date_started), ifnull(de.discontinued, 0))), 11) as on_drugs,
 de.date_started
 from kenyaemr_etl.etl_patient_hiv_followup fup
 join kenyaemr_etl.etl_patient_demographics p on p.patient_id=fup.patient_id
 join kenyaemr_etl.etl_hiv_enrollment e on fup.patient_id=e.patient_id
-inner join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(curdate())
+left join kenyaemr_etl.etl_drug_event de on e.patient_id = de.patient_id and de.program='HIV' and date(date_started) <= date(curdate())
 left outer JOIN
 (select patient_id, coalesce(date(effective_discontinuation_date),visit_date) visit_date,max(date(effective_discontinuation_date)) as effective_disc_date from kenyaemr_etl.etl_patient_program_discontinuation
 where date(visit_date) <= date(curdate()) and program_name='HIV'
@@ -2912,7 +2910,7 @@ group by patient_id
 ) d on d.patient_id = fup.patient_id
 where fup.visit_date <= date(curdate())
 group by patient_id
-having (patient_type != 164931 and on_drugs != 1) and (
+having (started_on_drugs is not null and started_on_drugs <> '') and (
 (
 ((timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30 or timestampdiff(DAY,date(latest_tca),date(curdate())) <= 30) and ((date(d.effective_disc_date) > date(curdate()) or date(enroll_date) > date(d.effective_disc_date)) or d.effective_disc_date is null))
 and (date(latest_vis_date) >= date(date_discontinued) or date(latest_tca) >= date(date_discontinued) or disc_patient is null)
@@ -7469,6 +7467,7 @@ BEGIN
         other_counselling_ordered,
         procedures_prescribed,
         procedures_ordered,
+        patient_outcome,
         admission_needed,
         date_of_patient_admission,
         admission_reason,
@@ -7544,6 +7543,7 @@ BEGIN
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 127896,'Lumbar Puncture','')),''),
                   nullif(max(if(o.concept_id=164174,o.value_text,'')),'')) as procedures_ordered,
         max(if(o.concept_id=1651,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as admission_needed,
+        max(if(o.concept_id=160433,o.value_coded,null)) as patient_outcome,
         max(if(o.concept_id = 1640,o.value_datetime,null)) as date_of_patient_admission,
         max(if(o.concept_id=164174,o.value_text,null)) as admission_reason,
         max(if(o.concept_id=162477,(case o.value_coded when 164180 then 'New' when 159833 THEN 'Readmission' else '' end),null)) as admission_type,
@@ -7578,7 +7578,7 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (164174,160632,165104,1651,1640,162477,1655,1000075,1896,1272,162724)
+                                                                          (164174,160632,165104,1651,1640,162477,1655,1000075,1896,1272,162724,160433)
         and o.voided=0
     where e.voided=0
     group by e.patient_id,date(e.encounter_datetime);

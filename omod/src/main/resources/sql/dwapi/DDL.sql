@@ -3423,6 +3423,7 @@ CREATE TABLE dwapi_etl.etl_clinical_encounter (
    other_counselling_ordered VARCHAR(100),
    procedures_prescribed 	INT(11),
    procedures_ordered 		VARCHAR(100),
+   patient_outcome		    INT(11),
    admission_needed		    INT(11),
    date_of_patient_admission	DATE,
    admission_reason		    VARCHAR(100),
