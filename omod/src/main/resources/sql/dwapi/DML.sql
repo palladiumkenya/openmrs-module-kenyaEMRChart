@@ -577,7 +577,7 @@ inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
-group by e.patient_id,visit_date;
+group by e.patient_id, encounter_id;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
 END $$
 
@@ -1172,7 +1172,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
-			group by e.patient_id,visit_date;
+			group by e.patient_id,e.encounter_id;
 		SELECT "Completed processing MCH antenatal visits ", CONCAT("Time: ", NOW());
 		END $$
 
@@ -1748,7 +1748,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
 				) et on et.encounter_type_id=e.encounter_type
-			group by e.patient_id,visit_date ;
+			group by e.patient_id,e.encounter_id ;
 		SELECT "Completed processing HEI Enrollments", CONCAT("Time: ", NOW());
 		END $$
 
@@ -1903,7 +1903,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
 					select encounter_type_id, uuid, name from encounter_type where
 						uuid in('bcc6da85-72f2-4291-b206-789b8186a021','c6d09e05-1f25-4164-8860-9f32c5a02df0')
 				) et on et.encounter_type_id=e.encounter_type
-			group by e.patient_id,visit_date;
+			group by e.patient_id,e.encounter_id;
 
 		SELECT "Completed processing HEI Followup visits", CONCAT("Time: ", NOW());
 		END $$
@@ -2050,7 +2050,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
            )
        ) y
            left join obs o on y.encounter_id = o.encounter_id and o.voided=0
-  group by patient_id;
+  group by patient_id,encounter_id;
 
  SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
  END $$
@@ -2304,7 +2304,7 @@ from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ("22c68f86-bbf0-49ba-b2d1-23fa7ccf0259", "59ed8e62-7f1f-40ae-a2e3-eabe350277ce","23b4ebbd-29ad-455e-be0e-04aa6bc30798","72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7")
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1659, 1113, 160632,161643,1729,1271,307,12,162202,1272,163752,163414,162275,162309,1109) and o.voided=0
-group by e.patient_id,visit_date;
+group by e.patient_id,e.encounter_id;
 
 SELECT "Completed processing TB Screening data ", CONCAT("Time: ", NOW());
 END $$
@@ -2698,7 +2698,7 @@ INSERT INTO dwapi_etl.etl_hts_referral_and_linkage (
 		inner join person p on p.person_id=e.patient_id and p.voided=0
 		inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","15ed03d2-c972-11e9-a32f-2a2ae2dbcce4")
   left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481) and o.voided=0
-  group by e.patient_id,e.visit_id;
+  group by e.patient_id,e.encounter_id;
   SELECT "Completed processing hts linkages";
 
 END $$
@@ -2754,7 +2754,7 @@ DROP PROCEDURE IF EXISTS sp_populate_dwapi_hts_patient_contact $$
 CREATE PROCEDURE sp_populate_dwapi_hts_patient_contact()
 BEGIN
 SELECT "Processing hts patient contacts";
---Tested contacts
+-- Tested contacts
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_contacts;
 
 CREATE TABLE dwapi_etl.etl_hts_contacts AS
@@ -2765,7 +2765,7 @@ ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(id);
 ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(patient_id);
 ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(visit_date);
 
---Linked contacts
+-- Linked contacts
 DROP TABLE IF EXISTS dwapi_etl.etl_contacts_linked;
 
 CREATE TABLE dwapi_etl.etl_contacts_linked AS
@@ -3236,7 +3236,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_triage()
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 				and o.concept_id in (160430,1154,159368,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
-			group by e.patient_id, visit_date
+			group by e.patient_id, e.encounter_id
 		;
 		SELECT "Completed processing Patient Triage data ", CONCAT("Time: ", NOW());
 		END $$
@@ -3750,7 +3750,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
                                                                                       165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354) and o.voided=0
-    group by e.patient_id,visit_date;
+    group by e.patient_id,e.encounter_id;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
   END $$
 
@@ -6257,7 +6257,7 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ('a74e3e4a-9e2a-41fb-8e64-4ba8a71ff984')
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160482,165143,167094,160632,167131) and o.voided=0
-    group by e.patient_id,date(e.encounter_datetime);
+    group by e.patient_id,e.encounter_id;
 
     SELECT "Completed processing vmmc enrolment data ", CONCAT("Time: ", NOW());
     END $$
@@ -6336,7 +6336,7 @@ BEGIN
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
                  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164964,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133) and o.voided=0
-        group by e.patient_id,date(e.encounter_datetime);
+        group by e.patient_id,e.encounter_id;
 
         SELECT "Completed processing vmmc circumcision procedure data ", CONCAT("Time: ", NOW());
         END $$
@@ -6399,7 +6399,7 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ('08873f91-7161-4f90-931d-65b131f2b12b')
         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,162871,162875,162760,162749,159369,161011,1473,1542,160632) and o.voided=0
-      group by e.patient_id,date(e.encounter_datetime);
+      group by e.patient_id,e.encounter_id;
 
     SELECT "Completed processing vmmc client followup data ", CONCAT("Time: ", NOW());
     END $$
@@ -6524,7 +6524,7 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
                  inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
                                                                                           5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
                                                                                           1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272) and o.voided=0
-        group by e.patient_id,date(e.encounter_datetime);
+        group by e.patient_id,e.encounter_id;
 
         SELECT "Completed processing vmmc medical examination form data ", CONCAT("Time: ", NOW());
         END $$
@@ -6593,7 +6593,7 @@ CREATE PROCEDURE sp_populate_dwapi_vmmc_client_followup()
                                                                          (5085, 5086, 5087, 5088, 162871,
                                                                           160632, 159369, 161011, 160753, 5096,
                                                                           1473, 1542) and o.voided=0
-        group by e.patient_id, date(e.encounter_datetime);
+        group by e.patient_id, e.encounter_id;
 
         END $$
 
@@ -6790,7 +6790,7 @@ CREATE PROCEDURE sp_populate_dwapi_hts_eligibility_screening()
                        166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
                        165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
                        5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396,5569,164956) and o.voided=0
-                      group by e.patient_id,date(e.encounter_datetime);
+                      group by e.patient_id,e.encounter_id;
     SELECT "Completed processing hts eligibility screening";
   END $$
 
@@ -7066,7 +7066,7 @@ BEGIN
              inner join form f on f.form_id = e.form_id and f.uuid in ('92fd9c5a-c84a-483b-8d78-d4d7a600db30','d753bab3-0bbb-43f5-9796-5e95a5d641f3')
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (162725,165146,165133,165006,165005,165136,165140,1193,163101,165141,160632,1473,165144,165143,160753) and o.voided=0
-    group by e.patient_id,e.encounter_type;
+    group by e.patient_id,e.encounter_type,e.encounter_id;
     SELECT "Completed processing overdose reporting";
 END $$
 
@@ -7301,7 +7301,7 @@ from encounter e
     (164174,160632,165104,1651,1640,162477,1655,1000075,1896,1272,162724,160433)
     and o.voided=0
 where e.voided=0
-group by e.patient_id,date(e.encounter_datetime);
+group by e.patient_id,e.encounter_id;
 SELECT "Completed processing Clinical Encounter";
 END $$
 
