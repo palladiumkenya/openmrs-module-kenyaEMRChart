@@ -1,0 +1,69 @@
+name: deploy to prod 8600
+on:
+  push:
+    branches: [ master, 2.x ]
+jobs:
+
+  build:
+    name: Deploy
+    if: github.ref == 'refs/heads/2.x'
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote connection
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.CICD_SECRET }}
+        port: ${{ secrets.PORT }}
+        command_timeout: 200m
+        script: |
+          cd /apps/github-workflows/kenyaemr-modules
+          sudo rm -rf openmrs-module-kenyaEMRChart
+          sudo mkdir openmrs-module-kenyaEMRChart
+          sudo chown -R cicd2:cicd2 openmrs-module-kenyaEMRChart
+          git config --global --add safe.directory /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
+          cd /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
+          git clone -b 2.x https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
+          git status
+          bash /apps/workflowConfigs/clearCharts.sh
+          mvn license:format
+          mvn clean install -DskipTests
+          sudo rm -rf /var/lib/OpenMRS/modules/kenyaEMRChart-*.omod
+          sudo cp /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart/omod/target/kenyaemrCharts-*.omod /var/lib/OpenMRS/modules/
+          sudo chown -R tomcat:tomcat /var/lib/OpenMRS/modules/
+          sudo chmod +r /var/lib/OpenMRS/modules/*.omod
+          sudo chmod 755 /var/lib/OpenMRS/modules/*.omod
+          sudo systemctl stop tomcat
+          sudo systemctl start tomcat
+  dev_deployment:
+    name: Deploying the assets to Dev server
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote connection
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.CICD_HOST }}
+        username: ${{ secrets.CICD_USERNAME }}
+        key: ${{ secrets.CICD_SECRET }}
+        port: ${{ secrets.PORT }}
+        command_timeout: 200m
+        script: |
+          cd /apps/github-workflows/kenyaemr-modules
+          sudo rm -rf openmrs-module-kenyaEMRChart
+          sudo mkdir openmrs-module-kenyaEMRChart
+          sudo chown -R cicd2:cicd2 openmrs-module-kenyaEMRChart
+          git config --global --add safe.directory /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
+          cd /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
+          bash /apps/workflowConfigs/clearCharts.sh
+          git clone -b master  https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
+          mvn license:format
+          mvn clean install -DskipTests
+          sudo rm -rf /var/lib/OpenMRS/modules/kenyaEMRChart-*.omod
+          sudo cp /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart/omod/target/kenyaemrCharts-*.omod /var/lib/OpenMRS/modules/
+          sudo chown -R tomcat:tomcat /var/lib/OpenMRS/modules/
+          sudo chmod +r /var/lib/OpenMRS/modules/*.omod
+          sudo chmod 755 /var/lib/OpenMRS/modules/*.omod
+          sudo service tomcat9 restart 
+
