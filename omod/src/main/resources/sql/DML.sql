@@ -7584,6 +7584,268 @@ BEGIN
     group by e.patient_id,date(e.encounter_datetime);
     SELECT "Completed processing Clinical Encounter";
 END $$
+-- Procedure sp_populate_etl_daily_revenue_summary--
+DROP PROCEDURE IF EXISTS sp_populate_etl_daily_revenue_summary $$
+CREATE PROCEDURE sp_populate_etl_daily_revenue_summary()
+BEGIN
+	SELECT "Processing daily revenue summary";
+	INSERT INTO kenyaemr_etl.etl_daily_revenue_summary (
+		transaction_date,
+		total_sales,
+		ipd_cash,
+		maternity,
+		xray,
+		lab,
+		theatre,
+		mortuary,
+		op_treatment,
+		pharmacy,
+		medical_exam,
+		-- medical_reports_including_P3,
+		dental,
+		physio_therapy,
+		occupational_therapy,
+		medical_records_cards_and_files,
+		-- booking_fees,
+		-- rental_services,
+		ambulance,
+		-- public_health_services,
+		ent_and_other_clinics,
+		other,
+		cash_receipts_cash_from_daily_services,
+		cash_receipt_nhif_receipt,
+		cash_receipt_other_debtors_receipt,
+		-- revenue_not_collected_patient_not_yet_paid_nhif_patients,
+		revenue_not_collected_patient_not_yet_paid_other_debtors,
+		revenue_not_collected_patient_not_yet_paid_waivers
+		-- revenue_not_collected_write_offs_exemptions,
+		-- revenue_not_collected_write_offs_absconders
+	)
+	 select
+		date(cbp.date_created) as transaction_date,
+		ts.total_sales,
+		cip.ipd,
+		cmat.maternity,
+		crad.xray,
+		clab.lab,
+		ct.theatre,
+		cm.mortuary,
+		cop.opd,
+		cp.pharmacy,
+		cex.medical_exam,
+	-- medical_reports_including_P3,
+		cd.dental,
+		cph.physiotherapy,
+		cot.occupational_therapy,
+		cmr.medical_records,
+	-- booking_fees,
+	-- rental_services,
+		ca.ambulance,
+	-- public_health_services,
+		ce.ent_and_other_clinics,
+		coth.other,
+		cash.cash_receipts,
+		ins.insurance_receipts,
+		otr.other_receipts,
+	 -- revenue_not_collected_patient_not_yet_paid_nhif_patients,
+		cn.pending_bills,
+		wvr.other_receipts_waiver
+	--  revenue_not_collected_write_offs_exemptions,
+    -- revenue_not_collected_write_offs_absconders,
+			 from cashier_bill_payment cbp
+					  -- total sales
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as total_sales
+								 from cashier_bill_line_item cbl
+								 group by date(cbl.date_created)
+			 ) ts on date(ts.date_created) = date(cbp.date_created)
+				 -- outpatient : clinical consultation
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as opd
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type in (160542,167410)
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cop on date(cop.date_created) = date(cbp.date_created)
+				 -- radiology : xray
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as xray
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 160463
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) crad on  date(crad.date_created) = date(cbp.date_created)
+				 -- lab
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as lab
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 900007
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) clab on  date(clab.date_created) = date(cbp.date_created)
+				 -- pharmacy
+					  left join (select cbl.bill_id,cbl.date_created, SUM(cbl.price) as pharmacy
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 900008
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cp on   date(cp.date_created) = date(cbp.date_created)
+				 -- dental
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as dental
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 161252
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cd on date(cd.date_created) = date(cbp.date_created)
+				 -- ent
+					  left join (select cbl.bill_id,cbl.date_created, SUM(cbl.price) as ent_and_other_clinics
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 160455
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) ce on date(ce.date_created) = date(cbp.date_created)
+				 -- mat
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as maternity
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 1000032
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cmat on date(cmat.date_created) = date(cbp.date_created)
+				 -- inpatient
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as ipd
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 167050
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cip on date(cip.date_created) = date(cbp.date_created)
+				 -- physio-therapy
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as physiotherapy
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 168812
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cph on date(cph.date_created) = date(cbp.date_created)
+				 -- mortuary
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as mortuary
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 1000472
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cm on date(cm.date_created) = date(cbp.date_created)
+				 -- ambulance
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as ambulance
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 1377
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) ca on date(ca.date_created) = date(cbp.date_created)
+				 -- theatre : operating room
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as theatre
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 164834
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) ct on date(ct.date_created) = date(cbp.date_created)
+				 -- occupational therapy
+					  left join (select cbl.bill_id, cbl.date_created,  SUM(cbl.price) as occupational_therapy
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 1000209
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cot on date(cot.date_created) = date(cbp.date_created)
+				 -- medical exam
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as medical_exam
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 432
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cex on date(cex.date_created) = date(cbp.date_created)
+				 -- medical_records_cards_and_files
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as medical_records
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type = 1000234
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) cmr on date(cmr.date_created) = date(cbp.date_created)
+				 -- other
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as other
+								 from cashier_bill_line_item cbl
+										  inner join (select cbs.service_id,cbs.service_type
+													  from cashier_billable_service cbs
+													  where cbs.service_type not in (1000234,432,1000209,164834,1377,1000472,168812,160542,167410,167050,1000032,160455,161252,900008,900007,160463)
+								 ) c on c.service_id = cbl.service_id and cbl.payment_status = 'PAID'
+								 group by cbl.bill_id
+			 ) coth on date(coth.date_created) = date(cbp.date_created)
+				 -- cash_receipts_cash_from_daily_services
+					  left join (select cbp.bill_id, cbp.date_created, SUM(cbp.amount_tendered) as cash_receipts
+								 from cashier_bill_payment cbp
+										  inner join cashier_payment_mode cpm on cpm.payment_mode_id = cbp.payment_mode_id and cbp.payment_mode_id = 1
+										  inner join (select cbl.bill_id, cbl.date_created
+													  from cashier_bill_line_item cbl where cbl.payment_status = 'PAID'  group by cbl.bill_id) csh on csh.bill_id = cbp.bill_id
+								 group by date(cbp.date_created)
+			 ) cash on date(cash.date_created) = date(cbp.date_created)
+				 -- cash_receipt_nhif_receipt : insurance
+					  left join (select cbp.bill_id, cbp.date_created, SUM(cbp.amount_tendered) as insurance_receipts
+								 from cashier_bill_payment cbp
+										  inner join cashier_payment_mode cpm on cpm.payment_mode_id = cbp.payment_mode_id and cbp.payment_mode_id = 2
+										  inner join (select cbl.bill_id, cbl.date_created
+													  from cashier_bill_line_item cbl where cbl.payment_status = 'PAID' group by cbl.bill_id) csh on csh.bill_id = cbp.bill_id
+								 group by date(cbp.date_created)
+			 ) ins on date(ins.date_created) = date(cbp.date_created)
+
+				 -- cash_receipt : other
+					  left join (select cbp.bill_id, cbp.date_created, SUM(cbp.amount_tendered) as other_receipts
+								 from cashier_bill_payment cbp
+										  inner join cashier_payment_mode cpm on cpm.payment_mode_id = cbp.payment_mode_id and cbp.payment_mode_id not in (1,2,3)
+										  inner join (select cbl.bill_id, cbl.date_created
+													  from cashier_bill_line_item cbl where cbl.payment_status = 'PAID' group by cbl.bill_id) csh on csh.bill_id = cbp.bill_id
+								 group by date(cbp.date_created)
+			 ) otr on date(otr.date_created) = date(cbp.date_created)
+				 -- waiver
+					  left join (select cbp.bill_id, cbp.date_created, SUM(cbp.amount_tendered) as other_receipts_waiver
+								 from cashier_bill_payment cbp
+										  inner join cashier_payment_mode cpm on cpm.payment_mode_id = cbp.payment_mode_id and cbp.payment_mode_id = 3
+										  inner join (select cbl.bill_id, cbl.date_created
+													  from cashier_bill_line_item cbl where cbl.payment_status = 'PAID' group by cbl.bill_id) csh on csh.bill_id = cbp.bill_id
+								 group by date(cbp.date_created)
+			 ) wvr on date(wvr.date_created) = date(cbp.date_created)
+
+				 -- pending
+					  left join (select cbl.bill_id, cbl.date_created, SUM(cbl.price) as pending_bills
+								 from cashier_bill_line_item cbl where  cbl.payment_status = 'PENDING'
+								 group by date(cbl.date_created), cbl.bill_id
+			 ) cn on date(cn.date_created) = date(cbp.date_created)
+			 where cbp.voided = 0
+			 group by date(cbp.date_created) ;
+
+	SELECT "Completed processing Daily Revenue Summary";
+END $$
     -- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
@@ -7673,6 +7935,7 @@ CALL sp_populate_etl_preventive_services();
 CALL sp_populate_etl_overdose_reporting();
 CALL sp_populate_etl_art_fast_track();
 CALL sp_populate_etl_clinical_encounter();
+CALL sp_populate_etl_daily_revenue_summary();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
