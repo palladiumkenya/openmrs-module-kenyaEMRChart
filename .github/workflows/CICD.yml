@@ -53,7 +53,7 @@ jobs:
           cd /apps/github-workflows/kenyaemr-modules
           sudo rm -rf openmrs-module-kenyaEMRChart
           sudo mkdir openmrs-module-kenyaEMRChart
-          sudo chown -R cicd2:cicd2 openmrs-module-kenyaEMRChart
+          sudo chown -R cicd:cicd openmrs-module-kenyaEMRChart
           git config --global --add safe.directory /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
           cd /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
           bash /apps/workflowConfigs/clearCharts.sh
