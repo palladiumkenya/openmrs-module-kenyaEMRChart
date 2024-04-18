@@ -28,7 +28,7 @@ jobs:
           git status
           bash /apps/workflowConfigs/clearCharts.sh
           mvn license:format
-          mvn clean install -DskipTests
+          sudo mvn clean install -DskipTests
           sudo rm -rf /var/lib/OpenMRS/modules/kenyaEMRChart-*.omod
           sudo cp /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart/omod/target/kenyaemrCharts-*.omod /var/lib/OpenMRS/modules/
           sudo chown -R tomcat:tomcat /var/lib/OpenMRS/modules/
@@ -57,9 +57,9 @@ jobs:
           git config --global --add safe.directory /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
           cd /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart
           bash /apps/workflowConfigs/clearCharts.sh
-          git clone -b master  https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
-          mvn license:format
-          mvn clean install -DskipTests
+          sudo git clone -b master  https://github.com/palladiumkenya/openmrs-module-kenyaEMRChart.git .
+          sudo mvn license:format
+          sudo mvn clean install -DskipTests
           sudo rm -rf /var/lib/OpenMRS/modules/kenyaEMRChart-*.omod
           sudo cp /apps/github-workflows/kenyaemr-modules/openmrs-module-kenyaEMRChart/omod/target/kenyaemrCharts-*.omod /var/lib/OpenMRS/modules/
           sudo chown -R tomcat:tomcat /var/lib/OpenMRS/modules/
