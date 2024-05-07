@@ -582,7 +582,7 @@ SELECT "Successfully created pharmacy extract table";
       (case referral_vmmc when 162223 then 'Yes' end) as referral_vmmc,
       (case referral_dreams when 165368 then 'Yes' end) as referral_dreams,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
-      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 165093 then "HIV Preventive services" when 1175 then "N/A" else "" end) as referred_to,
       next_appointment_date,
       clinical_notes
 
@@ -606,7 +606,7 @@ SELECT "Successfully created pharmacy extract table";
       admission_number,
       number_of_anc_visits,
       (case vaginal_examination when 132681 then "Normal" when 5577 then "Episiotomy" when 159264 then "Vaginal Tear" when 118935 then "FGM" when 139505 then "Vaginal wart" else "" end) as vaginal_examination,
-      (case uterotonic_given when 81369 then "Oxytocin" when 104590 then "Carbetocin" when 1107 then "None" else "" end) as uterotonic_given,
+      (case uterotonic_given when 81369 then "Oxytocin" when 104590 then "Carbetocin" when 5622 then "Other" when 1107 then "None" else "" end) as uterotonic_given,
        (case chlohexidine_applied_on_code_stump when 1065 then "Yes" when 1066 then "No" else "" end) as chlohexidine_applied_on_code_stump,
        (case vitamin_K_given when 1065 then "Yes" when 1066 then "No" else "" end) as vitamin_K_given,
        (case kangaroo_mother_care_given when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as kangaroo_mother_care_given,
@@ -640,7 +640,7 @@ SELECT "Successfully created pharmacy extract table";
       (case mother_decision when 1173 then "EXPRESSED BREASTMILK" when 1152 then "WEANED" when 5254 then "Infant formula" when 1150 then "BREASTFED PREDOMINATELY"
        when 6046 then "Mixed feeding" when 5526 then "BREASTFED EXCLUSIVELY" when 968 then "COW MILK" when 1595 then "REPLACEMENT FEEDING"  else "" end) as mother_decision,
       (case placenta_complete when 703 then "Yes" when 664 then "No" when 1501 then "Baby born before arrival" else "" end) as placenta_complete,
-      (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" else "" end) as maternal_death_audited,
+      (case maternal_death_audited when 1065 then "Yes" when 1066 then "No" when 1067 then "NA" else "" end) as maternal_death_audited,
       (case cadre when 1574 then "CLINICAL OFFICER/DOCTOR" when 1578 then "Midwife" when 1577 then "NURSE" when 1575 then "TRADITIONAL BIRTH ATTENDANT" when 1555 then " COMMUNITY HEALTH CARE WORKER" when 5622 then "Other" else "" end) as cadre,
       (case delivery_complications when 1065 then "Yes" when 1066 then "No" else "" end) as delivery_complications,
       (case coded_delivery_complications when 118744 then "Eclampsia" when 113195 then "Ruptured Uterus" when 115036 then "Obstructed Labor" when 228 then "APH" when 230 then "PPH" when 130 then "Puerperal sepsis" when 1067 then "Unknown" else "" end) as coded_delivery_complications,
@@ -655,6 +655,7 @@ SELECT "Successfully created pharmacy extract table";
       birth_weight,
       (case bf_within_one_hour when 1065 then "Yes" when 1066 then "No" else "" end) as bf_within_one_hour,
       (case birth_with_deformity when 155871 then "deformity" when 1066 then "No"  when 1175 then "Not applicable" else "" end) as birth_with_deformity,
+      ( case type_of_birth_deformity when 143672 then "Congenital syphilis" when 126208 then "Spina bifida" when 117470 then "Hydrocephalus" when 125048 then "Talipes" else "" end) as type_of_birth_deformity,
       final_test_result,
       patient_given_result,
       (case partner_hiv_tested when 1065 then "Yes" when 1066 then "No" else "" end) as partner_hiv_tested,
@@ -688,7 +689,7 @@ SELECT "Successfully created pharmacy extract table";
       condition_of_mother,
       discharge_date,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
-      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 165093 then "HIV Preventive services" when 1175 then "N/A" else "" end) as referred_to,
       clinical_notes
 
     from kenyaemr_etl.etl_mchs_discharge;
@@ -775,7 +776,7 @@ SELECT "Successfully created pharmacy extract table";
        when 5275 then "Intrauterine Device" when 136163 then "Lactational Amenorhea Method" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness"
        when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
-      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit"  when 165093 then "HIV Preventive services" when 1175 then "N/A" else "" end) as referred_to,
       clinical_notes,
       appointment_date
 
@@ -916,7 +917,7 @@ SELECT "Successfully created post natal visit table";
       (case vitaminA_given when 1065 then "Yes" when 1066 then "No" else "" end) as vitaminA_given,
       (case disability when 1065 then "Yes" when 1066 then "No" else "" end) as disability,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
-      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_to,
+      (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit"  when 165093 then "HIV Preventive services"  when 1175 then "N/A" else "" end) as referred_to,
       (case counselled_on when 1914 then "HIV" when 1380 then "Nutrition" else "" end) as counselled_on,
       (case mnps_supplementation when 161649 then "Yes" when 1107 then "No" else "" end) as MNPS_Supplementation,
       (case LLIN when 1065 then "Yes" when 1066 then "No" else "" end) as LLIN,
