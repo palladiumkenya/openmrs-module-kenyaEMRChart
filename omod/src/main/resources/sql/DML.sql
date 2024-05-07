@@ -564,8 +564,8 @@ max(if(o.concept_id=164934,o.value_coded,null)) as cacx_screening,
 max(if(o.concept_id=164935,o.value_coded,null)) as sti_partner_notification,
 max(if(o.concept_id=160581,o.value_coded,null)) as at_risk_population,
 max(if(o.concept_id=159615,o.value_coded,null)) as system_review_finding,
-max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
-max(if(o.concept_id=162549,o.value_datetime,null)) as refill_date,
+MAX(IF(pat.appointment_service_id=1,pat.start_date_time,NULL)) AS next_appointment_date,
+MAX(IF(pat.appointment_service_id=2,pat.start_date_time,NULL)) AS refill_date,
 max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
 max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
 max(if(o.concept_id=1855,o.value_coded,null)) as stability,
@@ -580,6 +580,7 @@ inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
+LEFT JOIN patient_appointment pat ON pat.patient_id = e.patient_id AND (DATE(pat.date_created) = DATE(e.encounter_datetime) OR DATE(pat.date_created) = DATE(e.date_created)) AND pat.appointment_service_id IN (1,2)
 where e.voided=0
 group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
@@ -2240,7 +2241,7 @@ max(if(o.concept_id=159958 and o.value_coded=78280,o.value_coded,null)) as sensi
 max(if(o.concept_id=159958 and o.value_coded=75948,o.value_coded,null)) as sensitive_e,
 max(if(o.concept_id=159964,o.value_datetime,null)) as test_date,
 max(if(o.concept_id=1169,o.value_coded,null)) as hiv_status,
-max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
+MAX(IF(pat.appointment_service_id=6,pat.start_date_time,NULL)) AS next_appointment_date,
 e.date_created as date_created,
 if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
 from encounter e
@@ -2252,6 +2253,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('fbf0bfce-e9f4-45bb-935a-59195d8a0e35')
 ) et on et.encounter_type_id=e.encounter_type
+LEFT JOIN patient_appointment pat ON pat.patient_id = e.patient_id AND (DATE(pat.date_created) = DATE(e.encounter_datetime) OR DATE(pat.date_created) = DATE(e.date_created)) AND pat.appointment_service_id = 6
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing TB Followup visits ", CONCAT("Time: ", NOW());
@@ -3658,13 +3660,14 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
                                                              when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
            max(if(o.concept_id = 160632, o.value_text, null )) as prep_discontinue_other_reasons,
            max(if(o.concept_id = 164999, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
-           max(if(o.concept_id = 5096, o.value_datetime, null )) as next_appointment,
+           MAX(IF(pat.appointment_service_id=9,pat.start_date_time,NULL)) AS next_appointment,
            max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
            e.voided as voided
     from encounter e
            inner join person p on p.person_id=e.patient_id and p.voided=0
            inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
            inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055) and o.voided=0
+    LEFT JOIN patient_appointment pat ON pat.patient_id = e.patient_id AND (DATE(pat.date_created) = DATE(e.encounter_datetime) OR DATE(pat.date_created) = DATE(e.date_created)) AND pat.appointment_service_id = 9
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
@@ -3930,7 +3933,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         max(if(o.concept_id = 159777, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as condoms_issued,
         max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms,
         max(if(o.concept_id = 165353, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
-        max(if(o.concept_id = 5096, o.value_datetime, null )) as appointment_date,
+        MAX(IF(pat.appointment_service_id=8,pat.start_date_time,NULL)) AS appointment_date,
         max(if(o.concept_id = 165354, (case o.value_coded when 165053 then "Risk will no longer exist" when 159492 then "Intention to transfer out" else "" end), "" )) as reason_no_appointment,
         max(if(o.concept_id = 163042, o.value_text, null )) as clinical_notes,
         e.voided
@@ -3940,6 +3943,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
                                                                                       165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354) and o.voided=0
+    LEFT JOIN patient_appointment pat ON pat.patient_id = e.patient_id AND (DATE(pat.date_created) = DATE(e.encounter_datetime) OR DATE(pat.date_created) = DATE(e.date_created)) AND pat.appointment_service_id = 8
     where e.voided=0
     group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
@@ -5449,7 +5453,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=165060,(case o.value_coded when 127910 THEN "Rape" when 165045 then "Condom burst" when 5622 then "Others" else "" end),null)) as exposure_type,
                max(if(o.concept_id=163042,o.value_text,null)) as other_exposure_type,
                max(if(o.concept_id=165248,o.value_text,null)) as clinical_notes,
-               max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
+               MAX(IF(pat.appointment_service_id=3,pat.start_date_time,NULL)) AS appointment_date,
                e.voided as voided
         from encounter e
                inner join person p on p.person_id=e.patient_id and p.voided=0
@@ -5464,6 +5468,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                 165209,160653,165279,165280,165210,165211,165213,165281,165282,166663,166664,165052,166637,165093,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
                 164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,163766,165055,165056,
                 165057,165058,164845,165248,5096,164142)
+                LEFT JOIN patient_appointment pat ON pat.patient_id = e.patient_id AND (DATE(pat.date_created) = DATE(e.encounter_datetime) OR DATE(pat.date_created) = DATE(e.date_created)) AND pat.appointment_service_id =3
         where e.voided=0
         group by e.patient_id, e.encounter_id, visit_date;
         SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
