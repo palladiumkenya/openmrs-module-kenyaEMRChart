@@ -500,7 +500,7 @@ SELECT "Successfully created pharmacy extract table";
       height,
       muac,
       hemoglobin,
-      (case breast_exam_done when 1065 then "Yes" when 1066 then "No" else "" end) as breast_exam_done,
+      (case breast_exam_done when 1065 then "Yes" when 1066 then "No" when 1115 then "Normal" when 1116 then "Abnormal" else "" end) as breast_exam_done,
       (case pallor when 1065 then "Yes" when 1066 then "No" else "" end) as pallor,
       maturity,
       fundal_height,
