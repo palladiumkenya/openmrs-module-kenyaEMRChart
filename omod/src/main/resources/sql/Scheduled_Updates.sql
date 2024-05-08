@@ -8321,7 +8321,7 @@ INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id,
       status,
       location_id,
       date_created
-      FROM patient_appointment;
+      FROM patient_appointment
       where voided = 0
         and date_created >= last_update_time
        or date_changed >= last_update_time
@@ -8332,7 +8332,7 @@ INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id,
                             end_date_time=VALUES(end_date_time),
                             appointment_service_id=VALUES(appointment_service_id),
                             status=VALUES(status),
-                            date_created=VALUES(date_created),
+                            date_created=VALUES(date_created);
       SELECT "Completed processing Patient appointement";
 END $$
 -- end of appointments updates
@@ -8630,8 +8630,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_art_fast_track(last_update_time);
     CALL sp_update_etl_clinical_encounter(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
-    CALL sp_update_next_appointment_dates(last_update_time)
-
+    CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
