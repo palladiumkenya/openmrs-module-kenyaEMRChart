@@ -777,9 +777,9 @@ SELECT "Successfully created pharmacy extract table";
        when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit"  when 165093 then "HIV Preventive services" when 1175 then "N/A" else "" end) as referred_to,
+	  referral_reason,
       clinical_notes,
       appointment_date
-
     from kenyaemr_etl.etl_mch_postnatal_visit;
 
   ALTER TABLE kenyaemr_datatools.mch_postnatal_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);

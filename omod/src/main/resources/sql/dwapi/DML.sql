@@ -1482,6 +1482,10 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 			test_2_kit_lot_no,
 			test_2_kit_expiry,
 			test_2_result,
+			test_3_kit_name,
+			test_3_kit_lot_no,
+			test_3_kit_expiry,
+			test_3_result,
 			final_test_result,
             syphilis_results,
 			patient_given_result,
@@ -1504,6 +1508,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 			family_planning_method,
 			referred_from,
 			referred_to,
+			referral_reason,
 			clinical_notes,
 			appointment_date,
 			date_created,
@@ -1569,6 +1574,10 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 				max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
 				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
+				max(if(t.test_3_result is not null, t.kit_name, null)) as test_3_kit_name,
+				max(if(t.test_3_result is not null, t.lot_no, null)) as test_3_kit_lot_no,
+				max(if(t.test_3_result is not null, t.expiry_date, null)) as test_3_kit_expiry,
+				max(if(t.test_3_result is not null, t.test_3_result, null)) as test_3_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
                 max(if(o.concept_id=299,o.value_coded,null)) as syphilis_results,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -1591,6 +1600,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 				max(if(o.concept_id=374,o.value_coded,null)) as family_planning_method,
 				max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
+				max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
 				max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
 				e.date_created as date_created,
@@ -1600,7 +1610,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                                            1724,167017,163783,162642,166665,165218,160632,299)
+                                                                            1724,167017,163783,162642,166665,165218,160632,299,164359)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -1613,14 +1623,15 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 											 o.obs_group_id,
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 1000629 then "One step" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
 											 inner join encounter e on e.encounter_id = o.encounter_id
                                              inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('72aa78e0-ee4b-47c3-9073-26f3b9ecc4a7')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+										 where o.concept_id in (1040, 1326,1000630, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id;
@@ -2537,6 +2548,10 @@ test_2_kit_name,
 test_2_kit_lot_no,
 test_2_kit_expiry,
 test_2_result,
+test_3_kit_name,
+test_3_kit_lot_no,
+test_3_kit_expiry,
+test_3_result,
 final_test_result,
 syphillis_test_result,
 patient_given_result,
@@ -2592,6 +2607,10 @@ max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
 max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
 max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
+max(if(t.test_3_result is not null, t.kit_name, null)) as test_3_kit_name,
+max(if(t.test_3_result is not null, t.lot_no, null)) as test_3_kit_lot_no,
+max(if(t.test_3_result is not null, t.expiry_date, null)) as test_3_kit_expiry,
+max(if(t.test_3_result is not null, t.test_3_result, null)) as test_3_result,
 max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" when 163611 then "Invalid" else "" end),null)) as final_test_result,
 max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
 max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -2628,13 +2647,14 @@ inner join (
                o.obs_group_id,
                max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
                max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
-               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
+			   max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
+               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 1000629 then "One step" else "" end),null)) as kit_name ,
                max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-             where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+             where o.concept_id in (1040, 1326, 1000630, 164962, 164964, 162502) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 group by e.encounter_id;
