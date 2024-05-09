@@ -2753,6 +2753,7 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
       ccc_number,
       provider_handed_to,
       cadre,
+	  remarks,
       voided
     )
       select
@@ -2779,11 +2780,12 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
                                     when 1540 then "Employee"
                                     when 5488 then "Adherence counsellor"
                                     when 5622 then "Other" else "" end),null)) as cadre,
+		max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
         e.voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","15ed03d2-c972-11e9-a32f-2a2ae2dbcce4")
-        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481) and o.voided=0
+        left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481,163042) and o.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -2791,7 +2793,7 @@ CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME
             or o.date_voided >= last_update_time
       group by e.patient_id,e.visit_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),creator=VALUES(creator), tracing_type=VALUES(tracing_type), tracing_status=VALUES(tracing_status),
-      facility_linked_to=VALUES(facility_linked_to), ccc_number=VALUES(ccc_number), provider_handed_to=VALUES(provider_handed_to), cadre=VALUES(cadre)
+      facility_linked_to=VALUES(facility_linked_to), ccc_number=VALUES(ccc_number), provider_handed_to=VALUES(provider_handed_to),cadre=VALUES(cadre),remarks=VALUES(remarks)
     ;
 
     -- fetch locally enrolled clients who had gone through HTS
