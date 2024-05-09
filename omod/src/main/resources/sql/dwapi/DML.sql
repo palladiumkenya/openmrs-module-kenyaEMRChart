@@ -1236,6 +1236,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
             birth_weight,
             bf_within_one_hour,
             birth_with_deformity,
+            type_of_birth_deformity,
             test_1_kit_name,
             test_1_kit_lot_no,
             test_1_kit_expiry,
@@ -1266,7 +1267,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
 				max(if(o.concept_id=1590,o.value_numeric,null)) as number_of_anc_visits,
 				max(if(o.concept_id=160704,o.value_coded,null)) as vaginal_examination,
-        max(if(o.concept_id=1282 and o.value_coded in (81369,104590,1107),o.value_coded,null)) as uterotonic_given,
+        max(if(o.concept_id=1282 and o.value_coded in (81369,104590,5622,1107),o.value_coded,null)) as uterotonic_given,
         max(if(o.concept_id=159369,o.value_coded,null)) as chlohexidine_applied_on_code_stump,
         max(if(o.concept_id=984,o.value_coded,null)) as vitamin_K_given,
         max(if(o.concept_id=161094,o.value_coded,null)) as kangaroo_mother_care_given,
@@ -1308,6 +1309,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=161543,o.value_coded,null)) as bf_within_one_hour,
 				max(if(o.concept_id=164122,o.value_coded,null)) as birth_with_deformity,
+				max(if(o.concept_id=159521,o.value_coded,null)) as type_of_birth_deformity,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -1328,7 +1330,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159521,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where

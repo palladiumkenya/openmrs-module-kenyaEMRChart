@@ -719,6 +719,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     birth_weight INT(11),
     bf_within_one_hour INT(11),
     birth_with_deformity INT(11),
+    type_of_birth_deformity INT(11),
     test_1_kit_name VARCHAR(50),
     test_1_kit_lot_no VARCHAR(50) DEFAULT NULL,
     test_1_kit_expiry DATE DEFAULT NULL,
