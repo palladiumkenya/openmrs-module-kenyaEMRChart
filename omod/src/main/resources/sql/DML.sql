@@ -2555,7 +2555,6 @@ visit_date,
 test_type,
 population_type,
 key_population_type,
-people_in_prison,
 priority_population_type,
 ever_tested_for_hiv,
 months_since_last_test,
@@ -2608,8 +2607,20 @@ if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_l
 e.encounter_datetime as visit_date,
 max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type , -- 2 for confirmation, 1 for initial
 max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" when 138643 then "Priority Population" else "" end),null)) as population_type,
-max(if(o.concept_id=165241,(case o.value_coded when 163488 then "Community" when 1142 then "Staff" when 167691 then "Inmates" else "" end),null)) as people_in_prison,
-max(if(o.concept_id=160581 and o.value_coded in(105,160578,160579,165100,162277,5622), (case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 5622 then "Other"  else null end),null)) as key_population_type,
+max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,160666,160578,165084,160579,165100,162277,167691,1142,163488,159674,162198,6096,5622), (case o.value_coded when 105 then 'People who inject drugs' 
+	                                                                                                                                                    when 160666 then 'People who use drugs' 
+	                                                                                                                                                    when 160578 then 'Men who have sex with men' 
+	                                                                                                                                                    when 165084 then 'Male Sex Worker' 
+	                                                                                                                                                    when 160579 then 'Female sex worker' 
+	                                                                                                                                                    when 165100 then 'Transgender' 
+	                                                                                                                                                    when 162277 then 'People in prison and other closed settings' 
+	                                                                                                                                                    when 167691 then 'Inmates'  
+	                                                                                                                                                    when 1142 then 'Prison Staff' 
+	                                                                                                                                                    when 163488 then 'Prison Community'
+																																						when 159674 then 'Fisher folk'
+																																						when 162198 then 'Truck driver'
+																																						when 6096 then 'Discordant'
+	                                                                                                                                                    when 5622 then 'Other'  else null end),null)) as key_population_type,
 max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
 max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_hiv,
 max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
@@ -2668,7 +2679,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,165241,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093,165241)
 inner join (
              select
                o.person_id,
