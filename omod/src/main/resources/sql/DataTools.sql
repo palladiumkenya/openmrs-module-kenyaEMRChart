@@ -1337,7 +1337,6 @@ create table kenyaemr_datatools.hts_test
   t.test_type,
   t.population_type,
   t.key_population_type,
-  t.people_in_prison,
   t.priority_population_type,
   t.ever_tested_for_hiv,
   t.months_since_last_test,

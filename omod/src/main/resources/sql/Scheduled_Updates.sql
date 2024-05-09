@@ -2584,7 +2584,6 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       test_type,
       population_type,
       key_population_type,
-      people_in_prison,
       priority_population_type,
       ever_tested_for_hiv,
       months_since_last_test,
@@ -2637,9 +2636,22 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
         e.encounter_datetime as visit_date,
         max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type ,
         max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" when 138643 then "Priority Population"  else null end),null)) as population_type,
-        max(if(o.concept_id=165241,(case o.value_coded when 163488 then "Community" when 1142 then "Staff" when 167691 then "Inmates" else "" end),null)) as people_in_prison,
-        max(if(o.concept_id=160581 and o.value_coded in(105,160578,160579,165100,162277,5622), (case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 5622 then "Other"  else null end),null)) as key_population_type,
-        max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
+		max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,160666,160578,165084,160579,165100,162277,167691,1142,163488,159674,162198,6096,5622), (case o.value_coded when 105 then 'People who inject drugs'
+																																																 when 160666 then 'People who use drugs'
+																																																 when 160578 then 'Men who have sex with men'
+																																																 when 165084 then 'Male Sex Worker'
+																																																 when 160579 then 'Female sex worker'
+																																																 when 165100 then 'Transgender'
+																																																 when 162277 then 'People in prison and other closed settings'
+																																																 when 167691 then 'Inmates'
+																																																 when 1142 then 'Prison Staff'
+																																																 when 163488 then 'Prison Community'
+																																																 when 159674 then 'Fisher folk'
+																																																 when 162198 then 'Truck driver'
+																																																 when 6096 then 'Discordant'
+																																																 when 5622 then 'Other'  else null end),null)) as key_population_type,
+
+		max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
         max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as ever_tested_for_hiv,
         max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
         max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end),null)) as patient_disabled,
@@ -2733,7 +2745,6 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
       test_2_kit_lot_no=VALUES(test_2_kit_lot_no), test_2_kit_expiry=VALUES(test_2_kit_expiry), test_2_result=VALUES(test_2_result),
         test_3_kit_name=VALUES(test_3_kit_name), test_3_kit_lot_no=VALUES(test_3_kit_lot_no), test_3_kit_expiry=VALUES(test_3_kit_expiry),
         test_3_result=VALUES(test_3_result),
-        people_in_prison=VALUES(people_in_prison),
       final_test_result=VALUES(final_test_result), patient_given_result=VALUES(patient_given_result), couple_discordant=VALUES(couple_discordant),referred=VALUES(referred),
       tb_screening=VALUES(tb_screening), neg_referral_for=VALUES(neg_referral_for), patient_had_hiv_self_test=VALUES(patient_had_hiv_self_test),
       remarks=VALUES(remarks), voided=VALUES(voided)
