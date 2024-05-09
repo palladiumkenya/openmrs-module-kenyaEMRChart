@@ -1409,6 +1409,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       family_planning_method,
       referred_from,
       referred_to,
+	  referral_reason,
       clinical_notes,
       date_created,
       date_last_modified
@@ -1486,6 +1487,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=374,o.value_coded,null)) as family_planning_method,
         max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
         max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
+		max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
         max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
@@ -1493,7 +1495,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
                             and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                1724,167017,163783,162642,166665,165218,160632,299)
+                                                1724,167017,163783,162642,166665,165218,160632,299,159395)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1514,7 +1516,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       final_test_result=VALUES(final_test_result),
       patient_given_result=VALUES(patient_given_result),couple_counselled=VALUES(couple_counselled),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),mother_haart_given=VALUES(mother_haart_given),prophylaxis_given=VALUES(prophylaxis_given),infant_prophylaxis_timing=VALUES(infant_prophylaxis_timing),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed)
       ,maternal_condition=VALUES(maternal_condition),iron_supplementation=VALUES(iron_supplementation),fistula_screening=VALUES(fistula_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method)
-      ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to), clinical_notes=VALUES(clinical_notes),appointment_date=VALUES(appointment_date),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding),pnc_hiv_test_timing_mother=VALUES(pnc_hiv_test_timing_mother),other_maternal_complications=VALUES(other_maternal_complications),syphilis_results=VALUES(syphilis_results)
+      ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to),referral_reason=VALUES(referral_reason), clinical_notes=VALUES(clinical_notes),appointment_date=VALUES(appointment_date),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding),pnc_hiv_test_timing_mother=VALUES(pnc_hiv_test_timing_mother),other_maternal_complications=VALUES(other_maternal_complications),syphilis_results=VALUES(syphilis_results)
     ;
 
     END $$
