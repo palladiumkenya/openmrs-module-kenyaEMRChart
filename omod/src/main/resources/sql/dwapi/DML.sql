@@ -941,6 +941,10 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 			test_2_kit_lot_no,
 			test_2_kit_expiry,
 			test_2_result,
+			test_3_kit_name,
+            test_3_kit_lot_no,
+            test_3_kit_expiry,
+            test_3_result,
 			final_test_result,
 			patient_given_result,
 			partner_hiv_tested,
@@ -1055,6 +1059,10 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 				max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
 				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
+				max(if(t.test_3_result is not null, t.kit_name, null)) as test_3_kit_name,
+				max(if(t.test_3_result is not null, t.lot_no, null)) as test_3_kit_lot_no,
+				max(if(t.test_3_result is not null, t.expiry_date, null)) as test_3_kit_expiry,
+				max(if(t.test_3_result is not null, t.test_3_result, null)) as test_3_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -1162,6 +1170,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 											 o.obs_group_id,
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+											 max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
 											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
@@ -1169,7 +1178,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 											 inner join encounter e on e.encounter_id = o.encounter_id
                                              inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('e8f98494-af35-4bb8-9fc7-c409c8fed843')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+										 where o.concept_id in (1040, 1326, 1000630, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.patient_id,visit_date;
@@ -1245,6 +1254,10 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
             test_2_kit_lot_no,
             test_2_kit_expiry,
             test_2_result,
+            test_3_kit_name,
+            test_3_kit_lot_no,
+            test_3_kit_expiry,
+            test_3_result,
             final_test_result,
             patient_given_result,
             partner_hiv_tested,
@@ -1318,6 +1331,10 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 				max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
 				max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 				max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
+				max(if(t.test_3_result is not null, t.kit_name, null)) as test_3_kit_name,
+				max(if(t.test_3_result is not null, t.lot_no, null)) as test_3_kit_lot_no,
+				max(if(t.test_3_result is not null, t.expiry_date, null)) as test_3_kit_expiry,
+				max(if(t.test_3_result is not null, t.test_3_result, null)) as test_3_result,
 				max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
 				max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
@@ -1343,6 +1360,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 											o.obs_group_id,
 											max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+											max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
 											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
 											max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
@@ -1350,7 +1368,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 											 inner join encounter e on e.encounter_id = o.encounter_id
                                              inner join person p on p.person_id = o.person_id and p.voided=0
 											 inner join form f on f.form_id=e.form_id and f.uuid in ('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
-										 where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+										 where o.concept_id in (1040, 1326, 1000630, 164962, 164964, 162502) and o.voided=0
 										 group by e.encounter_id, o.obs_group_id
 									 ) t on e.encounter_id = t.encounter_id
 			group by e.encounter_id ;
@@ -2516,6 +2534,7 @@ visit_date,
 test_type,
 population_type,
 key_population_type,
+people_in_prison,
 priority_population_type,
 ever_tested_for_hiv,
 months_since_last_test,
@@ -2537,6 +2556,10 @@ test_2_kit_name,
 test_2_kit_lot_no,
 test_2_kit_expiry,
 test_2_result,
+test_3_kit_name,
+test_3_kit_lot_no,
+test_3_kit_expiry,
+test_3_result,
 final_test_result,
 syphillis_test_result,
 patient_given_result,
@@ -2565,6 +2588,7 @@ if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_l
 e.encounter_datetime as visit_date,
 max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type , -- 2 for confirmation, 1 for initial
 max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" when 138643 then "Priority Population" else "" end),null)) as population_type,
+max(if(o.concept_id=165241,(case o.value_coded when 163488 then "Community" when 1142 then "Staff" when 167691 then "Inmates" else "" end),null)) as people_in_prison,
 max(if(o.concept_id=160581 and o.value_coded in(105,160578,160579,165100,162277,5622), (case o.value_coded when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 5622 then "Other"  else null end),null)) as key_population_type,
 max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
 max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_hiv,
@@ -2592,6 +2616,10 @@ max(if(t.test_2_result is not null, t.kit_name, null)) as test_2_kit_name,
 max(if(t.test_2_result is not null, t.lot_no, null)) as test_2_kit_lot_no,
 max(if(t.test_2_result is not null, t.expiry_date, null)) as test_2_kit_expiry,
 max(if(t.test_2_result is not null, t.test_2_result, null)) as test_2_result,
+max(if(t.test_3_result is not null, t.kit_name, null)) as test_3_kit_name,
+max(if(t.test_3_result is not null, t.lot_no, null)) as test_3_kit_lot_no,
+max(if(t.test_3_result is not null, t.expiry_date, null)) as test_3_kit_expiry,
+max(if(t.test_3_result is not null, t.test_3_result, null)) as test_3_result,
 max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" when 163611 then "Invalid" else "" end),null)) as final_test_result,
 max(if(o.concept_id=299,(case o.value_coded when 1229 then "Positive" when 1228 then "Negative" else "" end),null)) as syphillis_test_result,
 max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -2619,7 +2647,7 @@ e.voided
 from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,160581,
                                                                                  160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093)
 inner join (
              select
@@ -2628,13 +2656,14 @@ inner join (
                o.obs_group_id,
                max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
                max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
+               max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
                max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else "" end),null)) as kit_name ,
                max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
-             where o.concept_id in (1040, 1326, 164962, 164964, 162502) and o.voided=0
+             where o.concept_id in (1040, 1326, 1000630, 164962, 164964, 162502) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
 group by e.encounter_id;
