@@ -409,9 +409,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       sti_partner_notification,
       at_risk_population,
       system_review_finding,
-      next_appointment_date,
       next_appointment_reason,
-      refill_date,
       appointment_consent,
       stability,
       differentiated_care,
@@ -587,8 +585,6 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=164935,o.value_coded,null)) as sti_partner_notification,
         max(if(o.concept_id=160581,o.value_coded,null)) as at_risk_population,
         max(if(o.concept_id=159615,o.value_coded,null)) as system_review_finding,
-        max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
-        max(if(o.concept_id=162549,o.value_datetime,null)) as refill_date,
         max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
         max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
         max(if(o.concept_id=1855,o.value_coded,null)) as stability,
@@ -941,7 +937,6 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       referral_dreams,
       referred_from,
       referred_to,
-      next_appointment_date,
       clinical_notes,
       date_created,
       date_last_modified
@@ -1065,7 +1060,6 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=1592 and o.value_coded=165368,o.value_coded,null)) referral_dreams,
         max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
         max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
-        max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
         max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
@@ -1415,8 +1409,8 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       family_planning_method,
       referred_from,
       referred_to,
+	  referral_reason,
       clinical_notes,
-      appointment_date,
       date_created,
       date_last_modified
     )
@@ -1493,15 +1487,15 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=374,o.value_coded,null)) as family_planning_method,
         max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
         max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
+		max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
         max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
-        max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
                             and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                1724,167017,163783,162642,166665,165218,160632,299)
+                                                1724,167017,163783,162642,166665,165218,160632,299,159395)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1522,7 +1516,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       final_test_result=VALUES(final_test_result),
       patient_given_result=VALUES(patient_given_result),couple_counselled=VALUES(couple_counselled),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),mother_haart_given=VALUES(mother_haart_given),prophylaxis_given=VALUES(prophylaxis_given),infant_prophylaxis_timing=VALUES(infant_prophylaxis_timing),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed)
       ,maternal_condition=VALUES(maternal_condition),iron_supplementation=VALUES(iron_supplementation),fistula_screening=VALUES(fistula_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method)
-      ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to), clinical_notes=VALUES(clinical_notes),appointment_date=VALUES(appointment_date),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding),pnc_hiv_test_timing_mother=VALUES(pnc_hiv_test_timing_mother),other_maternal_complications=VALUES(other_maternal_complications),syphilis_results=VALUES(syphilis_results)
+      ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to),referral_reason=VALUES(referral_reason), clinical_notes=VALUES(clinical_notes),appointment_date=VALUES(appointment_date),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding),pnc_hiv_test_timing_mother=VALUES(pnc_hiv_test_timing_mother),other_maternal_complications=VALUES(other_maternal_complications),syphilis_results=VALUES(syphilis_results)
     ;
 
     END $$
@@ -1728,7 +1722,6 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       MNPS_Supplementation,
       LLIN,
       comments,
-      next_appointment_date,
       date_created,
       date_last_modified
     )
@@ -1795,7 +1788,6 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
 				max(if(o.concept_id=5484,o.value_coded,null)) as MNPS_Supplementation,
         max(if(o.concept_id=159855,o.value_coded,null)) as LLIN,
         max(if(o.concept_id=159395,o.value_text,null)) as comments,
-        max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
@@ -2117,7 +2109,6 @@ CREATE PROCEDURE sp_update_etl_tb_follow_up_visit(IN last_update_time DATETIME)
       sensitive_e,
       test_date,
       hiv_status,
-      next_appointment_date,
       date_created,
       date_last_modified
     )
@@ -2146,7 +2137,6 @@ CREATE PROCEDURE sp_update_etl_tb_follow_up_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=159958 and o.value_coded=75948,o.value_coded,null)) as sensitive_e,
         max(if(o.concept_id=159964,o.value_datetime,null)) as test_date,
         max(if(o.concept_id=1169,o.value_coded,null)) as hiv_status,
-        max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
@@ -3637,7 +3627,6 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       prep_discontinue_reasons,
       prep_discontinue_other_reasons,
       appointment_given,
-      next_appointment,
       remarks,
       voided
     )
@@ -3671,7 +3660,6 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
                                                when 162696 then "Client request" when 5622 then "other"  else "" end), "" )) as prep_discontinue_reasons,
                 max(if(o.concept_id = 160632, o.value_text, null )) as prep_discontinue_other_reasons,
                 max(if(o.concept_id = 164999, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
-                max(if(o.concept_id = 5096, o.value_datetime, null )) as next_appointment,
                 max(if(o.concept_id = 161011, o.value_text, null )) as remarks,
                 e.voided as voided
       from encounter e
@@ -3932,7 +3920,6 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         condoms_issued,
         number_of_condoms,
         appointment_given,
-        appointment_date,
         reason_no_appointment,
         clinical_notes,
         voided
@@ -4004,7 +3991,6 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         max(if(o.concept_id = 159777, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as condoms_issued,
         max(if(o.concept_id = 165055, o.value_numeric, null )) as number_of_condoms,
         max(if(o.concept_id = 165353, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as appointment_given,
-        max(if(o.concept_id = 5096, o.value_datetime, null )) as appointment_date,
         max(if(o.concept_id = 165354, (case o.value_coded when 165053 then "Risk will no longer exist" when 159492 then "Intention to transfer out" else "" end), "" )) as reason_no_appointment,
         max(if(o.concept_id = 163042, o.value_text, null )) as clinical_notes,
         e.voided
@@ -5480,7 +5466,6 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
       exposure_type,
       other_exposure_type,
       clinical_notes,
-      appointment_date,
       voided
     )
       select
@@ -5610,7 +5595,6 @@ CREATE PROCEDURE sp_update_etl_kp_clinical_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=165060,(case o.value_coded when 127910 THEN "Rape" when 165045 then "Condom burst" when 5622 then "Others" else "" end),null)) as exposure_type,
         max(if(o.concept_id=163042,o.value_text,null)) as other_exposure_type,
         max(if(o.concept_id=165248,o.value_text,null)) as clinical_notes,
-        max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
         e.voided as voided
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
@@ -8329,6 +8313,93 @@ BEGIN
     SELECT "Completed processing ART fast track";
 END $$
 
+-- update patient appoitments
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_appointments $$
+CREATE PROCEDURE sp_update_etl_patient_appointments(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing Patient appointment updates";
+INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id, 
+  provider_id, 
+  patient_id, 
+  visit_date, 
+  start_date_time, 
+  end_date_time, 
+  appointment_service_id,
+  status, 
+  location_id,
+  date_created)
+  SELECT
+      patient_appointment_id,
+      provider_id,
+      patient_id,
+      DATE(date_created) as visit_date,
+      start_date_time,
+      end_date_time,
+      appointment_service_id,
+      status,
+      location_id,
+      date_created
+      FROM patient_appointment
+      where voided = 0
+        and date_created >= last_update_time
+       or date_changed >= last_update_time
+       or date_voided >= last_update_time
+    group by patient_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+                            start_date_time=VALUES(start_date_time),
+                            end_date_time=VALUES(end_date_time),
+                            appointment_service_id=VALUES(appointment_service_id),
+                            status=VALUES(status),
+                            date_created=VALUES(date_created);
+      SELECT "Completed processing Patient appointement";
+END $$
+-- end of appointments updates
+
+-- update patient next appointment date
+DROP PROCEDURE IF EXISTS sp_update_next_appointment_dates $$
+CREATE PROCEDURE sp_update_next_appointment_dates(IN last_update_time DATETIME)
+BEGIN
+  SELECT "Processing Update next appointment date with appointment date from Bahmni";
+  update kenyaemr_etl.etl_patient_hiv_followup fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 1
+set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+ update kenyaemr_etl.etl_patient_hiv_followup fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 2
+set fup.refill_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+update kenyaemr_etl.etl_prep_followup fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 8
+set fup.appointment_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+update kenyaemr_etl.etl_prep_monthly_refill fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 9
+set fup.next_appointment = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+update kenyaemr_etl.etl_tb_follow_up_visit fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 6
+set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+update kenyaemr_etl.etl_clinical_visit fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.client_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 3
+set fup.appointment_date = date(pat.start_date_time) where fup.client_id > 0 and fup.date_created>= last_update_time;
+
+update kenyaemr_etl.etl_mch_antenatal_visit fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 4
+set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+update kenyaemr_etl.etl_mch_postnatal_visit fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 5
+set fup.appointment_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+
+update kenyaemr_etl.etl_hei_follow_up_visit fup
+    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 13
+set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0 and fup.date_created >= last_update_time;
+  
+      SELECT "Completed updating next appointment date";
+END $$
+-- end of appointments updates
+
 DROP PROCEDURE IF EXISTS sp_update_etl_clinical_encounter $$
 CREATE PROCEDURE sp_update_etl_clinical_encounter(IN last_update_time DATETIME)
 BEGIN
@@ -8576,7 +8647,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_overdose_reporting(last_update_time);
     CALL sp_update_etl_art_fast_track(last_update_time);
     CALL sp_update_etl_clinical_encounter(last_update_time);
-
+    CALL sp_update_etl_patient_appointments(last_update_time);
+    CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;

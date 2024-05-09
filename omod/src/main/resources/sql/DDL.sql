@@ -101,6 +101,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_art_fast_track;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_encounter;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_daily_revenue_summary;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
+
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -846,6 +848,10 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     test_2_kit_lot_no VARCHAR(50) DEFAULT NULL,
     test_2_kit_expiry DATE DEFAULT NULL,
     test_2_result VARCHAR(50) DEFAULT NULL,
+	test_3_kit_name VARCHAR(50),
+	test_3_kit_lot_no VARCHAR(50) DEFAULT NULL,
+	test_3_kit_expiry DATE DEFAULT NULL,
+	test_3_result VARCHAR(50) DEFAULT NULL,
     final_test_result VARCHAR(50) DEFAULT NULL,
     syphilis_results INT(11) DEFAULT NULL,
     patient_given_result VARCHAR(50) DEFAULT NULL,
@@ -868,6 +874,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     family_planning_method INT(11),
     referred_from INT(11),
     referred_to INT(11),
+	referral_reason VARCHAR(255) DEFAULT NULL,
     clinical_notes VARCHAR(200) DEFAULT NULL,
     appointment_date DATE DEFAULT NULL,
     date_created DATETIME NOT NULL,
@@ -1330,7 +1337,8 @@ index(test_type),
 index(final_test_result),
 index(couple_discordant),
 index(test_1_kit_name),
-index(test_2_kit_name)
+index(test_2_kit_name),
+index(test_3_kit_name)
 );
 
 -- ------------- CREATE HTS LINKAGE AND REFERRALS ------------------------
@@ -3287,6 +3295,26 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
   index(population_type),
   index(eligible_for_test)
 );
+-- Create table etl_patient_appointment
+
+CREATE TABLE kenyaemr_etl.etl_patient_appointment(
+   patient_appointment_id int NOT NULL PRIMARY KEY ,
+   provider_id int DEFAULT NULL,
+   patient_id int NOT NULL,
+   visit_date date NOT NULL,
+   start_date_time datetime DEFAULT NULL,
+   end_date_time datetime DEFAULT NULL,
+   appointment_service_id int DEFAULT NULL,
+   appointment_service_type_id int DEFAULT NULL,
+   status varchar(45) NOT NULL,
+   location_id int DEFAULT NULL,
+   date_created datetime NOT NULL,
+   INDEX(patient_id),
+   INDEX (location_id),
+   INDEX (visit_date),
+   INDEX (appointment_service_id)
+);
+
 -- create table etl_drug_orders
 
 CREATE TABLE kenyaemr_etl.etl_drug_order (
