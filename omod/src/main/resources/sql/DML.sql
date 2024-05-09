@@ -2717,6 +2717,7 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
   ccc_number,
   provider_handed_to,
   cadre,
+  remarks,
   voided
 )
   select
@@ -2743,11 +2744,12 @@ INSERT INTO kenyaemr_etl.etl_hts_referral_and_linkage (
                                 when 1540 then "Employee"
                                 when 5488 then "Adherence counsellor"
                                 when 5622 then "Other" else "" end),null)) as cadre,
+	max(if(o.concept_id=163042,trim(o.value_text),null)) as remarks,
     e.voided
   from encounter e
 		inner join person p on p.person_id=e.patient_id and p.voided=0
 		inner join form f on f.form_id = e.form_id and f.uuid in ("050a7f12-5c52-4cad-8834-863695af335d","15ed03d2-c972-11e9-a32f-2a2ae2dbcce4")
-  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481) and o.voided=0
+  left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164966, 159811, 162724, 160555, 159599, 162053, 1473,162577,160481,163042) and o.voided=0
   where e.voided=0
   group by e.patient_id,e.visit_id;
   SELECT "Completed processing hts linkages";
