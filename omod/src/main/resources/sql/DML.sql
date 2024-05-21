@@ -2607,15 +2607,15 @@ if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_l
 e.encounter_datetime as visit_date,
 max(if((o.concept_id=162084 and o.value_coded=162082 and f.uuid = "402dc5d7-46da-42d4-b2be-f43ea4ad87b0") or (f.uuid = "b08471f6-0892-4bf7-ab2b-bf79797b8ea4"), 2, 1)) as test_type , -- 2 for confirmation, 1 for initial
 max(if(o.concept_id=164930,(case o.value_coded when 164928 then "General Population" when 164929 then "Key Population" when 138643 then "Priority Population" else "" end),null)) as population_type,
-max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,160666,160578,165084,160579,165100,162277,167691,1142,163488,159674,162198,6096,5622), (case o.value_coded when 105 then 'People who inject drugs' 
-	                                                                                                                                                    when 160666 then 'People who use drugs' 
-	                                                                                                                                                    when 160578 then 'Men who have sex with men' 
-	                                                                                                                                                    when 165084 then 'Male Sex Worker' 
-	                                                                                                                                                    when 160579 then 'Female sex worker' 
-	                                                                                                                                                    when 165100 then 'Transgender' 
-	                                                                                                                                                    when 162277 then 'People in prison and other closed settings' 
-	                                                                                                                                                    when 167691 then 'Inmates'  
-	                                                                                                                                                    when 1142 then 'Prison Staff' 
+max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,160666,160578,165084,160579,165100,162277,167691,1142,163488,159674,162198,6096,5622), (case o.value_coded when 105 then 'People who inject drugs'
+	                                                                                                                                                    when 160666 then 'People who use drugs'
+	                                                                                                                                                    when 160578 then 'Men who have sex with men'
+	                                                                                                                                                    when 165084 then 'Male Sex Worker'
+	                                                                                                                                                    when 160579 then 'Female sex worker'
+	                                                                                                                                                    when 165100 then 'Transgender'
+	                                                                                                                                                    when 162277 then 'People in prison and other closed settings'
+	                                                                                                                                                    when 167691 then 'Inmates'
+	                                                                                                                                                    when 1142 then 'Prison Staff'
 	                                                                                                                                                    when 163488 then 'Prison Community'
 																																						when 159674 then 'Fisher folk'
 																																						when 162198 then 'Truck driver'
@@ -4791,30 +4791,30 @@ inner join (
                o.encounter_id,
                o.obs_group_id,
                max(if(o.concept_id=163589, (case o.value_coded when 159859 then "HPV"  else "" end),null)) as hpv_screening_method ,
-               max(if(o.concept_id=164934, (case o.value_coded when 703 then "Positive" 
+               max(if(o.concept_id=164934, (case o.value_coded when 703 then "Positive"
                when 664 then "Negative" when 159393 then "Suspicious for Cancer"  else "" end),null)) as hpv_screening_result ,
-               max(if(o.concept_id in (165070,160705), (case o.value_coded when 1065 then "Counseled on negative results" 
+               max(if(o.concept_id in (165070,160705), (case o.value_coded when 1065 then "Counseled on negative results"
                when 703 then "Do a VIA or colposcopy"  else "" end),null)) as hpv_treatment_method ,
                max(if(o.concept_id=163589, (case o.value_coded when 164977 then "VIA"  else "" end),null)) as via_vili_screening_method ,
-               max(if(o.concept_id=164934, (case o.value_coded when 703 then "Positive" when 664 then "Negative" 
+               max(if(o.concept_id=164934, (case o.value_coded when 703 then "Positive" when 664 then "Negative"
                when 159008 then "Suspicious for Cancer"  else "" end),null)) as via_vili_screening_result ,
-               
-               max(if(o.concept_id in (165070,165266,166937), (case o.value_coded when 1065 then "Counseled on negative results" 
+
+               max(if(o.concept_id in (165070,165266,166937), (case o.value_coded when 1065 then "Counseled on negative results"
                     when 165385 then "Cryotherapy performed (SVA)" when 165381 then "Cryotherapy postponed"
                     when 165386 then "Cryotherapy performed (previously postponed)" when 1648 then "Referred for cryotherapy"
-                    when 162810 then "LEEP performed" when 165396 then "Cold knife cone" 
-                    when 165395 then "Thermal ablation performed (SVA)" when  159837 then "Hysterectomy" when  165391 then "Referred for cancer treatment" 
+                    when 162810 then "LEEP performed" when 165396 then "Cold knife cone"
+                    when 165395 then "Thermal ablation performed (SVA)" when  159837 then "Hysterectomy" when  165391 then "Referred for cancer treatment"
                     when 161826 then "Perform biopsy and/or refer for further management" else "" end),null)) as via_vili_treatment_method ,
                max(if(o.concept_id=163589, (case o.value_coded when 885 then "Pap Smear"  else "" end),null)) as pap_smear_screening_method ,
-               max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal" when 145808 then "Low grade lesion" 
-                    when 145805 then "High grade lesion" when 155424 then "Invasive Cancer" when 145822 then "Atypical squamous cells(ASC-US/ASC-H)" 
+               max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal" when 145808 then "Low grade lesion"
+                    when 145805 then "High grade lesion" when 155424 then "Invasive Cancer" when 145822 then "Atypical squamous cells(ASC-US/ASC-H)"
                     when 155208 then "AGUS"  else "" end),null)) as pap_smear_screening_result ,
-               max(if(o.concept_id in (165070,1272), (case o.value_coded when 1065 then "Counseled on negative results" 
+               max(if(o.concept_id in (165070,1272), (case o.value_coded when 1065 then "Counseled on negative results"
                     when 160705 then "Refer for colposcopy" when 161826 then "Refer for biopsy"  else "" end),null)) as pap_smear_treatment_method ,
                max(if(o.concept_id=163589, (case o.value_coded when 160705 then "Colposcopy"  else "" end),null)) as colposcopy_screening_method ,
-               max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal" 
+               max(if(o.concept_id=164934, (case o.value_coded when 1115 then "Normal"
                     when 1116 then "Abnormal" when 159008 then "Suspicious for Cancer"  else "" end),null)) as colposcopy_screening_result ,
-                max(if(o.concept_id in (165070,166665,160705,165266), (case o.value_coded when 1065 then "Counseled on negative results" 
+                max(if(o.concept_id in (165070,166665,160705,165266), (case o.value_coded when 1065 then "Counseled on negative results"
                     when 162812 then "Cryotherapy" when 165395 then "Thermal ablation"
                     when 166620 then "Loop electrosurgical excision" when 1000103 then "Refer for appropriate diagnosis and management"
                     when 165385 then "Cryotherapy performed (SVA)" when 165381 then "Cryotherapy postponed"
@@ -4822,8 +4822,8 @@ inner join (
                     when 165396 then "LEEP performed" when 165396 then "Cold knife cone"
                     when 165395 then "Thermal ablation performed (SVA)" when 159837 then "Hysterectomy"
                     when 165391 then "Referred for cancer treatment"
-                    when 165995 then "Other treatment"  else "" end),null)) as colposcopy_treatment_method 
-      
+                    when 165995 then "Other treatment"  else "" end),null)) as colposcopy_treatment_method
+
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
              inner join form f on f.form_id=e.form_id and f.uuid in ("be5c5602-0a1d-11eb-9e20-37d2e56925ee","0c93b93c-bfef-4d2a-9fbe-16b59ee366e7")
@@ -4836,11 +4836,11 @@ left join (
                o.encounter_id,
 		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
 				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
-				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
                  when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as via_vili_screening_result,
                max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
 				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
-                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
                  when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as via_vili_treatment_method
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
@@ -4855,11 +4855,11 @@ left join (
                o.encounter_id,
 		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
 				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
-				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
                  when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as hpv_screening_result,
                max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
 				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
-                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
                  when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as hpv_treatment_method
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
@@ -4874,11 +4874,11 @@ left join (
                o.encounter_id,
 		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
 				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
-				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
                  when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as colposcopy_screening_result,
                max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
 				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
-                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
                  when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as colposcopy_treatment_method
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
@@ -4893,11 +4893,11 @@ left join (
                o.encounter_id,
 		       max(if(o1.concept_id = 164934, (case o1.value_coded when 703 then 'Positive'
 				 when 1116 then 'Positive' when 145805 then 'Positive' when 155424 then 'Positive'
-				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed' 
+				 when 145808  then 'Presumed' when 159393 then 'Presumed' when 159008 then 'Presumed'
                  when 5622 then 'Other' when 1115  then 'Negative' when 664  then 'Negative' else NULL end), '' )) as pap_smear_screening_result,
                max(if(o1.concept_id = 165266, (case o1.value_coded when 165381 then 'Cryotherapy postponed'when 165386 then 'Cryotherapy performed'
 				 when 162810 then 'LEEP' when 165396 then 'Cold knife cone' when 165395 then 'Thermocoagulation'
-                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment' 
+                 when 165385 then 'Cryotherapy performed (single Visit)' when 159837 then 'Hysterectomy' when 165391 then 'Referred for cancer treatment'
                  when 1107 then 'None' when 5622 then 'Other' else "" end), "" )) as pap_smear_treatment_method
              from obs o
              inner join encounter e on e.encounter_id = o.encounter_id
@@ -6137,6 +6137,108 @@ where e.voided=0
 group by o.id order by o.concept_id;
 
 SELECT "Completed processing gbv screening action data ", CONCAT("Time: ", NOW());
+END $$
+
+-- ------------- populate etl_violence_reporting-------------------------
+DROP PROCEDURE IF EXISTS sp_populate_etl_violence_reporting $$
+CREATE PROCEDURE sp_populate_etl_violence_reporting()
+BEGIN
+SELECT "Processing violence reporting", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_violence_reporting(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+place_of_incident,
+date_of_incident,
+time_of_incident,
+abuse_against,
+form_of_incident,
+perpetrator,
+other_perpetrator,
+date_of_crisis_response,
+support_service,
+hiv_testing_duration,
+hiv_testing_provided_within_5_days,
+duration_on_emergency_contraception,
+emergency_contraception_provided_within_5_days,
+psychosocial_trauma_counselling_duration,
+psychosocial_trauma_counselling_provided_within_5_days,
+pep_provided_duration,
+pep_provided_within_5_days,
+sti_screening_and_treatment_duration,
+sti_screening_and_treatment_provided_within_5_days,
+legal_support_duration,
+legal_support_provided_within_5_days,
+medical_examination_duration,
+medical_examination_provided_within_5_days,
+prc_form_file_duration,
+prc_form_file_provided_within_5_days,
+other_services_provided,
+medical_services_and_care_duration,
+medical_services_and_care_provided_within_5_days,
+psychosocial_trauma_counselling_durationA,
+psychosocial_trauma_counselling_provided_within_5_daysA,
+duration_of_none_sexual_legal_support,
+duration_of_none_sexual_legal_support_within_5_days,
+current_Location_of_person,
+follow_up_plan,
+resolution_date,
+date_created,
+date_last_modified,
+voided
+)
+select
+e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+max(if(o.concept_id = 162725, o.value_text, null)) as place_of_incident,
+max(if(o.concept_id = 160753, o.value_datetime, null)) as date_of_incident,
+max(if(o.concept_id = 161244, o.value_coded, null)) as time_of_incident,
+max(if(o.concept_id = 165164, o.value_coded,  null)) as abuse_against,
+max(if(o.concept_id = 165228, o.value_coded, null)) as form_of_incident,
+max(if(o.concept_id = 165206, o.value_coded, null)) as perpetrator,
+max(if(o.concept_id = 165230, o.value_text, null)) as other_perpetrator,
+max(if(o.concept_id = 165349, o.value_datetime, null)) as date_of_crisis_response,
+max(if(o.concept_id = 165225, o.value_text, null)) as support_service,
+max(if(o.concept_id = 159368, o.value_numeric, null)) as hiv_testing_duration,
+max(if(o.concept_id = 165165, o.value_coded, null)) as hiv_testing_provided_within_5_days,
+max(if(o.concept_id = 165166, o.value_numeric, null)) as duration_on_emergency_contraception,
+max(if(o.concept_id = 165167, o.value_coded, null)) as emergency_contraception_provided_within_5_days,
+max(if(o.concept_id = 165168, o.value_numeric, null)) as psychosocial_trauma_counselling_duration,
+max(if(o.concept_id = 165169, o.value_coded, null)) as psychosocial_trauma_counselling_provided_within_5_days,
+max(if(o.concept_id = 165170, o.value_numeric, null)) as pep_provided_duration,
+max(if(o.concept_id = 165171, o.value_coded, null)) as pep_provided_within_5_days,
+max(if(o.concept_id = 165190, o.value_numeric, null)) as sti_screening_and_treatment_duration,
+max(if(o.concept_id = 165172, o.value_coded, null)) as sti_screening_and_treatment_provided_within_5_days,
+max(if(o.concept_id = 165173, o.value_numeric, null)) as legal_support_duration,
+max(if(o.concept_id = 165174, o.value_coded, null)) as legal_support_provided_within_5_days,
+max(if(o.concept_id = 165175, o.value_numeric, null)) as medical_examination_duration,
+max(if(o.concept_id = 165176, o.value_coded, null)) as medical_examination_provided_within_5_days,
+max(if(o.concept_id = 165178, o.value_numeric, null)) as prc_form_file_duration,
+max(if(o.concept_id = 165177, o.value_coded, null)) as prc_form_file_provided_within_5_days,
+max(if(o.concept_id = 163108, o.value_text, null)) as other_services_provided,
+max(if(o.concept_id = 165181, o.value_numeric, null)) as medical_services_and_care_duration,
+max(if(o.concept_id = 165182, o.value_coded, null)) as medical_services_and_care_provided_within_5_days,
+max(if(o.concept_id = 165183, o.value_numeric, null)) as psychosocial_trauma_counselling_durationA,
+max(if(o.concept_id = 165184, o.value_coded, null)) as psychosocial_trauma_counselling_provided_within_5_daysA,
+max(if(o.concept_id = 165187, o.value_numeric, null)) as duration_of_none_sexual_legal_support,
+max(if(o.concept_id = 165188, o.value_coded, null)) as duration_of_none_sexual_legal_support_within_5_days,
+max(if(o.concept_id = 165189, o.value_coded, null)) as current_Location_of_person,
+max(if(o.concept_id = 164378, o.value_text, null)) as follow_up_plan,
+max(if(o.concept_id = 165224, o.value_datetime, null)) as resolution_date,
+e.date_created as date_created,
+if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+e.voided as voided
+from encounter e
+inner join person p on p.person_id=e.patient_id and p.voided=0
+inner join form f on f.form_id=e.form_id and f.uuid in ('10cd2ca0-8d25-4876-b97c-b568a912957e')
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162725,160753,161244,165164,165228,165206,165230,165349,165225,159368,165165,165166,165167,165168,165169,165170,165171,165190,165172,165173,165174,165175,165176,165178,165177,163108,165181,165182,165183,165184,165187,165188,165189,164378,165224) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+
+SELECT "Completed processing violence reporting data ", CONCAT("Time: ", NOW());
 END $$
 
 -- ------------- populate etl_depression_screening-------------------------
@@ -7393,14 +7495,14 @@ DROP PROCEDURE IF EXISTS sp_populate_etl_patient_appointment $$
 CREATE PROCEDURE sp_populate_etl_patient_appointment()
 BEGIN
   SELECT "Processing Patient appointment";
-  INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id, 
-  provider_id, 
-  patient_id, 
-  visit_date, 
-  start_date_time, 
-  end_date_time, 
+  INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id,
+  provider_id,
+  patient_id,
+  visit_date,
+  start_date_time,
+  end_date_time,
   appointment_service_id,
-  status, 
+  status,
   location_id,
     date_created)
   SELECT
@@ -7458,7 +7560,7 @@ set fup.appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
 update kenyaemr_etl.etl_hei_follow_up_visit fup
     inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 13
 set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-  
+
       SELECT "Completed updating next appointment date";
 END $$
 
@@ -8031,6 +8133,7 @@ CALL sp_populate_etl_PrEP_verification();
 CALL sp_populate_etl_alcohol_drug_abuse_screening();
 CALL sp_populate_etl_gbv_screening();
 CALL sp_populate_etl_gbv_screening_action();
+CALL sp_populate_etl_violence_reporting();
 CALL sp_populate_etl_depression_screening();
 CALL sp_populate_etl_adverse_events();
 CALL sp_populate_etl_allergy_chronic_illness();
@@ -8055,6 +8158,5 @@ UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_scr
 
 SELECT "Completed first time setup", CONCAT("Time: ", NOW());
 END $$
-
 
 

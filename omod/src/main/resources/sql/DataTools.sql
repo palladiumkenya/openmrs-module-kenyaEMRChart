@@ -13,7 +13,7 @@ create database kenyaemr_datatools DEFAULT CHARACTER SET utf8 COLLATE utf8_unico
 -- -------------------------- creating patient demographics --------------------------------------
 -- populate patient_demographics table
 create table kenyaemr_datatools.patient_demographics as
-select 
+select
 patient_id,
 uuid,
 given_name,
@@ -60,7 +60,7 @@ SELECT "Successfully created demographics table";
 
 -- --------------------------- populate patient_hiv_enrollment table ---------------------------------------------
 create table kenyaemr_datatools.hiv_enrollment as
-select 
+select
 patient_id,
 uuid,
 visit_id,
@@ -72,8 +72,8 @@ date_created,
 date_last_modified,
 patient_type,
 date_first_enrolled_in_care,
-(case entry_point when 159938 then "HBTC" when 160539 then "VCT Site" when 159937 then "MCH" when 160536 then "IPD-Adult" 
-  when 160537 then "IPD-Child," when 160541 then "TB Clinic" when 160542 then "OPD" when 162050 then "CCC" 
+(case entry_point when 159938 then "HBTC" when 160539 then "VCT Site" when 159937 then "MCH" when 160536 then "IPD-Adult"
+  when 160537 then "IPD-Child," when 160541 then "TB Clinic" when 160542 then "OPD" when 162050 then "CCC"
   when 160551 then "Self Test," when 5622 then "Other(eg STI)" else "" end) as entry_point,
 transfer_in_date,
 facility_transferred_from,
@@ -111,7 +111,7 @@ facility_confirmed_hiv_positive,
 (case ever_on_haart when 1185 then "Yes" else "" end) as ever_on_haart,
 IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 name_of_treatment_supporter,
-(case relationship_of_treatment_supporter when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" 
+(case relationship_of_treatment_supporter when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent"
   when 5617 then "Spouse" when 163565 then "Partner" when 5622 then "Other" else "" end) as relationship_of_treatment_supporter,
 treatment_supporter_telephone,
 treatment_supporter_address,
@@ -162,7 +162,7 @@ z_score_absolute,
 (case key_population_type when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" else "" end) as key_population_type,
 IF(who_stage in (1204,1220),"WHO Stage1", IF(who_stage in (1205,1221),"WHO Stage2", IF(who_stage in (1206,1222),"WHO Stage3", IF(who_stage in (1207,1223),"WHO Stage4", "")))) as who_stage,
 who_stage_associated_oi,
-(case presenting_complaints when 1 then "Yes" when 0 then "No" else "" end) as presenting_complaints, 
+(case presenting_complaints when 1 then "Yes" when 0 then "No" else "" end) as presenting_complaints,
 clinical_notes,
 (case on_anti_tb_drugs when 1065 then "Yes" when 1066 then "No" else "" end) as on_anti_tb_drugs,
 (case on_ipt when 1065 then "Yes" when 1066 then "No" else "" end) as on_ipt,
@@ -179,7 +179,7 @@ clinical_notes,
 (case genexpert_ordered when 162202 then "Yes" when 1066 then "No" else "" end) as genexpert_ordered,
 (case spatum_smear_result when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as spatum_smear_result,
 (case chest_xray_result when 1115 then "NORMAL" when 152526 then "ABNORMAL" else "" end) as chest_xray_result,
-(case genexpert_result when 664 then "NEGATIVE" when 162203 then "Mycobacterium tuberculosis detected with rifampin resistance" when 162204 then "Mycobacterium tuberculosis detected without rifampin resistance" 
+(case genexpert_result when 664 then "NEGATIVE" when 162203 then "Mycobacterium tuberculosis detected with rifampin resistance" when 162204 then "Mycobacterium tuberculosis detected without rifampin resistance"
   when 164104 then "Mycobacterium tuberculosis detected with indeterminate rifampin resistance"  when 163611 then "Invalid" when 1138 then "INDETERMINATE" else "" end) as genexpert_result,
 (case referral when 1065 then "Yes" when 1066 then "No" else "" end) as referral,
 (case clinical_tb_diagnosis when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as clinical_tb_diagnosis,
@@ -191,7 +191,7 @@ clinical_notes,
 (case pregnancy_status when 1065 then "Yes" when 1066 then "No" else "" end) as pregnancy_status,
 (case breastfeeding when 1065 then "Yes" when 1066 then "No" else "" end) as breastfeeding,
 (case wants_pregnancy when 1065 then "Yes" when 1066 then "No" else "" end) as wants_pregnancy,
-(case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)" 
+(case pregnancy_outcome when 126127 then "Spontaneous abortion" when 125872 then "STILLBIRTH" when 1395 then "Term birth of newborn" when 129218 then "Preterm Delivery (Maternal Condition)"
  when 159896 then "Therapeutic abortion procedure" when 151849 then "Liveborn, Unspecified Whether Single, Twin, or Multiple" when 1067 then "Unknown" else "" end) as pregnancy_outcome,
 anc_number,
 expected_delivery_date,
@@ -203,8 +203,8 @@ parity,
 full_term_pregnancies,
 abortion_miscarriages,
 (case family_planning_status when 965 then "On Family Planning" when 160652 then "Not using Family Planning" when 1360 then "Wants Family Planning" else "" end) as family_planning_status,
-(case family_planning_method when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectible" when 1359 then "Implant" 
-when 5275 then "Intrauterine Device" when 136163 then "Lactational Amenorhea Method" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness" 
+(case family_planning_method when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectible" when 1359 then "Implant"
+when 5275 then "Intrauterine Device" when 136163 then "Lactational Amenorhea Method" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness"
 when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
 (case reason_not_using_family_planning when 160572 then "Thinks can't get pregnant" when 160573 then "Not sexually active now" when 5622 then "Other" else "" end) as reason_not_using_family_planning,
 (case tb_status when 1660 then "No TB Signs" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "TB Screening Not Done"  else "" end) as tb_status,
@@ -228,10 +228,10 @@ when 124601 then 'Toothache' when 123919 then 'Ulcers' when 111525 then 'Vertigo
 (case dapsone_dispensed when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as dapsone_dispensed,
 (case inh_dispensed when 1065 then "Yes" when 1066 then "No" when 1175 then "Not applicable" else "" end) as inh_dispensed,
 (case arv_adherence when 159405 then "Good" when 163794 then "Inadequate" when 159407 then "Poor" else "" end) as arv_adherence,
-(case poor_arv_adherence_reason when 102 then "Toxicity, drug" when 121725 then "Alcohol abuse" when 119537 then "Depression" 
-when 5622 then "Other" when 1754 then "Medications unavailable" when 1778 then "TREATMENT OR PROCEDURE NOT CARRIED OUT DUE TO FEAR OF SIDE EFFECTS" 
-when 819 then "Cannot afford treatment" when 160583 then "Shares medications with others" when 160584 then "Lost or ran out of medication" 
-when 160585 then "Felt too ill to take medication" when 160586 then "Felt better and stopped taking medication" when 160587 then "Forgot to take medication" 
+(case poor_arv_adherence_reason when 102 then "Toxicity, drug" when 121725 then "Alcohol abuse" when 119537 then "Depression"
+when 5622 then "Other" when 1754 then "Medications unavailable" when 1778 then "TREATMENT OR PROCEDURE NOT CARRIED OUT DUE TO FEAR OF SIDE EFFECTS"
+when 819 then "Cannot afford treatment" when 160583 then "Shares medications with others" when 160584 then "Lost or ran out of medication"
+when 160585 then "Felt too ill to take medication" when 160586 then "Felt better and stopped taking medication" when 160587 then "Forgot to take medication"
 when 160588 then "Pill burden" when 160589 then "Concerned about privacy/stigma" when 820 then "TRANSPORT PROBLEMS"  else "" end) as poor_arv_adherence_reason,
 poor_arv_adherence_reason_other,
 (case pwp_disclosure when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" when 1175 then "N/A" else "" end) as pwp_disclosure,
@@ -249,7 +249,7 @@ refill_date,
 (case appointment_consent when 1065 then "Yes" when 1066 then "No" else "" end) as appointment_consent,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
-(case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
+(case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led"
 when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care,
 (case insurance_type when 1917 then "NHIF" when 1107 then "None" when 5622 then "Other" else "" end) as insurance_type,
 other_insurance_specify,
@@ -326,7 +326,7 @@ SELECT "Successfully created lab extract table";
 
 -- create table pharmacy_extract
 create table kenyaemr_datatools.pharmacy_extract as
-select 
+select
 patient_id,
 uuid,
 visit_date,
@@ -351,7 +351,7 @@ ALTER TABLE kenyaemr_datatools.pharmacy_extract ADD FOREIGN KEY (patient_id) REF
 
 -- create table patient_program_discontinuation
 create table kenyaemr_datatools.patient_program_discontinuation as
-select 
+select
 patient_id,
 uuid,
 visit_id,
@@ -1017,7 +1017,7 @@ SELECT "Successfully created tb enrollment table";
 
 -- create table tb_follow_up_visit
 create table kenyaemr_datatools.tb_follow_up_visit as
-select 
+select
 patient_id,
 uuid,
 provider,
@@ -1044,7 +1044,7 @@ test_date,
 (case hiv_status when 664 then "Negative" when 703 then "Positive" when 1067 then "Unknown" else "" end) as hiv_status,
 next_appointment_date
 from kenyaemr_etl.etl_tb_follow_up_visit;
- 
+
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 
 ALTER TABLE kenyaemr_datatools.tb_follow_up_visit ADD INDEX(visit_date);
@@ -1538,6 +1538,61 @@ from kenyaemr_etl.etl_gbv_screening_action;
 ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
 ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD INDEX(visit_date);
 SELECT "Successfully created gbv_screening_action table";
+
+-- create table etl_violence_reporting
+create table kenyaemr_datatools.violence_reporting as
+select
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+place_of_incident,
+date_of_incident,
+(case time_of_incident when 165194 then 'AM' when 165195 then 'PM' else '' end) as time_of_incident,
+(case abuse_against when 165163 then 'Group' when 165162 then 'Individual' else '' end) as abuse_against,
+(case form_of_incident when 123007 then 'Verbal abuse' when 152292 then 'Assault/physical abuse' when 126312 then 'Discrimination' when 152370 then 'Rape/Sexual abuse' when 156761 then 'Illegal arrest' when 165161 then 'Harassment' when 5622 then 'Other' else '' end) as form_of_incident,
+(case perpetrator when 165283 then 'Local Gang' when 165284 then 'Police' when 165285 then 'General public' when 165286 then 'Client' when 163488 then 'Community Member' when 165193 then 'Local authority' when 5619 then 'Health Care Provider' when 165289 then 'Education institution' when 165290 then 'Religious group' when 165291 then 'Drug peddler' when 165292 then 'Pimp or Madam' when 165293 then 'Bar owners or managers' when 1560 then 'Family' when 165294 then 'Partner' when 165295 then 'Neighbor' when 165296 then 'Employer' when 165241 then 'Other' else '' end) as perpetrator,
+other_perpetrator,
+date_of_crisis_response,
+support_service,
+hiv_testing_duration,
+(case hiv_testing_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as hiv_testing_provided_within_5_days,
+duration_on_emergency_contraception,
+(case emergency_contraception_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as emergency_contraception_provided_within_5_days,
+psychosocial_trauma_counselling_duration,
+(case psychosocial_trauma_counselling_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as psychosocial_trauma_counselling_provided_within_5_days,
+pep_provided_duration,
+(case pep_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as pep_provided_within_5_days,
+sti_screening_and_treatment_duration,
+(case sti_screening_and_treatment_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as sti_screening_and_treatment_provided_within_5_days,
+legal_support_duration,
+(case legal_support_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as legal_support_provided_within_5_days,
+medical_examination_duration,
+(case medical_examination_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as medical_examination_provided_within_5_days,
+
+prc_form_file_duration,
+(case prc_form_file_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as prc_form_file_provided_within_5_days,
+other_services_provided,
+medical_services_and_care_duration,
+(case medical_services_and_care_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as medical_services_and_care_provided_within_5_days,
+psychosocial_trauma_counselling_durationA,
+(case psychosocial_trauma_counselling_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as psychosocial_trauma_counselling_provided_within_5_daysA,
+duration_of_none_sexual_legal_support,
+(case duration_of_none_sexual_legal_support_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as duration_of_none_sexual_legal_support_within_5_days,
+(case current_Location_of_person when 1536 then 'Home' when 160432 then 'Dead' when 162277 then 'Imprisoned' when 1896 then 'Hospitalized' when 165227 then 'Safe place' else '' end) as current_Location_of_person,
+follow_up_plan,
+resolution_date,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_violence_reporting;
+
+ALTER TABLE kenyaemr_datatools.violence_reporting ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.violence_reporting ADD INDEX(visit_date);
+SELECT "Successfully created etl_violence_reporting table";
 
 
 -- create table depression_screening
@@ -2995,4 +3050,3 @@ SELECT "Successfully created clinical_encounter table";
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
-

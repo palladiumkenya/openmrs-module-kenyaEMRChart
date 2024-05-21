@@ -83,6 +83,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_PrEP_verification;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_screening_action;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_violence_reporting;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_depression_screening;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_adverse_events;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_allergy_chronic_illness;
@@ -2861,6 +2862,60 @@ CREATE TABLE kenyaemr_etl.etl_PrEP_verification (
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
     INDEX(obs_id),
+    INDEX(patient_id)
+    );
+
+    -- ------------ create table etl_violence_reporting-----------------------
+    CREATE TABLE kenyaemr_etl.etl_violence_reporting (
+    uuid char(38),
+    provider INT(11),
+    patient_id INT(11) NOT NULL ,
+    visit_id INT(11),
+    visit_date DATE,
+    location_id INT(11) DEFAULT NULL,
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    place_of_incident VARCHAR(100),
+    date_of_incident DATE,
+    time_of_incident  INT(11),
+    abuse_against INT(11),
+    form_of_incident INT(11),
+    perpetrator INT(11),
+    other_perpetrator VARCHAR(100),
+    date_of_crisis_response DATE,
+    support_service VARCHAR(100),
+    hiv_testing_duration VARCHAR(50),
+    hiv_testing_provided_within_5_days INT(11),
+    duration_on_emergency_contraception INT (11),
+    emergency_contraception_provided_within_5_days INT(11),
+    psychosocial_trauma_counselling_duration VARCHAR(50),
+    psychosocial_trauma_counselling_provided_within_5_days INT(11),
+    pep_provided_duration VARCHAR(50),
+    pep_provided_within_5_days INT(11),
+    sti_screening_and_treatment_duration VARCHAR(50),
+    sti_screening_and_treatment_provided_within_5_days INT(11),
+    legal_support_duration VARCHAR(50),
+    legal_support_provided_within_5_days INT(11),
+    medical_examination_duration VARCHAR(50),
+    medical_examination_provided_within_5_days INT(11),
+    prc_form_file_duration VARCHAR(50),
+    prc_form_file_provided_within_5_days INT(11),
+    other_services_provided VARCHAR(100),
+    medical_services_and_care_duration VARCHAR(50),
+    medical_services_and_care_provided_within_5_days INT(11),
+    psychosocial_trauma_counselling_durationA VARCHAR(50),
+    psychosocial_trauma_counselling_provided_within_5_daysA INT(11),
+    duration_of_none_sexual_legal_support VARCHAR(50),
+    duration_of_none_sexual_legal_support_within_5_days INT(11),
+    current_Location_of_person INT(11),
+    follow_up_plan VARCHAR(100),
+    resolution_date DATE,
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
     INDEX(patient_id)
     );
 
