@@ -8014,7 +8014,6 @@ CALL sp_populate_etl_progress_note();
 CALL sp_populate_etl_prep_discontinuation();
 CALL sp_populate_etl_hts_linkage_tracing();
 CALL sp_populate_etl_patient_program();
-CALL sp_update_dashboard_table();
 CALL sp_create_default_facility_table();
 CALL sp_populate_etl_person_address();
 CALL sp_populate_etl_otz_enrollment();
@@ -8054,6 +8053,7 @@ CALL sp_populate_etl_art_fast_track();
 CALL sp_populate_etl_clinical_encounter();
 CALL sp_populate_etl_daily_revenue_summary();
 CALL sp_update_next_appointment_date();
+CALL sp_update_dashboard_table();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
