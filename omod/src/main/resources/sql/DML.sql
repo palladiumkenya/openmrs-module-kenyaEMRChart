@@ -7199,7 +7199,7 @@ BEGIN
              left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
     where o.voided = 0
       and o.order_type_id = 2
-      and ((o.order_action = 'NEW' and o.date_stopped is not null) or (o.order_reason_non_coded = 'previously existing orders'))
+      and ((o.order_action = 'NEW') or (o.order_reason_non_coded = 'previously existing orders'))
       and e.voided = 0
     group by o.order_group_id,o.patient_id, o.encounter_id;
 
