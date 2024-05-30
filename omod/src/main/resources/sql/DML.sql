@@ -5395,7 +5395,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=165249,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_referred,
                max(if(o.concept_id=165250,o.value_text,null)) as sti_referred_text,
                max(if(o.concept_id=165197,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as tb_screened,
-               max(if(o.concept_id=165198,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as tb_results,
+               max(if(o.concept_id=165198,(case o.value_coded when 1660 then "No signs" when 142177 then "Presumptive" when 1661 then "Diagnosed with TB" when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as tb_results,
                max(if(o.concept_id=1111,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "NA" end),null)) as tb_treated,
                max(if(o.concept_id=162310,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as tb_referred,
                max(if(o.concept_id=163323,o.value_text,null)) as tb_referred_text,
@@ -5490,7 +5490,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=160119,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as active_art,
                max(if(o.concept_id=165242,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as eligible_vl,
                max(if(o.concept_id=165243,(case o.value_coded when 1065 THEN "Y" when 1066 then "N" when 1175 then "Not Applicable" else "" end),null)) as vl_test_done,
-               max(if(o.concept_id=165246,(case o.value_coded when 165244 THEN "Y" when 165245 then "N" when 1175 then "NA" else "" end),null)) as vl_results,
+               max(if(o.concept_id=165236 or 165246,(case o.value_coded when 167484 THEN "LDL" when 167485 then max(if(o.concept_id=856,o.value_numeric,null)) end),null) when 165244 THEN "Y" when 165245 then "N") as vl_results,
                max(if(o.concept_id=165246,(case o.value_coded when 164369 then "N"  else "Y" end),null)) as received_vl_results,
                max(if(o.concept_id=165247,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as condom_use_education,
                max(if(o.concept_id=164820,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as post_abortal_care,
@@ -5517,7 +5517,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                 164934,165196,165266,165267,165268,116030,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
                 165209,160653,165279,165280,165210,165211,165213,165281,165282,166663,166664,165052,166637,165093,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
                 164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,163766,165055,165056,
-                165057,165058,164845,165248,5096,164142)
+                165057,165058,164845,165248,5096,164142,165236,856)
         where e.voided=0
         group by e.patient_id, e.encounter_id, visit_date;
         SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
