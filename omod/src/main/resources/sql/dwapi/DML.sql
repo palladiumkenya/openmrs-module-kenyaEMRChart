@@ -5251,7 +5251,7 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                max(if(o.concept_id=160119,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as active_art,
                max(if(o.concept_id=165242,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as eligible_vl,
                max(if(o.concept_id=165243,(case o.value_coded when 1065 THEN "Y" when 1066 then "N" when 1175 then "Not Applicable" else "" end),null)) as vl_test_done,
-               max(if(o.concept_id=165236 or 165246,(case o.value_coded when 167484 THEN "LDL" when 167485 then max(if(o.concept_id=856,o.value_numeric,null)) end),null) when 165244 THEN "Y" when 165245 then "N") as vl_results,
+               COALESCE(max(if(o.concept_id=165236 or 165246,(case o.value_coded when 167484 THEN "LDL" when 165244 THEN "Y" when 165245 then "N" END), NULL)), max(if(o.concept_id=856,o.value_numeric,null))) as vl_results,
                max(if(o.concept_id=165246,(case o.value_coded when 164369 then "N"  else "Y" end),null)) as received_vl_results,
                max(if(o.concept_id=165247,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as condom_use_education,
                max(if(o.concept_id=164820,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as post_abortal_care,
