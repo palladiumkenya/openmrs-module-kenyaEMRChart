@@ -1540,6 +1540,61 @@ ALTER TABLE kenyaemr_datatools.gbv_screening_action ADD INDEX(visit_date);
 SELECT "Successfully created gbv_screening_action table";
 
 
+
+-- create table etl_violence_reporting
+create table kenyaemr_datatools.violence_reporting as
+select
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+place_of_incident,
+date_of_incident,
+(case time_of_incident when 165194 then 'AM' when 165195 then 'PM' else '' end) as time_of_incident,
+(case abuse_against when 165163 then 'Group' when 165162 then 'Individual' else '' end) as abuse_against,
+form_of_incident,
+perpetrator,
+date_of_crisis_response,
+support_service,
+hiv_testing_duration,
+(case hiv_testing_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as hiv_testing_provided_within_5_days,
+duration_on_emergency_contraception,
+(case emergency_contraception_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as emergency_contraception_provided_within_5_days,
+psychosocial_trauma_counselling_duration,
+(case psychosocial_trauma_counselling_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as psychosocial_trauma_counselling_provided_within_5_days,
+pep_provided_duration,
+(case pep_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as pep_provided_within_5_days,
+sti_screening_and_treatment_duration,
+(case sti_screening_and_treatment_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as sti_screening_and_treatment_provided_within_5_days,
+legal_support_duration,
+(case legal_support_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as legal_support_provided_within_5_days,
+medical_examination_duration,
+(case medical_examination_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as medical_examination_provided_within_5_days,
+prc_form_file_duration,
+(case prc_form_file_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as prc_form_file_provided_within_5_days,
+other_services_provided,
+medical_services_and_care_duration,
+(case medical_services_and_care_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as medical_services_and_care_provided_within_5_days,
+psychosocial_trauma_counselling_durationA,
+(case psychosocial_trauma_counselling_provided_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as psychosocial_trauma_counselling_provided_within_5_daysA,
+duration_of_none_sexual_legal_support,
+(case duration_of_none_sexual_legal_support_within_5_days when 1065 then 'Yes' when 1066 then 'No' else '' end) as duration_of_none_sexual_legal_support_within_5_days,
+(case current_Location_of_person when 1536 then 'Home' when 160432 then 'Dead' when 162277 then 'Imprisoned' when 1896 then 'Hospitalized' when 165227 then 'Safe place' else '' end) as current_Location_of_person,
+follow_up_plan,
+resolution_date,
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_violence_reporting;
+
+ALTER TABLE kenyaemr_datatools.violence_reporting ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.violence_reporting ADD INDEX(visit_date);
+SELECT "Successfully created etl_violence_reporting table";
+
+
 -- create table depression_screening
 create table kenyaemr_datatools.depression_screening as
 select
