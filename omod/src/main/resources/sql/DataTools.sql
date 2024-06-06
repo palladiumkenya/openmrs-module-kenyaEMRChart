@@ -180,7 +180,7 @@ clinical_notes,
 (case spatum_smear_result when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as spatum_smear_result,
 (case chest_xray_result when 1115 then "NORMAL" when 152526 then "ABNORMAL" else "" end) as chest_xray_result,
 (case genexpert_result when 664 then "NEGATIVE" when 162203 then "Mycobacterium tuberculosis detected with rifampin resistance" when 162204 then "Mycobacterium tuberculosis detected without rifampin resistance" 
-  when 164104 then "Mycobacterium TB with indeterminate rifampin resistance"  when 163611 then "Invalid" when 1138 then "INDETERMINATE" else "" end) as genexpert_result,
+  when 164104 then "Mycobacterium tuberculosis detected with indeterminate rifampin resistance"  when 163611 then "Invalid" when 1138 then "INDETERMINATE" else "" end) as genexpert_result,
 (case referral when 1065 then "Yes" when 1066 then "No" else "" end) as referral,
 (case clinical_tb_diagnosis when 703 then "POSITIVE" when 664 then "NEGATIVE" else "" end) as clinical_tb_diagnosis,
 (case contact_invitation when 1065 then "Yes" when 1066 then "No" else "" end) as contact_invitation,
@@ -249,8 +249,8 @@ refill_date,
 (case appointment_consent when 1065 then "Yes" when 1066 then "No" else "" end) as appointment_consent,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
-(case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" when 163488 then "Community ART distribution group"
-when 1537 then "Facility ART Distribution Group" end) as differentiated_care,
+(case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" 
+when 164946 then "Facility ART Distribution Group" else "" end) as differentiated_care,
 (case insurance_type when 1917 then "NHIF" when 1107 then "None" when 5622 then "Other" else "" end) as insurance_type,
 other_insurance_specify,
 (case insurance_status when 161636 then "Active" when 1118 then "Inactive" else "" end) as insurance_status
@@ -1232,8 +1232,7 @@ SELECT "Successfully created enhanced adherence table";
       muac,
       z_score_absolute,
       (case z_score when 1115 then "Normal (Median)" when 123814 then "Mild (-1 SD)" when 123815 then "Moderate (-2 SD)" when 164131 then "Severe (-3 SD and -4 SD)" else "" end) as z_score,
-      (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" when 164125 then "Nutritional wasting" when 114413 then "Overweight" when 164131 then "Severe (-3 SD and -4 SD" when 123815 then "Moderate (-2 SD)" when 123814 then "Mild (-1 SD)" end) as nutritional_status,
-      (case nutritional_intervention when 1380 then "Nutritional counselling for a Normal Case" when 159854 then "MAM(Supplementary Feeding Program)" when 161650 then "SAM without complications(Outpatient Therapeutic Program)" when 163302 then "Inpatient Management for clients with SAM Complications" when 983 then "Weight Management follow up for clients with Overweight/Obesity" end) as nutritional_intervention,
+      (case nutritional_status when 1115 then "Normal" when 163302 then "Severe acute malnutrition" when 163303 then "Moderate acute malnutrition" when 114413 then "Overweight/Obese" else "" end) as nutritional_status,
       last_menstrual_period,
       (case hpv_vaccinated when 1065 then 'Yes' when 1066 then 'No' else '' end) as hpv_vaccinated,
       voided
