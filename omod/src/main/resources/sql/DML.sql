@@ -418,7 +418,7 @@ max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
 max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
 max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
 max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
-max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
+max(if(o.concept_id=163515,o.value_coded,null)) as nutritional_status,
 max(if(o.concept_id=164930,o.value_coded,null)) as population_type,
 max(if(o.concept_id=160581,o.value_coded,null)) as key_population_type,
 max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
@@ -3431,6 +3431,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
             z_score_absolute,
             z_score,
 			nutritional_status,
+			nutritional_intervention,
 			last_menstrual_period,
             hpv_vaccinated,
             date_last_modified,
@@ -3459,7 +3460,8 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 				max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
 				max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
                 max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
-				max(if(o.concept_id=163300,o.value_coded,null)) as nutritional_status,
+				max(if(o.concept_id=163515 or o.concept_id=167392,o.value_coded,null)) as nutritional_status,
+				max(if(o.concept_id=163304,o.value_coded,null)) as nutritional_intervention,
 				max(if(o.concept_id=1427,date(o.value_datetime),null)) as last_menstrual_period,
                 max(if(o.concept_id=160325,o.value_coded,null)) as hpv_vaccinated,
 				if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
@@ -3471,7 +3473,7 @@ CREATE PROCEDURE sp_populate_etl_patient_triage()
 					select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-				and o.concept_id in (160430,1154,159368,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,163300,1427,160325,162584)
+				and o.concept_id in (160430,1154,159368,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,167392,1427,160325,162584,163304)
 			where e.voided=0
 			group by e.patient_id, visit_date
 		;
@@ -4100,6 +4102,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 			hepatotoxity,
 			peripheral_neuropathy,
 			rash,
+		    has_other_symptoms,
 			adherence,
 			action_taken,
 			voided
@@ -4116,10 +4119,11 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 				max(if(o.concept_id=164073,date(o.value_datetime),null)) as ipt_due_date,
 				max(if(o.concept_id=164074,date(o.value_datetime),null)) as date_collected_ipt,
 				max(if(o.concept_id=5089,o.value_numeric,null)) as weight,
-				max(if(o.concept_id=159098,o.value_coded,null)) as hepatotoxity,
-				max(if(o.concept_id=118983,o.value_coded,null)) as peripheral_neuropathy,
-				max(if(o.concept_id=512,o.value_coded,null)) as rash,
-				max(if(o.concept_id=164075,o.value_coded,null)) as adherence,
+                max(if(o.concept_id = 159098, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end), null )) as hepatotoxity,
+                max(if(o.concept_id = 118983, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end), null )) as peripheral_neuropathy,
+                max(if(o.concept_id = 512, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else null end), null )) as rash,
+                max(if(o.concept_id = 163190, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end), null )) as has_other_symptoms,
+                max(if(o.concept_id = 164075, (case o.value_coded when 159407 then "Poor" when 159405 then "Good" when 159406 then "Fair" when 164077 then "Very Good" when 164076 then "Excellent" when 1067 then "Unknown" else null end), null )) as adherence,
 				max(if(o.concept_id=160632,o.value_text,null)) as action_taken,
 				e.voided as voided
 			from encounter e
@@ -4129,7 +4133,7 @@ CREATE PROCEDURE sp_populate_etl_ipt_followup()
 					select encounter_type_id, uuid, name from encounter_type where uuid in('aadeafbe-a3b1-4c57-bc76-8461b778ebd6')
 				) et on et.encounter_type_id=e.encounter_type
 				left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-																 and o.concept_id in (164073,164074,159098,5089,118983,512,164075,160632)
+																 and o.concept_id in (164073,164074,159098,5089,118983,512,164075,160632,163190)
 			where e.voided=0
 			group by e.patient_id, e.encounter_id, visit_date
 		;
@@ -5085,8 +5089,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
                max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
                max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
-               max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-                                                     then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 1175 then "Not applicable"  else "" end),null)) as key_population_type,
+               COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
+                                                     then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
                max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
                                                then  "Prisoner" else "" end),null)) as priority_population_type,
                max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
@@ -5133,7 +5137,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                  ) et on et.encounter_type_id=e.encounter_type
                join person p on p.person_id=e.patient_id and p.voided=0
                left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                          and o.concept_id in (164932,160534,160555,160535,164929,138643,167131,161551,161550,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642)
+                                          and o.concept_id in (164932,160534,160555,160535,164929,138643,167131,161551,161550,165004,165137,165006,165005,165030,165031,165032,165007,165008,165009,160638,165038,160642,165241)
         where e.voided=0
         group by e.patient_id, e.encounter_id;
 
@@ -5393,7 +5397,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=165249,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as sti_referred,
                max(if(o.concept_id=165250,o.value_text,null)) as sti_referred_text,
                max(if(o.concept_id=165197,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "" end),null)) as tb_screened,
-               max(if(o.concept_id=165198,(case o.value_coded when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as tb_results,
+               max(if(o.concept_id=165198,(case o.value_coded when 1660 then "No signs" when 142177 then "Presumptive" when 1661 then "Diagnosed with TB" when 664 then "Negative" when 703 THEN "Positive" else "" end),null)) as tb_results,
                max(if(o.concept_id=1111,(case o.value_coded when 1065 then "Y" when 1066 THEN "N" else "NA" end),null)) as tb_treated,
                max(if(o.concept_id=162310,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as tb_referred,
                max(if(o.concept_id=163323,o.value_text,null)) as tb_referred_text,
@@ -5436,7 +5440,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=165270,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as prep_referred,
                max(if(o.concept_id=165271,o.value_text,null)) as prep_text,
                max(if(o.concept_id=165204,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as violence_screened,
-               max(if(o.concept_id=165205,(case o.value_coded when 165206 then "Harrasment" when 121387 then "Assault" when 165207 THEN "Illegal arrest" when 123007 THEN "Verbal Abuse" when 127910 THEN "Rape/Sexual assault" when 126312 THEN "Discrimination"  else "" end),null)) as violence_results,
+               max(if(o.concept_id=165205,(case o.value_coded when 165206 then "Emotional & Psychological" when 121387 then "Physical" when 165207 THEN "Emotional & Psychological" when 123007 THEN "Emotional & Psychological" when 127910 THEN "Rape/Sexual assault" when 126312 THEN "Emotional & Psychological"  when 141537 then "Economical" when 5622 then "Others" end),null)) as violence_results,
                max(if(o.concept_id=165208,(case o.value_coded when  1065 then "Supported" when 1066 THEN "Not supported" else "" end),null)) as violence_treated,
                max(if(o.concept_id=165273,(case o.value_coded when 1065 then "Yes" when 1066 THEN "No" else "" end),null)) as violence_referred,
                max(if(o.concept_id=165274,o.value_text,null)) as violence_text,
@@ -5488,7 +5492,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=160119,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as active_art,
                max(if(o.concept_id=165242,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" when 1175 then "Not Applicable" else "" end),null)) as eligible_vl,
                max(if(o.concept_id=165243,(case o.value_coded when 1065 THEN "Y" when 1066 then "N" when 1175 then "Not Applicable" else "" end),null)) as vl_test_done,
-               max(if(o.concept_id=165246,(case o.value_coded when 165244 THEN "Y" when 165245 then "N" when 1175 then "NA" else "" end),null)) as vl_results,
+               COALESCE(max(if(o.concept_id=165246,(case o.value_coded when 167484 THEN "LDL" END), NULL)), max(if(o.concept_id=856,o.value_numeric,null))) as vl_results,
                max(if(o.concept_id=165246,(case o.value_coded when 164369 then "N"  else "Y" end),null)) as received_vl_results,
                max(if(o.concept_id=165247,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as condom_use_education,
                max(if(o.concept_id=164820,(case o.value_coded when 1065 THEN "Yes" when 1066 then "No" else "" end),null)) as post_abortal_care,
@@ -5515,7 +5519,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                 164934,165196,165266,165267,165268,116030,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
                 165209,160653,165279,165280,165210,165211,165213,165281,165282,166663,166664,165052,166637,165093,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
                 164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,163766,165055,165056,
-                165057,165058,164845,165248,5096,164142)
+                165057,165058,164845,165248,5096,164142,856)
         where e.voided=0
         group by e.patient_id, e.encounter_id, visit_date;
         SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
