@@ -7574,7 +7574,7 @@ BEGIN
       patient_appointment_id,
       provider_id,
       patient_id,
-      DATE(date_created) as visit_date,
+      DATE(date_appointment_scheduled) as visit_date,
       start_date_time,
       end_date_time,
       appointment_service_id,
