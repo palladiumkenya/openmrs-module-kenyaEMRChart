@@ -2326,8 +2326,10 @@ select
     lubes_no,
     syringes_needles_no,
     pep_eligible,
+    case pep_status when 166665 then 'Initiated' when 164463 then 'Not Initiated' when 1175 then 'Not applicable' end as pep_status,
     exposure_type,
     other_exposure_type,
+    case initiated_pep_within_72hrs when 1065 then 'Yes' when 1066 then 'No' end as initiated_pep_within_72hrs,
     clinical_notes,
     appointment_date,
     voided
