@@ -5140,8 +5140,10 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
             lubes_no,
             syringes_needles_no,
             pep_eligible,
+            pep_status,
             exposure_type,
             other_exposure_type,
+            initiated_pep_within_72hrs,
             clinical_notes,
             appointment_date,
             voided
@@ -5285,8 +5287,12 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                max(if(o.concept_id=165057,o.value_numeric,null)) as lubes_no,
                max(if(o.concept_id=165058,o.value_numeric,null)) as syringes_needles_no,
                max(if(o.concept_id=164845,(case o.value_coded when 1065 THEN "Y" when 1066 then "N" else "NA" end),null)) as pep_eligible,
-               max(if(o.concept_id=165060,(case o.value_coded when 127910 THEN "Rape" when 165045 then "Condom burst" when 5622 then "Others" else "" end),null)) as exposure_type,
+               max(if(o.concept_id=65911,o.value_coded,null)) as pep_status,
+               concat_ws(',', max(if(o.concept_id = 165060 and o.value_coded = 127910,"Rape", null)),
+                         max(if(o.concept_id = 165060 and o.value_coded = 165045, "Condom burst", null)),
+                         max(if(o.concept_id = 165060 and o.value_coded = 5622, "Others", null))) as exposure_type,
                max(if(o.concept_id=163042,o.value_text,null)) as other_exposure_type,
+               max(if(o.concept_id=165171,o.value_coded,null)) as initiated_pep_within_72hrs,
                max(if(o.concept_id=165248,o.value_text,null)) as clinical_notes,
                max(if(o.concept_id=5096,o.value_datetime,null)) as appointment_date,
                e.voided as voided
@@ -5302,7 +5308,7 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                 164934,165196,165266,165267,165268,116030,165076,165202,165203,165270,165271,165204,165205,165208,165273,165274,165045,165050,165053,161595,165277,1382,
                 165209,160653,165279,165280,165210,165211,165213,165281,165282,166663,166664,165052,166637,165093,165214,165215,159382,164401,165218,164848,159427,1648,163042,165220,165221,165222,165223,
                 164952,164400,165231,165233,165234,165237,162724,165238,161562,165239,163042,165240,160119,165242,165243,165246,165247,164820,165302,163766,165055,165056,
-                165057,165058,164845,165248,5096,164142,856,159599,167790,162724,162053,163281,159430,165251,167786)
+                165057,165058,164845,165248,5096,164142,856,159599,167790,162724,162053,163281,159430,165251,167786,65911,165171,165060)
         group by e.patient_id, e.encounter_id, visit_date;
         SELECT "Completed processing Clinical visit data ", CONCAT("Time: ", NOW());
         END $$
