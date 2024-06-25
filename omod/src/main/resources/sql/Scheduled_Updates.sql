@@ -6783,6 +6783,141 @@ order by e.patient_id
 END $$
 
 
+-- Update Link facility tracking form
+DROP PROCEDURE IF EXISTS sp_update_etl_link_facility_tracking $$
+CREATE PROCEDURE sp_update_etl_link_facility_tracking(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing link facility tracking form", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_link_facility_tracking(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+county,
+sub_county,
+ward,
+facility_name,
+ccc_number,
+date_diagnosed,
+date_initiated_art,
+original_regimen,
+current_regimen,
+date_switched,
+reason_for_switch,
+date_of_last_visit,
+date_viral_load_sample_collected,
+date_viral_load_results_received,
+viral_load_results,
+viral_load_results_copies,
+date_of_next_visit,
+enrolled_in_pssg,
+attended_pssg,
+on_pmtct,
+date_of_delivery,
+tb_screening,
+sti_treatment,
+trauma_counselling,
+cervical_cancer_screening,
+family_planning,
+currently_on_tb_treatment,
+date_initiated_tb_treatment,
+tpt_status,
+date_initiated_tpt,
+data_collected_through,
+
+date_created,
+date_last_modified,
+voided
+)
+select
+       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+       max(if(o.concept_id = 167992, o.value_text, null)) as county,
+       max(if(o.concept_id = 160632, o.value_text, null)) as sub_county,
+       max(if(o.concept_id = 165137, o.value_text, null)) as ward,
+       max(if(o.concept_id = 162724, o.value_text, null)) as facility_name,
+       max(if(o.concept_id = 162053, o.value_text, null)) as ccc_number,
+       max(if(o.concept_id = 159948, o.value_datetime, null)) as date_diagnosed,
+       max(if(o.concept_id = 159599, o.value_datetime, null)) as date_initiated_art,
+       max(if(o.concept_id= 164855,o.value_coded,null)) as original_regimen,
+       max(if(o.concept_id= 164432,o.value_coded,null)) as current_regimen,
+       max(if(o.concept_id = 164516, o.value_datetime, null)) as date_switched,
+       max(if(o.concept_id = 162725, o.value_text, null)) as reason_for_switch,
+       max(if(o.concept_id = 164093, o.value_datetime, null)) as date_of_last_visit,
+       max(if(o.concept_id = 162078, o.value_datetime, null)) as date_viral_load_sample_collected,
+       max(if(o.concept_id = 163281, o.value_datetime, null)) as date_viral_load_results_received,
+       max(if(o.concept_id = 165236, o.value_coded, null)) as viral_load_results,
+       max(if(o.concept_id = 856, o.value_numeric, null)) as viral_load_results_copies,
+       max(if(o.concept_id = 5096, o.value_datetime, null)) as date_of_next_visit,
+       max(if(o.concept_id = 165163, o.value_coded, null)) as enrolled_in_pssg,
+       max(if(o.concept_id = 164999, o.value_coded, null)) as attended_pssg,
+       max(if(o.concept_id = 163532, o.value_coded, null)) as on_pmtct,
+       max(if(o.concept_id = 5599, o.value_datetime, null)) as date_of_delivery,
+       max(if(o.concept_id = 166663, o.value_coded, null)) as tb_screening,
+       max(if(o.concept_id = 166665, o.value_coded, null)) as sti_treatment,
+       max(if(o.concept_id = 165184, o.value_coded, null)) as trauma_counselling,
+       max(if(o.concept_id = 165086, o.value_coded, null)) as cervical_cancer_screening,
+       max(if(o.concept_id = 160653, o.value_coded, null)) as family_planning,
+       max(if(o.concept_id = 162309, o.value_coded, null)) as currently_on_tb_treatment,
+       max(if(o.concept_id = 1113, o.value_datetime, null)) as date_initiated_tb_treatment,
+       max(if(o.concept_id = 162230, o.value_coded, null)) as tpt_status,
+       max(if(o.concept_id = 162320, o.value_datetime, null)) as date_initiated_tpt,
+       max(if(o.concept_id = 162568, o.value_coded, null)) as data_collected_through,
+       e.date_created as date_created,
+       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+       e.voided as voided
+from encounter e
+         inner join person p on p.person_id=e.patient_id and p.voided=0
+         inner join form f on f.form_id=e.form_id and f.uuid in ('195b87e0-2b8a-45f1-8b1b-7c6a30a06691')
+         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167992,160632,165137,162724,162053,159948,159599,164855,164432,164516,162725,164093,162078,163281,165236,856,5096,165163,164999,163532,5599,166663,166665,165184,165086,160653,162309,1113,162230,162320,162568) and o.voided=0
+where e.voided=0 and e.date_created >= last_update_time
+                or e.date_changed >= last_update_time
+                or e.date_voided >= last_update_time
+                or o.date_created >= last_update_time
+                or o.date_voided >= last_update_time
+group by e.encounter_id
+order by e.patient_id
+        ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
+          provider=VALUES(provider),
+          county=VALUES(county),
+          sub_county=VALUES(sub_county),
+          ward=VALUES(ward),
+          facility_name=VALUES(facility_name),
+          ccc_number=VALUES(ccc_number),
+          date_diagnosed=VALUES(date_diagnosed),
+          date_initiated_art=VALUES(date_initiated_art),
+          original_regimen=VALUES(original_regimen),
+          current_regimen=VALUES(current_regimen),
+          date_switched=VALUES(date_switched),
+          reason_for_switch=VALUES(reason_for_switch),
+          date_of_last_visit=VALUES(date_of_last_visit),
+          date_viral_load_sample_collected=VALUES(date_viral_load_sample_collected),
+          date_viral_load_results_received=VALUES(date_viral_load_results_received),
+          viral_load_results=VALUES(viral_load_results),
+          viral_load_results_copies=VALUES(viral_load_results_copies),
+          date_of_next_visit=VALUES(date_of_next_visit),
+          enrolled_in_pssg=VALUES(enrolled_in_pssg),
+          attended_pssg=VALUES(attended_pssg),
+          on_pmtct=VALUES(on_pmtct),
+          date_of_delivery=VALUES(date_of_delivery),
+          tb_screening=VALUES(tb_screening),
+          sti_treatment=VALUES(sti_treatment),
+          trauma_counselling=VALUES(trauma_counselling),
+          cervical_cancer_screening=VALUES(cervical_cancer_screening),
+          family_planning=VALUES(family_planning),
+          currently_on_tb_treatment=VALUES(currently_on_tb_treatment),
+          date_initiated_tb_treatment=VALUES(date_initiated_tb_treatment),
+          tpt_status=VALUES(tpt_status),
+          date_initiated_tpt=VALUES(date_initiated_tpt),
+          data_collected_through=VALUES(data_collected_through),
+
+          voided=VALUES(voided);
+END $$
+
+
+-- Update Depression Screening
 
   DROP PROCEDURE IF EXISTS sp_update_etl_depression_screening $$
     CREATE PROCEDURE sp_update_etl_depression_screening(IN last_update_time DATETIME)
@@ -8566,7 +8701,7 @@ INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id,
       patient_appointment_id,
       provider_id,
       patient_id,
-      DATE(date_appointment_scheduled) as visit_date,
+      DATE(date_created) as visit_date,
       start_date_time,
       end_date_time,
       appointment_service_id,
@@ -8866,6 +9001,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
     CALL sp_update_etl_gbv_screening(last_update_time);
     CALL sp_update_etl_violence_reporting(last_update_time);
+    CALL sp_update_etl_link_facility_tracking(last_update_time);
     CALL sp_update_etl_depression_screening(last_update_time);
     CALL sp_update_etl_adverse_events(last_update_time);
     CALL sp_update_etl_allergy_chronic_illness(last_update_time);
