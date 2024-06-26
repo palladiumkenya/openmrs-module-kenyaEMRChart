@@ -640,17 +640,16 @@ from encounter e
 																				'a0034eee-1940-4e35-847f-97537a35d05e',
 																				'e1406e88-e9a9-11e8-9f32-f2801f1b9fd1',
 																				'de78a6be-bfc5-4634-adc3-5f1a280455cc',
-																				'bcc6da85-72f2-4291-b206-789b8186a021',
-																				'7df67b83-1b84-4fe2-b1b7-794b4e9bfcc3')
+																				'bcc6da85-72f2-4291-b206-789b8186a021')
 	 ) et on et.encounter_type_id=e.encounter_type
 		 left join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459,1643,32,1366,1000612,1019,21,
 																							  657,1042,653,5473,5475,299,887,302,1015,300,1367,305,306,1618,1875,849,678,676,1336,855,161470,1000443,
 																							  885,56,165562,161469,161478,160225,1000071,166395,160912,159644,163594,1006,1007,1009,1008,161153,161481,161482,166018,159829,785,655,
 																							  717,848,163699,1000069,160232,1356,161233,163613,163602,160913,167810,161532,1011,159655,159654,161500,168167,159362,163654,168114,163603,163348,
 																							  1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426)
-		 left join orders od on od.encounter_id = e.encounter_id and od.order_type_id = 3 and od.voided=0
+		 left join orders od on od.order_id = o.order_id and od.voided=0
 where e.voided=0
-group by e.encounter_id;
+group by o.obs_id;
 
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
 END $$
