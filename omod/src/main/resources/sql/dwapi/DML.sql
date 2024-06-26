@@ -1086,7 +1086,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 				max(if(o.concept_id=163784,o.value_datetime,null)) as date_given_haart,
 				max(if(o.concept_id=1282 and o.value_coded = 160123,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282 and o.value_coded = 80586,o.value_coded,null)) as baby_nvp_dispensed,
-        max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as deworming_done_anc,
+        max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as deworming_done_anc,
         max(if(concept_id=1418, value_numeric, null)) as IPT_dose_given_anc,
 				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
 				max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
@@ -6064,6 +6064,100 @@ SELECT "Completed processing violence reporting data ", CONCAT("Time: ", NOW());
 END $$
 
 
+-- ------------- populate dwapi_link_facility_tracking-------------------------
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_link_facility_tracking $$
+CREATE PROCEDURE sp_populate_dwapi_link_facility_tracking()
+BEGIN
+SELECT "Processing link facility tracking", CONCAT("Time: ", NOW());
+insert into dwapi_etl.etl_link_facility_tracking(
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+county,
+sub_county,
+ward,
+facility_name,
+ccc_number,
+date_diagnosed,
+date_initiated_art,
+original_regimen,
+current_regimen,
+date_switched,
+reason_for_switch,
+date_of_last_visit,
+date_viral_load_sample_collected,
+date_viral_load_results_received,
+viral_load_results,
+viral_load_results_copies,
+date_of_next_visit,
+enrolled_in_pssg,
+attended_pssg,
+on_pmtct,
+date_of_delivery,
+tb_screening,
+sti_treatment,
+trauma_counselling,
+cervical_cancer_screening,
+family_planning,
+currently_on_tb_treatment,
+date_initiated_tb_treatment,
+tpt_status,
+date_initiated_tpt,
+data_collected_through,
+date_created,
+date_last_modified,
+voided
+)
+select
+e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+max(if(o.concept_id = 167992, o.value_text, null)) as county,
+max(if(o.concept_id = 160632, o.value_text, null)) as sub_county,
+max(if(o.concept_id = 165137, o.value_text, null)) as ward,
+max(if(o.concept_id = 162724, o.value_text, null)) as facility_name,
+max(if(o.concept_id = 162053, o.value_text, null)) as ccc_number,
+max(if(o.concept_id = 159948, o.value_datetime, null)) as date_diagnosed,
+max(if(o.concept_id = 159599, o.value_datetime, null)) as date_initiated_art,
+max(if(o.concept_id= 164855,o.value_coded,null)) as original_regimen,
+max(if(o.concept_id= 164432,o.value_coded,null)) as current_regimen,
+max(if(o.concept_id = 164516, o.value_datetime, null)) as date_switched,
+max(if(o.concept_id = 162725, o.value_text, null)) as reason_for_switch,
+max(if(o.concept_id = 164093, o.value_datetime, null)) as date_of_last_visit,
+max(if(o.concept_id = 162078, o.value_datetime, null)) as date_viral_load_sample_collected,
+max(if(o.concept_id = 163281, o.value_datetime, null)) as date_viral_load_results_received,
+max(if(o.concept_id = 165236, o.value_text, null)) as viral_load_results,
+max(if(o.concept_id = 856, o.value_numeric, null)) as viral_load_results_copies,
+max(if(o.concept_id = 5096, o.value_datetime, null)) as date_of_next_visit,
+max(if(o.concept_id = 165163, o.value_coded, null)) as enrolled_in_pssg,
+max(if(o.concept_id = 164999, o.value_coded, null)) as attended_pssg,
+max(if(o.concept_id = 163532, o.value_coded, null)) as on_pmtct,
+max(if(o.concept_id = 5599, o.value_datetime, null)) as date_of_delivery,
+max(if(o.concept_id = 166663, o.value_coded, null)) as tb_screening,
+max(if(o.concept_id = 166665, o.value_coded, null)) as sti_treatment,
+max(if(o.concept_id = 165184, o.value_coded, null)) as trauma_counselling,
+max(if(o.concept_id = 165086, o.value_coded, null)) as cervical_cancer_screening,
+max(if(o.concept_id = 160653, o.value_coded, null)) as family_planning,
+max(if(o.concept_id = 162309, o.value_coded, null)) as currently_on_tb_treatment,
+max(if(o.concept_id = 1113, o.value_datetime, null)) as date_initiated_tb_treatment,
+max(if(o.concept_id = 162230, o.value_coded, null)) as tpt_status,
+max(if(o.concept_id = 162320, o.value_datetime, null)) as date_initiated_tpt,
+max(if(o.concept_id = 162568, o.value_coded, null)) as data_collected_through,
+
+e.date_created as date_created,
+if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+e.voided as voided
+from encounter e
+inner join person p on p.person_id=e.patient_id and p.voided=0
+inner join form f on f.form_id=e.form_id and f.uuid in ('195b87e0-2b8a-45f1-8b1b-7c6a30a06691')
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167992,160632,165137,162724,162053,159948,159599,164855,164432,164516,162725,164093,162078,163281,165236,856,5096,165163,164999,163532,5599,166663,166665,165184,165086,160653,162309,1113,162230,162320,162568) and o.voided=0
+where e.voided=0
+group by e.encounter_id;
+
+SELECT "Completed processing link facility tracking data ", CONCAT("Time: ", NOW());
+END $$
 
 -- ------------- populate etl_depression_screening-------------------------
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_depression_screening $$
@@ -7605,6 +7699,7 @@ CALL sp_populate_dwapi_alcohol_drug_abuse_screening();
 CALL sp_populate_dwapi_gbv_screening();
 CALL sp_populate_dwapi_gbv_screening_action();
 CALL sp_populate_dwapi_violence_reporting();
+CALL sp_populate_dwapi_link_facility_tracking();
 CALL sp_populate_dwapi_depression_screening();
 CALL sp_populate_dwapi_adverse_events();
 CALL sp_populate_dwapi_allergy_chronic_illness();

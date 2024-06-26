@@ -1595,6 +1595,100 @@ ALTER TABLE kenyaemr_datatools.violence_reporting ADD FOREIGN KEY (patient_id) R
 ALTER TABLE kenyaemr_datatools.violence_reporting ADD INDEX(visit_date);
 SELECT "Successfully created etl_violence_reporting table";
 
+-- create table link_facility_tracking
+create table kenyaemr_datatools.link_facility_tracking as
+select
+uuid,
+provider,
+patient_id,
+visit_id,
+visit_date,
+location_id,
+encounter_id,
+county,
+sub_county,
+ward,
+facility_name,
+ccc_number,
+date_diagnosed,
+date_initiated_art,
+(case original_regimen
+  when 162559 then 'ABC/DDI/LPV/r'
+  when 162562 then 'ABC/LPV/R/TDF'
+  when 161361 then 'EDF/3TC/EFV'
+  when 792 then 'D4T/3TC/NVP'
+  when 162200 then '3TC/ABC/LPV/r'
+  when 164970 then 'ABC/3TC/DTG'
+  when 164511 then 'AZT-3TC-ATV/r'
+  when 162563 then '3TC/ABC/EFV'
+  when 164968 then 'AZT/3TC/DTG'
+  when 164505 then 'TDF-3TC-EFV'
+  when 817 then 'ABC/3TC/AZT'
+  when 1652 then '3TC/NVP/AZT'
+  when 162560 then '3TC/D4T/LPV/r'
+  when 162199 then 'ABC/NVP/3TC'
+  when 164512 then 'TDF-3TC-ATV/r'
+  when 104565 then 'EFV/FTC/TDF'
+  when 162201 then '3TC/LPV/TDF/r'
+  when 162565 then '3TC/NVP/TDF'
+  when 162561 then '3TC/AZT/LPV/r'
+  when 160124 then 'AZT/3TC/EFV'
+  when 160104 then 'D4T/3TC/EFV' else '' end) as original_regimen,
+  (case current_regimen when 164968 then 'AZT/3TC/DTG'
+                         when 164969 then 'TDF/3TC/DTG'
+                         when 164970 then 'ABC/3TC/DTG'
+                         when 164505 then 'TDF-3TC-EFV'
+                         when 792 then 'D4T/3TC/NVP'
+                         when 160124 then 'AZT/3TC/EFV'
+                         when 160104 then 'D4T/3TC/EFV'
+                         when 1652 then '3TC/NVP/AZT'
+                         when 161361 then 'EDF/3TC/EFV'
+                         when 104565 then 'EFV/FTC/TDF'
+                         when 162201 then '3TC/LPV/TDF/r'
+                         when 817 then 'ABC/3TC/AZT'
+                         when 162199 then 'ABC/NVP/3TC'
+                         when 162200 then '3TC/ABC/LPV/r'
+                         when 162565 then '3TC/NVP/TDF'
+                         when 1652 then '3TC/NVP/AZT'
+                         when 162561 then '3TC/AZT/LPV/r'
+                         when 164511 then 'AZT-3TC-ATV/r'
+                         when 164512 then 'TDF-3TC-ATV/r'
+                         when 162560 then '3TC/D4T/LPV/r'
+                         when 162563 then '3TC/ABC/EFV'
+                         when 162562 then 'ABC/LPV/R/TDF'
+                         when 162559 then 'ABC/DDI/LPV/r' else '' end) as current_regimen,
+date_switched,
+reason_for_switch,
+date_of_last_visit,
+date_viral_load_sample_collected,
+date_viral_load_results_received,
+(case viral_load_results when 167484 then 'LDL' when 167485 then 'Copies' when 1107 then 'None' else '' end) as viral_load_results,
+viral_load_results_copies,
+date_of_next_visit,
+(case enrolled_in_pssg when 1065 then 'Yes' when 1066 then 'No' else '' end) as enrolled_in_pssg,
+(case attended_pssg when 1065 then 'Yes' when 1066 then 'No' else '' end) as attended_pssg,
+(case on_pmtct when 1065 then 'Yes' when 1066 then 'No' else '' end) as on_pmtct,
+date_of_delivery,
+(case tb_screening when 1065 then 'Yes' when 1066 then 'No' else '' end) as tb_screening,
+(case sti_treatment when 1065 then 'Yes' when 1066 then 'No' else '' end) as sti_treatment,
+(case trauma_counselling when 1065 then 'Yes' when 1066 then 'No' when 1175 then 'NA' else '' end) as trauma_counselling,
+(case cervical_cancer_screening when 1065 then 'Yes' when 1066 then 'No' when 1175 then 'NA' else '' end) as cervical_cancer_screening,
+(case family_planning when 1065 then 'Yes' when 1066 then 'No' when 1175 then 'NA' else '' end) as family_planning,
+(case currently_on_tb_treatment when 1065 then 'Yes' when 1066 then 'No' else '' end) as currently_on_tb_treatment,
+date_initiated_tb_treatment,
+(case tpt_status when 1264 then 'On TPT' when 1267 then 'Completed' when 1267 then 'Completed' when 167156 then 'Declined' when 1090 then 'Never Initiated' else '' end) as tpt_status,
+date_initiated_tpt,
+(case data_collected_through when 1502 then 'Visiting Facility' when 162189 then 'Calling Facility' when 978 then 'Self-reported' else '' end) as data_collected_through,
+
+
+date_created,
+date_last_modified,
+voided
+from kenyaemr_etl.etl_link_facility_tracking;
+
+ALTER TABLE kenyaemr_datatools.link_facility_tracking ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+ALTER TABLE kenyaemr_datatools.link_facility_tracking ADD INDEX(visit_date);
+SELECT "Successfully created etl_link_facility_tracking table";
 
 -- create table depression_screening
 create table kenyaemr_datatools.depression_screening as

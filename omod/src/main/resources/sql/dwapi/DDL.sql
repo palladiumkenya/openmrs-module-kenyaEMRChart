@@ -72,6 +72,7 @@ DROP TABLE IF EXISTS dwapi_etl.etl_alcohol_drug_abuse_screening;
 DROP TABLE IF EXISTS dwapi_etl.etl_gbv_screening;
 DROP TABLE IF EXISTS dwapi_etl.etl_gbv_screening_action;
 DROP TABLE IF EXISTS dwapi_etl.etl_violence_reporting;
+DROP TABLE IF EXISTS dwapi_etl.etl_link_facility_tracking;
 DROP TABLE IF EXISTS dwapi_etl.etl_depression_screening;
 DROP TABLE IF EXISTS dwapi_etl.etl_adverse_events;
 DROP TABLE IF EXISTS dwapi_etl.etl_allergy_chronic_illness;
@@ -2899,6 +2900,57 @@ CREATE TABLE dwapi_etl.etl_PrEP_verification (
     INDEX(patient_id)
     );
 
+        --- ----------Create table etl_link_facility_tracking-----------------------
+        CREATE TABLE dwapi_etl.etl_link_facility_tracking (
+        uuid char(38),
+        provider INT(11),
+        patient_id INT(11) NOT NULL ,
+        visit_id INT(11),
+        visit_date DATE,
+        location_id INT(11) DEFAULT NULL,
+        encounter_id INT(11) NOT NULL PRIMARY KEY,
+        county VARCHAR(100),
+        sub_county VARCHAR(100),
+        ward VARCHAR(100),
+        facility_name VARCHAR(100),
+        ccc_number VARCHAR(100),
+        date_diagnosed DATE,
+        date_initiated_art DATE,
+        original_regimen VARCHAR(255),
+        current_regimen varchar(255),
+        date_switched DATE,
+        reason_for_switch VARCHAR(500),
+        date_of_last_visit DATE,
+        date_viral_load_sample_collected DATE,
+        date_viral_load_results_received DATE,
+        viral_load_results VARCHAR(100),
+        viral_load_results_copies INT(11),
+        date_of_next_visit DATE,
+        enrolled_in_pssg VARCHAR(100),
+        attended_pssg VARCHAR(100),
+        on_pmtct VARCHAR(100),
+        date_of_delivery DATE,
+        tb_screening VARCHAR(100),
+        sti_treatment VARCHAR(100),
+        trauma_counselling  VARCHAR(100),
+        cervical_cancer_screening VARCHAR(100),
+        family_planning VARCHAR(100),
+        currently_on_tb_treatment VARCHAR(100),
+        date_initiated_tb_treatment DATE,
+        tpt_status VARCHAR(100),
+        date_initiated_tpt DATE,
+        data_collected_through VARCHAR(100),
+        date_created DATETIME NOT NULL,
+        date_last_modified DATETIME,
+        voided INT(11),
+        CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
+        CONSTRAINT unique_uuid UNIQUE(uuid),
+        INDEX(visit_date),
+        INDEX(encounter_id),
+        INDEX(patient_id)
+        );
+
+       SELECT "Successfully created etl_link_facility_tracking table";
     -- ------------ create table etl_depression_screening-----------------------
 
     CREATE TABLE dwapi_etl.etl_depression_screening (
