@@ -647,7 +647,7 @@ from encounter e
 																							  1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426)
 		 left join orders od on od.order_id = o.order_id and od.voided=0
 where e.voided=0
-group by o.obs_id;
+group by o.encounter_id;
 
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
@@ -1117,8 +1117,8 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=163784,o.value_datetime,null)) as date_given_haart,
 				max(if(o.concept_id=1282 and o.value_coded = 160123,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282 and o.value_coded = 80586,o.value_coded,null)) as baby_nvp_dispensed,
-        max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 "N/A" else "" end),null)) as deworming_done_anc,
-        max(if(concept_id=1418, value_numeric, null)) as IPT_dose_given_anc,
+                max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as deworming_done_anc,
+                max(if(concept_id=1418, value_numeric, null)) as IPT_dose_given_anc,
 				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
 				max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
 				max(if(o.concept_id=159853 and o.value_coded = 159854, "Yes",null)) as iron_supplement,

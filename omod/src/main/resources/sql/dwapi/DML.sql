@@ -649,7 +649,7 @@ from encounter e
 																							  1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426)
 		 left join orders od on od.order_id = o.order_id and od.voided=0
 where e.voided=0
-group by o.obs_id;
+group by o.encounter_id;
 
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
 END $$
