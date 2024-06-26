@@ -1086,7 +1086,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 				max(if(o.concept_id=163784,o.value_datetime,null)) as date_given_haart,
 				max(if(o.concept_id=1282 and o.value_coded = 160123,o.value_coded,null)) as baby_azt_dispensed,
 				max(if(o.concept_id=1282 and o.value_coded = 80586,o.value_coded,null)) as baby_nvp_dispensed,
-        max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as deworming_done_anc,
+        max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as deworming_done_anc,
         max(if(concept_id=1418, value_numeric, null)) as IPT_dose_given_anc,
 				max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
 				max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
