@@ -2731,7 +2731,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
                        max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else null end),null)) as test_1_result ,
                        max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else null end),null)) as test_2_result ,
                        max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else null end),null)) as test_3_result ,
-                       max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" else null end),null)) as kit_name ,
+                       max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 1000629 then "One step" when 1000631 then "Trinscreen" else null end),null)) as kit_name ,
                        max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                        max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
                      from obs o inner join encounter e on e.encounter_id = o.encounter_id
