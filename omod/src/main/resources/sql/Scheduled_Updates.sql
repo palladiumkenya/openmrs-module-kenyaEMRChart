@@ -2579,11 +2579,11 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 																									885,56,165562,161469,161478,160225,1000071,166395,160912,159644,163594,1006,1007,1009,1008,161153,161481,161482,166018,159829,785,655,
 																									717,848,163699,1000069,160232,1356,161233,163613,163602,160913,167810,161532,1011,159655,159654,161500,168167,159362,163654,168114,163603,163348,
 																									1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426)
-			   left join orders od on od.encounter_id = e.encounter_id and od.order_type_id = 3 and od.voided=0
+			   left join orders od on od.order_id = o.order_id and od.order_type_id = 3 and od.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
-	group by e.encounter_id
+	group by o.encounter_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
 
     ;
