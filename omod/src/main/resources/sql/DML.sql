@@ -646,9 +646,9 @@ from encounter e
 																							  885,56,165562,161469,161478,160225,1000071,166395,160912,159644,163594,1006,1007,1009,1008,161153,161481,161482,166018,159829,785,655,
 																							  717,848,163699,1000069,160232,1356,161233,163613,163602,160913,167810,161532,1011,159655,159654,161500,168167,159362,163654,168114,163603,163348,
 																							  1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426)
-		 left join orders od on od.encounter_id = e.encounter_id and od.order_type_id = 3 and od.voided=0
+		 left join orders od on od.order_id = o.order_id and od.order_type_id = 3 and od.voided=0
 where e.voided=0
-group by e.encounter_id;
+group by o.encounter_id;
 
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
