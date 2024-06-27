@@ -873,7 +873,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     cacx_screening INT(11),
     cacx_screening_method INT(11),
     family_planning_status INT(11),
-    family_planning_method INT(11),
+    family_planning_method VARCHAR(1000),
     referred_from INT(11),
     referred_to INT(11),
 	referral_reason VARCHAR(255) DEFAULT NULL,

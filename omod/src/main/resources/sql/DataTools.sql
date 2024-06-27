@@ -772,9 +772,7 @@ SELECT "Successfully created pharmacy extract table";
       (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 159393 then "Presumed" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
       (case cacx_screening_method when 885 then "PAP Smear" when 162816 then "VIA" when 164977 then "VILI" when 159859 then 'HPV' when 5622 then "Other" else "" end) as cacx_screening_method,
       (case family_planning_status when 965 then "On Family Planning" when 160652 then "Not using Family Planning"  else "" end) as family_planning_status,
-      (case family_planning_method when 160570 then "Emergency contraceptive pills" when 780 then "Oral Contraceptives Pills" when 5279 then "Injectible" when 1359 then "Implant"
-       when 5275 then "Intrauterine Device" when 136163 then "Lactational Amenorhea Method" when 5278 then "Diaphram/Cervical Cap" when 5277 then "Fertility Awareness"
-       when 1472 then "Tubal Ligation" when 190 then "Condoms" when 1489 then "Vasectomy" when 162332 then "Undecided" else "" end) as family_planning_method,
+      family_planning_method,
       (case referred_from when 1537 then "Another Health Facility" when 163488 then "Community Unit" when 1175 then "N/A" else "" end) as referred_from,
       (case referred_to when 1537 then "Another Health Facility" when 163488 then "Community Unit"  when 165093 then "HIV Preventive services" when 1175 then "N/A" else "" end) as referred_to,
 	  referral_reason,
