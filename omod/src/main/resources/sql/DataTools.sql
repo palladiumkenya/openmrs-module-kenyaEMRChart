@@ -295,7 +295,6 @@ select
     if(lab_test=299, (case test_result when 1228 then "REACTIVE" when 1229 then "NON-REACTIVE" when 1304 then "POOR SAMPLE QUALITY" end),
        if(lab_test=1030, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end),
        if(lab_test=163722, (case test_result when 1138 then "INDETERMINATE" when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1304 then "POOR SAMPLE QUALITY" end),
-		  if(lab_test=302, test_result,
              if(lab_test=32, (case test_result when 664 then "NEGATIVE" when 703 then "POSITIVE" when 1138 then "INDETERMINATE" end),
                 if(lab_test=1305, (case test_result when 1306 then "BEYOND DETECTABLE LIMIT" when 1301 then "DETECTED" when 1302 then "LDL" when 1304 then "POOR SAMPLE QUALITY" end),
                 if(lab_test=167718, (case test_result when 1254 then "CD4 COUNT GREATER THAN 200" when 167717 then "CD4 count less than or equal to 200" end),
@@ -311,7 +310,7 @@ select
                             if(lab_test=45, (case test_result when 703 then "Positive" when 664 then "Negative" when 1138 then "Indeterminate" when 1304 then "Poor Quality Sample" end),
                             if(lab_test=167452, (case test_result when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" end),
                             if(lab_test=167459, (case test_result when 163747 then "Absent" when 163748 then "Present" end),
-                               test_result )))))))))))))))) AS test_result,
+                               test_result ))))))))))))))) AS test_result,
     date_created,
     created_by
 from kenyaemr_etl.etl_laboratory_extract;
