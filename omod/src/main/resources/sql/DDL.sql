@@ -103,8 +103,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_art_fast_track;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_encounter;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_daily_revenue_summary;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
-
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -3416,25 +3414,6 @@ create table kenyaemr_etl.etl_hts_eligibility_screening (
   index(department),
   index(population_type),
   index(eligible_for_test)
-);
--- Create table etl_patient_appointment
-
-CREATE TABLE kenyaemr_etl.etl_patient_appointment(
-   patient_appointment_id int NOT NULL PRIMARY KEY ,
-   provider_id int DEFAULT NULL,
-   patient_id int NOT NULL,
-   visit_date date NOT NULL,
-   start_date_time datetime DEFAULT NULL,
-   end_date_time datetime DEFAULT NULL,
-   appointment_service_id int DEFAULT NULL,
-   appointment_service_type_id int DEFAULT NULL,
-   status varchar(45) NOT NULL,
-   location_id int DEFAULT NULL,
-   date_created datetime NOT NULL,
-   INDEX(patient_id),
-   INDEX (location_id),
-   INDEX (visit_date),
-   INDEX (appointment_service_id)
 );
 
 -- create table etl_drug_orders
