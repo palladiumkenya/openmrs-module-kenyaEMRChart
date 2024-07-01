@@ -7409,11 +7409,11 @@ END $$
 
 -- Procedure sp_populate_dwapi_patient_appointment --
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_appointment $$
-DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment $$
 
 CREATE PROCEDURE sp_populate_dwapi_patient_appointment()
 BEGIN
-    -- Create table dwapi_etl_patient_appointment
+DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
+-- Create table dwapi_etl_patient_appointment
 CREATE TABLE dwapi_etl.etl_patient_appointment as select
   patient_appointment_id,
   provider_id,
@@ -7458,9 +7458,9 @@ FROM patient_appointment order by patient_appointment_id desc;
 SELECT "Completed processing Patient appointement";
 END $$
 
--- Procedure sp_populate_etl_update_next_appointment_date with appointment date from bahmni --
-DROP PROCEDURE IF EXISTS sp_update_next_appointment_date $$
-CREATE PROCEDURE sp_update_next_appointment_date()
+-- Procedure sp_update_dwapi_next_appointment_date with appointment date from bahmni --
+DROP PROCEDURE IF EXISTS sp_update_dwapi_next_appointment_date $$
+CREATE PROCEDURE sp_update_dwapi_next_appointment_date()
 BEGIN
 SELECT "Processing Update next appointment date with appointment date from Bahmni";
 update dwapi_etl.etl_patient_hiv_followup fup
@@ -7826,6 +7826,7 @@ CALL sp_populate_dwapi_overdose_reporting();
 CALL sp_populate_dwapi_hts_patient_contact();
 CALL sp_populate_dwapi_art_fast_track();
 CALL sp_populate_dwapi_clinical_encounter();
+CALL sp_update_dwapi_next_appointment_date();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

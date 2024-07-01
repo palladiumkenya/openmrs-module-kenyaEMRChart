@@ -7670,10 +7670,10 @@ END $$
 
 -- Procedure sp_populate_etl_patient_appointment --
 DROP PROCEDURE IF EXISTS sp_populate_etl_patient_appointment $$
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment $$
 
 CREATE PROCEDURE sp_populate_etl_patient_appointment()
 BEGIN
+    DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
     -- Create table etl_patient_appointment
 CREATE TABLE kenyaemr_etl.etl_patient_appointment as select
          patient_appointment_id,
