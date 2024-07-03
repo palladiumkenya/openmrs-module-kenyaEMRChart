@@ -7670,29 +7670,8 @@ END $$
 
 -- Procedure sp_populate_etl_patient_appointment --
 DROP PROCEDURE IF EXISTS sp_populate_etl_patient_appointment $$
-DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment $$
-
 CREATE PROCEDURE sp_populate_etl_patient_appointment()
 BEGIN
-    -- Create table etl_patient_appointment
-CREATE TABLE kenyaemr_etl.etl_patient_appointment as select
-         patient_appointment_id,
-         provider_id,
-         patient_id,
-         date_appointment_scheduled as visit_date,
-         start_date_time,
-         end_date_time,
-         appointment_service_id,
-         appointment_service_type_id,
-         `status`,
-         location_id,
-         date_created
-     FROM patient_appointment WHERE 1=0;
-CREATE INDEX idx_patient_id ON kenyaemr_etl.etl_patient_appointment(patient_id);
-CREATE INDEX idx_location_id ON kenyaemr_etl.etl_patient_appointment(location_id);
-CREATE INDEX idx_visit_date ON kenyaemr_etl.etl_patient_appointment(visit_date);
-CREATE INDEX idx_appointment_service_id ON kenyaemr_etl.etl_patient_appointment(appointment_service_id);
-
   SELECT "Processing Patient appointment";
   INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id, 
   provider_id, 
@@ -7715,7 +7694,7 @@ CREATE INDEX idx_appointment_service_id ON kenyaemr_etl.etl_patient_appointment(
       status,
       location_id,
       date_created
-      FROM patient_appointment order by patient_appointment_id desc;
+      FROM patient_appointment;
       SELECT "Completed processing Patient appointement";
 END $$
 
@@ -7762,6 +7741,9 @@ set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id >
   
       SELECT "Completed updating next appointment date";
 END $$
+
+
+
 
 -- Procedure sp_populate_etl_art_fast_track --
 DROP PROCEDURE IF EXISTS sp_populate_etl_art_fast_track $$

@@ -8702,30 +8702,10 @@ BEGIN
     SELECT "Completed processing ART fast track";
 END $$
 
--- update patient appointments
+-- update patient appoitments
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_appointments $$
-
 CREATE PROCEDURE sp_update_etl_patient_appointments(IN last_update_time DATETIME)
 BEGIN
-
-CREATE TABLE IF NOT EXISTS kenyaemr_etl.etl_patient_appointment as select
- patient_appointment_id,
- provider_id,
- patient_id,
- date_appointment_scheduled as visit_date,
- start_date_time,
- end_date_time,
- appointment_service_id,
- appointment_service_type_id,
- `status`,
- location_id,
- date_created
-FROM patient_appointment WHERE 1=0;
-CREATE INDEX idx_patient_id ON kenyaemr_etl.etl_patient_appointment(patient_id);
-CREATE INDEX idx_location_id ON kenyaemr_etl.etl_patient_appointment(location_id);
-CREATE INDEX idx_visit_date ON kenyaemr_etl.etl_patient_appointment(visit_date);
-CREATE INDEX idx_appointment_service_id ON kenyaemr_etl.etl_patient_appointment(appointment_service_id);
-
 SELECT "Processing Patient appointment updates";
 INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id, 
   provider_id, 
