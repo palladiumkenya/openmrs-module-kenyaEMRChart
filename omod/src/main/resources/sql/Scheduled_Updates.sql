@@ -8721,6 +8721,10 @@ CREATE TABLE IF NOT EXISTS kenyaemr_etl.etl_patient_appointment as select
  location_id,
  date_created
 FROM patient_appointment WHERE 1=0;
+CREATE INDEX idx_patient_id ON kenyaemr_etl.etl_patient_appointment(patient_id);
+CREATE INDEX idx_location_id ON kenyaemr_etl.etl_patient_appointment(location_id);
+CREATE INDEX idx_visit_date ON kenyaemr_etl.etl_patient_appointment(visit_date);
+CREATE INDEX idx_appointment_service_id ON kenyaemr_etl.etl_patient_appointment(appointment_service_id);
 
 SELECT "Processing Patient appointment updates";
 INSERT INTO kenyaemr_etl.etl_patient_appointment(patient_appointment_id, 
