@@ -7407,101 +7407,6 @@ BEGIN
     SELECT "Completed processing overdose reporting";
 END $$
 
--- Procedure sp_populate_dwapi_patient_appointment --
-DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_appointment $$
-
-CREATE PROCEDURE sp_populate_dwapi_patient_appointment()
-BEGIN
-DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
--- Create table dwapi_etl_patient_appointment
-CREATE TABLE dwapi_etl.etl_patient_appointment as select
-  patient_appointment_id,
-  provider_id,
-  patient_id,
-  date_appointment_scheduled as visit_date,
-  start_date_time,
-  end_date_time,
-  appointment_service_id,
-  appointment_service_type_id,
-  `status`,
-  location_id,
-  date_created
-FROM patient_appointment WHERE 1=0;
-CREATE INDEX idx_patient_id ON dwapi_etl.etl_patient_appointment(patient_id);
-CREATE INDEX idx_location_id ON dwapi_etl.etl_patient_appointment(location_id);
-CREATE INDEX idx_visit_date ON dwapi_etl.etl_patient_appointment(visit_date);
-CREATE INDEX idx_appointment_service_id ON dwapi_etl.etl_patient_appointment(appointment_service_id);
-
-SELECT "Processing Patient appointment";
-INSERT INTO dwapi_etl.etl_patient_appointment(patient_appointment_id,
-      provider_id,
-      patient_id,
-      visit_date,
-      start_date_time,
-      end_date_time,
-      appointment_service_id,
-      status,
-      location_id,
-      date_created)
-SELECT
-    patient_appointment_id,
-    provider_id,
-    patient_id,
-    DATE(date_appointment_scheduled) as visit_date,
-    start_date_time,
-    end_date_time,
-    appointment_service_id,
-    status,
-    location_id,
-    date_created
-FROM patient_appointment order by patient_appointment_id desc;
-SELECT "Completed processing Patient appointement";
-END $$
-
--- Procedure sp_update_dwapi_next_appointment_date with appointment date from bahmni --
-DROP PROCEDURE IF EXISTS sp_update_dwapi_next_appointment_date $$
-CREATE PROCEDURE sp_update_dwapi_next_appointment_date()
-BEGIN
-SELECT "Processing Update next appointment date with appointment date from Bahmni";
-update dwapi_etl.etl_patient_hiv_followup fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 1
-    set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_patient_hiv_followup fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 2
-    set fup.refill_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_prep_followup fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 8
-    set fup.appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_prep_monthly_refill fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 9
-    set fup.next_appointment = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_tb_follow_up_visit fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 6
-    set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_clinical_visit fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.client_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 3
-    set fup.appointment_date = date(pat.start_date_time) where fup.client_id > 0;
-
-update dwapi_etl.etl_mch_antenatal_visit fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 4
-    set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_mch_postnatal_visit fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 5
-    set fup.appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-update dwapi_etl.etl_hei_follow_up_visit fup
-    inner join dwapi_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 13
-    set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
-
-SELECT "Completed updating next appointment date";
-END $$
-
 -- Procedure sp_populate_dwapi_art_fast_track --
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_art_fast_track $$
 CREATE PROCEDURE sp_populate_dwapi_art_fast_track()
@@ -7767,7 +7672,6 @@ CALL sp_populate_dwapi_hei_enrolment();
 CALL sp_populate_dwapi_hei_immunization();
 CALL sp_populate_dwapi_hei_follow_up();
 CALL sp_populate_dwapi_mch_delivery();
-CALL sp_populate_dwapi_patient_appointment();
 CALL sp_populate_dwapi_mch_discharge();
 CALL sp_populate_dwapi_drug_event();
 CALL sp_populate_dwapi_hts_test();
@@ -7826,7 +7730,6 @@ CALL sp_populate_dwapi_overdose_reporting();
 CALL sp_populate_dwapi_hts_patient_contact();
 CALL sp_populate_dwapi_art_fast_track();
 CALL sp_populate_dwapi_clinical_encounter();
-CALL sp_update_dwapi_next_appointment_date();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
