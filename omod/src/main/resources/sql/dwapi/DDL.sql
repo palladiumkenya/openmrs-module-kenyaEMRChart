@@ -90,6 +90,7 @@ DROP TABLE IF EXISTS dwapi_etl.etl_preventive_services;
 DROP TABLE IF EXISTS dwapi_etl.etl_overdose_reporting;
 DROP TABLE IF EXISTS dwapi_etl.etl_art_fast_track;
 DROP TABLE IF EXISTS dwapi_etl.etl_clinical_encounter;
+DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics
 create table dwapi_etl.etl_patient_demographics (
@@ -3587,6 +3588,25 @@ CREATE TABLE dwapi_etl.etl_clinical_encounter (
 );
 SELECT "Successfully created etl_clinical_encounter table";
 
+-- Create table dwapi_etl.etl_patient_appointment
+CREATE TABLE dwapi_etl.etl_patient_appointment(
+     patient_appointment_id int NOT NULL PRIMARY KEY ,
+     provider_id int DEFAULT NULL,
+     patient_id int NOT NULL,
+     visit_date date NOT NULL,
+     start_date_time datetime DEFAULT NULL,
+     end_date_time datetime DEFAULT NULL,
+     appointment_service_id int DEFAULT NULL,
+     appointment_service_type_id int DEFAULT NULL,
+     status varchar(45) NOT NULL,
+     location_id int DEFAULT NULL,
+     date_created datetime NOT NULL,
+     INDEX(patient_id),
+     INDEX (location_id),
+     INDEX (visit_date),
+     INDEX (appointment_service_id)
+);
+SELECT "Successfully created dwapi_etl.etl_patient_appointment table";
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
