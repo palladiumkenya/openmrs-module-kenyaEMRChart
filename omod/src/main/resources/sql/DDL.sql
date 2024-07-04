@@ -39,7 +39,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_follow_up_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_delivery;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_mchs_discharge;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_hei_immunization;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_immunization;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patients_booked_today;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_missed_appointments;
 DROP TABLE if exists kenyaemr_etl.etl_patient_demographics;
@@ -1040,7 +1040,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
 
   -- ------- create table etl_hei_immunization table-----------------------------------------
   SELECT "Creating etl_hei_immunization table";
-  CREATE TABLE kenyaemr_etl.etl_hei_immunization (
+  CREATE TABLE kenyaemr_etl.etl_immunization (
     encounter_id INT(11) NOT NULL PRIMARY KEY,
     patient_id INT(11) NOT NULL ,
     visit_date DATE,

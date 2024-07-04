@@ -1832,7 +1832,7 @@ DROP PROCEDURE IF EXISTS sp_update_etl_hei_immunization $$
 CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_hei_immunization(
+    insert into kenyaemr_etl.etl_immunization(
       patient_id,
       visit_date,
       created_by,

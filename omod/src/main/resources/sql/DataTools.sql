@@ -929,8 +929,8 @@ SELECT "Successfully created post natal visit table";
 
   SELECT "Successfully created hei_follow_up_visit";
 
-  -- create table hei_immunization
-  create table kenyaemr_datatools.hei_immunization as
+  -- create table immunization
+  create table kenyaemr_datatools.immunization as
     select
       patient_id,
 			visit_date,
@@ -964,10 +964,10 @@ SELECT "Successfully created post natal visit table";
 			influenza,
 			sequence,
             case fully_immunized when 1065 then 'Yes' when 1066 then 'No' end as fully_immunized
-    from kenyaemr_etl.etl_hei_immunization;
+    from kenyaemr_etl.etl_immunization;
 
-  ALTER TABLE kenyaemr_datatools.hei_immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
-  SELECT "Successfully created hei_immunization table";
+  ALTER TABLE kenyaemr_datatools.immunization ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  SELECT "Successfully created immunization table";
 
 
   -- create table tb_enrollment
