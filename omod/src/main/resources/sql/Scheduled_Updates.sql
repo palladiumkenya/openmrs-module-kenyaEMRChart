@@ -1832,7 +1832,7 @@ DROP PROCEDURE IF EXISTS sp_update_etl_hei_immunization $$
 CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
   BEGIN
     SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
-    insert into kenyaemr_etl.etl_hei_immunization(
+    insert into kenyaemr_etl.etl_immunization(
       patient_id,
       visit_date,
       created_by,
@@ -1863,6 +1863,8 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       VitaminA_1_and_half_yr,
       VitaminA_2_yr ,
       VitaminA_2_to_5_yr,
+      influenza,
+      sequence,
       fully_immunized
     )
       select
@@ -1896,6 +1898,8 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
         max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
         max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
         max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
+        max(if(vaccine="HEMOPHILUS INFLUENZA B", date_given, "")) as influenza,
+        y.sequence as sequence,
         y.fully_immunized as fully_immunized
       from (
              (select
@@ -1919,7 +1923,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
                        inner join
                        (
                          select encounter_type_id, uuid, name from encounter_type where
-                           uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
+                           uuid in ('82169b8d-c945-4c41-be62-433dfd9d6c86','29c02aff-9a93-46c9-bf6f-48b552fcb1fa')
                        ) et on et.encounter_type_id=e.encounter_type
                      where concept_id in(1282,1418,164134) and (e.date_created >= last_update_time
                                                          or e.date_changed >= last_update_time
@@ -1943,7 +1947,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
                  name as encounter_type,
                  max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
                                           when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
-                                          when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID"  end), "")) as vaccine,
+                                          when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID" when 5261 then "HEMOPHILUS INFLUENZA B" end), "")) as vaccine,
                  max(if(concept_id=1418, value_numeric, "")) as sequence,
                  max(if(concept_id=1410, date_given, "")) as date_given,
                  max(if(concept_id=164134, value_coded, "")) as fully_immunized,
@@ -1956,7 +1960,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
                         inner join
                         (
                           select encounter_type_id, uuid, name from encounter_type where
-                            uuid = '82169b8d-c945-4c41-be62-433dfd9d6c86'
+                            uuid in ('82169b8d-c945-4c41-be62-433dfd9d6c86','29c02aff-9a93-46c9-bf6f-48b552fcb1fa')
                         ) et on et.encounter_type_id=e.encounter_type
                       where concept_id in(984,1418,1410,164134) and (e.date_created >= last_update_time
                                                               or e.date_changed >= last_update_time
@@ -1975,7 +1979,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
       ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),ROTA_3=VALUES(ROTA_3),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2), Yellow_fever=VALUES(Yellow_fever),
       Measles_6_months=VALUES(Measles_6_months), VitaminA_6_months=VALUES(VitaminA_6_months),VitaminA_1_yr=VALUES(VitaminA_1_yr),
-      VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr),fully_immunized=VALUES(fully_immunized)
+      VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr),fully_immunized=VALUES(fully_immunized),influenza=VALUES(influenza),sequence=VALUES(sequence)
     ;
     END $$
 
@@ -2554,7 +2558,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 									 166018,785,655,717,848,163699,160913,1011,159655,159654,161500,163595,163596,1336,1338,1017,1018,851,729,679,1016,163426,160914) then o.value_numeric
 				when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,
 									 163722,167452,167459,1643,32,1366,1042,299,300,305,306,1618,1875,161470,885,165562,161478,160225,160232,1356,161233,167810,159362,163654,
-									 168114,163348,162202) then o.value_coded
+									 168114,163348,162202,1000612,1000614,1000615,1000616,1000617,1000613) then o.value_coded
 				when o.concept_id in (302,1367,56,1000071,163613,163603,163603,1000451,165552,165402,161156,161155,159648,159649,161467) then o.value_text
 			  END) AS test_result,
 		  od.date_activated as date_test_requested,
@@ -2578,7 +2582,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 																									657,1042,653,5473,5475,299,887,302,1015,300,1367,305,306,1618,1875,849,678,676,1336,855,161470,1000443,
 																									885,56,165562,161469,161478,160225,1000071,166395,160912,159644,163594,1006,1007,1009,1008,161153,161481,161482,166018,159829,785,655,
 																									717,848,163699,1000069,160232,1356,161233,163613,163602,160913,167810,161532,1011,159655,159654,161500,168167,159362,163654,168114,163603,163348,
-																									1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426,160914)
+																									1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426,160914,1000612,1000614,1000615,1000616,1000617,1000613)
 			   left join orders od on od.order_id = o.order_id and od.order_type_id = 3 and od.voided=0
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time

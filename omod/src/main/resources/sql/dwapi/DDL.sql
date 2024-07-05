@@ -1065,6 +1065,8 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     VitaminA_2_yr VARCHAR(50),
     VitaminA_2_to_5_yr VARCHAR(50),
     fully_immunized INT(11),
+    influenza VARCHAR(50),
+    sequence VARCHAR(50),
     voided INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
     INDEX(visit_date),
