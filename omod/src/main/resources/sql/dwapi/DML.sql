@@ -2009,6 +2009,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
       voided
   )
   select
+	  obs_uuid as uuid,
       patient_id,
       visit_date,
       y.creator,
@@ -2041,9 +2042,11 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
       max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
       max(if(vaccine="HEMOPHILUS INFLUENZA B", date_given, "")) as influenza,
       y.sequence as sequence,
-      y.fully_immunized as fully_immunized
+      y.fully_immunized as fully_immunized,
+      y.voided
   from (
            (select
+				obs_uuid,
                 person_id as patient_id,
                 date(encounter_datetime) as visit_date,
               creator,
@@ -2055,9 +2058,10 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
               max(if(concept_id=1418, value_numeric, "")) as sequence,
               max(if(concept_id=1282 , date(obs_datetime), null)) as date_given,
               max(if(concept_id=164134 , value_coded, "")) as fully_immunized,
-              obs_group_id
+              obs_group_id,
+              voided
           from (
-                   select o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime
+                   select o.uuid as obs_uuid,o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name, o.obs_datetime,e.voided
                    from obs o
                             inner join encounter e on e.encounter_id=o.encounter_id
                             inner join person p on p.person_id=o.person_id and p.voided=0
@@ -2074,6 +2078,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
   union
   (
       select
+		  obs_uuid,
           person_id as patient_id,
           date(encounter_datetime) as visit_date,
                  creator,
@@ -2087,9 +2092,10 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
                  max(if(concept_id=1418, value_numeric, "")) as sequence,
                  max(if(concept_id=1410, date_given, "")) as date_given,
                  max(if(concept_id=164134, value_coded, "")) as fully_immunized,
-                 obs_group_id
+                 obs_group_id,
+		        voided
              from (
-                      select o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name
+                      select o.uuid as obs_uuid,o.person_id, e.encounter_datetime, e.creator, e.date_created,if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified, o.concept_id, o.value_coded, o.value_numeric, date(o.value_datetime) date_given, o.obs_group_id, o.encounter_id, et.uuid, et.name,e.voided
                       from obs o
                                inner join encounter e on e.encounter_id=o.encounter_id
                                inner join person p on p.person_id=o.person_id and p.voided=0
