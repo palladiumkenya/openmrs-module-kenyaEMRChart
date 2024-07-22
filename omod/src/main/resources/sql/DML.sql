@@ -7698,7 +7698,7 @@ BEGIN
       status,
       location_id,
       date_created
-      FROM patient_appointment where voided=0 and status <>'Cancelled';
+      FROM patient_appointment where voided=0 and status NOT IN ('Cancelled','Requested');
       SELECT "Completed processing Patient appointement";
 END $$
 
