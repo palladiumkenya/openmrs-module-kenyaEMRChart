@@ -7708,8 +7708,13 @@ CREATE PROCEDURE sp_update_next_appointment_date()
 BEGIN
   SELECT "Processing Update next appointment date with appointment date from Bahmni";
   update kenyaemr_etl.etl_patient_hiv_followup fup
-    inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 1
-set fup.next_appointment_date = date(pat.start_date_time) where fup.patient_id > 0;
+      inner join
+      (
+          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt from kenyaemr_etl.etl_patient_hiv_followup fup
+                                                                                                                              inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 1
+          group by fup.patient_id, fup.visit_date
+      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+  set fup.next_appointment_date = apt.patAppt;
 
  update kenyaemr_etl.etl_patient_hiv_followup fup
     inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 2
