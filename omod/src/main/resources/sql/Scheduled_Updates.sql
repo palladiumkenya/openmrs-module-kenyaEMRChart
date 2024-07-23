@@ -5142,6 +5142,106 @@ clinical_notes=VALUES(clinical_notes),voided=VALUES(voided);
     SELECT "Completed processing CAXC screening", CONCAT("Time: ", NOW());
     END $$
 
+DROP PROCEDURE IF EXISTS sp_update_etl_patient_contact $$
+CREATE PROCEDURE sp_update_etl_patient_contact(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing patient contact ", CONCAT("Time: ", NOW());
+insert into kenyaemr_etl.etl_patient_contact (
+    uuid,
+    date_created,
+    start_date,
+    end_date,
+    encounter_id,
+    encounter_provider,
+    location_id,
+    date_last_modified,
+    patient_related_to,
+    patient_id,
+    relationship_type,
+    voided
+)
+select
+    p.uuid,
+    date(e.encounter_datetime) as date_created,
+    r.start_date,
+    r.end_date,
+    encounter_id,
+    e.creator as encounter_provider,
+    e.location_id,
+    e.date_changed as date_last_modified,
+    r.patient_related_to,
+    r.patient_id,
+    r.relationship as relationship_type,
+    e.voided
+from encounter e
+         inner join
+     (
+         select encounter_type_id, uuid, name from encounter_type where uuid='de1f9d67-b73e-4e1b-90d0-036166fc6995'
+     ) et on et.encounter_type_id=e.encounter_type
+         inner join (select r.person_a as patient_id,r.person_b as patient_related_to,r.relationship,r.start_date,r.end_date, r.date_created,r.date_changed,r.voided
+                     from relationship r inner join relationship_type t on r.relationship = t.relationship_type_id group by r.person_a) r on e.patient_id = r.patient_id and r.voided = 0
+         inner join person p on p.person_id=e.patient_id and p.voided=0
+where e.voided = 0
+   and (e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or p.date_changed >= last_update_time
+or p.date_created >= last_update_time
+or r.date_created >= last_update_time
+or r.date_changed >= last_update_time)
+ON DUPLICATE KEY UPDATE
+    start_date=start_date,
+    end_date=end_date,
+    patient_related_to=patient_related_to,
+    relationship_type=relationship_type
+;
+
+update kenyaemr_etl.etl_patient_contact c
+    join
+    (
+        select
+            pa.person_id,
+            max(if(pat.uuid='3ca03c84-632d-4e53-95ad-91f1bd9d96d6', pa.value, null)) as baseline_hiv_status,
+            max(if(pat.uuid='35a08d84-9f80-4991-92b4-c4ae5903536e', pa.value, null)) as living_with_patient,
+            max(if(pat.uuid='7c94bd35-fba7-4ef7-96f5-29c89a318fcf', pa.value, null)) as pns_approach
+        from person_attribute pa
+                 inner join
+             (
+                 select
+                     pat.person_attribute_type_id,
+                     pat.name,
+                     pat.uuid
+                 from person_attribute_type pat
+                 where pat.retired=0
+             ) pat on pat.person_attribute_type_id = pa.person_attribute_type_id
+                 and pat.uuid in (
+                                  'b2c38640-2603-4629-aebd-3b54f33f1e3a', -- phone_contact
+                                  '3ca03c84-632d-4e53-95ad-91f1bd9d96d6', -- baseline_hiv_status
+                                  '35a08d84-9f80-4991-92b4-c4ae5903536e', -- living_with_patient
+                                  '7c94bd35-fba7-4ef7-96f5-29c89a318fcf' -- pns_approach
+                     )
+        where pa.voided=0 and (pa.date_changed >= last_update_time
+        or pa.date_created >= last_update_time)
+        group by pa.person_id
+    ) att on att.person_id = c.patient_id
+set c.baseline_hiv_status=att.baseline_hiv_status,
+    c.living_with_patient=att.living_with_patient,
+    c.pns_approach=att.pns_approach;
+
+update kenyaemr_etl.etl_patient_contact c
+left outer join (select pa.person_id,
+            max(pa.address1)     physical_address,
+            max(pa.date_changed) date_last_modified,
+            max(date_created) as date_created
+     from person_address pa
+     where voided = 0
+       and (pa.date_changed >= last_update_time
+         or pa.date_created >= last_update_time)
+     group by person_id) pa on c.patient_id = pa.person_id
+set c.physical_address=pa.physical_address;
+
+SELECT "Completed processing Patient contact", CONCAT("Time: ", NOW());
+END $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_kp_contact $$
 CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
   BEGIN
@@ -9075,6 +9175,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_otz_activity(last_update_time);
     CALL sp_update_etl_ovc_enrolment(last_update_time);
     CALL sp_update_etl_cervical_cancer_screening(last_update_time);
+    CALL sp_update_etl_patient_contact(last_update_time);
     CALL sp_update_etl_kp_contact(last_update_time);
     CALL sp_update_etl_kp_client_enrollment(last_update_time);
     CALL sp_update_etl_kp_clinical_visit(last_update_time);

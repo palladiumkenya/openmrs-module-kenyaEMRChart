@@ -3005,7 +3005,7 @@ on t.patient_id = vl.patient_id;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_contacts;
 
 CREATE TABLE kenyaemr_etl.etl_hts_contacts AS
-select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,t.visit_date,t.test_type,t.test_1_result,t.test_2_result,t.final_test_result from
+select c.patient_id,c.relationship_type,c.baseline_hiv_status,t.visit_date,t.test_type,t.test_1_result,t.test_2_result,t.final_test_result from
 kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id group by c.patient_id;
 
 ALTER TABLE kenyaemr_etl.etl_hts_contacts ADD INDEX(id);
@@ -3016,9 +3016,9 @@ ALTER TABLE kenyaemr_etl.etl_hts_contacts ADD INDEX(visit_date);
 DROP TABLE IF EXISTS kenyaemr_etl.etl_contacts_linked;
 
 CREATE TABLE kenyaemr_etl.etl_contacts_linked AS
-select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,l.visit_date,t.final_test_result from kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id
+select c.patient_id,c.relationship_type,c.baseline_hiv_status,l.visit_date,t.final_test_result from kenyaemr_etl.etl_patient_contact c inner join kenyaemr_etl.etl_hts_test t on c.patient_id = t.patient_id
 inner join kenyaemr_etl.etl_hts_referral_and_linkage l on c.patient_id=l.patient_id
-group by c.id;
+group by c.patient_id;
 
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(id);
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(visit_date);
@@ -4949,64 +4949,86 @@ END $$
 DROP PROCEDURE IF EXISTS sp_populate_etl_patient_contact $$
 CREATE PROCEDURE sp_populate_etl_patient_contact()
 	BEGIN
-		SELECT "Processing patient contact ", CONCAT("Time: ", NOW());
-		INSERT INTO kenyaemr_etl.etl_patient_contact(
-      id,
-      uuid,
-      date_created,
-      date_last_modified,
-      first_name,
-      middle_name,
-      last_name,
-      sex,
-      birth_date,
-      physical_address,
-      phone_contact,
-      patient_related_to,
-      patient_id,
-      relationship_type,
-      appointment_date,
-      baseline_hiv_status,
-      reported_test_date,
-      ipv_outcome,
-      marital_status,
-      living_with_patient,
-      pns_approach,
-      contact_listing_decline_reason,
-      consented_contact_listing,
-      voided
-		)
-			select
-			  pc.id,
-			  pc.uuid,
-        pc.date_created,
-        pc.date_changed as date_last_modified,
-        pc.first_name,
-        pc.middle_name,
-        pc.last_name,
-        pc.sex,
-        pc.birth_date,
-        pc.physical_address,
-        pc.phone_contact,
-        pc.patient_related_to,
-        pc.patient_id,
-        pc.relationship_type,
-        pc.appointment_date,
-        pc.baseline_hiv_status,
-        pc.reported_test_date,
-        pc.ipv_outcome,
-        pc.marital_status,
-        pc.living_with_patient,
-        pc.pns_approach,
-        pc.contact_listing_decline_reason,
-        pc.consented_contact_listing,
-        pc.voided
-			from kenyaemr_hiv_testing_patient_contact pc
-				inner join kenyaemr_etl.etl_patient_demographics dm on dm.patient_id=pc.patient_related_to and dm.voided=0
-        where pc.voided=0
-		;
-		SELECT "Completed processing patient contact data ", CONCAT("Time: ", NOW());
-		END $$
+	SELECT "Processing patient contact ", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_patient_contact (
+        uuid,
+        date_created,
+        encounter_id,
+        encounter_provider,
+        location_id,
+        patient_id,
+        patient_related_to,
+        relationship_type,
+        start_date,
+        end_date,
+        date_last_modified,
+        voided
+    )
+    select
+        p.uuid,
+        date(e.encounter_datetime) as date_created,
+        encounter_id,
+        e.creator as encounter_provider,
+        e.location_id,
+        r.patient_id,
+        r.patient_related_to,
+        r.relationship as relationship_type,
+        r.start_date,
+        r.end_date,
+        e.date_changed as date_last_modified,
+        e.voided
+    from encounter e
+             inner join
+         (
+             select encounter_type_id, uuid, name from encounter_type where uuid='de1f9d67-b73e-4e1b-90d0-036166fc6995'
+         ) et on et.encounter_type_id=e.encounter_type
+             inner join (select r.person_a as patient_id,r.person_b as patient_related_to,r.relationship,r.start_date,r.end_date, r.date_created,r.date_changed,r.voided
+                         from relationship r inner join relationship_type t on r.relationship = t.relationship_type_id group by r.person_a) r on e.patient_id = r.patient_id and r.voided = 0
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+    where e.voided=0;
+
+    update kenyaemr_etl.etl_patient_contact c
+        join
+        (
+            select
+                pa.person_id,
+                max(if(pat.uuid='3ca03c84-632d-4e53-95ad-91f1bd9d96d6', pa.value, null)) as baseline_hiv_status,
+                max(if(pat.uuid='35a08d84-9f80-4991-92b4-c4ae5903536e', pa.value, null)) as living_with_patient,
+                max(if(pat.uuid='7c94bd35-fba7-4ef7-96f5-29c89a318fcf', pa.value, null)) as pns_approach
+            from person_attribute pa
+                     inner join
+                 (
+                     select
+                         pat.person_attribute_type_id,
+                         pat.name,
+                         pat.uuid
+                     from person_attribute_type pat
+                     where pat.retired=0
+                 ) pat on pat.person_attribute_type_id = pa.person_attribute_type_id
+                     and pat.uuid in (
+                                      'b2c38640-2603-4629-aebd-3b54f33f1e3a', -- phone_contact
+                                      '3ca03c84-632d-4e53-95ad-91f1bd9d96d6', -- baseline_hiv_status
+                                      '35a08d84-9f80-4991-92b4-c4ae5903536e', -- living_with_patient
+                                      '7c94bd35-fba7-4ef7-96f5-29c89a318fcf' -- pns_approach
+                         )
+            where pa.voided=0
+            group by pa.person_id
+        ) att on att.person_id = c.patient_id
+    set c.baseline_hiv_status=att.baseline_hiv_status,
+        c.living_with_patient=att.living_with_patient,
+        c.pns_approach=att.pns_approach;
+
+    update kenyaemr_etl.etl_patient_contact c
+        left outer join (select pa.person_id,
+                                max(pa.address1) physical_address,
+                                max(pa.date_changed) date_last_modified
+                         from person_address pa
+                         where voided=0
+                         group by person_id) pa on c.patient_id = pa.person_id
+    set c.physical_address=pa.physical_address;
+
+    SELECT "Completed processing patient contact data ", CONCAT("Time: ", NOW());
+END $$
 
 				-- ------------------------- process contact trace ------------------------
 
@@ -5030,8 +5052,8 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
       appointment_date,
       voided
 		)
-			select
-			  ct.id,
+        select
+        ct.id,
         ct.uuid,
         ct.date_created,
         ct.date_changed as date_last_modified,
@@ -5047,7 +5069,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
         ct.voided
 			from kenyaemr_hiv_testing_client_trace ct
                 inner join person p on p.person_id = ct.client_id and p.voided=0
-				inner join kenyaemr_etl.etl_patient_contact pc on pc.id=ct.client_id and ct.voided=0
+				inner join kenyaemr_etl.etl_patient_contact pc on pc.patient_id=ct.client_id and ct.voided=0
         where pc.voided=0
 		;
 		SELECT "Completed processing client trace data ", CONCAT("Time: ", NOW());

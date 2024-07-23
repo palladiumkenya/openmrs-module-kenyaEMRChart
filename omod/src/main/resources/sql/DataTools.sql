@@ -1272,31 +1272,29 @@ SELECT "Successfully created enhanced adherence table";
   -- create table datatools_patient_contact
   create table kenyaemr_datatools.patient_contact as
     select
-        id,
-        uuid,
-        date_created,
-        first_name,
-        middle_name,
-        last_name,
-        sex,
-        birth_date,
-        physical_address,
-        phone_contact,
-        patient_related_to,
+        encounter_id,
         patient_id,
+        patient_related_to,
         (case relationship_type when 970 then "Mother" when 971 then "Father" when 1528 then "Child" when 973 then "Grandparent" when 972 then "Sibling" when 160639 then "Guardian" when 1527 then "Parent" when 5617 then "Spouse" when 162221 then "Co-wife" when 163565 then "Sexual partner" when 157351 then "Injectable drug user" when 166606 then "SNS" when 5622 then "Other" else "" end) as relationship_type,
-        appointment_date,
+        date_created,
+        start_date,
+        end_date,
+        physical_address,
         baseline_hiv_status,
         reported_test_date,
+        (case living_with_patient when 1065 then "Yes" when 1066 then "No" when 162570 then "Declined to Answer" else "" end) as living_with_patient,
+        (case pns_approach when 162284 then "Dual referral" when 160551 then "Passive referral" when 161642 then "Contract referral" when 163096 then "Provider referral"  else "" end) as pns_approach,
+        appointment_date,
         ipv_outcome,
-       (case marital_status when 1057 then "Single" when 5555 then "Married Monogamous" when 159715 then "Married Polygamous" when 1058 then "Divorced" when 1059 then "Widowed" else "" end) as marital_status,
-       (case living_with_patient when 1065 then "Yes" when 1066 then "No" when 162570 then "Declined to Answer" else "" end) as living_with_patient,
-       (case pns_approach when 162284 then "Dual referral" when 160551 then "Passive referral" when 161642 then "Contract referral" when 163096 then "Provider referral"  else "" end) as pns_approach,
         contact_listing_decline_reason,
        (case consented_contact_listing when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as consented_contact_listing,
+        encounter_provider,
+        date_last_modified,
+        location_id,
+        uuid,
         voided
     from kenyaemr_etl.etl_patient_contact;
-  ALTER TABLE kenyaemr_datatools.patient_contact ADD PRIMARY KEY(id);
+  ALTER TABLE kenyaemr_datatools.patient_contact ADD PRIMARY KEY(patient_id);
   ALTER TABLE kenyaemr_datatools.patient_contact ADD FOREIGN KEY (patient_related_to) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
   ALTER TABLE kenyaemr_datatools.patient_contact ADD INDEX(date_created);
   SELECT "Successfully created patient_contact table";
@@ -1318,7 +1316,7 @@ SELECT "Successfully created enhanced adherence table";
       appointment_date,
       voided
     from kenyaemr_etl.etl_client_trace;
-  ALTER TABLE kenyaemr_datatools.client_trace ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_contact(id);
+  ALTER TABLE kenyaemr_datatools.client_trace ADD FOREIGN KEY (client_id) REFERENCES kenyaemr_datatools.patient_contact(patient_id);
   ALTER TABLE kenyaemr_datatools.client_trace ADD INDEX(date_created);
   SELECT "Successfully created client_trace table";
 
