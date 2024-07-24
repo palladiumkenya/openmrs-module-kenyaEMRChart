@@ -3331,6 +3331,7 @@ create table dwapi_etl.etl_hts_eligibility_screening (
   date_tested                      DATE,
   started_on_art                   INT(11),
   upn_number                       varchar(80),
+  child_defiled                    INT(11),
   ever_had_sex                     INT(11),
   sexually_active                  VARCHAR(100),
   new_partner                      VARCHAR(100),

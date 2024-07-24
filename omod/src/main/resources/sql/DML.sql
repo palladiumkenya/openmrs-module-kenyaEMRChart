@@ -7231,6 +7231,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
       date_tested,
       started_on_art,
       upn_number,
+      child_defiled,
       ever_had_sex,
       sexually_active,
       new_partner,
@@ -7319,6 +7320,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=164400,o.value_datetime,null)) as date_tested,
         max(if(o.concept_id=165240,o.value_coded,null)) as started_on_art,
         max(if(o.concept_id=162053,o.value_numeric,null)) as upn_number,
+        max(if(o.concept_id=160109,o.value_coded,null)) as child_defiled,
         max(if(o.concept_id=5569,o.value_coded,null)) as ever_had_sex,
         max(if(o.concept_id=160109,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as sexually_active,
         max(if(o.concept_id=167144,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as new_partner,
@@ -7388,7 +7390,7 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
                        164400,165240,162053,160109,167144,1436,6096,5568,5570,165088,160579,
                        166559,159218,163568,167161,1396,167145,160658,165205,164845,165269,112141,
                        165203,1691,165200,165197,1729,1659,165090,165060,166365,165908,165098,
-                       5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396,5569,164956)
+                       5272,5632,162699,1788,159803,160632,164126,159803,164082,160416,164951,162558,167229,160540,167163,167162,1396,5569,164956,160109)
                       and o.voided=0
                       where e.voided=0
                       group by e.patient_id,date(e.encounter_datetime);
@@ -7706,96 +7708,105 @@ END $$
 DROP PROCEDURE IF EXISTS sp_update_next_appointment_date $$
 CREATE PROCEDURE sp_update_next_appointment_date()
 BEGIN
-  SELECT "Processing Update next appointment date with appointment date from Bahmni";
- --HIV followup appointment update 
-  update kenyaemr_etl.etl_patient_hiv_followup fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt from kenyaemr_etl.etl_patient_hiv_followup fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 1
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.next_appointment_date = apt.patAppt;
---Drug refill appointmetn update querry
-update kenyaemr_etl.etl_patient_hiv_followup fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.refill_date etlAppt from kenyaemr_etl.etl_patient_hiv_followup fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 2
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.refill_date = apt.patAppt;
+    SELECT "Processing Update next appointment date with appointment date from Bahmni";
+    -- HIV followup appointment update
+    update kenyaemr_etl.etl_patient_hiv_followup fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt
+         from kenyaemr_etl.etl_patient_hiv_followup fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 1
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.next_appointment_date = apt.patAppt;
+-- Drug refill appointmetn update querry
+    update kenyaemr_etl.etl_patient_hiv_followup fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.refill_date etlAppt
+         from kenyaemr_etl.etl_patient_hiv_followup fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 2
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.refill_date = apt.patAppt;
 
---Prep followup appointment update querry
-update kenyaemr_etl.etl_prep_followup fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.appointment_date etlAppt from kenyaemr_etl.etl_prep_followup fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 8
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.appointment_date = apt.patAppt;
+-- Prep followup appointment update querry
+    update kenyaemr_etl.etl_prep_followup fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.appointment_date etlAppt
+         from kenyaemr_etl.etl_prep_followup fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 8
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.appointment_date = apt.patAppt;
 
---Prep monthly refill appointment update querry
-update kenyaemr_etl.etl_prep_monthly_refill fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment etlAppt from kenyaemr_etl.etl_prep_monthly_refill fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 9
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.next_appointment = apt.patAppt;
+-- Prep monthly refill appointment update querry
+    update kenyaemr_etl.etl_prep_monthly_refill fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment etlAppt
+         from kenyaemr_etl.etl_prep_monthly_refill fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 9
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.next_appointment = apt.patAppt;
 
---TB followup appointment update querry
-update kenyaemr_etl.etl_tb_follow_up_visit fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt from kenyaemr_etl.etl_tb_follow_up_visit fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 6
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.next_appointment_date = apt.patAppt;
+-- TB followup appointment update querry
+    update kenyaemr_etl.etl_tb_follow_up_visit fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt
+         from kenyaemr_etl.etl_tb_follow_up_visit fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 6
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.next_appointment_date = apt.patAppt;
 
---Clinical visit appointment update querry
-update kenyaemr_etl.etl_clinical_visit fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.appointment_date etlAppt from kenyaemr_etl.etl_clinical_visit fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 3
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.appointment_date = apt.patAppt;
+-- Clinical visit appointment update querry
+    update kenyaemr_etl.etl_clinical_visit fup
+        inner join
+        (select fup.client_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.appointment_date etlAppt
+         from kenyaemr_etl.etl_clinical_visit fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.client_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 3
+         group by fup.client_id, fup.visit_date) apt on apt.client_id = fup.client_id and apt.visit_date = fup.visit_date
+    set fup.appointment_date = apt.patAppt;
 
 
---MCH antenatal visit appointment update querry
-update kenyaemr_etl.etl_mch_antenatal_visit fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt from kenyaemr_etl.etl_mch_antenatal_visit fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 4
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.next_appointment_date = apt.patAppt;
+-- MCH antenatal visit appointment update querry
+    update kenyaemr_etl.etl_mch_antenatal_visit fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt
+         from kenyaemr_etl.etl_mch_antenatal_visit fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 4
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.next_appointment_date = apt.patAppt;
 
---MCH postnatal visit appointment update querry
-update kenyaemr_etl.etl_mch_postnatal_visit fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.appointment_date etlAppt from kenyaemr_etl.etl_mch_postnatal_visit fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 5
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.appointment_date = apt.patAppt;
+-- MCH postnatal visit appointment update querry
+    update kenyaemr_etl.etl_mch_postnatal_visit fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.appointment_date etlAppt
+         from kenyaemr_etl.etl_mch_postnatal_visit fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 5
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.appointment_date = apt.patAppt;
 
---MCH child/hei followup visit appointment update querry 
-update kenyaemr_etl.etl_hei_follow_up_visit fup
-      inner join
-      (
-          select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt from kenyaemr_etl.etl_hei_follow_up_visit fup
-          inner join kenyaemr_etl.etl_patient_appointment pat on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and pat.appointment_service_id = 13
-          group by fup.patient_id, fup.visit_date
-      ) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
-  set fup.next_appointment_date = apt.patAppt;
+-- MCH child/hei followup visit appointment update querry
+    update kenyaemr_etl.etl_hei_follow_up_visit fup
+        inner join
+        (select fup.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, fup.next_appointment_date etlAppt
+         from kenyaemr_etl.etl_hei_follow_up_visit fup
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = fup.patient_id and pat.visit_date = fup.visit_date and
+                                pat.appointment_service_id = 13
+         group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
+    set fup.next_appointment_date = apt.patAppt;
   
       SELECT "Completed updating next appointment date";
 END $$
