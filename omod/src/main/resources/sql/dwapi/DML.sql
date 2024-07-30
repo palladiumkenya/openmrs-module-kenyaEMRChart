@@ -2843,10 +2843,9 @@ SELECT "Processing hts patient contacts";
 DROP TABLE IF EXISTS dwapi_etl.etl_hts_contacts;
 
 CREATE TABLE dwapi_etl.etl_hts_contacts AS
-select c.uuid,c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,t.visit_date,t.test_type,t.test_1_result,t.test_2_result,t.final_test_result from
+select c.uuid,c.patient_id,c.relationship_type,c.baseline_hiv_status,t.visit_date,t.test_type,t.test_1_result,t.test_2_result,t.final_test_result from
 dwapi_etl.etl_patient_contact c inner join dwapi_etl.etl_hts_test t on c.patient_id = t.patient_id group by c.patient_id;
 
-ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(id);
 ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(patient_id);
 ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(visit_date);
 
@@ -2854,11 +2853,11 @@ ALTER TABLE dwapi_etl.etl_hts_contacts ADD INDEX(visit_date);
 DROP TABLE IF EXISTS dwapi_etl.etl_contacts_linked;
 
 CREATE TABLE dwapi_etl.etl_contacts_linked AS
-select c.id,c.patient_id,c.relationship_type,c.baseline_hiv_status,l.visit_date,t.final_test_result from dwapi_etl.etl_patient_contact c inner join dwapi_etl.etl_hts_test t on c.patient_id = t.patient_id
+select c.patient_id,c.relationship_type,c.baseline_hiv_status,l.visit_date,t.final_test_result from dwapi_etl.etl_patient_contact c inner join dwapi_etl.etl_hts_test t on c.patient_id = t.patient_id
 inner join dwapi_etl.etl_hts_referral_and_linkage l on c.patient_id=l.patient_id
-group by c.id;
+group by c.patient_id;
 
-ALTER TABLE dwapi_etl.etl_contacts_linked ADD INDEX(id);
+ALTER TABLE dwapi_etl.etl_contacts_linked ADD INDEX(patient_id);
 ALTER TABLE dwapi_etl.etl_contacts_linked ADD INDEX(visit_date);
 
 SELECT "Completed processing hts patient contacts", CONCAT("Time: ", NOW());
