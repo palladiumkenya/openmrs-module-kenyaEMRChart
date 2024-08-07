@@ -3366,9 +3366,11 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       systolic_pressure,
       diastolic_pressure,
       temperature,
+      temperature_collection_mode,
       pulse_rate,
       respiratory_rate,
       oxygen_saturation,
+      oxygen_saturation_collection_mode,
       muac,
       z_score_absolute,
       z_score,
@@ -3396,9 +3398,11 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
         max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_pressure,
         max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic_pressure,
         max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
+        max(if(o.concept_id=167231,o.value_coded,null)) as temperature_collection_mode,
         max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
         max(if(o.concept_id=5242,o.value_numeric,null)) as respiratory_rate,
         max(if(o.concept_id=5092,o.value_numeric,null)) as oxygen_saturation,
+        max(if(o.concept_id=165932,o.value_coded,null)) as oxygen_saturation_collection_mode,
         max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
         max(if(o.concept_id=162584,o.value_numeric,null)) as z_score_absolute,
         max(if(o.concept_id=163515,o.value_coded,null)) as z_score,
@@ -3414,7 +3418,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
           select encounter_type_id, uuid, name from encounter_type where uuid in('d1059fb9-a079-4feb-a749-eedd709ae542','a0034eee-1940-4e35-847f-97537a35d05e','465a92f2-baf8-42e9-9612-53064be868e8')
         ) et on et.encounter_type_id=e.encounter_type
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,167392,1427,160325,162584,1154,159368,163304)
+                                 and o.concept_id in (160430,5089,5090,5085,5086,5088,5087,5242,5092,1343,163515,167392,1427,160325,162584,1154,159368,163304,167231,165932)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3423,7 +3427,7 @@ CREATE PROCEDURE sp_update_etl_patient_triage(IN last_update_time DATETIME)
       group by e.patient_id, visit_date
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider),weight=VALUES(weight),height=VALUES(height),systolic_pressure=VALUES(systolic_pressure),diastolic_pressure=VALUES(diastolic_pressure),
       temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),respiratory_rate=VALUES(respiratory_rate),complaint_today=VALUES(complaint_today),complaint_duration=VALUES(complaint_duration),
-      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score=VALUES(z_score),nutritional_status=VALUES(nutritional_status),nutritional_intervention=VALUES(nutritional_intervention),last_menstrual_period=VALUES(last_menstrual_period),hpv_vaccinated=VALUES(hpv_vaccinated),voided=VALUES(voided),z_score_absolute=VALUES(z_score_absolute);
+      oxygen_saturation=VALUES(oxygen_saturation),muac=VALUES(muac),z_score=VALUES(z_score),nutritional_status=VALUES(nutritional_status),nutritional_intervention=VALUES(nutritional_intervention),last_menstrual_period=VALUES(last_menstrual_period),hpv_vaccinated=VALUES(hpv_vaccinated),voided=VALUES(voided),z_score_absolute=VALUES(z_score_absolute),oxygen_saturation_collection_mode=VALUES(oxygen_saturation_collection_mode),temperature_collection_mode=VALUES(temperature_collection_mode);
 
     END $$
 -- ------------- populate etl_generalized_anxiety_disorder-------------------------
