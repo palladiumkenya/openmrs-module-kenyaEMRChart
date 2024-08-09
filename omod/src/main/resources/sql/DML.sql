@@ -4963,28 +4963,45 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
         date_last_modified,
         voided
     )
-    select
-        p.uuid,
-        date(e.encounter_datetime) as date_created,
-        encounter_id,
-        e.creator as encounter_provider,
-        e.location_id,
-        r.patient_contact,
-        r.patient_related_to,
-        r.relationship as relationship_type,
-        r.start_date,
-        r.end_date,
-        e.date_changed as date_last_modified,
-        e.voided
+    select  p.uuid,
+            date(e.encounter_datetime) as date_created,
+            encounter_id,
+            e.creator                  as encounter_provider,
+            e.location_id,
+            r.patient_contact,
+            r.patient_related_to,
+            r.relationship             as relationship_type,
+            r.start_date,
+            r.end_date,
+            e.date_changed             as date_last_modified,
+            e.voided
     from encounter e
              inner join
-         (
-             select encounter_type_id, uuid, name from encounter_type where uuid='de1f9d67-b73e-4e1b-90d0-036166fc6995'
-         ) et on et.encounter_type_id=e.encounter_type
-             inner join (select r.person_a as patient_related_to,r.person_b as patient_contact,r.relationship,r.start_date,r.end_date, r.date_created,r.date_changed,r.voided
-                         from relationship r inner join relationship_type t on r.relationship = t.relationship_type_id) r on e.patient_id = r.patient_contact and r.voided = 0
-             inner join person p on p.person_id=e.patient_id and p.voided=0
-    where e.voided=0 group by patient_contact, relationship_type, patient_related_to;
+         (select encounter_type_id, uuid, name from encounter_type where uuid = 'de1f9d67-b73e-4e1b-90d0-036166fc6995') et
+         on et.encounter_type_id = e.encounter_type
+             inner join (select r.person_a as patient_related_to,
+                                r.person_b as patient_contact,
+                                r.relationship,
+                                r.start_date,
+                                r.end_date,
+                                r.date_created,
+                                r.date_changed,
+                                r.voided
+                         from relationship r
+                                  inner join relationship_type t on r.relationship = t.relationship_type_id and
+                                                                    t.a_is_to_b in
+                                                                    ('Co-wife', 'Partner', 'Injectable-drug-user', 'SNS',
+                                                                     'Spouse', 'Parent', 'Child', 'Sibling')) r
+                        on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
+                                                                                  r.end_date > current_date)
+             inner join person p on p.person_id = r.patient_contact  and p.voided = 0
+             inner join (select person_id
+                         from person_attribute pa
+                                  join person_attribute_type t
+                                       on pa.person_attribute_type_id = t.person_attribute_type_id and
+                                          t.uuid = '7c94bd35-fba7-4ef7-96f5-29c89a318fcf') pt on e.patient_id = pt.person_id
+    where e.voided = 0
+    group by patient_contact, relationship_type, patient_related_to;
 
     update kenyaemr_etl.etl_patient_contact c
         join
