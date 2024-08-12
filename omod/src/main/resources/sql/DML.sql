@@ -4988,10 +4988,7 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
                                 r.date_changed,
                                 r.voided
                          from relationship r
-                                  inner join relationship_type t on r.relationship = t.relationship_type_id and
-                                                                    t.a_is_to_b in
-                                                                    ('Co-wife', 'Partner', 'Injectable-drug-user', 'SNS',
-                                                                     'Spouse', 'Parent', 'Child', 'Sibling')) r
+                                  inner join relationship_type t on r.relationship = t.relationship_type_id ) r
                         on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
                                                                                   r.end_date > current_date)
              inner join person p on p.person_id = r.patient_contact  and p.voided = 0
@@ -5008,10 +5005,12 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
         (
             select
                 pa.person_id,
-                max(if(pat.uuid='3ca03c84-632d-4e53-95ad-91f1bd9d96d6', pa.value, null)) as baseline_hiv_status,
+                max(if(pat.uuid='3ca03c84-632d-4e53-95ad-91f1bd9d96d6', case pa.value when 703 then 'Positive' when 664 then 'Negative' when 1067 then 'Unknown' end, null)) as baseline_hiv_status,
                 max(if(pat.uuid='35a08d84-9f80-4991-92b4-c4ae5903536e', pa.value, null)) as living_with_patient,
-                max(if(pat.uuid='59d1b886-90c8-4f7f-9212-08b20a9ee8cf', pa.value, null)) as pns_approach
+                max(if(pat.uuid='59d1b886-90c8-4f7f-9212-08b20a9ee8cf', pa.value, null)) as pns_approach,
+                max(if(pat.uuid='49c543c2-a72a-4b0a-8cca-39c375c0726f', pa.value, null)) as ipv_outcome
             from person_attribute pa
+                inner join person p on p.person_id = pa.person_id and p.voided = 0
                      inner join
                  (
                      select
@@ -5021,18 +5020,18 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
                      from person_attribute_type pat
                      where pat.retired=0
                  ) pat on pat.person_attribute_type_id = pa.person_attribute_type_id
-                     and pat.uuid in (
-                                      'b2c38640-2603-4629-aebd-3b54f33f1e3a', -- phone_contact
-                                      '3ca03c84-632d-4e53-95ad-91f1bd9d96d6', -- baseline_hiv_status
+                     and pat.uuid in ('3ca03c84-632d-4e53-95ad-91f1bd9d96d6', -- baseline_hiv_status
                                       '35a08d84-9f80-4991-92b4-c4ae5903536e', -- living_with_patient
-                                      '59d1b886-90c8-4f7f-9212-08b20a9ee8cf' -- pns_approach
+                                      '59d1b886-90c8-4f7f-9212-08b20a9ee8cf', -- pns_approach
+                                      '49c543c2-a72a-4b0a-8cca-39c375c0726f' -- ipv_outcome
                          )
             where pa.voided=0
-            group by pa.person_id
+            group by p.person_id
         ) att on att.person_id = c.patient_id
     set c.baseline_hiv_status=att.baseline_hiv_status,
         c.living_with_patient=att.living_with_patient,
-        c.pns_approach=att.pns_approach;
+        c.pns_approach=att.pns_approach,
+        c.ipv_outcome=att.ipv_outcome;
 
     update kenyaemr_etl.etl_patient_contact c
         left outer join (select pa.person_id,
