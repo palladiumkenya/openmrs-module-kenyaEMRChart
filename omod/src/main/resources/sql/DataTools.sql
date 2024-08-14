@@ -2371,7 +2371,7 @@ select
     mental_health_referred,
     mental_health_text,
     mat_screened,
--- mat_results,
+    mat_results,
     mat_treated,
     mat_referred,
     mat_text,
