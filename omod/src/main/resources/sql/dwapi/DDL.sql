@@ -2491,7 +2491,7 @@ CREATE TABLE dwapi_etl.etl_patient_program (
       mental_health_referred VARCHAR(10),
       mental_health_text VARCHAR(255),
       mat_screened VARCHAR(10),
---      mat_results VARCHAR(255),
+      mat_results VARCHAR(255),
       mat_treated VARCHAR(100),
       mat_referred VARCHAR(10),
       mat_text VARCHAR(255),
