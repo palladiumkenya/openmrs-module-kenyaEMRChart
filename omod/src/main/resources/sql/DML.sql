@@ -6457,7 +6457,7 @@ if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_l
 e.voided as voided
 from encounter e
 inner join person p on p.person_id=e.patient_id and p.voided=0
-inner join form f on f.form_id=e.form_id and f.uuid in ('195b87e0-2b8a-45f1-8b1b-7c6a30a06691')
+inner join form f on f.form_id=e.form_id and f.uuid in ('052ede51-ddda-4f04-aa25-754ff40abf37')
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167992,160632,165137,162724,162053,159948,159599,164855,164432,164516,162725,164093,162078,163281,165236,856,5096,165163,164999,163532,5599,166663,166665,165184,165086,160653,162309,1113,162230,162320,162568) and o.voided=0
 where e.voided=0
 group by e.encounter_id;
