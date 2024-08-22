@@ -5199,7 +5199,7 @@ from encounter e
                                    on pa.person_attribute_type_id = t.person_attribute_type_id and
                                       t.uuid = '7c94bd35-fba7-4ef7-96f5-29c89a318fcf') pt on e.patient_id = pt.person_id
 where e.voided = 0
-group by patient_contact, relationship_type, patient_related_to
+group by patient_contact
 ON DUPLICATE KEY UPDATE
     start_date=start_date,
     end_date=end_date,
