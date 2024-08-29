@@ -2278,6 +2278,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_contact (
   location_id INT(11) DEFAULT NULL,
   voided INT(11),
   uuid                   CHAR(38),
+  CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
   CONSTRAINT FOREIGN KEY (patient_related_to) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
   CONSTRAINT unique_uuid UNIQUE(uuid),
   INDEX(date_created),
