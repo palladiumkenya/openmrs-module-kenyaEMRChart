@@ -5189,7 +5189,8 @@ from encounter e
                             r.date_changed,
                             r.voided
                      from relationship r
-                              inner join relationship_type t on r.relationship = t.relationship_type_id ) r
+                              inner join relationship_type t on r.relationship = t.relationship_type_id
+                              inner join person pr on pr.person_id = r.person_a AND pr.voided = 0) r
                     on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
                                                                               r.end_date > current_date)
          inner join person p on p.person_id = r.patient_contact  and p.voided = 0
