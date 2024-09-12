@@ -4,10 +4,10 @@ BEGIN
 DECLARE script_id INT(11);
 
 -- create/recreate database dwapi_etl
+SET FOREIGN_KEY_CHECKS = 0;
 drop database if exists dwapi_etl;
+SET FOREIGN_KEY_CHECKS = 1;
 create database dwapi_etl DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-
 
 -- Log start time
 INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('initial_creation_of_dwapi_tables', NOW());
