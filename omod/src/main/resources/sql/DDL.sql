@@ -4,7 +4,9 @@ BEGIN
 DECLARE script_id INT(11);
 
 -- create/recreate database kenyaemr_etl
+SET FOREIGN_KEY_CHECKS = 0;
 drop database if exists kenyaemr_etl;
+SET FOREIGN_KEY_CHECKS = 1;
 create database kenyaemr_etl DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 drop database if exists kenyaemr_datatools;
