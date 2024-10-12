@@ -3622,6 +3622,7 @@ CREATE TABLE kenyaemr_etl.etl_clinical_encounter (
      procedures_prescribed 		INT(11),
      procedures_ordered 		VARCHAR(100),
      patient_outcome		    INT(11),
+     general_examination VARCHAR(255),
      admission_needed		    INT(11),
      date_of_patient_admission	DATE,
      admission_reason		VARCHAR(100),
