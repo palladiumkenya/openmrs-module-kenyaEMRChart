@@ -7972,6 +7972,7 @@ BEGIN
         procedures_prescribed,
         procedures_ordered,
         patient_outcome,
+        general_examination,
         admission_needed,
         date_of_patient_admission,
         admission_reason,
@@ -8046,8 +8047,20 @@ BEGIN
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 1000222,'Enema Administration','')),''),
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 127896,'Lumbar Puncture','')),''),
                   nullif(max(if(o.concept_id=164174,o.value_text,'')),'')) as procedures_ordered,
-        max(if(o.concept_id=1651,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as admission_needed,
         max(if(o.concept_id=160433,o.value_coded,null)) as patient_outcome,
+        concat_ws(',',nullif(max(if(o.concept_id=162737 and o.value_coded =1107 ,'None','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded =136443,'Jaundice','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded =460,'Oedema','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 5334,'Oral Thrush','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 5245,'Pallor','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 140125,'Finger Clubbing','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 126952,'Lymph Node Axillary','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 143050,'Cyanosis','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 126939,'Lymph Nodes Inguinal','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 823,'Wasting','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 142630,'Dehydration','')),''),
+                         nullif(max(if(o.concept_id=162737 and o.value_coded = 116334,'Lethargic','')),'')) as general_examination,
+        max(if(o.concept_id=1651,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as admission_needed,
         max(if(o.concept_id = 1640,o.value_datetime,null)) as date_of_patient_admission,
         max(if(o.concept_id=164174,o.value_text,null)) as admission_reason,
         max(if(o.concept_id=162477,(case o.value_coded when 164180 then 'New' when 159833 THEN 'Readmission' else '' end),null)) as admission_type,
@@ -8082,7 +8095,7 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (164174,160632,165104,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181)
+                                                                          (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181)
         and o.voided=0
     where e.voided=0
     group by e.patient_id,date(e.encounter_datetime);
