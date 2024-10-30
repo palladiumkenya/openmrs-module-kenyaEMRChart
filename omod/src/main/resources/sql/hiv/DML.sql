@@ -221,7 +221,11 @@ insert into kenyaemr_etl.etl_hiv_enrollment (
     ever_on_pep,
     ever_on_prep,
     ever_on_haart,
-                                             who_stage,
+    cd4_test_result,
+    cd4_test_date,
+    viral_load_test_result,
+    viral_load_test_date,
+    who_stage,
     name_of_treatment_supporter,
     relationship_of_treatment_supporter,
     treatment_supporter_telephone,
@@ -257,6 +261,10 @@ select
        max(if(o.concept_id=1691,o.value_coded,null)) as ever_on_pep,
        max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
        max(if(o.concept_id=1181,o.value_coded,null)) as ever_on_haart,
+       max(if(o.concept_id=5497,o.value_numeric,null)) as cd4_test_result,
+       max(if(o.concept_id=159376,o.value_datetime,null)) as cd4_test_date,
+       max(if(o.concept_id=1305 and o.value_coded=1302,'LDL',if(o.concept_id=162086,o.value_text,null))) as viral_load_test_result,
+       max(if(o.concept_id=163281,o.value_datetime,null)) as viral_load_test_date,
        max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
        max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
        max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
@@ -274,7 +282,7 @@ from encounter e
          ) et on et.encounter_type_id=e.encounter_type
        inner join person p on p.person_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356)
+                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356,5497,159376,1305,162086,163281)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
@@ -3075,6 +3083,163 @@ group by c.patient_id;
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(patient_id);
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(visit_date);
 
+DROP TABLE IF EXISTS kenyaemr_etl.etl_viral_load_validity_tracker;
+
+CREATE TABLE kenyaemr_etl.etl_viral_load_validity_tracker (
+  patient_id INT(11) not null,
+  lab_test INT(11),
+  vl_result VARCHAR(50),
+  date_created DATE,
+  date_test_requested DATE,
+  date_test_result_received DATE,
+  base_viral_load_test_result VARCHAR(100),
+  base_viral_load_test_date VARCHAR(100),
+  urgency VARCHAR(100),
+  order_reason VARCHAR(100),
+  previous_test_result VARCHAR(100),
+  previous_date_test_requested DATE,
+  previous_date_test_result_received DATE,
+  previous_urgency VARCHAR(100),
+  previous_order_reason VARCHAR(100),
+  date_started DATE,
+  date_confirmed_hiv_positive DATE,
+  latest_hiv_followup_visit DATE,
+  breastfeeding_status VARCHAR(100),
+  pregnancy_status VARCHAR(100),
+  lmp_date DATE,
+  pregnancy_outcome VARCHAR(100),
+  index(patient_id),
+  index(vl_result),
+  index(date_test_requested),
+  index(base_viral_load_test_result),
+  index(previous_test_result),
+  index(previous_date_test_requested),
+  index(date_confirmed_hiv_positive),
+  index(breastfeeding_status),
+  index(pregnancy_status),
+  index(order_reason)
+);
+
+INSERT INTO kenyaemr_etl.etl_viral_load_validity_tracker
+(
+    patient_id,
+    lab_test,
+    vl_result,
+    date_created,
+    date_test_requested,
+    date_test_result_received,
+    base_viral_load_test_result,
+    base_viral_load_test_date,
+    urgency,
+ order_reason,
+    previous_test_result,
+    previous_date_test_requested,
+    previous_date_test_result_received,
+    previous_urgency,
+    previous_order_reason,
+    date_started,
+    date_confirmed_hiv_positive,
+    latest_hiv_followup_visit,
+    breastfeeding_status,
+    pregnancy_status,
+    lmp_date,
+    pregnancy_outcome
+)
+WITH LatestTest AS (
+    -- CTE for fetching latest test data
+    SELECT
+        x.patient_id,
+        x.lab_test,
+        x.test_result,
+        x.date_created,
+        x.date_test_requested,
+        x.date_test_result_received,
+        e.base_viral_load_test_result,
+        e.base_viral_load_test_date,
+        x.urgency,
+        x.order_reason,
+        d.date_started,
+        COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
+        fup.latest_hiv_followup_visit,
+        fup.breastfeeding_status,
+        fup.pregnancy_status,
+        fup.lmp_date,
+        fup.pg_outcome
+    FROM
+        kenyaemr_etl.etl_laboratory_extract x
+            LEFT JOIN (SELECT d.patient_id, MIN(d.date_started) AS date_started
+                       FROM kenyaemr_etl.etl_drug_event d
+                       WHERE d.program = 'HIV'
+                       GROUP BY d.patient_id) d
+                      ON x.patient_id = d.patient_id
+            INNER JOIN (SELECT e.patient_id, e.visit_date, e.date_confirmed_hiv_positive,
+                               MID(MAX(CONCAT(DATE(e.visit_date), e.viral_load_test_result)), 11) AS base_viral_load_test_result,
+                               MID(MAX(CONCAT(DATE(e.visit_date), e.viral_load_test_date)), 11) AS base_viral_load_test_date
+                        FROM kenyaemr_etl.etl_hiv_enrollment e
+                        GROUP BY e.patient_id) e
+                       ON x.patient_id = e.patient_id
+            INNER JOIN (SELECT f.patient_id, f.visit_date AS latest_hiv_followup_visit,
+                               MID(MAX(CONCAT(DATE(f.visit_date), f.breastfeeding)), 11) AS breastfeeding_status,
+                               MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_status)), 11) AS pregnancy_status,
+                               MID(MAX(CONCAT(DATE(f.visit_date), f.last_menstrual_period)), 11) AS lmp_date,
+                               MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_outcome)), 11) AS pg_outcome
+                        FROM kenyaemr_etl.etl_patient_hiv_followup f
+                        GROUP BY f.patient_id) fup
+                       ON x.patient_id = fup.patient_id
+    WHERE
+        x.lab_test IN (1305, 856)
+      AND x.date_test_requested = (
+        SELECT MAX(x2.date_test_requested)
+        FROM kenyaemr_etl.etl_laboratory_extract x2
+        WHERE x2.patient_id = x.patient_id
+          AND x2.lab_test IN (1305, 856)
+    )
+),
+     PreviousTest AS (
+         -- CTE for fetching previous test data
+         SELECT
+             p.patient_id,
+             p.test_result AS previous_test_result,
+             p.date_test_requested AS previous_date_test_requested,
+             p.date_test_result_received AS previous_date_test_result_received,
+             p.urgency AS previous_urgency,
+             p.order_reason AS previous_order_reason,
+             ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.date_test_requested DESC) AS rn
+         FROM
+             kenyaemr_etl.etl_laboratory_extract p
+         WHERE
+             p.lab_test IN (1305, 856)
+     )
+-- Use the SELECT statement to pull data from the CTEs
+SELECT
+    l.patient_id,
+    l.lab_test,
+    l.test_result,
+    l.date_created,
+    l.date_test_requested,
+    l.date_test_result_received,
+    l.base_viral_load_test_result,
+    l.base_viral_load_test_date,
+    l.urgency,
+    l.order_reason,
+    pt.previous_test_result,
+    pt.previous_date_test_requested,
+    pt.previous_date_test_result_received,
+    pt.previous_urgency,
+    pt.previous_order_reason,
+    l.date_started,
+    l.date_confirmed_hiv_positive,
+    l.latest_hiv_followup_visit,
+    l.breastfeeding_status,
+    l.pregnancy_status,
+    l.lmp_date,
+    l.pg_outcome
+FROM
+    LatestTest l
+        LEFT JOIN PreviousTest pt ON l.patient_id = pt.patient_id
+        AND pt.rn = 2 -- Select the second latest test as the previous one
+ORDER BY
+    l.patient_id;
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
 
 END $$
