@@ -4912,7 +4912,7 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                max(if(o.concept_id=160534,o.value_datetime,null)) as transfer_in_date,
                max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
                max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
-               COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 165083 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
+               COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 166513 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
                    then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
                max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
                                                then  "Prisoner" else "" end),null)) as priority_population_type,
