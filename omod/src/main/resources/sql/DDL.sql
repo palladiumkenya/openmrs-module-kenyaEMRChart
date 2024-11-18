@@ -56,6 +56,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_enhanced_adherence;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_triage;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_linkage_tracing;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_generalized_anxiety_disorder;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_nutrition;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_initiation;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_follow_up;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ipt_outcome;
@@ -1667,6 +1668,56 @@ SELECT "Successfully created etl_ART_preparation table";
   SELECT "Successfully created etl_generalized_anxiety_disorder table";
 
 
+--------------- Create table etl_nutrition ---------------------
+CREATE TABLE kenyaemr_etl.etl_nutrition (
+    uuid CHAR(38),
+    encounter_id INT(11) NOT NULL PRIMARY KEY,
+    patient_id INT(11) NOT NULL ,
+    location_id INT(11) DEFAULT NULL,
+    visit_date DATE,
+    visit_id INT(11),
+    encounter_provider INT(11),
+    date_created DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    visit_type INT(11),
+    facility_name VARCHAR(255),
+    patient_pregnant INT(11),
+    sero_status INT(11),
+    patient_on_arv INT(11),
+    medication_condition INT(11),
+    medication_condition_other VARCHAR(255),
+    patient_has_edema INT(11),
+    anaemia_level INT(11),
+    metabolic_disorders INT(11),
+    patient_sam_mam INT(11),
+    nutritional_intervention INT(11),
+    first_0_6_months INT(11),
+    first_6_12_months INT(11),
+    postnatal INT(11),
+    maternal_nutrition INT(11),
+    critical_nutrition_practices INT(11),
+    therapeutic_food INT(11),
+    therapeutic_food_other VARCHAR(255),
+    supplemental_food INT(11),
+    supplemental_food_other VARCHAR(255),
+    micronutrients INT(11),
+    micronutrients_other VARCHAR(255),
+    status_continuing_sam_mam_patient INT(11),
+    referral_status INT(11),
+    criteria_for_admission INT(11),
+    type_of_admission INT(11),
+    next_appointment_date DATE,
+    cadre INT(11),
+    cadre_other VARCHAR(255),
+    provider_name VARCHAR(255),
+    voided INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+    CONSTRAINT unique_uuid UNIQUE(uuid),
+    INDEX(visit_date),
+    INDEX(encounter_id),
+    INDEX(patient_id),
+    INDEX(patient_id, visit_date)
+    );
 
 
   -- ------------ create table etl_prep_behaviour_risk_assessment-----------------------

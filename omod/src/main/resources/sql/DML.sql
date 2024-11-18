@@ -3601,6 +3601,111 @@ CREATE PROCEDURE sp_populate_etl_generalized_anxiety_disorder()
     group by e.encounter_id;
     SELECT "Completed processing Processing Generalized Anxiety Disorder forms", CONCAT("Time: ", NOW());
   END $$
+
+-- ------------- populate etl_nutrition-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_nutrition $$
+CREATE PROCEDURE sp_populate_etl_nutrition()
+  BEGIN
+    SELECT "Processing Nutrition form", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_nutrition(
+            uuid,
+            patient_id,
+            visit_id,
+            visit_date,
+            location_id,
+            encounter_id,
+            encounter_provider,
+            date_created,
+            visit_type,
+            facility_name,
+            patient_pregnant,
+            sero_status,
+            patient_on_arv,
+            medication_condition,
+            medication_condition_other,
+            patient_has_edema,
+            anaemia_level,
+            metabolic_disorders,
+            patient_sam_mam,
+            nutritional_intervention,
+            first_0_6_months,
+            first_6_12_months,
+            postnatal,
+            maternal_nutrition,
+            critical_nutrition_practices,
+            therapeutic_food,
+            therapeutic_food_other,
+            supplemental_food,
+            supplemental_food_other,
+            micronutrients,
+            micronutrients_other,
+            status_continuing_sam_mam_patient,
+            referral_status,
+            criteria_for_admission,
+            type_of_admission,
+            next_appointment_date,
+            cadre,
+            cadre_other,
+            provider_name,
+            date_last_modified,
+            voided
+        )
+    select
+        e.uuid,
+        e.patient_id,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.location_id,
+        e.encounter_id as encounter_id,
+        e.creator,
+        e.date_created as date_created,
+        max(if(o.concept_id=164181,trim(o.value_coded),null)) as visit_type,
+        max(if(o.concept_id=160632,trim(o.value_text),null)) as facility_name,
+        max(if(o.concept_id=5272,trim(o.value_coded),null)) as patient_pregnant,
+        max(if(o.concept_id=1169,trim(o.value_coded),null)) as sero_status,
+        max(if(o.concept_id=1149,trim(o.value_coded),null)) as patient_on_arv,
+        max(if(o.concept_id=162747,trim(o.value_coded),null)) as medication_condition,
+        max(if(o.concept_id=160632,trim(o.value_text),null)) as medication_condition_other,
+        max(if(o.concept_id=163894,trim(o.value_coded),null)) as patient_has_edema,
+        max(if(o.concept_id=156625,trim(o.value_coded),null)) as anaemia_level,
+        max(if(o.concept_id=163304,trim(o.value_coded),null)) as metabolic_disorders,
+        max(if(o.concept_id=160205,trim(o.value_coded),null)) as patient_sam_mam,
+        max(if(o.concept_id=162696,trim(o.value_coded),null)) as nutritional_intervention,
+        max(if(o.concept_id=985,trim(o.value_coded),null)) as first_0_6_months,
+        max(if(o.concept_id=1151,trim(o.value_coded),null)) as first_6_12_months,
+        max(if(o.concept_id=168734,trim(o.value_coded),null)) as postnatal,
+        max(if(o.concept_id=163300,trim(o.value_coded),null)) as maternal_nutrition,
+        max(if(o.concept_id=161005,trim(o.value_coded),null)) as critical_nutrition_practices,
+        max(if(o.concept_id=161648,trim(o.value_coded),null)) as therapeutic_food,
+        max(if(o.concept_id=160632,trim(o.value_text),null)) as therapeutic_food_other,
+        max(if(o.concept_id=159854,trim(o.value_coded),null)) as supplemental_food,
+        max(if(o.concept_id=160632,trim(o.value_text),null)) as supplemental_food_other,
+        max(if(o.concept_id=5484,trim(o.value_coded),null)) as micronutrients,
+        max(if(o.concept_id=160632,trim(o.value_text),null)) as micronutrients_other,
+        max(if(o.concept_id=159402,trim(o.value_coded),null)) as status_continuing_sam_mam_patient,
+        max(if(o.concept_id=1788,trim(o.value_coded),null)) as referral_status,
+        max(if(o.concept_id=167381,trim(o.value_coded),null)) as criteria_for_admission,
+        max(if(o.concept_id=162477,trim(o.value_coded),null)) as type_of_admission,
+        max(if(o.concept_id=5096,o.value_datetime,null)) as next_appointment_date,
+        max(if(o.concept_id=5619,trim(o.value_coded),null)) as cadre,
+        max(if(o.concept_id=160632,trim(o.value_text),null)) as cadre_other,
+        max(if(o.concept_id=1473,o.value_text,null)) as provider_name,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided as voided
+
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id=e.form_id and f.uuid in ("b8357314-0f6a-4fc9-a5b7-339f47095d62")
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (
+                        164181,160632,5272,1169,1149,162747,160632,163894,156625,163304,160205,
+                        162696,985,1151,168734,163300,161005,161648,160632,
+                        159854,160632,159854,160632,5484,160632,159402,1788,167381,162477,5096,5619,160632,1473) and o.voided=0
+    where e.voided=0
+    group by e.encounter_id;
+    SELECT "Completed processing Nutrition forms", CONCAT("Time: ", NOW());
+  END $$
+
 -- ------------- populate etl_prep_behaviour_risk_assessment-------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_prep_behaviour_risk_assessment $$
@@ -8320,6 +8425,7 @@ CALL sp_populate_etl_mch_discharge();
 CALL sp_drug_event();
 CALL sp_populate_hts_test();
 CALL sp_populate_etl_generalized_anxiety_disorder();
+CALL sp_populate_etl_nutrition();
 CALL sp_populate_hts_linkage_and_referral();
 CALL sp_populate_hts_referral();
 CALL sp_populate_etl_ccc_defaulter_tracing();

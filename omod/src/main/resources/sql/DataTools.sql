@@ -1253,7 +1253,53 @@ SELECT "Successfully created enhanced adherence table";
   ALTER TABLE kenyaemr_datatools.generalized_anxiety_disorder ADD INDEX(visit_date);
   SELECT "Successfully created generalized anxiety disorder table";
 
-
+  -- Create table nutrition
+    create table kenyaemr_datatools.nutrition as
+        select
+        uuid,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        encounter_provider,
+        date_created,
+        (case o.value_coded when 164180 then "New visit" when 160530 then "Return Visit" when 160563 then "Referred from other facilites" else "" end) as visit_type,
+        facility_name,
+        (case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end) as patient_pregnant,
+        (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1067 then "Unknown" else "" end) as sero_status,
+        (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as patient_on_arv,
+        (case o.value_coded when 112141 then "TB" when 119481 then "Diabetes" when 117399 then "Hypertension" when 5622 then "Other" else "" end) as medication_condition,
+        medication_condition_other,
+        (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as patient_has_edema,
+        (case o.value_coded when 1118 then "Not Done" when 1115 then "Normal" when 1498 then "Mild" when 1499 then "Moderate" when 1500 then "Severe" else "" end) as anaemia_level,
+        (case o.value_coded when 1107 then "None" when 135761 then "Lypodystrophy" when 141623 then "Dyslipidemia" when 142473 then "Type II Diabetes" else "" end) as metabolic_disorders,
+        (case o.value_coded when 1687 then "1st Time Diagnosis" when 160033 then "Relapse" when 1655 then "Re-admission" else "" end) as patient_sam_mam,
+        (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as nutritional_intervention,
+        (case o.value_coded when 5526 then "Exclusive breastfeeding" when 164477 then "Exclusive replacement feeding" when 6046 then "Mixed feeding" else "" end) as first_0_6_months,
+        (case o.value_coded when 5632 then "Breastfeeding" when 140719 then "Not Breastfeeding" when 1067 then "Not known" when 159854 then "Began complimentary feeding" else "" end) as first_6_12_months,
+        (case o.value_coded when 5632 then "Breastfeeding" when 164477 then "Replacement feeding"  when 159854 then "Complimentary feeding" else "" end) as postnatal,
+        (case o.value_coded when 129202 then "Pre-natal" when 164171 then "Post Natal" else "" end) as maternal_nutrition,
+        (case o.value_coded when 1107 then "None" when 163300 then "Nutrition status assessment" when 161648 then "Dietary/Energy needs" when 1906 then "Sanitation" when 135797 then "Positive living behaviour" when 159364 then "Exercise" when 154358 then "Safe drinking water" when 1611 then "Prompt treatment for Opportunistic Infections" when 164377 then "Drug food interactions side effects" else "" end) as critical_nutrition_practices,
+        (case o.value_coded when 1107 then "None" when 163394 then "RUTF" when 163404 then "F-75" when 167247 then "F-100" when 159854 then "Fiesmol" when 5622 then "Others" else "" end) as therapeutic_food,
+        therapeutic_food_other,
+        (case o.value_coded when 1107 then "None" when 159597 then "FBF" when 162758 then "CSB" when 166382 then "RUSF" when 165577 then "Liquid nutrition supplements" when 5622 then "Others" else "" end) as supplemental_food,
+        supplemental_food_other,
+        (case o.value_coded when 1107 then "None" when 86339 then "Vitamin A" when 86343 then "B6" when 461 then "Multi-vitamins" when 104677 then "Iron-folate" when 86672 then "Zinc" when 161649 then "Multiple Micronutrients" when 5622 then "Others" else "" end) as micronutrients,
+        micronutrients_other,
+        (case o.value_coded when 5544 then "Gaining Weight" when 832 then "Losing Weight" when 128378 then "Static Weight" when 159791 then "Cured" when 1692 then "Discharged" when 163484 then "Refused Nutrition Support" else "" end) as status_continuing_sam_mam_patient,
+        (case o.value_coded when 5485 then "Refer for admission" when 164407 then "Referral for other clinics" when 163316 then "Referral for livelihood support" when 159492 then "Transferred Out" else "" end) as referral_status,
+        (case o.value_coded when 1362 then "Edema +" when 1363 then "Edema ++" when 1364 then "Edema +++" when 1343 then "MUAC" when 162584 then "WHZ" when 1342 then "BMI for Age" else "" end) as criteria_for_admission,
+        (case o.value_coded when 164144 then "New" when 1000049 then "Re-Admission" when 160033 then "Relapse" when 160031 then "Returned Defaulter" else "" end) as type_of_admission,
+         next_appointment_date,
+        (case o.value_coded when 900009 then "Nutritionist" when 1577 then "Nurse" when 162591 then "Doctor" when 1574 then "Clinical Officer" when 5622 then "Others" else "" end) as cadre,
+        cadre_other,
+        provider_name,
+        voided
+        from kenyaemr_etl.etl_nutrition;
+    ALTER TABLE kenyaemr_datatools.nutrition ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.nutrition ADD INDEX(visit_date);
+    SELECT "Successfully created nutrition table";
   -- create table datatools_patient_contact
   create table kenyaemr_datatools.patient_contact as
     select
