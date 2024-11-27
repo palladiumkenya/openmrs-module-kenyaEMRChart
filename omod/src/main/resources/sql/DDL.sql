@@ -66,6 +66,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_hts_referral;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_behaviour_risk_assessment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_monthly_refill;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_discontinuation;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_orthopaedic_clinic_visit;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_prep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_progress_note;
@@ -1792,6 +1793,68 @@ SELECT "Successfully created etl_ART_preparation table";
 
   );
   SELECT "Successfully created etl_prep_discontinuation table";
+
+------------------- create table etl_orthopaedic_clinic_visit -----------------------
+    CREATE TABLE kenyaemr_etl.etl_orthopaedic_clinic_visit (
+        uuid CHAR(38),
+        encounter_id INT(11) NOT NULL PRIMARY KEY,
+        patient_id INT(11) NOT NULL ,
+        location_id INT(11) DEFAULT NULL,
+        visit_date DATE,
+        visit_id INT(11),
+        encounter_provider INT(11),
+        date_created DATETIME NOT NULL,
+        date_last_modified DATETIME,
+        visit_type INT(11),
+        referral_form INT(11),
+        other_facility_name VARCHAR(255),
+        facility_name VARCHAR(255),
+        service_area INT(11),
+        other_unit_name VARCHAR(255),
+        orthopaedic_number INT (11),
+        select_symptoms VARCHAR(255),
+        symptoms_for_otc_other VARCHAR(255),
+        location VARCHAR(255),
+        otc_duration INT(11),
+        onset_otc VARCHAR(255),
+        hpi VARCHAR(255),
+        past_prescribed_drugs VARCHAR(255),
+--        previous_physiotherapy INT(11),
+        trauma_history INT(11),
+        surgical_history INT(11),
+        type_of_surgery VARCHAR(255),
+        surgical_date DATE,
+        surgery_indication VARCHAR(255),
+        underlying_condition INT(11),
+        specify_condition INT(11),
+        specify_condition_other VARCHAR(255),
+        family_history INT(11),
+        musculoskeletal_system_conditions INT(11),
+        musculoskeletal_system_conditions_other VARCHAR(255),
+        musculoskeletal_examination_findings VARCHAR(255),
+        musculoskeletal_findings INT(11),
+        musculoskeletal_findings_other VARCHAR(255),
+        joint_assessed VARCHAR(255),
+        joint_movement INT(11),
+        angle_degrees INT(11),
+        clinician_findings_notes VARCHAR(255),
+        intervention_given VARCHAR(255),
+        intervention_given_other VARCHAR(255),
+        management_plan VARCHAR(255),
+        procedure_done VARCHAR(255),
+        procedure_done_other VARCHAR(255),
+        patient_referral VARCHAR(255),
+        name_of_the_facility VARCHAR(255),
+        voided INT(11),
+        CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+        CONSTRAINT unique_uuid UNIQUE(uuid),
+        INDEX(visit_date),
+        INDEX(encounter_id),
+        INDEX(patient_id, visit_date)
+    );
+
+    SELECT "Successfully created etl_orthopaedic_clinic_visit table";
+
 
   -- ------------ create table etl_prep_enrollment-----------------------
   CREATE TABLE kenyaemr_etl.etl_prep_enrolment (

@@ -1254,6 +1254,127 @@ SELECT "Successfully created enhanced adherence table";
   SELECT "Successfully created generalized anxiety disorder table";
 
 
+    -- create table datatools_orthopaedic_clinic_visit
+    create table kenyaemr_datatools.orthopaedic_clinic_visit as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+      (case o.value_coded when 164180 then "New visit" when 160530 then "Re-visit" when 160551 then "Referral" else "" end) as visit_type,
+      (case o.value_coded when 160542 then "Community unit(CU)" when 164407 then "Other health facility" when 163266 then "This health facility" else "" end) as referral_form,
+      other_facility_name,
+      facility_name,
+      (case o.value_coded when 160542 then "CBR(Community-based rehabilitation)" when 159937 then "MCH" when 159927 then "Outreach/Mobile Clinic" when 164103 then "Diabetic clinic" when 167396 then "NBU(newborn unit)" when 5622 then "Others" else "" end) as service_area,
+      other_unit_name,
+      orthopaedic_number,
+      select_symptoms,
+      symptoms_for_otc_other,
+      location,
+      otc_duration,
+      (case o.value_coded when 1839 then "Sudden" when 1499 then "Gradual" else "" end) as onset_otc,
+      hpi,
+      past_prescribed_drugs,
+      (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as trauma_history,
+      (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as surgical_history,
+      type_of_surgery,
+      surgical_date,
+      surgery_indication,
+      (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as underlying_condition,
+      (case o.value_coded when 114698 then "Osteoarthritis" when 114662 then "Osteoporosis" when 127417 then "Rheumatoid arthritis" when 127706 then "Diabetes" when 115115 then "Obesity" when 117762 then "Gout" when 153690 then "Lupus" when 119955 then "Hip dysplasia" when 113125 then "Scoliosis" when 5622 then "Others" else "" end) as specify_condition,
+      specify_condition_other,
+      (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as family_history,
+      (case o.value_coded when 114698 then "Arthritis" when 114662 then "Osteoporosis" when 117585 then "Genetic disorders"
+            when 114931 then "Fractures" when 119955 then "Hip dysplasia"
+            when 113125 then "Scoliosis" when 5622 then "Others" else "" end) as musculoskeletal_system_conditions,
+      musculoskeletal_system_conditions_other,
+      musculoskeletal_examination_findings,
+      (case o.value_coded when 5313 then "Local Tenderness" when 80 then "Hot and Red joint" when 130917 then "Muscle Atrophy"
+            when 152183 then "Flexion Attitude(knee/neck/spine/ankle)"
+            when 134186 then "Homan's sign positive"
+            when 155871 then "Deformity(S-shaped)"
+            when 131113 then "Thickening of the bone"
+            when 152228 then "Local swelling" when 114362 then "Pseudo-paralysis"
+            when 126385 then "Adduction is restricted(Shoulder/hip/fingers)"
+            when 142671 then "Abduction is restricted" when 163894 then "Dugas test positive"
+            when 135412 then "Sulcus test positive" when 136421
+            then "Crepitus" when 114431 then "Dimple Sign" when 131113
+            then "Step sign positive" when 139740 then "Triangle disruption"
+            when 122904 then "Supination and pronation of the forarm"
+            when 135412 then "Anterior/posterior angulation" when 134186 then "Garden spade deformity"
+            when 116472 then "Kyphosis" when 5622 then "Other"
+            else "" end) as musculoskeletal_findings,
+      musculoskeletal_findings_other,
+      joint_assessed,
+      joint_movement,
+      angle_degrees,
+      clinician_findings_notes,
+      (case o.value_coded when 167004 then "Assessing"
+            when 2001239 then "Counselling Delivery"
+            when 162308 then "Measurement taking"
+            when 119758 then "Fabrication"
+            when 159630 then "Fitting"
+            when 5622 then "Assistive Technology Training"
+            when 2001627 then "Casting"
+            when 1000474 then "PWD assessment & Categorization"
+            when 160068 then "Referral"
+            when 142608 then "Delivery"
+            when 5622 then "Others"
+            else "" end) as intervention_given,
+      intervention_given_other,
+      management_plan,
+      (case o.value_coded when 1107 then "None"
+            when 1000133 then "Cryotherapy"
+            when 127642 then "Transverse friction massage"
+            when 162158 then "Compression bandaging"
+            when 527 then "Splinting"
+            when 165390 then "Pulsed electromagnetic field therapy(PEMF)"
+            when 5981 then "Thermotherapy"
+            when 160925 then "Limb Elevation"
+            when 166403 then "Plaster of Paris(POP) application"
+            when 108 then "Isometric exercises"
+            when 137971 then "ROM exercises"
+            when 5622 then "Joint Aspiration"
+            when 5108 then "Gait Training"
+            when 1933 then "TENS,SWD"
+            when 127642 then "Traction and counter traction"
+            when 162158 then "MClosed Reduction by traction(Gallow's/Dunlop's/Smith's traction)"
+            when 166939 then "Corrective osteotomy"
+            when 165390 then "Cuff and collar sling"
+            when 168650 then "Stripping"
+            when 160925 then "Intramedullary fixation with  K-wires"
+            when 136117 then "Rigid plate and screw fixation"
+            when 108 then "Closed Reduction(Hippocrates's/Stimson's/Kocher's method)"
+            when 137971 then "Open reduction and internal fixation"
+            when 5622 then "DCP plating"
+            when 166737 then "Arm Sling"
+            when 1933 then "Cast fixed"
+            when 127642 then "Percutaneous fixation"
+            when 162158 then "Excision"
+            when 123498 then "External fixation"
+            when 165390 then "Anthroplasty"
+            when 166105 then "Arthrodesis"
+            when 160925 then "Buddy taping"
+            when 164009 then "Amputation"
+            when 163949 then "Debridement"
+            when 137971 then "Tenoctomy"
+            when 5622 then "Tenodes"
+            when 162926 then "Removal of Plaster"
+            else "" end) as procedure_done,
+      procedure_done_other,
+      (case o.value_coded when 163266 then "This Facility" when 164407 then "Other Facility" when 1000478 then "Community Unit" else "" end) as patient_referral,
+      name_of_the_facility,
+      voided
+    from kenyaemr_etl.etl_orthopaedic_clinic_visit;
+
+    ALTER TABLE kenyaemr_datatools.orthopaedic_clinic_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.orthopaedic_clinic_visit ADD INDEX(visit_date);
+    SELECT "Successfully created orthopaedic clinic visit table";
+
   -- create table datatools_patient_contact
   create table kenyaemr_datatools.patient_contact as
     select

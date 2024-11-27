@@ -3842,6 +3842,159 @@ CREATE PROCEDURE sp_populate_etl_prep_discontinuation()
     SELECT "Completed processing PrEP discontinuation", CONCAT("Time: ", NOW());
   END $$
 
+-- ------------- populate etl_orthopaedic_clinic_visit-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_orthopaedic_clinic_visit $$
+CREATE PROCEDURE sp_populate_etl_orthopaedic_clinic_visit()
+  BEGIN
+    SELECT "Processing Orthopaedic Clinic Visit form", CONCAT("Time: ", NOW());
+    insert into kenyaemr_etl.etl_orthopaedic_clinic_visit(
+        uuid,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        encounter_provider,
+        date_created,
+        visit_type,
+        referral_form,
+        other_facility_name,
+        facility_name,
+        service_area,
+        other_unit_name,
+        orthopaedic_number,
+        select_symptoms,
+        symptoms_for_otc_other,
+        location,
+        otc_duration,
+        onset_otc,
+        hpi,
+        past_prescribed_drugs,
+--        previous_physiotherapy,
+        trauma_history,
+        surgical_history,
+        type_of_surgery,
+        surgical_date,
+        surgery_indication,
+        underlying_condition,
+        specify_condition,
+        specify_condition_other,
+        family_history,
+        musculoskeletal_system_conditions,
+        musculoskeletal_system_conditions_other,
+        musculoskeletal_examination_findings,
+        musculoskeletal_findings,
+        musculoskeletal_findings_other,
+        joint_assessed,
+        joint_movement,
+        angle_degrees,
+        clinician_findings_notes,
+        intervention_given,
+        intervention_given_other,
+        management_plan,
+        procedure_done,
+        procedure_done_other,
+        patient_referral,
+        name_of_the_facility,
+        date_last_modified,
+        voided
+        )
+    select
+           e.uuid,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime) as visit_date,
+           e.location_id,
+           e.encounter_id as encounter_id,
+           e.creator,
+           e.date_created as date_created,
+           max(if(o.concept_id=164181,trim(o.value_coded),null)) as visit_type,
+           max(if(o.concept_id=161643,trim(o.value_coded),null)) as referral_form,
+           max(if(o.concept_id=160632,o.value_text,null)) as other_facility_name,
+           max(if(o.concept_id=162724,o.value_text,null)) as facility_name,
+           max(if(o.concept_id=168146,o.value_coded,null)) as service_area,
+           max(if(o.concept_id=166635,o.value_text,null)) as other_unit_name,
+           max(if(o.concept_id=159893,o.value_numeric,null)) as orthopaedic_number,
+           concat_ws(',', max(if(o.concept_id = 5219 and o.value_coded = 114403, 'Pain', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 130842, 'Immobility', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 140468, 'Muscle tenseness', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 119775, 'Muscle spasms', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 163894, 'Swelling', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 111525, 'Loss of function', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 116554, 'Joint stiffness', null)),
+                  max(if(o.concept_id = 5219 and o.value_coded = 5622, 'Other', null))) as select_symptoms,
+           max(if(o.concept_id=160632,o.value_text,null)) as symptoms_for_otc_other,
+           max(if(o.concept_id=167992,o.value_text,null)) as location,
+           max(if(o.concept_id=1731,o.value_numeric,null)) as otc_duration,
+           max(if(o.concept_id=162642,o.value_coded,null)) as onset_otc,
+           max(if(o.concept_id=160430,o.value_text,null)) as hpi,
+           concat_ws(',', max(if(o.concept_id = 1628 and o.value_text = 162725, 'Drug Name', null)),
+                  max(if(o.concept_id = 1628 and o.value_numeric = 1731, 'Duration', null)),
+                  max(if(o.concept_id = 1628 and o.value_numeric = 1443, 'Dosage', null))) as past_prescribed_drugs,
+--           max(if(o.concept_id=1628,o.value_coded,null)) as previous_physiotherapy,
+           max(if(o.concept_id=159520,o.value_coded,null)) as trauma_history,
+           max(if(o.concept_id=168148,o.value_coded,null)) as surgical_history,
+           max(if(o.concept_id=166635,o.value_text,null)) as type_of_surgery,
+           max(if(o.concept_id=160715,o.value_datetime,null)) as surgical_date,
+           max(if(o.concept_id=163393,o.value_text,null)) as surgery_indication,
+           max(if(o.concept_id=165034,o.value_coded,null)) as underlying_condition,
+           max(if(o.concept_id=162747,o.value_coded,null)) as specify_condition,
+           max(if(o.concept_id=166635,o.value_text,null)) as specify_condition_other,
+           max(if(o.concept_id=1081,o.value_coded,null)) as family_history,
+           max(if(o.concept_id=162747,o.value_coded,null)) as musculoskeletal_system_conditions,
+           max(if(o.concept_id=166635,o.value_text,null)) as musculoskeletal_system_conditions_other,
+           max(if(o.concept_id=160632,o.value_text,null)) as musculoskeletal_examination_findings,
+           max(if(o.concept_id=164936,o.value_coded,null)) as musculoskeletal_findings,
+           max(if(o.concept_id=160632,o.value_text,null)) as musculoskeletal_findings_other,
+           concat_ws(',', max(if(o.concept_id = 165285 and o.value_coded = 166161, 'Ankle', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 166204, 'Cervical spine', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 166231, 'Elbow', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 166241, 'Forearm', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 164387, 'Foot', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 166245, 'Hip', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 112764, 'Sacroiliac', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 166306, 'Shoulder', null)),
+                  max(if(o.concept_id = 165285 and o.value_coded = 166293, 'Thumb', null))) as joint_assessed,
+           concat_ws(',', max(if(o.concept_id = 165139 and o.value_coded = 125286, 'Abduction', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 125284, 'Adduction', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 154488, 'Dorsiflexion', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 142492, 'Deviation', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 125974, 'Elevation', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 145939, 'Eversion', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 124199, 'Extension', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 127691, 'Hyperextension', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 166344, 'Lateral bending', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 152183, 'Flexion', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 159279, 'Inversion', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 124179, 'Plantar flexion', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 166746, 'Rotation in abduction', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 140714, 'Rotation in extension', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 161572, 'Rotation in neutral position', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 152183, 'Rotation in flexion', null)),
+                  max(if(o.concept_id = 165139 and o.value_coded = 157783, 'Rotation', null))) as joint_movement,
+
+           max(if(o.concept_id=159368,o.value_numeric,null)) as angle_degrees,
+           max(if(o.concept_id=164939,o.value_text,null)) as clinician_findings_notes,
+           max(if(o.concept_id=165531,o.value_coded,null)) as intervention_given,
+           max(if(o.concept_id=166635,o.value_text,null)) as intervention_given_other,
+           max(if(o.concept_id=163104,o.value_text,null)) as management_plan,
+           max(if(o.concept_id=120198,o.value_coded,null)) as procedure_done,
+           max(if(o.concept_id=160632,o.value_text,null)) as procedure_done_other,
+           max(if(o.concept_id=1788,o.value_text,null)) as patient_referral,
+           max(if(o.concept_id=162724,o.value_text,null)) as name_of_the_facility,
+           if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+           e.voided as voided
+    from encounter e
+            inner join person p on p.person_id=e.patient_id and p.voided=0
+            inner join form f on f.form_id=e.form_id and f.uuid in ("beec83df-6606-4019-8223-05a54a52f2b0")
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,160632,162724,168146,166635,159893,5219,160632,167992,1731,
+               162642,160430,1628,159520,168148,166635,160715,163393,165034,162747,166635,162747,1081,162747,166635,160632,164936,160632,165285,165139,
+               159368,164939,165531,166635,163104,120198,160632,1788,162724) and o.voided=0
+    where e.voided=0
+    group by e.encounter_id;
+    SELECT "Completed processing Orthopaedic Clinic Visit", CONCAT("Time: ", NOW());
+  END $$
 -- ------------- populate etl_prep_enrollment-------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_prep_enrolment $$
@@ -9065,6 +9218,7 @@ CALL sp_populate_etl_prep_behaviour_risk_assessment();
 CALL sp_populate_etl_prep_monthly_refill();
 CALL sp_populate_etl_progress_note();
 CALL sp_populate_etl_prep_discontinuation();
+CALL sp_populate_etl_orthopaedic_clinic_visit();
 CALL sp_populate_etl_hts_linkage_tracing();
 CALL sp_populate_etl_patient_program();
 CALL sp_create_default_facility_table();
