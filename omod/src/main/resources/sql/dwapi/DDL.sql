@@ -90,6 +90,11 @@ DROP TABLE IF EXISTS dwapi_etl.etl_preventive_services;
 DROP TABLE IF EXISTS dwapi_etl.etl_overdose_reporting;
 DROP TABLE IF EXISTS dwapi_etl.etl_art_fast_track;
 DROP TABLE IF EXISTS dwapi_etl.etl_clinical_encounter;
+DROP TABLE IF EXISTS dwapi_etl.etl_pep_management_survivor;
+DROP TABLE IF EXISTS dwapi_etl.etl_sgbv_pep_followup;
+DROP TABLE IF EXISTS dwapi_etl.etl_sgbv_post_rape_care;
+DROP TABLE IF EXISTS dwapi_etl.etl_gbv_physical_emotional_abuse;
+DROP TABLE IF EXISTS dwapi_etl.etl_family_planning;
 DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics
@@ -3616,6 +3621,261 @@ CREATE TABLE dwapi_etl.etl_patient_appointment(
      INDEX (appointment_service_id)
 );
 SELECT "Successfully created dwapi_etl.etl_patient_appointment table";
+
+-- Create dwapi_etl.etl_pep_management_survivor table";
+CREATE TABLE dwapi_etl.etl_pep_management_survivor
+(
+    patient_id                                INT(11)  NOT NULL,
+    visit_id                                  INT(11) DEFAULT NULL,
+    encounter_id                              INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                      CHAR(38) NOT NULL,
+    location_id                               INT(11)  NOT NULL,
+    provider                                  INT(11)  NOT NULL,
+    visit_date                                DATE,
+    prc_number                                VARCHAR(100),
+    incident_reporting_date                   DATE,
+    type_of_violence                          INT(11),
+    other_type_of_violence                    VARCHAR(255),
+    type_of_assault                           VARCHAR(255),
+    other_type_of_assault                     VARCHAR(255),
+    incident_date                             DATE,
+    perpetrator_identity                      VARCHAR(100),
+    survivor_relation_to_perpetrator          INT(11),
+    perpetrator_compulsory_HIV_test_done      INT(11),
+    perpetrator_compulsory_HIV_test_result    INT(11),
+    perpetrator_file_number                   VARCHAR(100),
+    survivor_state                            VARCHAR(255),
+    clothing_state                            VARCHAR(255),
+    genitalia_examination                     VARCHAR(255),
+    other_injuries                            VARCHAR(255),
+    high_vaginal_or_anal_swab                 VARCHAR(255),
+    rpr_vdrl                                  INT(11),
+    survivor_hiv_test_result                  INT(11),
+    given_pep                                 INT(11),
+    referred_to_psc                           INT(11),
+    pdt                                       INT(11),
+    emergency_contraception_issued            INT(11),
+    reason_emergency_contraception_not_issued INT(11),
+    sti_prophylaxis_and_treatment             INT(11),
+    reason_sti_prophylaxis_not_issued         VARCHAR(255),
+    pep_regimen_issued                        INT(11),
+    reason_pep_regimen_not_issued             VARCHAR(255),
+    starter_pack_given                        INT(11),
+    date_given_pep                            DATE,
+    HBsAG_result                              int(11),
+    LFTs_ALT                                  VARCHAR(100),
+    RFTs_creatinine                           VARCHAR(100),
+    other_tests                               VARCHAR(255),
+    next_appointment_date                     DATE,
+    voided                                    INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date),
+    INDEX (type_of_violence),
+    INDEX (incident_reporting_date),
+    INDEX (type_of_assault),
+    INDEX (incident_date),
+    INDEX (survivor_relation_to_perpetrator)
+);
+SELECT "Successfully created etl_pep_management_survivor table";
+
+-- Create dwapi_etl_sgbv_pep_followup table";
+CREATE TABLE dwapi_etl.etl_sgbv_pep_followup
+(
+    patient_id                                    INT(11)  NOT NULL,
+    visit_id                                      INT(11) DEFAULT NULL,
+    encounter_id                                  INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                          CHAR(38) NOT NULL,
+    location_id                                   INT(11)  NOT NULL,
+    provider                                      INT(11)  NOT NULL,
+    visit_date                                    DATE,
+    visit_number                                  INT(11),
+    pep_completed                                 INT(11),
+    reason_pep_not_completed                      VARCHAR(255),
+    hiv_test_done                                 INT(11),
+    hiv_test_result                               INT(11),
+    pdt_test_done                                 INT(11),
+    pdt_test_result                               INT(11),
+    HBsAG_test_done                               INT(11),
+    HBsAG_test_result                             INT(11),
+    lfts_alt                                      VARCHAR(50),
+    rfts_creatinine                               VARCHAR(50),
+    three_month_post_exposure_HIV_serology_result INT(11),
+    patient_assessment                            VARCHAR(255),
+    next_appointment_date                         DATE,
+    voided                                        INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date),
+    INDEX (visit_number),
+    INDEX (pep_completed),
+    INDEX (three_month_post_exposure_HIV_serology_result),
+    INDEX (hiv_test_result)
+);
+SELECT "Successfully created dwapi_etl_sgbv_pep_followup table";
+
+-- Create dwapi_etl.etl_sgbv_post_rape_care table
+CREATE TABLE dwapi_etl.etl_sgbv_post_rape_care
+(
+    patient_id                          INT(11)  NOT NULL,
+    visit_id                            INT(11) DEFAULT NULL,
+    encounter_id                        INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                CHAR(38) NOT NULL,
+    location_id                         INT(11)  NOT NULL,
+    provider                            INT(11)  NOT NULL,
+    visit_date                          DATE,
+    examination_date                    DATE,
+    incident_date                       DATE,
+    number_of_perpetrators              VARCHAR(10),
+    is_perpetrator_known                INT(11),
+    survivor_relation_to_perpetrator    VARCHAR(100),
+    county                              VARCHAR(100),
+    sub_county                          VARCHAR(100),
+    landmark                            VARCHAR(100),
+    observation_on_chief_complaint      VARCHAR(255),
+    chief_complaint_report              VARCHAR(255),
+    circumstances_around_incident       VARCHAR(255),
+    type_of_sexual_violence             INT(11),
+    other_type_of_sexual_violence       VARCHAR(255),
+    use_of_condoms                      INT(11),
+    prior_attendance_to_health_facility INT(11),
+    attended_health_facility_name       VARCHAR(100),
+    date_attended_health_facility       DATE,
+    treated_at_facility                 INT(11),
+    given_referral_notes                INT(11),
+    incident_reported_to_police         INT(11),
+    police_station_name                 VARCHAR(100),
+    police_report_date                  DATE,
+    medical_or_surgical_history         VARCHAR(255),
+    additional_info_from_survivor        VARCHAR(255),
+    physical_examination                VARCHAR(255),
+    parity_term                         INT(11),
+    parity_abortion                     INT(11),
+    on_contraception                    INT(11),
+    known_pregnancy                     INT(11),
+    date_of_last_consensual_sex         DATE,
+    systolic                            INT(11),
+    diastolic                           INT(11),
+    demeanor                            INT(11),
+    changed_clothes                     INT(11),
+    state_of_clothes                    VARCHAR(100),
+    means_clothes_transported           INT(11),
+    details_about_clothes_transport     VARCHAR(255),
+    clothes_handed_to_police            INT(11),
+    survivor_went_to_toilet             INT(11),
+    survivor_bathed                     INT(11),
+    bath_details                        VARCHAR(255),
+    survivor_left_marks_on_perpetrator  INT(11),
+    details_of_marks_on_perpetrator     INT(11),
+    physical_injuries                   VARCHAR(255),
+    details_outer_genitalia             VARCHAR(255),
+    details_vagina                      VARCHAR(255),
+    details_hymen                       VARCHAR(255),
+    details_anus                        VARCHAR(255),
+    significant_orifice                 VARCHAR(255),
+    pep_first_dose                      INT(11),
+    ecp_given                           INT(11),
+    stitching_done                      INT(11),
+    stitching_notes                     VARCHAR(255),
+    treated_for_sti                     INT(11),
+    sti_treatment_remarks               VARCHAR(255),
+    other_medications                   VARCHAR(255),
+    referred_to                         VARCHAR(255),
+    web_prep_microscopy                 INT(11),
+    samples_packed                      VARCHAR(255),
+    examining_officer                   VARCHAR(100),
+    voided                              INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date),
+    INDEX (incident_date),
+    INDEX (pep_first_dose),
+    INDEX (ecp_given),
+    INDEX (survivor_relation_to_perpetrator)
+);
+SELECT "Successfully created dwapi_etl.etl_sgbv_post_rape_care table";
+
+-- Create etl_gbv_physical_emotional_abuse table";
+CREATE TABLE dwapi_etl.etl_gbv_physical_emotional_abuse
+(
+    patient_id                  INT(11)  NOT NULL,
+    visit_id                    INT(11) DEFAULT NULL,
+    encounter_id                INT(11)  NOT NULL PRIMARY KEY,
+    uuid                        CHAR(38) NOT NULL,
+    location_id                 INT(11)  NOT NULL,
+    provider                    INT(11)  NOT NULL,
+    visit_date                  DATE,
+    gbv_number                  VARCHAR(100),
+    referred_from               INT(11),
+    entry_point                  INT(11),
+    other_referral_source       VARCHAR(100),
+    type_of_violence            INT(11),
+    date_of_incident            DATE,
+    trauma_counselling          INT(11),
+    trauma_counselling_comments VARCHAR(255),
+    referred_to                 VARCHAR(255),
+    other_referral              VARCHAR(255),
+    next_appointment_date       DATE,
+    voided                      INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date),
+    INDEX (entry_point),
+    INDEX (referred_from),
+    INDEX (date_of_incident),
+    INDEX (type_of_violence)
+);
+-- Create etl_family_planning table";
+CREATE TABLE dwapi_etl.etl_family_planning
+(
+    patient_id                            INT(11)  NOT NULL,
+    visit_id                              INT(11) DEFAULT NULL,
+    encounter_id                          INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                  CHAR(38) NOT NULL,
+    location_id                           INT(11)  NOT NULL,
+    provider                              INT(11)  NOT NULL,
+    visit_date                            DATE,
+    first_user_of_contraceptive           INT(11),
+    counselled_on_fp                      INT(11),
+    contraceptive_dispensed               INT(11),
+    type_of_visit_for_method              INT(11),
+    type_of_service                       INT(11),
+    quantity_dispensed                    VARCHAR(10),
+    reasons_for_larc_removal              INT(11),
+    other_reasons_for_larc_removal        VARCHAR(255),
+    counselled_on_natural_fp              INT(11),
+    circle_beads_given                    INT(11),
+    receiving_postpartum_fp               INT(11),
+    experienced_intimate_partner_violence INT(11),
+    referred_for_fp                       INT(11),
+    referred_to                           INT(11),
+    referred_from                         INT(11),
+    reasons_for_referral                  VARCHAR(255),
+    voided                                INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date),
+    INDEX (type_of_visit_for_method),
+    INDEX (referred_from),
+    INDEX (contraceptive_dispensed),
+    INDEX (receiving_postpartum_fp)
+);
+SELECT "Successfully created etl_family_planning table";
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$

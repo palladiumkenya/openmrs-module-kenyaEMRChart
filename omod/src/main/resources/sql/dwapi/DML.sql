@@ -7886,13 +7886,476 @@ from encounter e
     inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
     left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
     (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181)
-    and o.voided=0
-where e.voided=0
 group by e.patient_id,date(e.encounter_datetime);
 SELECT "Completed processing Clinical Encounter";
 END $$
 
-    -- end of dml procedures
+-- Procedure sp_populate_etl_pep_management_survivor --
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_pep_management_survivor $$
+CREATE PROCEDURE sp_populate_dwapi_pep_management_survivor()
+BEGIN
+    SELECT "Processing DWAPI PEP management survivor";
+    INSERT INTO dwapi_etl.etl_pep_management_survivor (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        prc_number,
+        incident_reporting_date,
+        type_of_violence,
+        other_type_of_violence,
+        type_of_assault,
+        other_type_of_assault,
+        incident_date,
+        perpetrator_identity,
+        survivor_relation_to_perpetrator,
+        perpetrator_compulsory_HIV_test_done,
+        perpetrator_compulsory_HIV_test_result,
+        perpetrator_file_number,
+        survivor_state,
+        clothing_state,
+        genitalia_examination,
+        other_injuries,
+        high_vaginal_or_anal_swab,
+        rpr_vdrl,
+        survivor_hiv_test_result,
+        given_pep,
+        referred_to_psc,
+        pdt,
+        emergency_contraception_issued,
+        reason_emergency_contraception_not_issued,
+        sti_prophylaxis_and_treatment,
+        reason_sti_prophylaxis_not_issued,
+        pep_regimen_issued,
+        reason_pep_regimen_not_issued,
+        starter_pack_given,
+        date_given_pep,
+        HBsAG_result,
+        LFTs_ALT,
+        RFTs_creatinine,
+        other_tests,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 1646, o.value_text, null )) as prc_number,
+        max(if(o.concept_id=166848,o.value_datetime,null)) as incident_reporting_date,
+        max(if(o.concept_id=165205,o.value_coded,null)) as type_of_violence,
+        max(if(o.concept_id=165138,o.value_text,null)) as other_type_of_violence,
+        concat_ws(',',nullif(max(if(o.concept_id=123160 and o.value_coded = 166060,'Oral','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 123385,'Vaginal','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 148895,'Anal','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 5622,'Other','')),'')) as type_of_assault,
+        max(if(o.concept_id=164879,o.value_text,null)) as other_type_of_assault,
+        max(if(o.concept_id=165349,o.value_datetime,null)) as incident_date,
+        max(if(o.concept_id=165230,o.value_text,null)) as perpetrator_identity,
+        max(if(o.concept_id=1530,o.value_coded,null)) as survivor_relation_to_perpetrator,
+        max(if(o.concept_id=164848,o.value_coded,null)) as perpetrator_compulsory_HIV_test_done,
+        max(if(o.concept_id=159427,o.value_coded,null)) as perpetrator_compulsory_HIV_test_result,
+        max(if(o.concept_id=1639,o.value_numeric,null)) as perpetrator_file_number,
+        max(if(o.concept_id=163042,o.value_text,null)) as survivor_state,
+        max(if(o.concept_id=163045,o.value_text,null)) as clothing_state,
+        max(if(o.concept_id=160971,o.value_text,null)) as genitalia_examination,
+        max(if(o.concept_id=165092,o.value_text,null)) as other_injuries,
+        max(if(o.concept_id=166364,o.value_text,null)) as high_vaginal_or_anal_swab,
+        max(if(o.concept_id=299,o.value_coded,null)) as rpr_vdrl,
+        max(if(o.concept_id=163760,o.value_coded,null)) as survivor_hiv_test_result,
+        max(if(o.concept_id=165171,o.value_coded,null)) as given_pep,
+        max(if(o.concept_id=165270,o.value_coded,null)) as referred_to_psc,
+        max(if(o.concept_id=167229,o.value_coded,null)) as pdt,
+        max(if(o.concept_id=165167,o.value_coded,null)) as emergency_contraception_issued,
+        max(if(o.concept_id=160138,o.value_text,null)) as reason_emergency_contraception_not_issued,
+        max(if(o.concept_id=165200,o.value_coded,null)) as sti_prophylaxis_and_treatment,
+        max(if(o.concept_id=160953,o.value_text,null)) as reason_sti_prophylaxis_not_issued,
+        max(if(o.concept_id=164845,o.value_coded,null)) as pep_regimen_issued,
+        max(if(o.concept_id=160954,o.value_text,null)) as reason_pep_regimen_not_issued,
+        max(if(o.concept_id=1263,o.value_coded,null)) as starter_pack_given,
+        max(if(o.concept_id=166865,o.value_datetime,null)) as date_given_pep,
+        max(if(o.concept_id=161472,o.value_coded,null)) as HBsAG_result,
+        max(if(o.concept_id=654,o.value_datetime,null)) as LFTs_ALT,
+        max(if(o.concept_id=790,o.value_numeric,null)) as RFTs_creatinine,
+        max(if(o.concept_id=160987,o.value_text,null)) as other_tests,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'f44b2405-226b-47c4-b98f-b826ea4725ae'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                  (1646,166848,165205,165138,123160,164879,165349,165230,1530,164848,159427,1639,163042,163045,160971,
+                   165092,166364,299,163760,165171,165270,167229,165167,160138,165200,160953,164845,160954,1263,166865,161472,654,790,160987)
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing DWAPI PEP management survivor";
+END $$
+
+-- Procedure sp_populate_dwapi_sgbv_pep_followup --
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_sgbv_pep_followup $$
+CREATE PROCEDURE sp_populate_dwapi_sgbv_pep_followup()
+BEGIN
+    SELECT "Processing SGBV PEP followup";
+    INSERT INTO dwapi_etl.etl_sgbv_pep_followup (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        visit_number,
+        pep_completed,
+        reason_pep_not_completed,
+        hiv_test_done,
+        hiv_test_result,
+        pdt_test_done,
+        pdt_test_result,
+        HBsAG_test_done,
+        HBsAG_test_result,
+        lfts_alt,
+        rfts_creatinine,
+        three_month_post_exposure_HIV_serology_result,
+        patient_assessment,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 1724, o.value_coded, null )) as visit_number,
+        max(if(o.concept_id=165171,o.value_coded,null)) as pep_completed,
+        max(if(o.concept_id=161011,o.value_text,null)) as reason_pep_not_completed,
+        max(if(o.concept_id=1356,o.value_coded,null)) as hiv_test_done,
+        max(if(o.concept_id=159427,o.value_coded,null)) as hiv_test_result,
+        max(if(o.concept_id=163951,o.value_coded,null)) as pdt_test_done,
+        max(if(o.concept_id=167229,o.value_coded,null)) as pdt_test_result,
+        max(if(o.concept_id=161472 and o.value_coded in (1065,1066),o.value_coded,null)) as HBsAG_test_done,
+        max(if(o.concept_id=165384,o.value_coded,null)) as HBsAG_test_result,
+        max(if(o.concept_id=654,o.value_numeric,null)) as lfts_alt,
+        max(if(o.concept_id=790,o.value_coded,null)) as rfts_creatinine,
+        max(if(o.concept_id=161472 and o.value_coded in (703,664),o.value_coded,null)) as three_month_post_exposure_HIV_serology_result,
+        max(if(o.concept_id=160632,o.value_text,null)) as patient_assessment,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '155ccbe2-a33f-4a58-8ce6-57a7372071ee'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (1724,165171,161011,1356,159427,163951,167229,161472,165384,654,790,160632)
+        and o.voided=0
+    where e.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing SGBV PEP followup";
+END $$
+
+-- Procedure sp_populate_dwapi_sgbv_post_rape_care
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_sgbv_post_rape_care $$
+CREATE PROCEDURE sp_populate_dwapi_sgbv_post_rape_care()
+BEGIN
+    SELECT "Processing SGBV Post rape care";
+    INSERT INTO dwapi_etl.etl_sgbv_post_rape_care (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        examination_date,
+        incident_date,
+        number_of_perpetrators,
+        is_perpetrator_known,
+        survivor_relation_to_perpetrator,
+        county,
+        sub_county,
+        landmark,
+        observation_on_chief_complaint,
+        chief_complaint_report,
+        circumstances_around_incident,
+        type_of_sexual_violence,
+        other_type_of_sexual_violence,
+        use_of_condoms,
+        prior_attendance_to_health_facility,
+        attended_health_facility_name,
+        date_attended_health_facility,
+        treated_at_facility,
+        given_referral_notes,
+        incident_reported_to_police,
+        police_station_name,
+        police_report_date,
+        medical_or_surgical_history,
+        additional_info_from_survivor,
+        physical_examination,
+        parity_term,
+        parity_abortion,
+        on_contraception,
+        known_pregnancy,
+        date_of_last_consensual_sex,
+        systolic,
+        diastolic,
+        demeanor,
+        changed_clothes,
+        state_of_clothes,
+        means_clothes_transported,
+        details_about_clothes_transport,
+        clothes_handed_to_police,
+        survivor_went_to_toilet,
+        survivor_bathed,
+        bath_details,
+        survivor_left_marks_on_perpetrator,
+        details_of_marks_on_perpetrator,
+        physical_injuries,
+        details_outer_genitalia,
+        details_vagina,
+        details_hymen,
+        details_anus,
+        significant_orifice,
+        pep_first_dose,
+        ecp_given,
+        stitching_done,
+        stitching_notes,
+        treated_for_sti,
+        sti_treatment_remarks,
+        other_medications,
+        referred_to,
+        web_prep_microscopy,
+        samples_packed,
+        examining_officer,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 159948, o.value_datetime, null )) as examination_date,
+        max(if(o.concept_id=162869,o.value_datetime,null)) as incident_date,
+        max(if(o.concept_id=1639,o.value_numeric,null)) as number_of_perpetrators,
+        max(if(o.concept_id=165229,o.value_coded,null)) as is_perpetrator_known,
+        max(if(o.concept_id=167214,o.value_text,null)) as survivor_relation_to_perpetrator,
+        max(if(o.concept_id=167131,o.value_text,null)) as county,
+        max(if(o.concept_id=161564,o.value_text,null)) as sub_county,
+        max(if(o.concept_id=159942,o.value_text,null)) as landmark,
+        max(if(o.concept_id=160945,o.value_text,null)) as observation_on_chief_complaint,
+        max(if(o.concept_id=166846,o.value_text,null)) as chief_complaint_report,
+        max(if(o.concept_id=160303,o.value_text,null)) as circumstances_around_incident,
+        concat_ws(',',nullif(max(if(o.concept_id=123160 and o.value_coded = 166060,'Oral','')),''),
+              nullif(max(if(o.concept_id=123160 and o.value_coded = 123385,'Vaginal','')),''),
+              nullif(max(if(o.concept_id=123160 and o.value_coded = 148895,'Anal','')),''),
+              nullif(max(if(o.concept_id=123160 and o.value_coded = 5622,'Other','')),'')) as type_of_sexual_violence,
+        max(if(o.concept_id=161011,o.value_text,null)) as other_type_of_sexual_violence,
+        max(if(o.concept_id=1357,o.value_coded,null)) as use_of_condoms,
+        max(if(o.concept_id=166484,o.value_coded,null)) as prior_attendance_to_health_facility,
+        max(if(o.concept_id=162724,o.value_text,null)) as attended_health_facility_name,
+        max(if(o.concept_id=164093,o.value_datetime,null)) as date_attended_health_facility,
+        max(if(o.concept_id=165052,o.value_coded,null)) as treated_at_facility,
+        max(if(o.concept_id=165152,o.value_coded,null)) as given_referral_notes,
+        max(if(o.concept_id=165193,o.value_coded,null)) as incident_reported_to_police,
+        max(if(o.concept_id=161550,o.value_text,null)) as police_station_name,
+        max(if(o.concept_id=165144,o.value_datetime,null)) as police_report_date,
+        max(if(o.concept_id=160221,o.value_text,null)) as medical_or_surgical_history,
+        max(if(o.concept_id=163677,o.value_text,null)) as additional_info_from_survivor,
+        max(if(o.concept_id=1391,o.value_text,null)) as physical_examination,
+        max(if(o.concept_id=160080,o.value_numeric,null)) as parity_term,
+        max(if(o.concept_id=1823,o.value_numeric,null)) as parity_abortion,
+        max(if(o.concept_id=163400,o.value_coded,null)) as on_contraception,
+        max(if(o.concept_id=5272,o.value_coded,null)) as known_pregnancy,
+        max(if(o.concept_id=160753,o.value_datetime,null)) as date_of_last_consensual_sex,
+        max(if(o.concept_id=5085,o.value_numeric,null)) as systolic,
+        max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic,
+        max(if(o.concept_id=62056,o.value_coded,null)) as demeanor,
+        max(if(o.concept_id=165171,o.value_coded,null)) as changed_clothes,
+        max(if(o.concept_id=163104,o.value_text,null)) as state_of_clothes,
+        max(if(o.concept_id=165171,o.value_coded,null)) as means_clothes_transported,
+        max(if(o.concept_id=166363,o.value_text,null)) as details_about_clothes_transport,
+        max(if(o.concept_id=165180,o.value_coded,null)) as clothes_handed_to_police,
+        max(if(o.concept_id=160258,o.value_coded,null)) as survivor_went_to_toilet,
+        max(if(o.concept_id=162997,o.value_coded,null)) as survivor_bathed,
+        max(if(o.concept_id=163048,o.value_text,null)) as bath_details,
+        max(if(o.concept_id=165241,o.value_coded,null)) as survivor_left_marks_on_perpetrator,
+        max(if(o.concept_id=161031,o.value_text,null)) as details_of_marks_on_perpetrator,
+        max(if(o.concept_id=165035,o.value_text,null)) as physical_injuries,
+        max(if(o.concept_id=160971,o.value_text,null)) as details_outer_genitalia,
+        max(if(o.concept_id=160969,o.value_text,null)) as details_vagina,
+        max(if(o.concept_id=160981,o.value_text,null)) as details_hymen,
+        max(if(o.concept_id=160962,o.value_text,null)) as details_anus,
+        max(if(o.concept_id=160943,o.value_text,null)) as significant_orifice,
+        max(if(o.concept_id=165060,o.value_coded,null)) as pep_first_dose,
+        max(if(o.concept_id=374,o.value_coded,null)) as ecp_given,
+        max(if(o.concept_id=1670,o.value_coded,null)) as stitching_done,
+        max(if(o.concept_id=165440,o.value_text,null)) as stitching_notes,
+        max(if(o.concept_id=165200,o.value_coded,null)) as treated_for_sti,
+        max(if(o.concept_id=167214,o.value_text,null)) as sti_treatment_remarks,
+        max(if(o.concept_id=160632,o.value_text,null)) as other_medications,
+        concat_ws(',',nullif(max(if(o.concept_id=160632 and o.value_coded = 165192,'Police Station','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 167254,'Safe Shelter','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 5460,'Trauma Counselling','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 160542,'OPD/CCC/HIV clinic','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 1370,'HIV Test','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 164422,'Laboratory','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 135914,'Legal','')),''),
+              nullif(max(if(o.concept_id=160632 and o.value_coded = 5622,'Other','')),'')) as referred_to,
+        max(if(o.concept_id=164217,o.value_coded,null)) as web_prep_microscopy,
+        max(if(o.concept_id=165435,o.value_text,null)) as samples_packed,
+        max(if(o.concept_id=165225,o.value_text,null)) as examining_officer,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'c46aa4fd-8a5a-4675-90a7-a6f2119f61d8'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (159948,162869,1639,165229,167214,167131,161564,159942,160945,166846,160303,123160,161011,1357,166484,162724,164093,165052,165152,165193,161550,
+                                                                           165144,160221,163677,1391,160080,1823,163400,5272,160753,5085,5086,162056,165171,163104,161239,166363,165180,160258,162997,163048,165241,161031,
+                                                                           165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225)
+        and o.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing SGBV post rape care";
+END $$
+
+-- Procedure sp_populate_dwapi_gbv_physical_emotional_abuse
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_gbv_physical_emotional_abuse $$
+CREATE PROCEDURE sp_populate_dwapi_gbv_physical_emotional_abuse()
+BEGIN
+    SELECT "Processing GBV physical and emotional abuse";
+    INSERT INTO dwapi_etl.etl_gbv_physical_emotional_abuse (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        gbv_number,
+        referred_from,
+        entry_point,
+        other_referral_source,
+        type_of_violence,
+        date_of_incident,
+        trauma_counselling,
+        trauma_counselling_comments,
+        referred_to,
+        other_referral,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 1646, o.value_text, null )) as gbv_number,
+        max(if(o.concept_id=1272,o.value_coded,null)) as referred_from,
+        max(if(o.concept_id=160540,o.value_coded,null)) as entry_point,
+        max(if(o.concept_id=165092,o.value_text,null)) as other_referral_source,
+        concat_ws(',',nullif(max(if(o.concept_id=165205 and o.value_coded = 167243,'Intimate Partner Violence (IPV)','')),''),
+                  nullif(max(if(o.concept_id=165205 and o.value_coded = 117510,'Emotional Violence','')),''),
+                  nullif(max(if(o.concept_id=165205 and o.value_coded = 158358,'Physical Violence','')),'')) as type_of_violence,
+        max(if(o.concept_id=162869,o.value_datetime,null)) as date_of_incident,
+        max(if(o.concept_id=165184,o.value_coded,null)) as trauma_counselling,
+        max(if(o.concept_id=161011,o.value_text,null)) as trauma_counselling_comments,
+        concat_ws(',',nullif(max(if(o.concept_id=1272 and o.value_coded = 165192,'Police Station','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 165227,'Safe Space','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 1691,'Post-exposure Prophylaxis','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 1459,'HIV Testing/Re-testing services','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 1610,'Care and Treatment','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 5486,'Alternative dispute resolution','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 160546,'STI Screening/treatment','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 1606,'Radiology services (X-ray)','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 5490,'Psychosocial Support','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 135914,'Legal Support','')),''),
+                  nullif(max(if(o.concept_id=1272 and o.value_coded = 5622,'Other','')),'')) as referred_to,
+        max(if(o.concept_id=60632,o.value_text,null)) as other_referral,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'a0943862-f0fe-483d-9f11-44f62abae063'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (1646,1272,160540,165092,165205,162869,165184,161011,60632)
+        and o.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing GBV physical and emotional abuse";
+END $$
+
+
+-- Procedure sp_populate_dwapi_family_planning
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_family_planning $$
+CREATE PROCEDURE sp_populate_dwapi_family_planning()
+BEGIN
+    SELECT "Processing Family planning";
+    INSERT INTO dwapi_etl.etl_family_planning (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        first_user_of_contraceptive,
+        counselled_on_fp,
+        contraceptive_dispensed,
+        type_of_visit_for_method,
+        type_of_service,
+        quantity_dispensed,
+        reasons_for_larc_removal,
+        other_reasons_for_larc_removal,
+        counselled_on_natural_fp,
+        circle_beads_given,
+        receiving_postpartum_fp,
+        experienced_intimate_partner_violence,
+        referred_for_fp,
+        referred_to,
+        referred_from,
+        reasons_for_referral,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 160653, o.value_coded, null )) as first_user_of_contraceptive,
+        max(if(o.concept_id = 1382, o.value_coded, null )) as counselled_on_fp,
+        max(if(o.concept_id = 374, o.value_coded, null )) as contraceptive_dispensed,
+        max(if(o.concept_id = 167523, o.value_coded, null )) as type_of_visit_for_method,
+        max(if(o.concept_id = 1386, o.value_coded, null )) as type_of_service,
+        max(if(o.concept_id = 166864, o.value_numeric, null )) as quantity_dispensed,
+        max(if(o.concept_id = 164901, o.value_coded, null )) as reasons_for_larc_removal,
+        max(if(o.concept_id = 160632, o.value_text, null )) as other_reasons_for_larc_removal,
+        max(if(o.concept_id = 1379, o.value_coded, null )) as counselled_on_natural_fp,
+        max(if(o.concept_id = 166866, o.value_coded, null )) as circle_beads_given,
+        max(if(o.concept_id = 1177, o.value_coded, null )) as receiving_postpartum_fp,
+        max(if(o.concept_id = 167255, o.value_coded, null )) as experienced_intimate_partner_violence,
+        max(if(o.concept_id = 166515, o.value_coded, null )) as referred_for_fp,
+        max(if(o.concept_id = 163145, o.value_coded, null )) as referred_to,
+        max(if(o.concept_id = 160481, o.value_coded, null )) as referred_from,
+        max(if(o.concept_id = 164359, o.value_text, null )) as reasons_for_referral,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'a52c57d4-110f-4879-82ae-907b0d90add6'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (160653,1382,374,167523,1386,166864,164901,160632,1379,166866,1177,167255,163145,160481,164359)
+        and o.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing Family planning";
+END $$
+
+-- end of dml procedures
 
 		SET sql_mode=@OLD_SQL_MODE $$
 
@@ -7981,6 +8444,11 @@ CALL sp_populate_dwapi_overdose_reporting();
 CALL sp_populate_dwapi_hts_patient_contact();
 CALL sp_populate_dwapi_art_fast_track();
 CALL sp_populate_dwapi_clinical_encounter();
+CALL sp_populate_dwapi_pep_management_survivor();
+CALL sp_populate_dwapi_sgbv_pep_followup();
+CALL sp_populate_dwapi_sgbv_post_rape_care();
+CALL sp_populate_dwapi_gbv_physical_emotional_abuse();
+CALL sp_populate_dwapi_family_planning();
 CALL sp_update_dwapi_next_appointment_date();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
