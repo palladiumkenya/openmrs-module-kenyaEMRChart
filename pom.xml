@@ -48,6 +48,7 @@
         <serializationxstreamVersion>0.2.14</serializationxstreamVersion>
         <uiframeworkVersion>3.23.0</uiframeworkVersion>
         <legacyUiVersion>1.15.0</legacyUiVersion>
+        <webservicesRestVersion>2.42.0</webservicesRestVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -164,6 +165,37 @@
                 <artifactId>uiframework-api</artifactId>
                 <version>${uiframeworkVersion}</version>
                 <scope>provided</scope>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>webservices.rest-omod</artifactId>
+                <version>${webservicesRestVersion}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>webservices.rest-omod-common</artifactId>
+                <version>${webservicesRestVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>webservices.rest-omod-1.8</artifactId>
+                <version>${webservicesRestVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>webservices.rest-omod-common</artifactId>
+                <version>${webservicesRestVersion}</version>
+                <classifier>tests</classifier>
+                <scope>test</scope>
             </dependency>
 
 
