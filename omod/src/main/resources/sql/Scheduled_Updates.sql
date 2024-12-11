@@ -7245,6 +7245,8 @@ allergy_onset_date,
 complaint,
 complaint_date,
 complaint_duration,
+complaint_onset_status,
+complaint_severity,
 date_created,
 date_last_modified,
 voided
@@ -7261,16 +7263,18 @@ select
    max(if(o1.obs_group =160531 and o1.concept_id = 5219,o1.value_coded,null)) as complaint,
    max(if(o1.obs_group =160531 and o1.concept_id = 159948,date(o1.value_datetime),null)) as complaint_date,
    max(if(o1.obs_group =160531 and o1.concept_id = 159368,o1.value_numeric,null)) as complaint_duration,
+   max(if(o1.obs_group =160531 and o1.concept_id = 168146,o1.value_coded,null)) as complaint_onset_status,
+   max(if(o1.obs_group =160531 and o1.concept_id = 160287,o1.value_coded,null)) as complaint_severity,
    e.date_created as date_created,  if(max(o1.date_created) > min(e.date_created),max(o1.date_created),NULL) as date_last_modified,
    e.voided as voided
 from encounter e
    inner join person p on p.person_id=e.patient_id and p.voided=0
    inner join (
-              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b','d1059fb9-a079-4feb-a749-eedd709ae542','465a92f2-baf8-42e9-9612-53064be868e8')
+              select encounter_type_id, uuid, name from encounter_type where uuid in('a0034eee-1940-4e35-847f-97537a35d05e','c6d09e05-1f25-4164-8860-9f32c5a02df0','c4a2be28-6673-4c36-b886-ea89b0a42116','706a8b12-c4ce-40e4-aec3-258b989bf6d3','a2010bf5-2db0-4bf4-819f-8a3cffbcb21b','d1059fb9-a079-4feb-a749-eedd709ae542','465a92f2-baf8-42e9-9612-53064be868e8','7671cc06-b852-46e6-a279-afc8e2343a04')
               ) et on et.encounter_type_id=e.encounter_type
                           inner join (select o.person_id,o1.encounter_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id,o1.value_coded, o1.value_datetime,o1.date_voided as date_voided,o1.value_numeric,
                           o1.date_created as date_created,o1.voided from obs o join obs o1 on o.obs_id = o1.obs_group_id
-                           and o1.concept_id in (1284,159948,166937,160643,159935,162760,160753,5219,159948,159368)
+                           and o1.concept_id in (1284,159948,166937,160643,159935,162760,160753,5219,159948,159368,168146,160287)
                           and o.concept_id in (159392,121689,160531)) o1 on o1.encounter_id = e.encounter_id and o1.voided=0
 where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time
@@ -9841,6 +9845,372 @@ BEGIN
     SELECT "Completed processing Family planning";
 END $$
 
+    -- Procedure sp_update_etl_physiotherapy
+DROP PROCEDURE IF EXISTS sp_update_etl_physiotherapy $$
+CREATE PROCEDURE sp_update_etl_physiotherapy(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing Physiotherapy";
+    INSERT INTO kenyaemr_etl.etl_physiotherapy (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        visit_type,
+        referred_from,
+        referred_from_department,
+        referred_from_department_other,
+        number_of_sessions,
+        referral_reason,
+        disorder_category,
+        other_disorder_category,
+        clinical_notes,
+        pin_scale,
+        affected_region,
+        range_of_motion,
+        strength_test,
+        functional_assessment,
+        assessment_finding,
+        goals,
+        planned_interventions,
+        other_interventions,
+        sessions_per_week,
+        patient_outcome,
+        referred_for,
+        referred_to,
+        transfer_to_facility,
+        services_referred_for,
+        date_of_admission,
+        reason_for_admission,
+        type_of_admission,
+        priority_of_admission,
+        admission_ward,
+        duration_of_hospital_stay,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 164181, o.value_coded, null )) as visit_type,
+        max(if(o.concept_id = 160338, o.value_coded, null )) as referred_from,
+        max(if(o.concept_id = 160478, o.value_coded, null )) as referred_from_department,
+        max(if(o.concept_id = 160632, o.value_text, null )) as referred_from_department_other,
+        max(if(o.concept_id = 164812, o.value_numeric, null )) as number_of_sessions,
+        max(if(o.concept_id = 162725, o.value_text, null )) as referral_reason,
+        max(if(o.concept_id = 1000485, o.value_coded, null )) as disorder_category,
+        max(if(o.concept_id = 160632, o.value_text, null )) as other_disorder_category,
+        max(if(o.concept_id = 160629, o.value_text, null )) as clinical_notes,
+        max(if(o.concept_id = 1475, o.value_numeric, null )) as pin_scale,
+        max(if(o.concept_id = 160629, o.value_text, null )) as affected_region,
+        max(if(o.concept_id = 602, o.value_coded, null )) as range_of_motion,
+        max(if(o.concept_id = 165241, o.value_coded, null )) as strength_test,
+        max(if(o.concept_id = 163580, o.value_coded, null )) as functional_assessment,
+        max(if(o.concept_id = 165002, o.value_text, null )) as assessment_finding,
+        max(if(o.concept_id = 165250, o.value_text, null )) as goals,
+        max(if(o.concept_id = 163304, o.value_coded, null )) as planned_interventions,
+        max(if(o.concept_id = 165250, o.value_text, null )) as other_interventions,
+        max(if(o.concept_id = 161011, o.value_text, null )) as sessions_per_week,
+        max(if(o.concept_id = 160433, o.value_coded, null )) as patient_outcome,
+        max(if(o.concept_id = 160632, o.value_text, null )) as referred_for,
+        max(if(o.concept_id = 163145, o.value_text, null )) as referred_to,
+        max(if(o.concept_id = 159495, o.value_text, null )) as transfer_to_facility,
+        max(if(o.concept_id = 162724, o.value_text, null )) as services_referred_for,
+        max(if(o.concept_id = 1640, o.value_datetime, null )) as date_of_admission,
+        max(if(o.concept_id = 162879, o.value_text, null )) as reason_for_admission,
+        max(if(o.concept_id = 162477, o.value_coded, null )) as type_of_admission,
+        max(if(o.concept_id = 1655, o.value_coded, null )) as priority_of_admission,
+        max(if(o.concept_id = 1000075, o.value_coded, null )) as admission_ward,
+        max(if(o.concept_id = 1896, o.value_coded, null )) as duration_of_hospital_stay,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '18c209ac-0787-4b51-b9aa-aa8b1581239c'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (164181,160338,160478,160632,164812,162725,1000485,160632,160629,1475,160629,602,165241,163580,165002,165250,163304,165250,161011,160433,163145,159495,162724,1640,162879,162477,1655,1000075,1896)
+        and o.voided=0
+    where e.voided = 0 and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id, date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE
+                         provider=VALUES(provider),
+                         visit_date=VALUES(visit_date),
+                         visit_type=VALUES(visit_type),
+                         referred_from=VALUES(referred_from),
+                         referred_from_department=VALUES(referred_from_department),
+                         referred_from_department_other=VALUES(referred_from_department_other),
+                         number_of_sessions=VALUES(number_of_sessions),
+                         referral_reason=VALUES(referral_reason),
+                         disorder_category=VALUES(disorder_category),
+                         other_disorder_category=VALUES(other_disorder_category),
+                         clinical_notes=VALUES(clinical_notes),
+                         pin_scale=VALUES(pin_scale),
+                         affected_region=VALUES(affected_region),
+                         range_of_motion=VALUES(range_of_motion),
+                         strength_test=VALUES(strength_test),
+                         functional_assessment=VALUES(functional_assessment),
+                         assessment_finding=VALUES(assessment_finding),
+                         goals=VALUES(goals),
+                         planned_interventions=VALUES(planned_interventions),
+                         other_interventions=VALUES(other_interventions),
+                         sessions_per_week=VALUES(sessions_per_week),
+                         patient_outcome=VALUES(patient_outcome),
+                         referred_for=VALUES(referred_for),
+                         referred_to=VALUES(referred_to),
+                         transfer_to_facility=VALUES(transfer_to_facility),
+                         services_referred_for=VALUES(services_referred_for),
+                         date_of_admission=VALUES(date_of_admission),
+                         reason_for_admission=VALUES(reason_for_admission),
+                         type_of_admission=VALUES(type_of_admission),
+                         priority_of_admission=VALUES(priority_of_admission),
+                         admission_ward=VALUES(admission_ward),
+                         duration_of_hospital_stay=VALUES(duration_of_hospital_stay),
+                         voided=VALUES(voided);
+    SELECT "Completed processing Physiotherapy";
+END $$
+
+-- Procedure sp_update_etl_psychiatry
+DROP PROCEDURE IF EXISTS sp_update_etl_psychiatry $$
+CREATE PROCEDURE sp_update_etl_psychiatry(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing psychiatry";
+INSERT INTO kenyaemr_etl.etl_psychiatry (patient_id,
+ visit_id,
+ encounter_id,
+ uuid,
+ location_id,
+ provider,
+ visit_date,
+ visit_type,
+ referred_from,
+ referred_from_department,
+--  referred_from_department_other,
+ presenting_allegations,
+ other_allegations,
+ contact_with_TB_case,
+--  site_location,
+ history_of_present_illness,
+-- psychiatric_history,
+ surgical_history,
+ type_of_surgery,
+ surgery_date,
+ on_medication,
+ childhood_mistreatment,
+ persistent_cruelty_meanness,
+ physically_abused,
+ sexually_abused,
+-- patient_education_history,
+ patient_occupation_history,
+ reproductive_history,
+ lmp_date,
+ general_examination_findings,
+--  general_examination_notes,
+ mental_status,
+--  mental_status_other,
+ attitude_and_behaviour,
+-- other_attitude_and_behaviour,
+ speech,
+-- other_speech,
+ mood,
+ illusions,
+ attention_concentration,
+ memory_recall,
+--  immediate_memory_recall_status,
+-- recent_memory_recall_status,
+-- remote_memory_recall_status,
+ judgement,
+ insight,
+ affect,
+ thought_process,
+ thought_content,
+ hallucinations,
+ orientation_status,
+ management_plan,
+ counselling_prescribed,
+ patient_outcome,
+ referred_to,
+ facility_transferred_to,
+ date_of_admission,
+ reason_for_admission,
+ type_of_admission,
+ priority_of_admission,
+ admission_ward,
+ duration_of_hospital_stay,
+ voided)
+select e.patient_id,
+e.visit_id,
+e.encounter_id,
+e.uuid,
+e.location_id,
+e.creator,
+date(e.encounter_datetime)                                                              as visit_date,
+max(if(o.concept_id = 164181, o.value_coded, null))                                     as visit_type,
+max(if(o.concept_id = 160338, o.value_coded, null))                                     as referred_from,
+max(if(o.concept_id = 160478, o.value_coded, null))                                     as referred_from_department,
+-- max(if(o.concept_id =, o., null))                    as referred_from_department_other,
+max(if(o.concept_id = 5219, o.value_coded, null))                                       as presenting_allegations,
+max(if(o.concept_id = 165250, o.value_text, null))                                      as other_allegations,
+max(if(o.concept_id = 124068, o.value_coded, null))                                     as contact_with_TB_case,
+--  max(if(o.concept_id =, o., null))                    as site_location,
+max(if(o.concept_id = 1390, o.value_text, null))                                        as history_of_present_illness,
+-- max(if(o.concept_id =, o., null))                    as psychiatric_history,
+max(if(o.concept_id = 168148, o.value_coded, null))                                     as surgical_history,
+max(if(o.concept_id = 166635, o.value_text, null))                                      as type_of_surgery,
+max(if(o.concept_id = 160715, o.value_datetime, null))                                  as surgery_date,
+max(if(o.concept_id = 159367, o.value_coded, null))                                     as on_medication,
+max(if(o.concept_id = 165206, o.value_coded, null))                                     as childhood_mistreatment,
+max(if(o.concept_id = 165241, o.value_coded, null))                                     as persistent_cruelty_meanness,
+max(if(o.concept_id = 165034, o.value_coded, null))                                     as physically_abused,
+max(if(o.concept_id = 123160, o.value_coded, null))                                     as sexually_abused,
+-- max(if(o.concept_id =, o., null))                    as patient_education_history,
+max(if(o.concept_id = 161011, o.value_text, null))                                      as patient_occupation_history,
+max(if(o.concept_id = 160598, o.value_text, null))                                      as reproductive_history,
+max(if(o.concept_id = 1427, o.value_datetime, null))                                    as lmp_date,
+concat_ws(',', max(if(o.concept_id = 162737 and o.value_coded = 1107, 'None', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 136443, 'Jaundice', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 460, 'Oedema', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 5334, 'Oral thrush', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 5245, 'Pallor', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 140125, 'Finger Clubbing', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 126952, 'Lymph Node Axillary', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 143050, 'Cyanosis', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 126939, 'Lymph Nodes Inguinal', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 823, 'Wasting', null)),
+max(if(o.concept_id = 162737 and o.value_coded = 116334, 'Lethargic', null))) as general_examination_findings,
+--    max(if(o.concept_id =, o., null))                    as general_examination_notes,
+max(if(o.concept_id = 167092, o.value_coded, null))                                     as mental_status,
+--  max(if(o.concept_id =, o., null))                    as mental_status_other,
+max(if(o.concept_id = 167193, o.value_coded, null))                                     as attitude_and_behaviour,
+-- max(if(o.concept_id =, o., null))                    as other_attitude_and_behaviour,
+max(if(o.concept_id = 167201, o.value_coded, null))                                     as speech,
+--  max(if(o.concept_id =, o., null))                    as other_speech,
+max(if(o.concept_id = 167099, o.value_coded, null))                                     as mood,
+max(if(o.concept_id = 167526, o.value_coded, null))                                     as illusions,
+max(if(o.concept_id = 167203, o.value_coded, null))                                     as attention_concentration,
+max(if(o.concept_id = 167321, o.value_coded, null))                                     as memory_recall,
+--  max(if(o.concept_id = , o., null))                    as immediate_memory_recall_status,
+--  max(if(o.concept_id =, o., null))                    as recent_memory_recall_status,
+-- max(if(o.concept_id =, o., null))                    as remote_memory_recall_status,
+max(if(o.concept_id = 167116, o.value_coded, null))                                     as judgement,
+max(if(o.concept_id = 167115, o.value_coded, null))                                     as insight,
+max(if(o.concept_id = 167101, o.value_coded, null))                                     as affect,
+concat_ws(',', max(if(o.concept_id = 167106 and o.value_coded = 16732, 'Logical', null)),
+max(if(o.concept_id = 167106 and o.value_coded = 167319, 'Illogical', null)),
+max(if(o.concept_id = 167106 and o.value_coded = 167318, 'Pressured', null)),
+max(if(o.concept_id = 167106 and o.value_coded = 167137, 'Disorganized',
+null)))                                                                as thought_process,
+concat_ws(',', max(if(o.concept_id = 167112 and o.value_coded = 1115, 'Normal', null)),
+max(if(o.concept_id = 167112 and o.value_coded = 142600, 'Delusions', null)),
+max(if(o.concept_id = 167112 and o.value_coded = 125562, 'Suicidal', null)),
+max(if(o.concept_id = 167112 and o.value_coded = 114164, 'Phobias', null)),
+max(if(o.concept_id = 167112 and o.value_coded = 132613, 'Obssessions', null)),
+max(if(o.concept_id = 167112 and o.value_coded = 167117, 'Homicidal', null))) as thought_content,
+concat_ws(',', max(if(o.concept_id = 167181 and o.value_coded = 148126, 'Auditory hallucinations', null)),
+max(if(o.concept_id = 167181 and o.value_coded = 132427, 'Olfactory Hallucinations', null)),
+max(if(o.concept_id = 167181 and o.value_coded = 125058, 'Tactile Hallucinations', null)),
+max(if(o.concept_id = 167181 and o.value_coded = 123069, 'Visual Hallucinations', null)),
+max(if(o.concept_id = 167181 and o.value_coded = 163747, 'Absent', null)))    as hallucinations,
+concat_ws(',', max(if(o.concept_id = 167084 and o.value_coded = 167083, 'Oriented to time', null))
+max(if(o.concept_id = 167084 and o.value_coded = 167082, 'Oriented to place', null))
+max(if(o.concept_id = 167084 and o.value_coded = 167081, 'Oriented to person', null))
+max(if(o.concept_id = 167084 and o.value_coded = 163747, 'Absent', null)))    as orientation_status,
+max(if(o.concept_id = 163104, o.value_text, null))                                      as management_plan,
+concat_ws(',', max(if(o.concept_id = 165104 and o.value_coded = 1107, 'None', null)),
+max(if(o.concept_id = 165104 and o.value_coded = 156277, 'Family Counseling', null)),
+max(if(o.concept_id = 165104 and o.value_coded = 1380, 'Nutritional and Dietary', null)),
+max(if(o.concept_id = 165104 and o.value_coded = 5490, 'Psychosocial therapy', null)),
+max(if(o.concept_id = 165104 and o.value_coded = 165151, 'Substance Abuse Counseling', null))
+max(if(o.concept_id = 165104 and o.value_coded = 5622, 'Other', null)))       as counselling_prescribed,
+max(if(o.concept_id = 160433, o.value_coded, null))                                     as patient_outcome,
+max(if(o.concept_id = 163145, o.value_coded, null))                                     as referred_to,
+max(if(o.concept_id = 159495 or o.concept_id = 162724, o.value_text, null))             as facility_transferred_to,
+max(if(o.concept_id = 1640, o.value_datetime, null))                                    as date_of_admission,
+max(if(o.concept_id = 162879, o.value_text, null))                                      as reason_for_admission,
+max(if(o.concept_id = 162477, o.value_coded, null))                                     as type_of_admission,
+max(if(o.concept_id = 1655, o.value_coded, null))                                       as priority_of_admission,
+max(if(o.concept_id = 1000075, o.value_coded, null))                                    as admission_ward,
+max(if(o.concept_id = 1896, o.value_coded, null))                                       as duration_of_hospital_stay,
+e.voided
+from encounter e
+inner join person p on p.person_id = e.patient_id and p.voided = 0
+inner join form f on f.form_id = e.form_id and f.uuid = '1fbd26f1-0478-437c-be1e-b8468bd03ffa'
+left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                              (164181, 160338, 160478, 5219, 165250, 124068,
+                               1390, 168148, 166635, 160715, 159367, 165206,
+                               165241, 165034, 123160, 161011, 160598, 1427,
+                               162737, 167092, 167193, 167201, 167099,
+                               167526,
+                               167203, 167321, 167116, 167115, 167101,
+                               167106, 167112, 167181, 167084, 163104,
+                               165104, 160433,
+                               163145, 159495, 162724, 1640, 162879, 162477,
+                               1655, 1000075, 1896)
+and o.voided = 0
+where e.voided = 0 and e.date_created >= last_update_time
+or e.date_changed >= last_update_time
+or e.date_voided >= last_update_time
+or o.date_created >= last_update_time
+or o.date_voided >= last_update_time
+group by e.patient_id, date(e.encounter_datetime)
+ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+visit_date=VALUES(visit_date),
+visit_type=VALUES(visit_type),
+referred_from=VALUES(referred_from),
+referred_from_department=VALUES(referred_from_department),
+presenting_allegations=VALUES(presenting_allegations),
+other_allegations=VALUES(other_allegations),
+contact_with_TB_case=VALUES(contact_with_TB_case),
+history_of_present_illness=VALUES(history_of_present_illness),
+surgical_history=VALUES(surgical_history),
+type_of_surgery=VALUES(type_of_surgery),
+surgery_date=VALUES(surgery_date),
+on_medication=VALUES(on_medication),
+childhood_mistreatment=VALUES(childhood_mistreatment),
+persistent_cruelty_meanness=VALUES(persistent_cruelty_meanness),
+physically_abused=VALUES(physically_abused),
+sexually_abused=VALUES(sexually_abused),
+patient_occupation_history=VALUES(patient_occupation_history),
+reproductive_history=VALUES(reproductive_history),
+lmp_date=VALUES(lmp_date),
+general_examination_findings=VALUES(general_examination_findings),
+mental_status=VALUES(mental_status),
+attitude_and_behaviour=VALUES(attitude_and_behaviour),
+speech=VALUES(speech),
+mood=VALUES(mood),
+illusions=VALUES(illusions),
+attention_concentration=VALUES(attention_concentration),
+memory_recall=VALUES(memory_recall),
+judgement=VALUES(judgement),
+insight=VALUES(insight),
+affect=VALUES(affect),
+thought_process=VALUES(thought_process),
+thought_content=VALUES(thought_content),
+hallucinations=VALUES(hallucinations),
+orientation_status=VALUES(orientation_status),
+management_plan=VALUES(management_plan),
+counselling_prescribed=VALUES(counselling_prescribed),
+patient_outcome=VALUES(patient_outcome),
+referred_to=VALUES(referred_to),
+facility_transferred_to=VALUES(facility_transferred_to),
+date_of_admission=VALUES(date_of_admission),
+reason_for_admission=VALUES(reason_for_admission),
+type_of_admission=VALUES(type_of_admission),
+priority_of_admission=VALUES(priority_of_admission),
+admission_ward=VALUES(admission_ward),
+duration_of_hospital_stay=VALUES(duration_of_hospital_stay),
+voided=VALUES(voided);
+
+SELECT "Completed processing psychiatry";
+END $$
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -9932,6 +10302,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_sgbv_post_rape_care(last_update_time);
     CALL sp_update_etl_gbv_physical_emotional_abuse(last_update_time);
     CALL sp_update_etl_family_planning(last_update_time);
+    CALL sp_update_etl_physiotherapy(last_update_time);
+    CALL sp_update_etl_psychiatry(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();

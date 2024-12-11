@@ -95,6 +95,8 @@ DROP TABLE IF EXISTS dwapi_etl.etl_sgbv_pep_followup;
 DROP TABLE IF EXISTS dwapi_etl.etl_sgbv_post_rape_care;
 DROP TABLE IF EXISTS dwapi_etl.etl_gbv_physical_emotional_abuse;
 DROP TABLE IF EXISTS dwapi_etl.etl_family_planning;
+DROP TABLE IF EXISTS dwapi_etl.etl_physiotherapy;
+DROP TABLE IF EXISTS dwapi_etl.etl_psychiatry;
 DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics
@@ -3034,6 +3036,8 @@ allergy_onset_date DATE,
 complaint INT(11),
 complaint_date DATE,
 complaint_duration int(11),
+complaint_onset_status int(11),
+complaint_severity int(11),
 voided int(11),
 date_created DATETIME NOT NULL,
 date_last_modified DATETIME,
@@ -3876,6 +3880,132 @@ CREATE TABLE dwapi_etl.etl_family_planning
     INDEX (receiving_postpartum_fp)
 );
 SELECT "Successfully created etl_family_planning table";
+
+-- Create etl_physiotherapy table
+CREATE TABLE dwapi_etl.etl_physiotherapy
+(
+    patient_id                     INT(11)  NOT NULL,
+    visit_id                       INT(11) DEFAULT NULL,
+    encounter_id                   INT(11)  NOT NULL PRIMARY KEY,
+    uuid                           CHAR(38) NOT NULL,
+    location_id                    INT(11)  NOT NULL,
+    provider                       INT(11)  NOT NULL,
+    visit_date                     DATE,
+    visit_type                     INT(11),
+    referred_from                  INT(11),
+    referred_from_department       INT(11),
+    referred_from_department_other VARCHAR(100),
+    number_of_sessions             INT(11),
+    referral_reason                VARCHAR(255),
+    disorder_category              INT(11),
+    other_disorder_category        VARCHAR(255),
+    clinical_notes                 VARCHAR(255),
+    pin_scale                      INT(11),
+    affected_region                INT(11),
+    range_of_motion                INT(11),
+    strength_test                  INT(11),
+    functional_assessment          INT(11),
+    assessment_finding             VARCHAR(255),
+    goals                          VARCHAR(255),
+    planned_interventions          INT(11),
+    other_interventions            VARCHAR(255),
+    sessions_per_week              VARCHAR(255),
+    patient_outcome                INT(11),
+    referred_for                   VARCHAR(255),
+    referred_to                    INT(11),
+    transfer_to_facility           VARCHAR(255),
+    services_referred_for          VARCHAR(255),
+    date_of_admission              DATE,
+    reason_for_admission           VARCHAR(255),
+    type_of_admission              INT(11),
+    priority_of_admission          INT(11),
+    admission_ward                 INT(11),
+    duration_of_hospital_stay      INT(11),
+    voided                         INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_physiotherapy table";
+
+-- Create etl_psychiatry table
+CREATE TABLE dwapi_etl.etl_psychiatry
+(
+    patient_id                     INT(11)  NOT NULL,
+    visit_id                       INT(11) DEFAULT NULL,
+    encounter_id                   INT(11)  NOT NULL PRIMARY KEY,
+    uuid                           CHAR(38) NOT NULL,
+    location_id                    INT(11)  NOT NULL,
+    provider                       INT(11)  NOT NULL,
+    visit_date                     DATE,
+    visit_type                     INT(11),
+    referred_from                  INT(11),
+    referred_from_department       INT(11),
+   -- referred_from_department_other VARCHAR(100),
+    presenting_allegations         INT(11),
+    other_allegations              VARCHAR(255),
+    contact_with_TB_case           INT(11),
+   -- site_location                  VARCHAR(255),
+    history_of_present_illness     VARCHAR(255),
+   -- psychiatric_history            VARCHAR(255),
+    surgical_history               INT(11),
+    type_of_surgery                VARCHAR(255),
+    surgery_date                   DATE,
+    on_medication                  INT(11),
+    childhood_mistreatment         INT(11),
+    persistent_cruelty_meanness    INT(11),
+    physically_abused              INT(11),
+    sexually_abused                INT(11),
+  --  patient_education_history      VARCHAR(255),
+    patient_occupation_history     VARCHAR(255),
+    reproductive_history           VARCHAR(255),
+    lmp_date                       INT(11),
+  --  general_examination_findings   VARCHAR(255),
+    general_examination_notes      VARCHAR(255),
+    mental_status                  INT(11),
+   -- mental_status_other            VARCHAR(255),
+    attitude_and_behaviour         INT(11),
+  --  other_attitude_and_behaviour   VARCHAR(255),
+    speech                         INT(11),
+   -- other_speech                   VARCHAR(255),
+    mood                           INT(11),
+    illusions                      INT(11),
+    attention_concentration        INT(11),
+    memory_recall                  INT(11),
+   -- immediate_memory_recall_status INT(11),
+   -- recent_memory_recall_status    INT(11),
+   -- remote_memory_recall_status    INT(11),
+    judgement                      INT(11),
+    insight                        INT(11),
+    affect                         VARCHAR(255),
+    thought_process                VARCHAR(255),
+    thought_content                VARCHAR(255),
+    hallucinations                 VARCHAR(255),
+    orientation_status             VARCHAR(255),
+    management_plan                VARCHAR(255),
+    counselling_prescribed         VARCHAR(255),
+    patient_outcome                INT(11),
+    referred_to                    INT(11),
+    facility_transferred_to        VARCHAR(255),
+    date_of_admission              DATE,
+    reason_for_admission           VARCHAR(255),
+    type_of_admission              INT(11),
+    priority_of_admission          INT(11),
+    admission_ward                 INT(11),
+    duration_of_hospital_stay      INT(11),
+    voided                         INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_psychiatry table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
