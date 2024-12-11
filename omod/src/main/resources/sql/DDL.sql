@@ -383,6 +383,9 @@ order_id VARCHAR(200),
 lab_test VARCHAR(180),
 urgency VARCHAR(50),
 order_reason VARCHAR(180),
+order_test_name VARCHAR(180),
+result_test_name VARCHAR(180),
+set_member_conceptId VARCHAR(100),
 test_result VARCHAR(180),
 date_test_requested DATE DEFAULT null,
 date_test_result_received DATE,
@@ -396,7 +399,8 @@ INDEX(visit_date),
 INDEX(encounter_id),
 INDEX(patient_id),
 INDEX(lab_test),
-INDEX(test_result)
+INDEX(test_result),
+INDEX(set_member_conceptId)
 
 );
 SELECT "Successfully created etl_laboratory_extract table";
