@@ -2574,7 +2574,8 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 							  WHERE cs.concept_set = 1000628),
 		 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
 								  from obs o
-										   inner join concept c on o.concept_id = c.concept_id and c.datatype_id = 2
+										   inner join concept c on o.concept_id = c.concept_id
+										   inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
 										   left join concept_name n
 													 on o.value_coded = n.concept_id AND n.locale = 'en' AND
 														n.concept_name_type = 'FULLY_SPECIFIED'
@@ -2584,7 +2585,8 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 								  where o.order_id is not null ),
 		 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
 									from obs o
-											 inner join concept c on o.concept_id = c.concept_id and c.datatype_id = 1
+											 inner join concept c on o.concept_id = c.concept_id
+											 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
 											 inner join concept_name n
 														on o.concept_id = n.concept_id AND n.locale = 'en' AND
 														   n.concept_name_type = 'FULLY_SPECIFIED'
@@ -2594,7 +2596,8 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 									where o.order_id is not null ),
 		 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
 								 from obs o
-										  inner join concept c on o.concept_id = c.concept_id and c.datatype_id = 3
+										  inner join concept c on o.concept_id = c.concept_id
+										  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
 										  inner join concept_name n
 													 on o.concept_id = n.concept_id AND n.locale = 'en' AND
 														n.concept_name_type = 'FULLY_SPECIFIED'
