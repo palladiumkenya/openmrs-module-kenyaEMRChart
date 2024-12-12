@@ -8533,6 +8533,8 @@ INSERT INTO dwapi_etl.etl_psychiatry (patient_id,
   priority_of_admission,
   admission_ward,
   duration_of_hospital_stay,
+  date_created,
+  date_last_modified,
   voided)
 select e.patient_id,
 e.visit_id,
@@ -8616,6 +8618,8 @@ max(if(o.concept_id = 162477, o.value_coded, null))                             
 max(if(o.concept_id = 1655, o.value_coded, null))                                       as priority_of_admission,
 max(if(o.concept_id = 1000075, o.value_coded, null))                                    as admission_ward,
 max(if(o.concept_id = 1896, o.value_coded, null))                                       as duration_of_hospital_stay,
+e.date_created,
+e.date_changed,
 e.voided
 from encounter e
 inner join person p on p.person_id = e.patient_id and p.voided = 0
