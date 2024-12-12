@@ -601,6 +601,7 @@ urgency,
 order_reason,
 order_test_name,
 result_test_name,
+result_name,
 set_member_conceptId,
 test_result,
 date_test_requested,
@@ -674,6 +675,7 @@ SELECT
 	o.order_reason,
 	lc.name as order_test_name,
 	if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
+	COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
 	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
 	COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
 	o.date_activated as date_test_requested,
@@ -689,7 +691,6 @@ FROM encounter e
 		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
 		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
 where e.voided=0;
-
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
 encounter_id,
