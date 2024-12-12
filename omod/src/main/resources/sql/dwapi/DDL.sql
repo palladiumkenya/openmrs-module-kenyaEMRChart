@@ -58,6 +58,7 @@ DROP TABLE IF EXISTS dwapi_etl.etl_prep_followup;
 DROP TABLE IF EXISTS dwapi_etl.etl_progress_note;
 DROP TABLE IF EXISTS dwapi_etl.etl_ovc_enrolment;
 DROP TABLE IF EXISTS dwapi_etl.etl_cervical_cancer_screening;
+DROP TABLE IF EXISTS dwapi_etl.etl_occupational_therapy_clinical_visit;
 
 DROP TABLE IF EXISTS dwapi_etl.etl_client_trace;
 DROP TABLE IF EXISTS dwapi_etl.etl_contact;
@@ -2224,6 +2225,64 @@ CREATE TABLE dwapi_etl.etl_patient_program (
    INDEX(patient_id, visit_date)
 );
   SELECT "Successfully created etl_cervical_cancer_screening table";
+
+
+
+  -- --------------------- creating patient occupational therapy clinical visit table -------
+
+  CREATE TABLE dwapi_etl.etl_occupational_therapy_clinical_visit (
+        uuid CHAR(38),
+        encounter_id INT(11) NOT NULL PRIMARY KEY,
+        patient_id INT(11) NOT NULL ,
+        location_id INT(11) DEFAULT NULL,
+        visit_date DATE,
+        visit_id INT(11),
+        encounter_provider INT(11),
+        date_created DATETIME NOT NULL,
+        date_last_modified DATETIME,
+        visit_type INT(11),
+        referral_form INT(11),
+        specify_referring_department INT(11),
+        specify_referring_department_other VARCHAR(255),
+        occupational_therapy_number INT(11),
+        patient_enrolled_in_school INT(11),
+        patient_with_disability INT(11),
+        disability_type INT(11),
+        neurodevelopmental_finding_type INT(11),
+        learning_findings INT(11),
+        neurodiversity_conditions INT(11),
+        neurodiversity_conditions_other VARCHAR(255),
+        general_clinical_notes VARCHAR(255),
+        ot_intervention INT(11),
+        ot_intervention_other VARCHAR(255),
+        assistive_technology INT(11),
+        service_offered INT(11),
+        therapeutical_intervention INT(11),
+        therapeutical_intervention_other VARCHAR(255),
+        remarks VARCHAR(255),
+        patient_outcome INT(11),
+        referral_for VARCHAR(255),
+        referral_to INT(11),
+        services_referred_for VARCHAR(255),
+        date_of_patient_admission DATE,
+        reason_for_admission VARCHAR(255),
+        type_of_admission INT(11),
+        priority_of_admission INT(11),
+        admission_male_ward INT(11),
+        hospital_stay INT(11),
+        voided INT(11),
+        CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics(patient_id),
+        CONSTRAINT unique_uuid UNIQUE(uuid),
+        INDEX(visit_date),
+        INDEX(encounter_id),
+        INDEX(patient_id),
+        INDEX(patient_id, visit_date)
+  );
+
+  SELECT "Successfully created etl_occupational_therapy_clinical_visit table";
+
+
+
 
   -- --------------------- creating patient contact  table -------------------------------
 CREATE TABLE dwapi_etl.etl_patient_contact (

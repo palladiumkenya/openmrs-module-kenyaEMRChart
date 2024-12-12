@@ -2203,6 +2203,71 @@ ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD FOREIGN KEY (patien
 ALTER TABLE kenyaemr_datatools.cervical_cancer_screening ADD INDEX(visit_date);
 SELECT "Successfully created cervical_cancer_screening table";
 
+
+
+  -- create table occupational therapy clinical visit
+  create table kenyaemr_datatools.occupational_therapy_clinical_visit as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+        date_last_modified,
+        (case visit_type when 164180 then 'New visit' when 160530 then 'Return visit' when 160563 then 'Referral' else '' end) as visit_type,
+          (case referral_form when 164407 then 'From other facilities' when 1759 then 'Referred from CHU' when 164918 then 'Internal(Department)' else '' end) as referral_form,
+          (case specify_referring_department when 160542 then 'Outpatient Department' when 167050 then 'Inpatient Department' when 160454 then 'Ophthalmology (Eye)Clinic' when 160455 then 'Ear, Nose, and Throat(ENT)Clinic' when 168812 then 'Physiotherapy clinic' when 164164 then 'Surgical Outpatient Clinic' when 160457 then 'Paediatrics clinics'
+                when 2001538 then 'Maxillofacial Clinic' when 160448 then 'Medical Outpatient clinic' when 1000042 then 'Oncology Clinic' when  1000043 then 'Dental clinic'
+                when 160475 then 'Renal Clinic' when 5489 then 'Mental Health' when 160460 then 'Dermatology Clinic' when 164103 then 'Diabetic Clinic' when 1000209 then 'Occupational Therapy Clinic'
+                when 160465 then 'Orthopaedic Clinic' when 5622 then 'Others specify' else '' end) as specify_referring_department,
+            specify_referring_department_other,
+            occupational_therapy_number,
+            (case patient_enrolled_in_school when 5629 then 'In School' when 164212 then 'Out of school' else '' end) as patient_enrolled_in_school,
+            (case patient_with_disability when 1065 then 'Yes' when 1066 then 'No' else '' end) as patient_with_disability,
+            (case disability_type when 167078 then 'Neurodevelopmental' when 153343 then 'learning' when 160176 then 'Neurodiversity conditions' when 156923 then 'Intelectual disability' when 142616 then 'Delayed developmental milestone' when 5622 then 'Others(specify)' else '' end) as disability_type,
+            (case neurodevelopmental_finding_type when 152492 then 'Cerebral palsy' when 144481 then 'Down syndrome' when 117470 then 'Hydrocephalus' when 126208 then 'Spina bifida' else '' end) as neurodevelopmental_finding_type,
+            (case learning_findings when 118795 then 'Dyslexia' when 118800 then 'Dysgraphia' when 141644 then 'Dyscalculia' when 153271 then 'Auditory processing' when 121529 then 'Language processing disorder' when 155205 then 'Nonverbal learning disabilities' when 126456 then 'Visual perceptual/visual motor deficit' else '' end) as learning_findings,
+            (case neurodiversity_conditions when 121317 then 'ADHD(Attention deficit hyperactivity disorder)' when 121303 then 'Autism' else '' end) as neurodiversity_conditions,
+            neurodiversity_conditions_other,
+            general_clinical_notes,
+            (case ot_intervention when 1107 then 'None' when 164806 then 'Neonatal Screening' when 168287 then 'Initial Assessment' when 168031 then 'Re-Assessment' when 2001261 then 'PWDs Assessment and Categorisation' when 169149 then 'Environmental Assessment'
+                            when 2001260 then 'Assistive Technology Assessment' when 527 then 'Splinting' when 2002061 then 'Activities of Daily Living Training' when 2002060 then 'Hand Therapy' when 163318 then 'Developmental Skills Training' when 1000534 then 'Multi sensory screening'
+                             when 2002026 then 'Therapeutic Activities' when 2000823 then 'Sensory Stimulation' when 160130 then 'Vocational Training' when 164518 then 'Bladder and Bowel Management' when  164872 then 'Environmental Adaptations' when 2002045 then 'OT Screening'
+                             when 167696 then 'Individual Psychotherapy' when 166724 then 'Scar Management' when 167695 then 'Group Psychotherapy' when 167809 then 'Health Education/ Patient Education' when 165001 then 'Home Visits (Interventions)' when 167277 then 'Recreation Therapy'
+                             when 2001249 then 'Therapeutic play' when 161625 then 'OT in critical care' when 167813 then 'OT Sexual health' when 160351 then 'Teletherapy' when 163579 then 'Fine and gross motor skills training' when 160563 then 'Referrals IN' when 159492 then  'Referrals OUT'
+                             when 1692 then 'Discharge on recovery' when  5622 then 'Other' else '' end)  as ot_intervention,
+            ot_intervention_other,
+            (case assistive_technology when 1107 then 'None' when 2001249 then 'Inclusive Play Therapy' when 165424 then 'Cognitive/Intellectual' when 2000819 then 'Communication' when 165151 then 'Self Care'
+                        when 2000976 then 'Hearing Devices' when 168812 then 'Physical' else '' end) as assistive_technology,
+            (case service_offered when 1537 then 'Facility' when 160545 then 'Community Outreach' else '' end)  as service_offered,
+            (case therapeutical_intervention when 168238 then 'Evaluation using play' when 163579 then 'Fine motor play' when 160047 then 'Concentration play' when 2001246 then 'Vestibular stimulation play' when 5622 then 'Other' else '' end) as therapeutical_intervention,
+            therapeutical_intervention_other,
+            remarks,
+            (case patient_outcome when 160429 then 'Released Home' when 1654 then 'Admit' when 1693 then 'Referral' when 159 then 'Deceased' else '' end) as patient_outcome,
+            referral_for,
+            (case referral_to when 164407 then 'Other health facility' when 163266 then 'This health facility' when 1000478 then 'Community Health Unit' else '' end)  as referral_to,
+            services_referred_for,
+            date_of_patient_admission,
+            reason_for_admission,
+            (case type_of_admission when 164180 then 'New' when 159833 then 'Readmission' else '' end) as type_of_admission,
+            (case priority_of_admission when 160473 then 'Emergency' when 159310 then 'Direct' when 1000139 then 'Scheduled' else '' end) as priority_of_admission,
+            (case admission_male_ward when 1000040 then 'Male Medical' when 1000041 then 'Male Surgical' when 161629 then 'Observation Ward' when 162680 then 'Recovery Ward' when 1000054 then 'Psychiatric Ward'
+                    when 1000056 then 'Isolation Ward' when 161936 then  'Intensive Care Unit' when 1000199 then 'Amenity Ward' when 167396 then 'High Dependecy Unit' else '' end) as admission_male_ward,
+            (case hospital_stay when 1072 then 'Daycase' when 161018 then 'Overnight' when 1275 then 'Longer stay' else '' end)  as hospital_stay,
+
+
+      voided
+    from kenyaemr_etl.etl_occupational_therapy_clinical_visit;
+
+  ALTER TABLE kenyaemr_datatools.occupational_therapy_clinical_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+  ALTER TABLE kenyaemr_datatools.occupational_therapy_clinical_visit ADD INDEX(visit_date);
+  SELECT "Successfully created occupational_therapy_clinical_visit table";
+
+
+
 -- Create table contact
 create table kenyaemr_datatools.kp_contact as
 select

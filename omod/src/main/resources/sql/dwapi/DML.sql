@@ -4713,6 +4713,108 @@ group by e.encounter_id;
 SELECT "Completed processing Cervical Cancer Screening", CONCAT("Time: ", NOW());
 
 END $$
+
+
+-- ------------- populate etl_occupational_therapy_clinical_visit--------------------------------
+-- ------------- populate etl_occupational_therapy_clinical_visit--------------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_occupational_therapy_clinical_visit $$
+CREATE PROCEDURE sp_populate_dwapi_occupational_therapy_clinical_visit()
+BEGIN
+    SELECT "Processing Patient Occupation therapy clinic view ", CONCAT("Time: ", NOW());
+    INSERT INTO dwapi_etl.etl_occupational_therapy_clinical_visit(
+        uuid,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        encounter_provider,
+        date_created,
+        date_last_modified,
+        visit_type,
+        referral_form,
+        specify_referring_department,
+        specify_referring_department_other,
+        occupational_therapy_number,
+        patient_enrolled_in_school,
+        patient_with_disability,
+        disability_type,
+        neurodevelopmental_finding_type,
+        learning_findings,
+        neurodiversity_conditions,
+        neurodiversity_conditions_other,
+        general_clinical_notes,
+        ot_intervention,
+        ot_intervention_other,
+        assistive_technology,
+        service_offered,
+        therapeutical_intervention,
+        therapeutical_intervention_other,
+        remarks,
+        patient_outcome,
+        referral_for,
+        referral_to,
+        services_referred_for,
+        date_of_patient_admission,
+        reason_for_admission,
+        type_of_admission,
+        priority_of_admission,
+        admission_male_ward,
+        hospital_stay,
+        voided
+    )
+    SELECT
+        e.uuid,
+        e.patient_id,
+        e.visit_id,
+        DATE(e.encounter_datetime) AS visit_date,
+        e.location_id,
+        e.encounter_id AS encounter_id,
+        e.creator,
+        e.date_created AS date_created,
+                      max(if(o.concept_id=164181,o.value_coded,null)) as visit_type,
+                      max(if(o.concept_id=160338,o.value_coded,null)) as referral_form,
+                      max(if(o.concept_id=160478,o.value_coded,null)) as specify_referring_department,
+                      max(if(o.concept_id=160632,o.value_text,null)) as specify_referring_department_other,
+                      max(if(o.concept_id=164812,o.value_numeric,null)) as occupational_therapy_number,
+                      max(if(o.concept_id=160336,o.value_coded,null)) as patient_enrolled_in_school,
+                      max(if(o.concept_id=162558,o.value_coded,null)) as patient_with_disability,
+                      max(if(o.concept_id=1069,o.value_coded,null)) as disability_type,
+                      max(if(o.concept_id=167273,o.value_coded,null)) as neurodevelopmental_finding_type,
+                      max(if(o.concept_id=165241,o.value_coded,null)) as learning_findings,
+                      max(if(o.concept_id=165911,o.value_coded,null)) as neurodiversity_conditions,
+                      max(if(o.concept_id=160632,o.value_text,null)) as neurodiversity_conditions_other,
+                      max(if(o.concept_id=160430,o.value_text,null)) as general_clinical_notes,
+                      max(if(o.concept_id=165302,o.value_coded,null)) as ot_intervention,
+                      max(if(o.concept_id=160632,o.value_text,null)) as ot_intervention_other,
+                      max(if(o.concept_id=164204,o.value_coded,null)) as assistive_technology,
+                      max(if(o.concept_id=164406,o.value_coded,null)) as service_offered,
+                      max(if(o.concept_id=168360,o.value_coded,null)) as therapeutical_intervention,
+                      max(if(o.concept_id=160632,o.value_text,null)) as therapeutical_intervention_other,
+                      max(if(o.concept_id=161011,o.value_text,null)) as remarks,
+                      max(if(o.concept_id=160433,o.value_coded,null)) as patient_outcome,
+                      max(if(o.concept_id=160632,o.value_text,null)) as referral_for,
+                      max(if(o.concept_id=163145,o.value_coded,null)) as referral_to,
+                      max(if(o.concept_id=162724,o.value_text,null)) as services_referred_for,
+                      max(if(o.concept_id=1640,o.value_datetime,null)) as date_of_patient_admission,
+                      max(if(o.concept_id=162879,o.value_text,null)) as reason_for_admission,
+                      max(if(o.concept_id=162477,o.value_coded,null)) as type_of_admission,
+                      max(if(o.concept_id=1655,o.value_coded,null)) as priority_of_admission,
+                      max(if(o.concept_id=1000075,o.value_coded,null)) as admission_male_ward,
+                      max(if(o.concept_id=1896,o.value_coded,null)) as hospital_stay,
+        IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified,
+        e.voided AS voided
+    FROM encounter e
+    INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+    INNER JOIN form f ON f.form_id = e.form_id AND f.uuid IN ("062a24b5-728b-4639-8176-197e8f458490")
+    LEFT OUTER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0
+    AND o.concept_id IN (164181, 160338, 160478, 160632, 164812, 160336, 162558, 1069, 167273, 165241, 165911, 160632, 160430, 165302, 160632, 164204, 164406, 168360, 160632, 161011, 160433, 160632, 163145, 162724, 1640, 162879, 162477, 1655, 1000075, 1896)
+    WHERE e.voided = 0
+    GROUP BY e.patient_id, visit_date;
+    SELECT "Completed processing Occupational therapy clinical visit data ", CONCAT("Time: ", NOW());
+END $$
+
 		--------------------------- process patient contact ------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_patient_contact $$
@@ -7900,6 +8002,7 @@ CALL sp_populate_dwapi_otz_enrollment();
 CALL sp_populate_dwapi_otz_activity();
 CALL sp_populate_dwapi_ovc_enrolment();
 CALL sp_populate_dwapi_cervical_cancer_screening();
+CALL sp_populate_dwapi_occupational_therapy_clinical_visit();
 CALL sp_populate_dwapi_patient_contact();
 CALL sp_populate_dwapi_client_trace();
 CALL sp_populate_dwapi_kp_contact();
