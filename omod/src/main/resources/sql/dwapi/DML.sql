@@ -600,6 +600,7 @@ lab_test,
 urgency,
 order_reason,
 order_test_name,
+obs_id,
 result_test_name,
 result_name,
 set_member_conceptId,
@@ -633,7 +634,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 							  AND n.locale = 'en'
 							  AND n.concept_name_type = 'FULLY_SPECIFIED'
 						  WHERE cs.concept_set = 1000628),
-	 CodedLabOrderResults AS (SELECT o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
+	 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
 							  from obs o
 									   inner join concept c on o.concept_id = c.concept_id and c.datatype_id = 2
 									   left join concept_name n
@@ -642,8 +643,8 @@ WITH FilteredOrders AS (SELECT patient_id,
 									   left join concept_name n1
 												 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 													n1.concept_name_type = 'FULLY_SPECIFIED'
-							  where o.order_id is not null),
-	 NumericLabOrderResults AS (SELECT o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
+							  where o.order_id is not null ),
+	 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
 								from obs o
 										 inner join concept c on o.concept_id = c.concept_id and c.datatype_id = 1
 										 inner join concept_name n
@@ -653,7 +654,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 												   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 													  n1.concept_name_type = 'FULLY_SPECIFIED'
 								where o.order_id is not null ),
-	 TextLabOrderResults AS (SELECT o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
+	 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
 							 from obs o
 									  inner join concept c on o.concept_id = c.concept_id and c.datatype_id = 3
 									  inner join concept_name n
@@ -662,7 +663,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 									  left join concept_name n1
 												on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 												   n1.concept_name_type = 'FULLY_SPECIFIED'
-							 where o.order_id is not null)
+							 where o.order_id is not null )
 SELECT
 	UUID(),
 	e.encounter_id,
@@ -675,6 +676,7 @@ SELECT
 	o.urgency,
 	o.order_reason,
 	lc.name as order_test_name,
+	COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
 	if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
 	COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
 	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
@@ -691,7 +693,8 @@ FROM encounter e
 		 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
 		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
 		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
-		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id;
+		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
+group by obs_id;
 
 
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
