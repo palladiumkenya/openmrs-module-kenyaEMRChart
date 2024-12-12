@@ -676,7 +676,7 @@ SELECT
 	lc.name as order_test_name,
 	if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
 	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
-	COALESCE(cr.name,nr.value_numeric,tr.value_text) as test_result,
+	COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
 	o.date_activated as date_test_requested,
 	e.encounter_datetime as date_test_result_received,
 -- test requested by
@@ -686,7 +686,7 @@ SELECT
 	e.voided
 FROM encounter e
 		 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
-		 INNER JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
+		 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
 		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
 		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
 		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id;
