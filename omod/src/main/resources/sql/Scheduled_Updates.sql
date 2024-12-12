@@ -2538,6 +2538,11 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
       lab_test,
       urgency,
       order_reason,
+	  order_test_name,
+      obs_id,
+	  result_test_name,
+	  result_name,
+	  set_member_conceptId,
       test_result,
       date_test_requested,
       date_test_result_received,
@@ -2545,53 +2550,95 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
       date_last_modified,
       created_by
     )
-      select
-		  e.uuid,
-		  e.encounter_id,
-		  e.patient_id,
-		  e.location_id,
-		  coalesce(od.date_activated,o.obs_datetime) as visit_date,
-		  e.visit_id,
-		  od.order_id,
-		  od.concept_id,
-		  od.urgency,
-		  od.order_reason,
-		  (CASE when o.concept_id in(5497,730,654,790,856,21,653,5475,887,1015,849,678,676,855,1000443,161469,166395,160912,159644,163594,1006,1007,1009,1008,161153,161481,161482,
-									 166018,785,655,717,848,163699,160913,1011,159655,159654,161500,163595,163596,1336,1338,1017,1018,851,729,679,1016,163426,160914) then o.value_numeric
-				when o.concept_id in(1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,
-									 163722,167452,167459,1643,32,1366,1042,299,300,305,306,1618,1875,161470,885,165562,161478,160225,160232,1356,161233,167810,159362,163654,
-									 168114,163348,162202,1000612,1000614,1000615,1000616,1000617,1000613) then o.value_coded
-				when o.concept_id in (302,1367,56,1000071,163613,163603,163603,1000451,165552,165402,161156,161155,159648,159649,161467) then o.value_text
-			  END) AS test_result,
-		  od.date_activated as date_test_requested,
-		  e.encounter_datetime as date_test_result_received,
+	WITH FilteredOrders AS (SELECT patient_id,
+								   encounter_id,
+								   order_id,
+								   concept_id,
+								   date_activated,
+								   urgency,
+								   order_reason
+							FROM openmrs.orders
+							WHERE order_type_id = 3
+							  AND voided = 0
+							GROUP BY patient_id, encounter_id ,concept_id),
+		 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
+									 cs.concept_id     AS member_concept_id,
+									 c.datatype_id     AS member_datatype,
+									 c.class_id        AS member_class,
+									 n.name
+							  FROM concept_set cs
+									   INNER JOIN concept c ON cs.concept_id = c.concept_id
+									   INNER JOIN concept_name n ON c.concept_id = n.concept_id
+								  AND n.locale = 'en'
+								  AND n.concept_name_type = 'FULLY_SPECIFIED'
+							  WHERE cs.concept_set = 1000628),
+		 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
+								  from obs o
+										   inner join concept c on o.concept_id = c.concept_id
+										   inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
+										   left join concept_name n
+													 on o.value_coded = n.concept_id AND n.locale = 'en' AND
+														n.concept_name_type = 'FULLY_SPECIFIED'
+										   left join concept_name n1
+													 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+														n1.concept_name_type = 'FULLY_SPECIFIED'
+								  where o.order_id is not null ),
+		 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
+									from obs o
+											 inner join concept c on o.concept_id = c.concept_id
+											 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
+											 inner join concept_name n
+														on o.concept_id = n.concept_id AND n.locale = 'en' AND
+														   n.concept_name_type = 'FULLY_SPECIFIED'
+											 left join concept_name n1
+													   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+														  n1.concept_name_type = 'FULLY_SPECIFIED'
+									where o.order_id is not null ),
+		 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
+								 from obs o
+										  inner join concept c on o.concept_id = c.concept_id
+										  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
+										  inner join concept_name n
+													 on o.concept_id = n.concept_id AND n.locale = 'en' AND
+														n.concept_name_type = 'FULLY_SPECIFIED'
+										  left join concept_name n1
+													on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+													   n1.concept_name_type = 'FULLY_SPECIFIED'
+								 where o.order_id is not null )
+	SELECT
+		UUID(),
+		e.encounter_id,
+		e.patient_id,
+		e.location_id,
+		coalesce(o.date_activated,obs_datetime) as visit_date,
+		e.visit_id,
+		o.order_id,
+		o.concept_id,
+		o.urgency,
+		o.order_reason,
+		lc.name as order_test_name,
+		COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
+		if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
+		COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
+		if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
+		COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
+		o.date_activated as date_test_requested,
+		e.encounter_datetime as date_test_result_received,
 -- test requested by
-		  e.date_created,
-		  if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
-		  e.creator
-      from encounter e
-			   inner join person p on p.person_id=e.patient_id and p.voided=0
-			   left join
-		   (
-			   select encounter_type_id, uuid, name from encounter_type where uuid in('17a381d1-7e29-406a-b782-aa903b963c28',
-																					  'a0034eee-1940-4e35-847f-97537a35d05e',
-																					  'e1406e88-e9a9-11e8-9f32-f2801f1b9fd1',
-																					  'de78a6be-bfc5-4634-adc3-5f1a280455cc',
-																					  'bcc6da85-72f2-4291-b206-789b8186a021',
-																					  '7df67b83-1b84-4fe2-b1b7-794b4e9bfcc3')
-		   ) et on et.encounter_type_id=e.encounter_type
-			   left join obs o on e.encounter_id=o.encounter_id and o.voided=0 and o.concept_id in (5497,730,654,790,856,1030,1305,1325,159430,161472,1029,1031,1619,1032,162202,307,45,167718,163722,167452,167459,1643,32,1366,1000612,1019,21,
-																									657,1042,653,5473,5475,299,887,302,1015,300,1367,305,306,1618,1875,849,678,676,1336,855,161470,1000443,
-																									885,56,165562,161469,161478,160225,1000071,166395,160912,159644,163594,1006,1007,1009,1008,161153,161481,161482,166018,159829,785,655,
-																									717,848,163699,1000069,160232,1356,161233,163613,163602,160913,167810,161532,1011,159655,159654,161500,168167,159362,163654,168114,163603,163348,
-																									1000451,165552,165402,161156,161155,159648,159649,161467,163595,163596,1338,1017,1018,851,729,679,1016,163426,160914,1000612,1000614,1000615,1000616,1000617,1000613)
-			   left join orders od on od.order_id = o.order_id and od.order_type_id = 3 and od.voided=0
+		e.date_created,
+		e.date_changed as date_last_modified,
+		e.creator
+	FROM encounter e
+			 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+			 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
+			 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
+			 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
+			 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id	
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
-	group by o.encounter_id
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), test_result=VALUES(test_result)
-
+	group by obs_id
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), set_member_conceptId=VALUES(set_member_conceptId), test_result=VALUES(test_result)
     ;
     END $$
 -- DELIMITER ;
