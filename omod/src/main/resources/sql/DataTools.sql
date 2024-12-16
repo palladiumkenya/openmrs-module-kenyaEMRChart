@@ -1254,6 +1254,56 @@ SELECT "Successfully created enhanced adherence table";
   SELECT "Successfully created generalized anxiety disorder table";
 
 
+    -- create table datatools_orthopaedic_clinic_visit
+    create table kenyaemr_datatools.orthopaedic_clinic_visit as
+    select
+      uuid,
+      patient_id,
+      visit_id,
+      visit_date,
+      location_id,
+      encounter_id,
+      encounter_provider,
+      date_created,
+      (case o.value_coded when 164180 then "New visit" when 160530 then "Re-visit" when 160551 then "Referral" else "" end) as visit_type,
+      (case o.value_coded when 160542 then "Community unit(CU)" when 164407 then "Other health facility" when 163266 then "This health facility" else "" end) as referral_form,
+      facility_name,
+      (case o.value_coded when 160542 then "CBR(Community-based rehabilitation)" when 159937 then "MCH" when 159927 then "Outreach/Mobile Clinic" when 164103 then "Diabetic clinic" when 167396 then "NBU(newborn unit)" when 5622 then "Others" else "" end) as service_area,
+      other_unit_name,
+      orthopaedic_number,
+      select_symptoms,
+      location,
+      otc_duration,
+      (case o.value_coded when 1839 then "Sudden" when 1499 then "Gradual" else "" end) as onset_otc,
+      hpi,
+      past_prescribed_drugs,
+      (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as trauma_history,
+      (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end) as surgical_history,
+      type_of_surgery,
+      surgical_date,
+      surgery_indication,
+      specify_condition,
+      specify_condition_other,
+      musculoskeletal_system_conditions,
+      musculoskeletal_system_conditions_other,
+      musculoskeletal_findings,
+      joint_assessed,
+      joint_movement,
+      angle_degrees,
+      clinician_findings_notes,
+      intervention_given,
+      intervention_given_other,
+      management_plan,
+      procedure_done,
+      (case o.value_coded when 163266 then "This Facility" when 164407 then "Other Facility" when 1000478 then "Community Unit" else "" end) as patient_referral,
+      name_of_the_facility,
+      voided
+    from kenyaemr_etl.etl_orthopaedic_clinic_visit;
+
+    ALTER TABLE kenyaemr_datatools.orthopaedic_clinic_visit ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics(patient_id);
+    ALTER TABLE kenyaemr_datatools.orthopaedic_clinic_visit ADD INDEX(visit_date);
+    SELECT "Successfully created orthopaedic clinic visit table";
+
   -- create table datatools_patient_contact
   create table kenyaemr_datatools.patient_contact as
     select
