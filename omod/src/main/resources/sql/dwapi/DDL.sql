@@ -97,6 +97,7 @@ DROP TABLE IF EXISTS dwapi_etl.etl_gbv_physical_emotional_abuse;
 DROP TABLE IF EXISTS dwapi_etl.etl_family_planning;
 DROP TABLE IF EXISTS dwapi_etl.etl_physiotherapy;
 DROP TABLE IF EXISTS dwapi_etl.etl_psychiatry;
+DROP TABLE IF EXISTS dwapi_etl.etl_special_clinics;
 DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics
@@ -4009,6 +4010,31 @@ CREATE TABLE dwapi_etl.etl_psychiatry
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_psychiatry table";
+
+-- Create etl_special_clinics table
+CREATE TABLE dwapi_etl.etl_special_clinics
+(
+    patient_id         INT(11)  NOT NULL,
+    visit_id           INT(11) DEFAULT NULL,
+    encounter_id       INT(11)  NOT NULL PRIMARY KEY,
+    uuid               CHAR(38) NOT NULL,
+    location_id        INT(11)  NOT NULL,
+    provider           INT(11)  NOT NULL,
+    visit_date         DATE,
+    visit_type         INT(11),
+    special_clinic     VARCHAR(255),
+    special_clinic_form_uuid CHAR(38),
+    date_created       DATE,
+    date_last_modified DATE,
+    voided             INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_type),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_special_clinics table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
