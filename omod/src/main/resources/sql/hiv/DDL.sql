@@ -104,7 +104,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_preventive_services;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_overdose_reporting;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_art_fast_track;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_clinical_encounter;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_daily_revenue_summary;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_pep_management_survivor;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_sgbv_pep_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_sgbv_post_rape_care;
@@ -3659,45 +3658,6 @@ CREATE TABLE kenyaemr_etl.etl_clinical_encounter (
  INDEX (visit_date)
 );
 SELECT "Successfully created etl_clinical_encounter table";
-
--- Create etl_daily_revenue_summary table
-CREATE TABLE kenyaemr_etl.etl_daily_revenue_summary(
-	daily_summary_id                                         INT AUTO_INCREMENT    	PRIMARY KEY,
-	transaction_date                                         DATE NULL,
-	total_sales                                              INT      NULL,
-	ipd_cash                                                 INT      NULL,
-	maternity                                                INT      NULL,
-	xray                                                     INT      NULL,
-	lab                                                      INT      NULL,
-	theatre                                                  INT      NULL,
-	mortuary                                                 INT      NULL,
-	op_treatment                                             INT      NULL,
-	pharmacy                                                 INT      NULL,
-	medical_exam                                             INT      NULL,
-	medical_reports_including_P3                             INT      NULL,
-	dental                                                   INT      NULL,
-	physio_therapy                                           INT      NULL,
-	occupational_therapy                                     INT      NULL,
-	medical_records_cards_and_files                          INT      NULL,
-	booking_fees                                             INT      NULL,
-	rental_services                                          INT      NULL,
-	ambulance                                                INT      NULL,
-	public_health_services                                   INT      NULL,
-	ent_and_other_clinics                                    INT      NULL,
-	other                                                    INT      NULL,
-	cash_receipts_cash_from_daily_services                   INT      NULL,
-	cash_receipt_nhif_receipt                                INT      NULL,
-	cash_receipt_other_debtors_receipt                       INT      NULL,
-	revenue_not_collected_patient_not_yet_paid_nhif_patients INT      NULL,
-	revenue_not_collected_patient_not_yet_paid_other_debtors INT      NULL,
-	revenue_not_collected_patient_not_yet_paid_waivers       INT      NULL,
-	revenue_not_collected_write_offs_exemptions              INT      NULL,
-	revenue_not_collected_write_offs_absconders              INT      NULL,
-	INDEX (daily_summary_id),
-	INDEX (transaction_date)
-);
-
-SELECT "Successfully created etl_daily_revenue_summary table";
 
 -- Create etl_pep_management_survivor table
 CREATE TABLE kenyaemr_etl.etl_pep_management_survivor

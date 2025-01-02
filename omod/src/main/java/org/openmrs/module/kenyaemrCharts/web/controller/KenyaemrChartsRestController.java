@@ -586,4 +586,123 @@ public class KenyaemrChartsRestController extends BaseRestController {
         return sampleTypeObject;
     }
 
+    @RequestMapping(method = RequestMethod.GET, value = "/recreateFacilitywideTables")
+    @ResponseBody
+    public SimpleObject recreateFacilitywideTables(HttpServletRequest request) {
+        final List<SimpleObject> ret = new ArrayList<SimpleObject>();
+        final List<SimpleObject> status = new ArrayList<SimpleObject>();
+        final SimpleObject sampleTypeObject = new SimpleObject();
+
+        DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
+        sf.getCurrentSession().doWork(new Work() {
+
+            @Override
+            public void execute(Connection connection) throws SQLException {
+                try {
+                    Statement stmt = connection.createStatement();
+                    ResultSet rs = stmt.executeQuery(
+                            "SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools') OR (In_use > 0 AND `Database` LIKE 'dwapi_etl');");
+                    ResultSetMetaData metaData = rs.getMetaData();
+
+                    while (rs.next()) {
+                        Object[] row = new Object[metaData.getColumnCount()];
+                        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                            row[i - 1] = rs.getObject(i);
+                            rs.getInt("In_use");
+                        }
+                        if (rs.getInt("In_use") > 0) {
+                            status.add(SimpleObject.create(
+                                    "process", "locked"));
+                            sampleTypeObject.put("status", status);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("An error has occured" + e);
+                    throw new IllegalArgumentException("Unable to execute", e);
+                }
+            }
+        });
+        if (sampleTypeObject.isEmpty()) {
+
+            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
+            Transaction tx = null;
+            try {
+                Context.openSession();
+                tx = sf.getHibernateSessionFactory().getCurrentSession().beginTransaction();
+                final Transaction finalTx = tx;
+                sf.getCurrentSession().doWork(new Work() {
+
+                    @Override
+                    public void execute(Connection connection) throws SQLException {
+                        PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
+
+                        ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
+                        procedureBuilder.buildProcedures();
+
+                        StringBuilder sb = null;
+                        String spFacilitywideDDLName = "create_facility_wide_etl_tables()";
+                        String spFacilitywideDMLName = "sp_facility_wide_refresh()";
+                        // we want to end up with a string like "{call create_etl_tables}"
+                        // we then iterate the various procedures and execute them
+
+                        sb = new StringBuilder();
+                        sb.append("{call ");
+                        sb.append(spFacilitywideDDLName).append("}");
+                        System.out.println("Core module: currently executing: " + spFacilitywideDDLName);
+                        CallableStatement sp = connection.prepareCall(sb.toString());
+                        sp.execute();
+
+                        sb = new StringBuilder();
+                        sb.append("{call ");
+                        sb.append(spFacilitywideDMLName).append("}");
+                        System.out.println("Core module: currently executing: " + spFacilitywideDMLName);
+                        CallableStatement spDml = connection.prepareCall(sb.toString());
+                        spDml.execute();
+
+                        System.out.println("Successfully completed recreating facility-wide tables ... ");
+
+                        // get the dataset for the UI
+                        try {
+
+                            ResultSet resultSet = statement.executeQuery();
+                            if (resultSet != null) {
+                                ResultSetMetaData metaData = resultSet.getMetaData();
+
+                                while (resultSet.next()) {
+                                    Object[] row = new Object[metaData.getColumnCount()];
+                                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                                        row[i - 1] = resultSet.getObject(i);
+                                    }
+
+                                    ret.add(SimpleObject.create(
+                                            "script_name", row[0],
+                                            "start_time", row[1] != null ? row[1].toString() : "",
+                                            "stop_time", row[2] != null ? row[2].toString() : "",
+                                            "status", row[3] != null ? "Pending" : "Success"));
+                                }
+                            }
+                            finalTx.commit();
+                        } finally {
+                            try {
+                                if (statement != null) {
+                                    statement.close();
+                                }
+                            } catch (Exception e) {
+                            }
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Unable to execute query", e);
+            } finally {
+                Context.closeSession();
+            }
+            sampleTypeObject.put("data", ret);
+        } else {
+            return sampleTypeObject;
+        }
+
+        return sampleTypeObject;
+    }
+
 }
