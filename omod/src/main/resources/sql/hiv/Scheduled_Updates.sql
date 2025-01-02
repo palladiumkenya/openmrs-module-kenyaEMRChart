@@ -10236,6 +10236,7 @@ BEGIN
                when 'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0' then 'Maxillofacial'
                when '998be6de-bd13-4136-ba0d-3f772139895f' then 'Cardiology'
                when '32e43fc9-6de3-48e3-aafe-3b92f167753d' then 'Fertility'
+               when 'a3c01460-c346-4f3d-a627-5c7de9494ba0' then 'Dental'
                when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology' end as special_clinic,
            f.uuid                                                                      as special_clinic_form_uuid
     from encounter e
@@ -10260,6 +10261,7 @@ BEGIN
                                                                        '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24', -- Gastroenterology
                                                                        '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
                                                                        '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
+                                                                       'a3c01460-c346-4f3d-a627-5c7de9494ba0', -- Dental
                                                                        'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0'  -- Maxillofacial
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id = 164181
