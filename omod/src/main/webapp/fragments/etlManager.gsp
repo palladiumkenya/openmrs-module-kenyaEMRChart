@@ -11,6 +11,7 @@
             jq("#recreate").prop("disabled", true);
             jq("#recreate-datatools").prop("disabled", true);
             jq("#recreate-dwapi").prop("disabled", true);
+            jq("#recreate-facility-wide").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("refreshTables") }')
                 .success(function(data) {
                     if(data.status) {
@@ -26,6 +27,7 @@
                         jq("#recreate").prop("disabled", false);
                         jq("#recreate-datatools").prop("disabled", false);
                         jq("#recreate-dwapi").prop("disabled", false);
+                        jq("#recreate-facility-wide").prop("disabled", false);
                         if(data.data) {
                             var processedData = data.data;
                             for (index in processedData) {
@@ -53,7 +55,7 @@
                     jq("#recreate").prop("disabled", false);
                     jq("#recreate-datatools").prop("disabled", false);
                     jq("#recreate-dwapi").prop("disabled", false);
-
+                    jq("#recreate-facility-wide").prop("disabled", false);
                     alert('AJAX error ' + err);
                 })
         });
@@ -67,6 +69,7 @@
             jq("#refresh").prop("disabled", true);
             jq("#recreate-datatools").prop("disabled", true);
             jq("#recreate-dwapi").prop("disabled", true);
+            jq("#recreate-facility-wide").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("recreateTables") }')
                 .success(function(data) {
                     if(data.status) {
@@ -83,6 +86,7 @@
                         jq("#refresh").prop("disabled", false);
                         jq("#recreate-datatools").prop("disabled", false);
                         jq("#recreate-dwapi").prop("disabled", false);
+                        jq("#recreate-facility-wide").prop("disabled", false);
                         if(data.data) {
                             var processedData = data.data;
                             for (index in processedData) {
@@ -109,6 +113,7 @@
                     jq("#refresh").prop("disabled", false);
                     jq("#recreate-datatools").prop("disabled", false);
                     jq("#recreate-dwapi").prop("disabled", false);
+                    jq("#recreate-facility-wide").prop("disabled", false);
                     alert('AJAX error ' + err);
                 })
         });
@@ -121,6 +126,7 @@
             jq("#refresh").prop("disabled", true);
             jq("#recreate-datatools").prop("disabled", true);
             jq("#recreate-dwapi").prop("disabled", true);
+            jq("#recreate-facility-wide").prop("disabled", true);
             jq.getJSON('${ ui.actionLink("recreateDatatoolsTables") }')
                 .success(function(data) {
                     if(data.status) {
@@ -137,6 +143,7 @@
                         jq("#refresh").prop("disabled", false);
                         jq("#recreate-datatools").prop("disabled", false);
                         jq("#recreate-dwapi").prop("disabled", false);
+                        jq("#recreate-facility-wide").prop("disabled", false);
                         if(data.data) {
                             var processedData = data.data;
                             for (index in processedData) {
@@ -163,6 +170,7 @@
                     jq("#refresh").prop("disabled", false);
                     jq("#recreate-datatools").prop("disabled", false);
                     jq("#recreate-dwapi").prop("disabled", false);
+                    jq("#recreate-facility-wide").prop("disabled", true);
                     alert('AJAX error ' + err);
                 })
         });
@@ -177,6 +185,7 @@
             jq("#recreate").prop("disabled", true);
             jq("#recreate-datatools").prop("disabled", true);
             jq("#recreate-dwapi").prop("disabled", true);
+            jq("#recreate-facility-wide").prop("disabled", true);
             jq(this).prop("disabled", true);
             jq.getJSON('${ ui.actionLink("recreateDwapiTables") }')
                 .success(function(data) {
@@ -194,6 +203,7 @@
                         jq("#refresh").prop("disabled", false);
                         jq('#recreate-datatools').prop("disabled", false);
                         jq('#recreate-dwapi').prop("disabled", false);
+                        jq("#recreate-facility-wide").prop("disabled", false);
                         if(data.data) {
                             var processedData = data.data;
                             for (index in processedData) {
@@ -220,6 +230,66 @@
                     jq("#refresh").prop("disabled", false);
                     jq('#recreate-datatools').prop("disabled", false);
                     jq('#recreate-dwapi').prop("disabled", false);
+                    jq('#recreate-facility-wide').prop("disabled", false);
+                    alert('AJAX error ' + err);
+                })
+        });
+
+        jq('#recreate-facility-wide').click(function() {
+            jq("#recreate").attr("disabled", true);
+            jq("#refresh").attr("disabled", true);
+            jq("#msgSpan").text("Recreating facility-wide Tables");
+            jq("#msg").text("");
+            jq("#showStatus").show();
+            jq("#refresh").prop("disabled", true);
+            jq("#recreate").prop("disabled", true);
+            jq("#recreate-datatools").prop("disabled", true);
+            jq("#recreate-dwapi").prop("disabled", true);
+            jq("#recreate-facility-wide").prop("disabled", true);
+            jq(this).prop("disabled", true);
+            jq.getJSON('${ ui.actionLink("recreateFacilitywideTables") }')
+                .success(function(data) {
+                    if(data.status) {
+                        if(data.status[0].process ==="locked") {
+                            jq( "#dialog-1" ).dialog( "open" );
+                            jq("#showStatus").hide();
+                        }
+
+                    }else {
+                        jq("#showStatus").hide();
+                        jq("#msg").text("Facility-wide tables recreated successfully");
+                        jq("#recreate").prop("disabled", false);
+                        jq("#refresh").prop("disabled", false);
+                        jq('#recreate-datatools').prop("disabled", false);
+                        jq('#recreate-dwapi').prop("disabled", false);
+                        jq("#recreate-facility-wide").prop("disabled", false);
+                        if(data.data) {
+                            var processedData = data.data;
+                            for (index in processedData) {
+                                jq('#log_table > tbody > tr').remove();
+                                var tbody = jq('#log_table > tbody');
+                                for (index in processedData) {
+                                    var item = processedData[index];
+                                    var row = '<tr>';
+                                    row += '<td width="35%">' + item.script_name + '</td>';
+                                    row += '<td width="20%">' + item.start_time + '</td>';
+                                    row += '<td width="20%">' + item.stop_time + '</td>';
+                                    row += '<td width="20%">' + item.status + '</td>';
+                                    row += '</tr>';
+                                    tbody.append(row);
+                                }
+                            }
+                        }
+                    }
+                })
+                .error(function(xhr, status, err) {
+                    jq("#showStatus").hide();
+                    jq("#msg").text("There was an error recreating DWAPI tables");
+                    jq("#recreate").prop("disabled", false);
+                    jq("#refresh").prop("disabled", false);
+                    jq('#recreate-datatools').prop("disabled", false);
+                    jq('#recreate-dwapi').prop("disabled", false);
+                    jq('#recreate-facility-wide').prop("disabled", false);
                     alert('AJAX error ' + err);
                 })
         });
@@ -262,7 +332,6 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 <hr>
 <div>
 
-
     <button id="refresh" style="height:43px;width:185px">
         <img src="${ ui.resourceLink("kenyaui", "images/glyphs/switch.png") }" width="32" height="32" /> Refresh Tables
     </button>
@@ -271,11 +340,14 @@ tr:nth-child(even) {background-color: #f2f2f2;}
         <img src="${ ui.resourceLink("kenyaui", "images/buttons/undo.png") }" width="32" height="32" /> Recreate Tables
     </button>
 </button>
+<button id="recreate-facility-wide"  style="height:43px;width:280px">
+    <img src="${ ui.resourceLink("kenyaui", "images/buttons/cloud-sync.png") }" width="32" height="32" /> Recreate facility-wide Tables
+</button>
+</div>
 
 <button id="recreate-datatools"  style="height:43px;width:185px">
     <img src="${ ui.resourceLink("kenyaui", "images/buttons/datatool.png") }" width="32" height="32" /> Recreate Datatools
 </button>
-
 
     <button id="recreate-dwapi"  style="height:43px;width:280px">
         <img src="${ ui.resourceLink("kenyaui", "images/buttons/cloud-sync.png") }" width="32" height="32" /> Refresh DWAPI Tables for Upload
