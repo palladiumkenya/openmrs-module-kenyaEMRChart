@@ -10206,6 +10206,31 @@ BEGIN
               provider,
               visit_date,
               visit_type,
+              referred_from,
+              acuity_finding,
+              referred_to,
+              ot_intervention,
+              assistive_technology,
+              enrolled_in_school,
+              patient_with_disability,
+              patient_has_edema,
+              nutritional_status,
+              patient_pregnant,
+              sero_status,
+              medication_condition,
+              nutritional_intervention,
+              postnatal,
+              patient_on_arv,
+              anaemia_level,
+              metabolic_disorders,
+              critical_nutrition_practices,
+              therapeutic_food,
+              supplemental_food,
+              micronutrients,
+              referral_status,
+              criteria_for_admission,
+              type_of_admission,
+              cadre,
               special_clinic,
               special_clinic_form_uuid)
     select e.patient_id,
@@ -10216,6 +10241,31 @@ BEGIN
            e.creator,
            date(e.encounter_datetime)                                                  as visit_date,
            max(if(o.concept_id = 164181, o.value_coded, null))                         as visit_type,
+           max(if(o.concept_id = 161643, o.value_coded, null))                         as referred_from,
+           max(if(o.concept_id = 164448, o.value_coded, null))                         as acuity_finding,
+           max(if(o.concept_id = 163145, o.value_coded, null))                         as referred_to,
+           max(if(o.concept_id = 165302, o.value_coded, null))                        as ot_intervention,
+           max(if(o.concept_id = 164204, o.value_coded, null))                        as assistive_technology,
+           max(if(o.concept_id = 160336, o.value_coded, null))                         as enrolled_in_school,
+           max(if(o.concept_id = 162558, o.value_coded, null))                         as patient_with_disability,
+           max(if(o.concept_id = 163894, o.value_coded, null))                         as patient_has_edema,
+           max(if(o.concept_id = 160205,o.value_coded,null))                           as nutritional_status,
+           max(if(o.concept_id  = 5272,o.value_coded,null))                            as patient_pregnant,
+           max(if(o.concept_id  = 1169,o.value_coded,null))                            as sero_status,
+           max(if(o.concept_id  = 162747,o.value_coded,null))                          as medication_condition,
+           max(if(o.concept_id  = 162696,o.value_coded,null))                           as nutritional_intervention,
+           max(if(o.concept_id = 168734,o.value_coded,null))                          as postnatal,
+           max(if(o.concept_id  =1149,o.value_coded,null))                            as patient_on_arv,
+           max(if(o.concept_id  = 156625,o.value_coded,null))                          as anaemia_level,
+           max(if(o.concept_id  = 163304,o.value_coded,null))                          as metabolic_disorders,
+           max(if(o.concept_id  = 161005,o.value_coded,null))                          as critical_nutrition_practices,
+           max(if(o.concept_id  = 161648,o.value_coded,null))                          as therapeutic_food,
+           max(if(o.concept_id  = 159854,o.value_coded,null))                          as supplemental_food,
+           max(if(o.concept_id  = 5484,o.value_coded,null))                          as micronutrients,
+        max(if(o.concept_id  =   1788,o.value_coded,null))                          as referral_status,
+        max(if(o.concept_id  =  167381,o.value_coded,null))                         as criteria_for_admission,
+        max(if(o.concept_id  =  162477,o.value_coded,null))                         as type_of_admission,
+        max(if(o.concept_id  =  5619,o.value_coded,null))                           as cadre,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
@@ -10262,7 +10312,8 @@ BEGIN
                                                                        '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
                                                                        'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0'  -- Maxillofacial
         )
-             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id = 164181
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10272,7 +10323,32 @@ BEGIN
     group by e.patient_id, date(e.encounter_datetime)
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),
                             visit_date=VALUES(visit_date),
-                            visit_type=VALUES(visit_type);
+                            visit_type=VALUES(visit_type),
+                            referred_from=VALUES(referred_from),
+                            acuity_finding=VALUES(acuity_finding),
+                            referred_to=VALUES(referred_to),
+                            ot_intervention=VALUES(ot_intervention),
+                            assistive_technology=VALUES(assistive_technology),
+                            enrolled_in_school=VALUES(enrolled_in_school),
+                            patient_with_disability=VALUES(patient_with_disability),
+                            patient_has_edema=VALUES(patient_has_edema),
+                            nutritional_status=VALUES(nutritional_status),
+                            patient_pregnant=VALUES(patient_pregnant),
+                            sero_status=VALUES(sero_status),
+                            medication_condition=VALUES(medication_condition),
+                            nutritional_intervention=VALUES(nutritional_intervention),
+                            postnatal=VALUES(postnatal),
+                            patient_on_arv=VALUES(patient_on_arv),
+                            anaemia_level=VALUES(anaemia_level),
+                            metabolic_disorders=VALUES(metabolic_disorders),
+                            critical_nutrition_practices=VALUES(critical_nutrition_practices),
+                            therapeutic_food=VALUES(therapeutic_food),
+                            supplemental_food=VALUES(supplemental_food),
+                            micronutrients=VALUES(micronutrients),
+                            referral_status=VALUES(referral_status),
+                            criteria_for_admission=VALUES(criteria_for_admission),
+                            type_of_admission=VALUES(type_of_admission),
+                            cadre=VALUES(cadre);
     SELECT "Completed updating special clinics";
 END $$
 
