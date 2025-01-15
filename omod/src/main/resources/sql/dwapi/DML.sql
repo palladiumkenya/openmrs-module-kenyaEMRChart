@@ -8645,19 +8645,44 @@ CREATE PROCEDURE sp_populate_dwapi_special_clinics()
 BEGIN
     SELECT "Processing special clinics";
     INSERT INTO dwapi_etl.etl_special_clinics (
-               patient_id,
-               visit_id,
-               encounter_id,
-               uuid,
-               location_id,
-               provider,
-               visit_date,
-               visit_type,
-               special_clinic,
-               special_clinic_form_uuid,
-               date_created,
-               date_last_modified,
-               voided)
+              patient_id,
+              visit_id,
+              encounter_id,
+              uuid,
+              location_id,
+              provider,
+              visit_date,
+              visit_type,
+              referred_from,
+              acuity_finding,
+              referred_to,
+              ot_intervention,
+              assistive_technology,
+              enrolled_in_school,
+              patient_with_disability,
+              patient_has_edema,
+              nutritional_status,
+              patient_pregnant,
+              sero_status,
+              medication_condition,
+              nutritional_intervention,
+              postnatal,
+              patient_on_arv,
+              anaemia_level,
+              metabolic_disorders,
+              critical_nutrition_practices,
+              therapeutic_food,
+              supplemental_food,
+              micronutrients,
+              referral_status,
+              criteria_for_admission,
+              type_of_admission,
+              cadre,
+              special_clinic,
+              special_clinic_form_uuid,
+              date_created,
+              date_last_modified,
+              voided)
     select e.patient_id,
            e.visit_id,
            e.encounter_id,
@@ -8666,6 +8691,31 @@ BEGIN
            e.creator,
            date(e.encounter_datetime)                                                  as visit_date,
            max(if(o.concept_id = 164181, o.value_coded, null))                         as visit_type,
+           max(if(o.concept_id = 161643, o.value_coded, null))                         as referred_from,
+           max(if(o.concept_id = 164448, o.value_coded, null))                         as acuity_finding,
+           max(if(o.concept_id = 163145, o.value_coded, null))                         as referred_to,
+           max(if(o.concept_id = 165302, o.value_coded, null))                        as ot_intervention,
+           max(if(o.concept_id = 164204, o.value_coded, null))                        as assistive_technology,
+           max(if(o.concept_id = 160336, o.value_coded, null))                         as enrolled_in_school,
+           max(if(o.concept_id = 162558, o.value_coded, null))                         as patient_with_disability,
+           max(if(o.concept_id = 163894,o.value_coded,null))                           as patient_has_edema,
+           max(if(o.concept_id = 160205,o.value_coded,null))                           as nutritional_status,
+           max(if(o.concept_id  = 5272,o.value_coded,null))                            as patient_pregnant,
+           max(if(o.concept_id  = 1169,o.value_coded,null))                            as sero_status,
+           max(if(o.concept_id  = 162747,o.value_coded,null))                          as medication_condition,
+           max(if(o.concept_id  = 162696,o.value_coded,null))                          as nutritional_intervention,
+           max(if(o.concept_id = 168734,o.value_coded,null))                           as postnatal,
+           max(if(o.concept_id  = 1149,o.value_coded,null))                            as patient_on_arv,
+           max(if(o.concept_id  = 156625,o.value_coded,null))                          as anaemia_level,
+           max(if(o.concept_id  = 163304,o.value_coded,null))                          as metabolic_disorders,
+           max(if(o.concept_id  = 161005,o.value_coded,null))                          as critical_nutrition_practices,
+           max(if(o.concept_id  = 161648,o.value_coded,null))                          as therapeutic_food,
+           max(if(o.concept_id  = 159854,o.value_coded,null))                          as supplemental_food,
+           max(if(o.concept_id  = 5484,o.value_coded,null))                          as micronutrients,
+        max(if(o.concept_id  =   1788,o.value_coded,null))                          as referral_status,
+        max(if(o.concept_id  =  167381,o.value_coded,null))                         as criteria_for_admission,
+        max(if(o.concept_id  =  162477,o.value_coded,null))                         as type_of_admission,
+        max(if(o.concept_id  =  5619,o.value_coded,null))                           as cadre,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
@@ -8707,18 +8757,18 @@ BEGIN
                                                                        'd9f74419-e179-426e-9aff-ec97f334a075', -- Audiology
                                                                        '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
                                                                        'efa2f992-44af-487e-aaa7-c92813a34612', -- Dermatology
-                                                                       '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24', -- Gastroenterology
-                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
-                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4',-- Pediatrics
-                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437',-- Medical
-                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61',-- Surgical
-                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0',-- Maxillofacial
                                                                        'f97f2bf3-c26b-4adf-aacd-e09d720a14cd', -- Neurology
+                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
+                                                                       '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24', -- Gastroenterology
+                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437', -- Medical
+                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61', -- Surgical
+                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0', -- Maxillofacial
                                                                        '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
-                                                                       'a3c01460-c346-4f3d-a627-5c7de9494ba0', -- Dental
-                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d' -- Fertility
+                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
+                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4' -- Pediatrics
         )
-             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id = 164181
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
+                            1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619)
         and o.voided = 0
     group by e.patient_id, date(e.encounter_datetime);
     SELECT "Completed processing special clinics";
