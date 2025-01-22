@@ -111,7 +111,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_physical_emotional_abuse;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_family_planning;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_physiotherapy;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_psychiatry;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics

@@ -11,6 +11,7 @@ INSERT INTO kenyaemr_etl.etl_script_status (script_name, start_time) VALUES('ini
 SET script_id = LAST_INSERT_ID();
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_daily_revenue_summary;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Create etl_daily_revenue_summary table
@@ -51,6 +52,28 @@ CREATE TABLE kenyaemr_etl.etl_daily_revenue_summary(
 );
 
 SELECT "Successfully created etl_daily_revenue_summary table";
+
+-- Create etl_special_clinics table
+CREATE TABLE kenyaemr_etl.etl_special_clinics
+(
+    patient_id               INT(11)  NOT NULL,
+    visit_id                 INT(11) DEFAULT NULL,
+    encounter_id             INT(11)  NOT NULL PRIMARY KEY,
+    uuid                     CHAR(38) NOT NULL,
+    location_id              INT(11)  NOT NULL,
+    provider                 INT(11)  NOT NULL,
+    visit_date               DATE,
+    visit_type               INT(11),
+    special_clinic           VARCHAR(255),
+    special_clinic_form_uuid CHAR(38),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_type),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_special_clinics table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
