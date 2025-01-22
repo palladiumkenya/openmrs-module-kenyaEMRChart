@@ -4029,57 +4029,6 @@ CREATE TABLE kenyaemr_etl.etl_psychiatry
 );
 SELECT "Successfully created etl_psychiatry table";
 
--- Create etl_special_clinics table
-CREATE TABLE kenyaemr_etl.etl_special_clinics
-(
-    patient_id               INT(11)  NOT NULL,
-    visit_id                 INT(11) DEFAULT NULL,
-    encounter_id             INT(11)  NOT NULL PRIMARY KEY,
-    uuid                     CHAR(38) NOT NULL,
-    location_id              INT(11)  NOT NULL,
-    provider                 INT(11)  NOT NULL,
-    visit_date               DATE,
-    visit_type               INT(11),
-    referred_from            INT(11),
-    acuity_finding           INT(11),
-    referred_to              INT(11),
-    ot_intervention          INT(11),
-    assistive_technology     INT(11),
-    enrolled_in_school       INT(11),
-    patient_with_disability  INT(11),
-    patient_has_edema        INT(11),
-    nutritional_status        INT(11),
-    patient_pregnant        INT(11),
-    sero_status        INT(11),
-    medication_condition        INT(11),
-    nutritional_intervention     INT(11),
-    postnatal               INT(11),
-    patient_on_arv               INT(11),
-    anaemia_level               INT(11),
-    metabolic_disorders         VARCHAR(255),
-    critical_nutrition_practices   VARCHAR(255),
-    therapeutic_food        VARCHAR(255),
-    supplemental_food       VARCHAR(255),
-    micronutrients        VARCHAR(255),
-    referral_status        INT(11),
-    criteria_for_admission    INT(11),
-    type_of_admission    INT(11),
-    cadre    INT(11),
-    neuron_developmental_findings   VARCHAR(255),
-    neurodiversity_conditions INT(11),
-    learning_findings        VARCHAR(255),
-    disability_classification  VARCHAR(255),
-    special_clinic           VARCHAR(255),
-    special_clinic_form_uuid CHAR(38),
-    CONSTRAINT FOREIGN KEY (patient_id)
-        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
-    CONSTRAINT unique_uuid UNIQUE (uuid),
-    INDEX (patient_id),
-    INDEX (visit_type),
-    INDEX (visit_date)
-);
-SELECT "Successfully created etl_special_clinics table";
-
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
