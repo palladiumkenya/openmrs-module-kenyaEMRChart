@@ -8802,6 +8802,7 @@ BEGIN
                     max(if(o.concept_id = 1069 and o.value_coded = 155205,  'Nonverbal learning disabilities',NULL)),
                     max(if(o.concept_id = 1069 and o.value_coded = 5622,  'Others(specify)',NULL))) as disability_classification,
            case f.uuid
+               when '22c68f86-bbf0-49ba-b2d1-23fa7ccf0259' then 'HIV'
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
                when '235900ff-4d4a-4575-9759-96f325f5e291' then 'Ophthamology'
@@ -8823,6 +8824,8 @@ BEGIN
                when '998be6de-bd13-4136-ba0d-3f772139895f' then 'Cardiology'
                when '32e43fc9-6de3-48e3-aafe-3b92f167753d' then 'Fertility'
                when 'a3c01460-c346-4f3d-a627-5c7de9494ba0' then 'Dental'
+               when '6d0be8bd-5320-45a0-9463-60c9ee2b1338' then 'Renal'
+               when '57df8a60-7585-4fc0-b51b-e10e568cf53c' then 'Urology'
                when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology' end as special_clinic,
            f.uuid                                                                      as special_clinic_form_uuid,
            e.date_created,
@@ -8830,7 +8833,8 @@ BEGIN
            e.voided
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
-             inner join form f on f.form_id = e.form_id and f.uuid in ('c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
+             inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259', -- HIV
+                                                                       'c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
                                                                        '1fbd26f1-0478-437c-be1e-b8468bd03ffa', -- Psychiatry
                                                                        '235900ff-4d4a-4575-9759-96f325f5e291', -- Ophthamology
                                                                        'beec83df-6606-4019-8223-05a54a52f2b0', -- Orthopaedic
@@ -8842,20 +8846,22 @@ BEGIN
                                                                        'd9f74419-e179-426e-9aff-ec97f334a075', -- Audiology
                                                                        '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
                                                                        'efa2f992-44af-487e-aaa7-c92813a34612', -- Dermatology
-                                                                       'f97f2bf3-c26b-4adf-aacd-e09d720a14cd', -- Neurology
-                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
                                                                        '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24', -- Gastroenterology
-                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437', -- Medical
-                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61', -- Surgical
-                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0', -- Maxillofacial
-                                                                       '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
-                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
-                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4' -- Pediatrics
+                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
+                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4',-- Pediatrics
+                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437',-- Medical
+                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61',-- Surgical
+                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0',-- Maxillofacial
+                                                                       'f97f2bf3-c26b-4adf-aacd-e09d720a14cd', -- Neurology
+                                                                       'a3c01460-c346-4f3d-a627-5c7de9494ba0', -- Dental
+                                                                       '6d0be8bd-5320-45a0-9463-60c9ee2b1338', -- Renal
+                                                                       '57df8a60-7585-4fc0-b51b-e10e568cf53c', -- Urology
+                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d' -- Fertility
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
                             1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1069)
         and o.voided = 0
-    group by e.patient_id, date(e.encounter_datetime);
+    group by e.patient_id, e.encounter_id;
     SELECT "Completed processing special clinics";
 END $$
 -- end of dml procedures
