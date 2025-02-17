@@ -4794,7 +4794,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
                 e.date_changed             as date_last_modified,
                 e.voided
         from encounter e
-                 inner join
+                 left join
              (select encounter_type_id, uuid, name from encounter_type where uuid = 'de1f9d67-b73e-4e1b-90d0-036166fc6995') et
              on et.encounter_type_id = e.encounter_type
                  inner join (select r.person_a as patient_related_to,
@@ -4811,7 +4811,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
                             on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
                                                                                       r.end_date > current_date)
                  inner join person p on p.person_id = r.patient_contact  and p.voided = 0
-                 inner join (select person_id
+                 left join (select person_id
                              from person_attribute pa
                                       join person_attribute_type t
                                            on pa.person_attribute_type_id = t.person_attribute_type_id and
