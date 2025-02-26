@@ -419,12 +419,15 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       screened_for_sti,
       cacx_screening,
       sti_partner_notification,
+      experienced_gbv,
+      depression_screening,
       at_risk_population,
       system_review_finding,
       next_appointment_reason,
       appointment_consent,
       stability,
       differentiated_care,
+      established_differentiated_care,
       insurance_type,
       other_insurance_specify,
       insurance_status,
@@ -595,12 +598,15 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=161558,o.value_coded,null)) as screened_for_sti,
         max(if(o.concept_id=164934,o.value_coded,null)) as cacx_screening,
         max(if(o.concept_id=164935,o.value_coded,null)) as sti_partner_notification,
+        max(if(o.concept_id=167161,o.value_coded,null)) as experienced_gbv,
+        max(if(o.concept_id=165086,o.value_coded,null)) as depression_screening,
         max(if(o.concept_id=160581,o.value_coded,null)) as at_risk_population,
         max(if(o.concept_id=159615,o.value_coded,null)) as system_review_finding,
         max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
         max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
         max(if(o.concept_id=1855,o.value_coded,null)) as stability,
         max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
+        max(if(o.concept_id=164946 OR o.concept_id = 165287,o.value_coded,null)) as established_differentiated_care,
         max(if(o.concept_id=159356,o.value_coded,null)) as insurance_type,
         max(if(o.concept_id=161011,o.value_text,null)) as other_insurance_specify,
         max(if(o.concept_id=165911,o.value_coded,null)) as insurance_status,
@@ -615,7 +621,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
                                  and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
                                  1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
                                  164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
+                                 121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911,
+                                                      167161,165086,164946,165287)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -8462,8 +8469,8 @@ INSERT INTO kenyaemr_etl.etl_drug_order (
     provider,
     order_id,
     urgency,
+    drug_id,
     drug_concept_id,
-    drug_short_name,
     drug_name,
     frequency,
     enc_name,
@@ -8480,65 +8487,76 @@ INSERT INTO kenyaemr_etl.etl_drug_order (
     date_voided,
     date_created,
     date_last_modified)
-select e.uuid,
+SELECT
+    e.uuid,
     e.encounter_id,
     o.order_group_id,
     e.patient_id,
     e.location_id,
-    date(e.encounter_datetime)                                                as visit_date,
+    DATE(e.encounter_datetime) AS visit_date,
     e.visit_id,
-    e.creator                                                                 as provider,
-    do.order_id                                                               as order_id,
-    o.urgency                                                                 as urgency,
-    group_concat(o.concept_id SEPARATOR '|')                                  as drug_concept_id,
-    group_concat(left(cn0.name, 255) SEPARATOR '+')                           as drug_short_name,
-    group_concat(left(cn.name, 255) SEPARATOR '+')                            as drug_name,
-    group_concat(case do.frequency when 1 then 'Once daily, in the evening' when 2 then 'Once daily, in the morning' when 3 then 'Twice daily'
-                                   when 4 then 'Once daily, at bedtime' when 5 then 'Once daily' when 6 then 'Thrice daily' end SEPARATOR '|')                                  as frequency,
-    et.name                                                                   as enc_name,
-    group_concat(do.dose SEPARATOR '|')                                       as dose,
-    group_concat(left(cn1.name, 255) SEPARATOR '|')                           as dose_units,
-    group_concat(do.quantity SEPARATOR '|')                                   as quantity,
-    group_concat(left(cn2.name, 255) SEPARATOR '|')                           as quantity_units,
-       do.dosing_instructions                                                 as dosing_instructions,
-       do.duration                                                            as duration,
-       (case do.duration_units
-            when 1072 then 'DAYS'
-            when 1073 then 'WEEKS'
-            when 1074
-                then 'MONTHS' end)                                            as duration_units,
-       o.instructions                                                         as instructions,
-       group_concat(left(cn3.name, 255) SEPARATOR '|')                        as route,
-       o.voided                                                               as voided,
-       o.date_voided                                                          as date_voided,
-       e.date_created                                                         as date_created,
-       e.date_changed                                                         as date_last_modified
-from orders o
-    inner join drug_order do on o.order_id = do.order_id
-    inner join encounter e on e.encounter_id = o.encounter_id and e.voided = 0 and e.patient_id = o.patient_id
-    inner join person p on p.person_id = e.patient_id and p.voided = 0
-    left outer join encounter_type et on et.encounter_type_id = e.encounter_type
-    left outer join concept_name cn0
-    on o.concept_id = cn0.concept_id and cn0.locale = 'en' and cn0.concept_name_type = 'SHORT'
-    left outer join concept_name cn on o.concept_id = cn.concept_id and cn.locale = 'en' and
-    cn.concept_name_type = 'FULLY_SPECIFIED'
-    left outer join concept_name cn1 on do.dose_units = cn1.concept_id and cn1.locale = 'en' and
-    cn1.concept_name_type = 'FULLY_SPECIFIED'
-    left outer join concept_name cn2 on do.quantity_units = cn2.concept_id and cn2.locale = 'en' and
-    cn2.concept_name_type = 'FULLY_SPECIFIED'
-    left outer join concept_name cn3 on do.route = cn3.concept_id and cn3.locale = 'en' and
-    cn3.concept_name_type = 'FULLY_SPECIFIED'
-    left outer join concept_set cs on o.concept_id = cs.concept_id  and do.dose_units = cs.concept_id and do.quantity_units = cs.concept_id and do.route = cs.concept_id
-where o.voided = 0
-  and o.order_type_id = 2
-  and (o.order_action = 'NEW' or (o.order_reason_non_coded = 'previously existing orders'))
-  and e.voided = 0
-  and e.date_created >= last_update_time
-   or e.date_changed >= last_update_time
-   or e.date_voided >= last_update_time
-group by o.order_group_id,o.patient_id, o.encounter_id
+    e.creator AS provider,
+    do.order_id,
+    o.urgency,
+    d.drug_id,
+    GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR '|') AS drug_concept_id,
+    GROUP_CONCAT(DISTINCT LEFT(d.name, 255) SEPARATOR '+') AS drug_name,
+    COALESCE(
+            GROUP_CONCAT(DISTINCT
+                         CASE do.frequency
+                             WHEN 1 THEN 'Once daily, in the evening'
+                             WHEN 2 THEN 'Once daily, in the morning'
+                             WHEN 3 THEN 'Twice daily'
+                             WHEN 4 THEN 'Once daily, at bedtime'
+                             WHEN 5 THEN 'Once daily'
+                             WHEN 6 THEN 'Thrice daily'
+                             ELSE 'Unknown'
+                             END SEPARATOR '|'
+            ), 'Unknown'
+    ) AS frequency,
+    et.name AS enc_name,
+    GROUP_CONCAT(DISTINCT do.dose SEPARATOR '|') AS dose,
+    do.dose_units AS dose_units,
+    do.quantity AS quantity,
+    do.quantity_units AS quantity_units,
+    do.dosing_instructions,
+    do.duration,
+    CASE do.duration_units
+        WHEN 1072 THEN 'DAYS'
+        WHEN 1073 THEN 'WEEKS'
+        WHEN 1074 THEN 'MONTHS'
+        ELSE 'UNKNOWN'
+        END AS duration_units,
+    o.instructions,
+    do.route AS route,
+    o.voided,
+    o.date_voided,
+    e.date_created,
+    e.date_changed AS date_last_modified
+FROM orders o
+         INNER JOIN drug_order do
+                    ON o.order_id = do.order_id
+         INNER JOIN drug d
+                    ON do.drug_inventory_id = d.drug_id
+         INNER JOIN encounter e
+                    ON e.encounter_id = o.encounter_id
+                        AND e.voided = 0
+                        AND e.patient_id = o.patient_id
+         INNER JOIN person p
+                    ON p.person_id = e.patient_id
+                        AND p.voided = 0
+         LEFT JOIN encounter_type et
+                   ON et.encounter_type_id = e.encounter_type
+WHERE o.voided = 0
+  AND o.order_type_id = 2
+  AND (
+    COALESCE(o.order_action, '') = 'NEW'
+        OR COALESCE(o.order_reason_non_coded, '') = 'previously existing orders'
+    )
+  AND e.voided = 0
+GROUP BY o.order_group_id, o.patient_id, o.encounter_id, o.order_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),order_id=VALUES(order_id),urgency=VALUES(urgency),
-    drug_concept_id=VALUES(drug_concept_id),drug_short_name=VALUES(drug_short_name),drug_name=VALUES(drug_name),frequency=VALUES(frequency),
+    drug_concept_id=VALUES(drug_concept_id),drug_id=VALUES(drug_id),drug_name=VALUES(drug_name),frequency=VALUES(frequency),
                      enc_name=VALUES(enc_name),dose=VALUES(dose),dose_units=VALUES(dose_units),quantity=VALUES(quantity),
                      quantity_units=VALUES(quantity_units),dosing_instructions=VALUES(dosing_instructions),duration=VALUES(duration),duration_units=VALUES(duration_units),
                      instructions=VALUES(instructions),route=VALUES(route),voided=VALUES(voided);
@@ -10494,6 +10512,120 @@ BEGIN
     SELECT "Completed updating special clinics";
 END $$
 
+DROP PROCEDURE IF EXISTS sp_update_etl_kvp_clinical_enrollment $$
+-- Procedure sp_update_etl_kvp_clinical_enrollment
+CREATE PROCEDURE sp_update_etl_kvp_clinical_enrollment(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing KVP Clinical enrollment";
+    INSERT INTO kenyaemr_etl.etl_kvp_clinical_enrollment (patient_id,
+              visit_id,
+              encounter_id,
+              uuid,
+              location_id,
+              provider,
+              visit_date,
+              contacted_by_pe_for_health_services,
+              has_regular_non_paying_sexual_partner,
+              number_of_sexual_partners,
+              year_started_fsw,
+              year_started_msm,
+              year_started_using_drugs,
+              trucker_duration_on_transit,
+              duration_working_as_trucker_fisherfolk,
+              duration_working_as_fisherfolk,
+              year_tested_discordant_couple,
+              ever_experienced_violence,
+              type_of_violence_experienced,
+              ever_tested_for_hiv,
+              latest_hiv_test_method,
+              latest_hiv_test_results,
+              willing_to_test_for_hiv,
+              reason_not_willing_to_test_for_hiv,
+              receiving_hiv_care,
+              hiv_care_facility,
+              other_hiv_care_facility,
+              ccc_number,
+              consent_followup,
+              date_created,
+              date_last_modified,
+              voided)
+    select e.patient_id,
+           e.visit_id,
+           e.encounter_id,
+           e.uuid,
+           e.location_id,
+           e.creator,
+           date(e.encounter_datetime)                            as visit_date,
+           max(if(o.concept_id = 165004, o.value_coded, null))   as contacted_by_pe_for_health_services,
+           max(if(o.concept_id = 165027, o.value_coded, null))   as has_regular_non_paying_sexual_partner,
+           max(if(o.concept_id = 5570, o.value_numeric, null))   as number_of_sexual_partners,
+           max(if(o.concept_id = 165030, o.value_numeric, null)) as year_started_fsw,
+           max(if(o.concept_id = 165031, o.value_numeric, null)) as year_started_msm,
+           max(if(o.concept_id = 165032, o.value_numeric, null)) as year_started_using_drugs,
+           max(if(o.concept_id = 165032, o.value_numeric, null)) as trucker_duration_on_transit,
+           max(if(o.concept_id = 163191, o.value_numeric, null)) as duration_working_as_trucker_fisherfolk,
+           max(if(o.concept_id = 169043, o.value_numeric, null)) as duration_working_as_fisherfolk,
+           max(if(o.concept_id = 159813, o.value_numeric, null)) as year_tested_discordant_couple,
+           max(if(o.concept_id = 123160, o.value_coded, null))   as ever_experienced_violence,
+           max(if(o.concept_id = 165205, o.value_coded, null))   as type_of_violence_experienced,
+           max(if(o.concept_id = 164401, o.value_coded, null))   as ever_tested_for_hiv,
+           max(if(o.concept_id = 164956, o.value_coded, null))   as latest_hiv_test_method,
+           max(if(o.concept_id = 165153, o.value_coded, null))   as latest_hiv_test_results,
+           max(if(o.concept_id = 165154, o.value_coded, null))   as willing_to_test_for_hiv,
+           max(if(o.concept_id = 160632, o.value_text, null))    as reason_not_willing_to_test_for_hiv,
+           max(if(o.concept_id = 159811, o.value_coded, null))   as receiving_hiv_care,
+           max(if(o.concept_id = 165239, o.value_coded, null))   as hiv_care_facility,
+           max(if(o.concept_id = 162724, o.value_text, null))    as other_hiv_care_facility,
+           max(if(o.concept_id = 162053, o.value_numeric, null)) as ccc_number,
+           max(if(o.concept_id = 165036, o.value_numeric, null)) as consent_followup,
+           e.date_created,
+           e.date_changed,
+           e.voided
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'c7f47cea-207b-11e9-ab14-d663bd873d93'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (165004, 165027, 5570, 165030, 165031, 165032,
+                                                                           163191, 169043, 159813, 123160, 165205,
+                                                                           164401, 164956, 165153, 165154, 160632,
+                                                                           159811, 165239, 162724, 162053, 165036)
+        and o.voided = 0
+    where e.voided = 0 and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id, date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+        visit_date=VALUES(visit_date),
+        contacted_by_pe_for_health_services=VALUES(contacted_by_pe_for_health_services),
+        has_regular_non_paying_sexual_partner=VALUES(has_regular_non_paying_sexual_partner),
+        number_of_sexual_partners=VALUES(number_of_sexual_partners),
+        year_started_fsw=VALUES(year_started_fsw),
+        year_started_msm=VALUES(year_started_msm),
+        year_started_using_drugs=VALUES(year_started_using_drugs),
+        trucker_duration_on_transit=VALUES(trucker_duration_on_transit),
+        duration_working_as_trucker_fisherfolk=VALUES(duration_working_as_trucker_fisherfolk),
+        duration_working_as_fisherfolk=VALUES(duration_working_as_fisherfolk),
+        year_tested_discordant_couple=VALUES(year_tested_discordant_couple),
+        ever_experienced_violence=VALUES(ever_experienced_violence),
+        type_of_violence_experienced=VALUES(type_of_violence_experienced),
+        ever_tested_for_hiv=VALUES(ever_tested_for_hiv),
+        latest_hiv_test_method=VALUES(latest_hiv_test_method),
+        latest_hiv_test_results=VALUES(latest_hiv_test_results),
+        willing_to_test_for_hiv=VALUES(willing_to_test_for_hiv),
+        reason_not_willing_to_test_for_hiv=VALUES(reason_not_willing_to_test_for_hiv),
+        receiving_hiv_care=VALUES(receiving_hiv_care),
+        hiv_care_facility=VALUES(hiv_care_facility),
+        other_hiv_care_facility=VALUES(other_hiv_care_facility),
+        ccc_number=VALUES(ccc_number),
+        consent_followup=VALUES(consent_followup),
+        date_created=VALUES(date_created),
+        date_last_modified=VALUES(date_last_modified),
+        voided=VALUES(voided);
+    SELECT "Completed processing KVP Clinical enrollment";
+END $$
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -10587,7 +10719,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_family_planning(last_update_time);
     CALL sp_update_etl_physiotherapy(last_update_time);
     CALL sp_update_etl_psychiatry(last_update_time);
---    CALL sp_update_etl_special_clinics(last_update_time);
+    -- CALL sp_update_etl_special_clinics(last_update_time);
+    CALL sp_update_etl_kvp_clinical_enrollment(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();

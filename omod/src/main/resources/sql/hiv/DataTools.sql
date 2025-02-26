@@ -242,6 +242,13 @@ poor_arv_adherence_reason_other,
 (case screened_for_sti when 703 then "POSITIVE" when 664 then "NEGATIVE" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as screened_for_sti,
 (case cacx_screening when 703 then "POSITIVE" when 664 then "NEGATIVE" when 1118 then "Not Done" when 1175 then "N/A" else "" end) as cacx_screening,
 (case sti_partner_notification when 1065 then "Yes" when 1066 then "No" else "" end) as sti_partner_notification,
+(case experienced_gbv when 1065 then 'Yes' when 1066 then 'No' end) as experienced_gbv,
+(case depression_screening when 1065 then 'Yes' when 1066 then 'No' end) as depression_screening,
+(case differentiated_care /*when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" */when 163488 then "Community ART distribution group"
+           when 1537 then "Facility ART Distribution Group" end) as differentiated_care,
+(case established_differentiated_care when 164942 then 'Standard Care' when 164943 then 'Fast Track' when 166443 then 'Health care worker Led facility ART group(HFAG)'
+           when 166444 then 'Peer Led Facility ART Group(PFAG)' when 1555 then 'Health care worker Led Community ART group(HCAG)' when 164945 then 'Peer Led Community ART Group(PCAG)'
+           when 1000478 then 'Community Pharmacy(CP)' when 164944 then 'Community ART Distribution Points(CAPD)' when 166583 then 'Individual patient ART Community Distribution(IACD)' end) as established_differentiated_care,
 (case at_risk_population when 105 then "People who inject drugs" when 160578 then "Men who have sex with men" when 160579 then "Female sex Worker" else "" end) as at_risk_population,
 (case system_review_finding when 1115 then "NORMAL" when 1116 then "ABNORMAL" else "" end) as system_review_finding,
 next_appointment_date,
@@ -249,8 +256,6 @@ refill_date,
 (case appointment_consent when 1065 then "Yes" when 1066 then "No" else "" end) as appointment_consent,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
-(case differentiated_care when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" when 163488 then "Community ART distribution group"
-when 1537 then "Facility ART Distribution Group" end) as differentiated_care,
 (case insurance_type when 1917 then "NHIF" when 1107 then "None" when 5622 then "Other" else "" end) as insurance_type,
 other_insurance_specify,
 (case insurance_status when 161636 then "Active" when 1118 then "Inactive" else "" end) as insurance_status
@@ -3137,6 +3142,48 @@ ALTER TABLE kenyaemr_datatools.clinical_encounter
 ALTER TABLE kenyaemr_datatools.clinical_encounter
     ADD INDEX (visit_date);
 SELECT "Successfully created clinical_encounter table";
+
+create table kenyaemr_datatools.kvp_clinical_enrollment as
+select  patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        case contacted_by_pe_for_health_services when 1065 then 'Yes' when 1066 then 'No' end as contacted_by_pe_for_health_services,
+        case has_regular_non_paying_sexual_partner when 1065 then 'Yes' when 1066 then 'No' end as has_regular_non_paying_sexual_partner,
+        number_of_sexual_partners,
+        year_started_fsw,
+        year_started_msm,
+        year_started_using_drugs,
+        trucker_duration_on_transit,
+        duration_working_as_trucker_fisherfolk,
+        duration_working_as_fisherfolk,
+        year_tested_discordant_couple,
+        case ever_experienced_violence when 1065 then 'Yes' when 1066 then 'No' end as ever_experienced_violence,
+        case type_of_violence_experienced when 158358 then 'Physical' when 123160 then 'Sexual' when 117510 then 'Emotional' end as type_of_violence_experienced,
+        case ever_tested_for_hiv when 1065 then 'Yes' when 1066 then 'No' end as ever_tested_for_hiv,
+        case latest_hiv_test_method when 164952 then 'HIV Self Test' when 163722 then 'Rapid HIV Testing' end as latest_hiv_test_method,
+        case latest_hiv_test_results when 703 then 'Yes I tested positive' when 664 then 'Yes I tested negative' when 1066 then 'No I do not want to share' end as latest_hiv_test_results,
+        case willing_to_test_for_hiv when 1065 then 'Yes' when 1066 then 'No' end as willing_to_test_for_hiv,
+        reason_not_willing_to_test_for_hiv,
+        case receiving_hiv_care when 1065 then 'Yes' when 1066 then 'No' end as receiving_hiv_care,
+        case hiv_care_facility when 162723 then 'Elsewhere' when 163266 then 'Here' end as hiv_care_facility,
+        other_hiv_care_facility,
+        ccc_number,
+        case consent_followup when 1065 then 'Yes' when 1066 then 'No' end as consent_followup,
+        date_created,
+        date_last_modified,
+        voided
+from kenyaemr_etl.etl_kvp_clinical_enrollment;
+ALTER TABLE kenyaemr_datatools.kvp_clinical_enrollment
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.kvp_clinical_enrollment
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.kvp_clinical_enrollment
+    ADD INDEX (visit_date);
+SELECT "Successfully created kenyaemr_datatools.kvp_clinical_enrollment table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
