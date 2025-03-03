@@ -147,6 +147,8 @@ max(if(pit.uuid='ca125004-e8af-445d-9436-a43684150f8b',pi.identifier,null)) driv
 max(if(pit.uuid='f85081e2-b4be-4e48-b3a4-7994b69bb101',pi.identifier,null)) national_unique_patient_identifier,
 REPLACE(max(if(pit.uuid='fd52829a-75d2-4732-8e43-4bff8e5b4f1a',pi.identifier,null)),'-','') hts_recency_id,
 max(if(pit.uuid='09ebf4f9-b673-4d97-b39b-04f94088ba64',pi.identifier,null)) nhif_number,
+max(if(pit.uuid='52c3c0c3-05b8-4b26-930e-2a6a54e14c90',pi.identifier,null)) shif_number,
+max(if(pit.uuid='24aedd37-b5be-4e08-8311-3721b8d5100d',pi.identifier,null)) sha_number,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -174,6 +176,8 @@ set d.unique_patient_no=pid.UPN,
     d.national_unique_patient_identifier=pid.national_unique_patient_identifier,
     d.hts_recency_id=pid.hts_recency_id,
     d.nhif_number=pid.nhif_number,
+    d.shif_number=pid.shif_number,
+    d.sha_number=pid.sha_number,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
