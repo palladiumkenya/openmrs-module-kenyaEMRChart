@@ -2634,6 +2634,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 		e.creator
 	FROM encounter e
 			 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+             INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
 			 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
 			 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
 			 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
