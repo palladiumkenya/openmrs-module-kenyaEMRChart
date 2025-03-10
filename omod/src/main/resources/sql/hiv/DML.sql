@@ -221,7 +221,11 @@ insert into kenyaemr_etl.etl_hiv_enrollment (
     ever_on_pep,
     ever_on_prep,
     ever_on_haart,
-                                             who_stage,
+    cd4_test_result,
+    cd4_test_date,
+    viral_load_test_result,
+    viral_load_test_date,
+    who_stage,
     name_of_treatment_supporter,
     relationship_of_treatment_supporter,
     treatment_supporter_telephone,
@@ -257,6 +261,10 @@ select
        max(if(o.concept_id=1691,o.value_coded,null)) as ever_on_pep,
        max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
        max(if(o.concept_id=1181,o.value_coded,null)) as ever_on_haart,
+       max(if(o.concept_id=5497,o.value_numeric,null)) as cd4_test_result,
+       max(if(o.concept_id=159376,o.value_datetime,null)) as cd4_test_date,
+       max(if(o.concept_id=1305 and o.value_coded=1302,'LDL',if(o.concept_id=162086,o.value_text,null))) as viral_load_test_result,
+       max(if(o.concept_id=163281,o.value_datetime,null)) as viral_load_test_date,
        max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
        max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
        max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
@@ -274,7 +282,7 @@ from encounter e
          ) et on et.encounter_type_id=e.encounter_type
        inner join person p on p.person_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356)
+                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356,5497,159376,1305,162086,163281)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
@@ -615,92 +623,93 @@ date_created,
 date_last_modified,
 created_by
 )
+
 WITH FilteredOrders AS (SELECT patient_id,
-							   encounter_id,
-							   order_id,
-							   concept_id,
-							   date_activated,
-							   urgency,
-							   order_reason
-						FROM openmrs.orders
-						WHERE order_type_id = 3
-						  AND voided = 0
-						GROUP BY patient_id, encounter_id ,concept_id),
-	 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
-								 cs.concept_id     AS member_concept_id,
-								 c.datatype_id     AS member_datatype,
-								 c.class_id        AS member_class,
-								 n.name
-						  FROM concept_set cs
-								   INNER JOIN concept c ON cs.concept_id = c.concept_id
-								   INNER JOIN concept_name n ON c.concept_id = n.concept_id
-							  AND n.locale = 'en'
-							  AND n.concept_name_type = 'FULLY_SPECIFIED'
-						  WHERE cs.concept_set = 1000628),
-	 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
-							  from obs o
-									   inner join concept c on o.concept_id = c.concept_id
-									   inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
-									   left join concept_name n
-												 on o.value_coded = n.concept_id AND n.locale = 'en' AND
-													n.concept_name_type = 'FULLY_SPECIFIED'
-									   left join concept_name n1
-												 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													n1.concept_name_type = 'FULLY_SPECIFIED'
-							  where o.order_id is not null ),
-	 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
-								from obs o
-										 inner join concept c on o.concept_id = c.concept_id
-										 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
-										 inner join concept_name n
-													on o.concept_id = n.concept_id AND n.locale = 'en' AND
-													   n.concept_name_type = 'FULLY_SPECIFIED'
-										 left join concept_name n1
-												   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													  n1.concept_name_type = 'FULLY_SPECIFIED'
-								where o.order_id is not null ),
-	 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
-							 from obs o
-									  inner join concept c on o.concept_id = c.concept_id
-									  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
-									  inner join concept_name n
-												 on o.concept_id = n.concept_id AND n.locale = 'en' AND
-													n.concept_name_type = 'FULLY_SPECIFIED'
-									  left join concept_name n1
-												on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-												   n1.concept_name_type = 'FULLY_SPECIFIED'
-							 where o.order_id is not null )
+                               encounter_id,
+                               order_id,
+                               concept_id,
+                               date_activated,
+                               urgency,
+                               order_reason
+                        FROM openmrs.orders
+                        WHERE order_type_id = 3
+                          AND order_action = 'NEW'
+                          AND voided = 0
+                        GROUP BY patient_id, encounter_id ,concept_id),
+     LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
+                                 cs.concept_id     AS member_concept_id,
+                                 c.datatype_id     AS member_datatype,
+                                 c.class_id        AS member_class,
+                                 n.name
+                          FROM concept_set cs
+                                   INNER JOIN concept c ON cs.concept_id = c.concept_id
+                                   INNER JOIN concept_name n ON c.concept_id = n.concept_id
+                              AND n.locale = 'en'
+                              AND n.concept_name_type = 'FULLY_SPECIFIED'
+                          WHERE cs.concept_set = 1000628),
+     CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
+                              from obs o
+                                       inner join concept c on o.concept_id = c.concept_id
+                                       inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
+                                       left join concept_name n
+                                                 on o.value_coded = n.concept_id AND n.locale = 'en' AND
+                                                    n.concept_name_type = 'FULLY_SPECIFIED'
+                                       left join concept_name n1
+                                                 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+                                                    n1.concept_name_type = 'FULLY_SPECIFIED'
+                              where o.order_id is not null ),
+     NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
+                                from obs o
+                                         inner join concept c on o.concept_id = c.concept_id
+                                         inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
+                                         inner join concept_name n
+                                                    on o.concept_id = n.concept_id AND n.locale = 'en' AND
+                                                       n.concept_name_type = 'FULLY_SPECIFIED'
+                                         left join concept_name n1
+                                                   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+                                                      n1.concept_name_type = 'FULLY_SPECIFIED'
+                                where o.order_id is not null ),
+     TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
+                             from obs o
+                                      inner join concept c on o.concept_id = c.concept_id
+                                      inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
+                                      inner join concept_name n
+                                                 on o.concept_id = n.concept_id AND n.locale = 'en' AND
+                                                    n.concept_name_type = 'FULLY_SPECIFIED'
+                                      left join concept_name n1
+                                                on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+                                                   n1.concept_name_type = 'FULLY_SPECIFIED'
+                             where o.order_id is not null )
 SELECT
-	UUID(),
-	e.encounter_id,
-	e.patient_id,
-	e.location_id,
-	coalesce(o.date_activated,obs_datetime) as visit_date,
-	e.visit_id,
-	o.order_id,
-	o.concept_id,
-	o.urgency,
-	o.order_reason,
-	lc.name as order_test_name,
-	COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
-	if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
-	COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
-	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
-	COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
-	o.date_activated as date_test_requested,
-	e.encounter_datetime as date_test_result_received,
--- test requested by
-	e.date_created,
-	e.date_changed as date_last_modified,
-	e.creator
+    UUID(),
+    e.encounter_id,
+    e.patient_id,
+    e.location_id,
+    coalesce(o.date_activated,obs_datetime) as visit_date,
+    e.visit_id,
+    o.order_id,
+    o.concept_id,
+    o.urgency,
+    o.order_reason,
+    lc.name as order_test_name,
+    COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
+    if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
+    COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
+    if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
+    COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
+    o.date_activated as date_test_requested,
+    e.encounter_datetime as date_test_result_received,
+    e.date_created,
+    e.date_changed as date_last_modified,
+    e.creator
 FROM encounter e
-		 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
-		 INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
-		 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
-		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
-		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
-		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
-where e.voided=0 group by obs_id;
+         INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+         INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
+         LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
+         LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
+         LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
+         LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
+where e.voided=0 group by o.order_id;
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
 encounter_id,
@@ -3075,6 +3084,230 @@ group by c.patient_id;
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(patient_id);
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(visit_date);
 
+DROP TABLE IF EXISTS kenyaemr_etl.etl_viral_load_validity_tracker;
+
+CREATE TABLE kenyaemr_etl.etl_viral_load_validity_tracker (
+  patient_id INT(11) not null,
+  lab_test INT(11),
+  vl_result VARCHAR(50),
+  date_created DATE,
+  date_test_requested DATE,
+  date_test_result_received DATE,
+  base_viral_load_test_result VARCHAR(100),
+  base_viral_load_test_date VARCHAR(100),
+  urgency VARCHAR(100),
+  order_reason VARCHAR(100),
+  previous_test_result VARCHAR(100),
+  previous_date_test_requested DATE,
+  previous_date_test_result_received DATE,
+  previous_urgency VARCHAR(100),
+  previous_order_reason VARCHAR(100),
+  date_started_art DATE,
+  date_confirmed_hiv_positive DATE,
+  latest_hiv_followup_visit DATE,
+  breastfeeding_status VARCHAR(100),
+  pregnancy_status VARCHAR(100),
+  lmp_date DATE,
+  pregnancy_outcome VARCHAR(100),
+  index(patient_id),
+  index(vl_result),
+  index(date_test_requested),
+  index(base_viral_load_test_result),
+  index(previous_test_result),
+  index(previous_date_test_requested),
+  index(date_confirmed_hiv_positive),
+  index(breastfeeding_status),
+  index(pregnancy_status),
+  index(order_reason)
+);
+
+INSERT INTO kenyaemr_etl.etl_viral_load_validity_tracker
+(
+    patient_id,
+    lab_test,
+    vl_result,
+    date_created,
+    date_test_requested,
+    date_test_result_received,
+    base_viral_load_test_result,
+    base_viral_load_test_date,
+    urgency,
+    order_reason,
+    previous_test_result,
+    previous_date_test_requested,
+    previous_date_test_result_received,
+    previous_urgency,
+    previous_order_reason,
+    date_started_art,
+    date_confirmed_hiv_positive,
+    latest_hiv_followup_visit,
+    breastfeeding_status,
+    pregnancy_status,
+    lmp_date,
+    pregnancy_outcome
+)
+WITH LatestTest AS (
+    -- CTE for fetching latest test data
+    SELECT
+        x.patient_id,
+        x.lab_test,
+        x.test_result,
+        x.date_created,
+        x.date_test_requested,
+        x.date_test_result_received,
+        e.base_viral_load_test_result,
+        e.base_viral_load_test_date,
+        x.urgency,
+        x.order_reason,
+        d.date_started_art,
+        COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
+        fup.latest_hiv_followup_visit,
+        fup.breastfeeding_status,
+        fup.pregnancy_status,
+        fup.lmp_date,
+        fup.pg_outcome
+    FROM kenyaemr_etl.etl_laboratory_extract x
+             LEFT JOIN (
+        SELECT d.patient_id, MIN(d.date_started) AS date_started_art
+        FROM kenyaemr_etl.etl_drug_event d
+        WHERE d.program = 'HIV'
+        GROUP BY d.patient_id
+    ) d ON x.patient_id = d.patient_id
+             INNER JOIN (
+        SELECT e.patient_id, e.visit_date, e.date_confirmed_hiv_positive,
+               MID(MAX(CONCAT(DATE(e.visit_date), e.viral_load_test_result)), 11) AS base_viral_load_test_result,
+               MID(MAX(CONCAT(DATE(e.visit_date), e.viral_load_test_date)), 11) AS base_viral_load_test_date
+        FROM kenyaemr_etl.etl_hiv_enrollment e
+        GROUP BY e.patient_id
+    ) e ON x.patient_id = e.patient_id
+             INNER JOIN (
+        SELECT f.patient_id, f.visit_date AS latest_hiv_followup_visit,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.breastfeeding)), 11) AS breastfeeding_status,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_status)), 11) AS pregnancy_status,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.last_menstrual_period)), 11) AS lmp_date,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_outcome)), 11) AS pg_outcome
+        FROM kenyaemr_etl.etl_patient_hiv_followup f
+        GROUP BY f.patient_id
+    ) fup ON x.patient_id = fup.patient_id
+    WHERE x.lab_test IN (1305, 856)
+      AND x.date_test_requested = (
+        SELECT MAX(x2.date_test_requested)
+        FROM kenyaemr_etl.etl_laboratory_extract x2
+        WHERE x2.patient_id = x.patient_id
+          AND x2.lab_test IN (1305, 856)
+    )
+),
+     PreviousTest AS (
+         -- CTE for fetching previous test data
+         SELECT
+             p.patient_id,
+             p.order_id,
+             p.test_result AS previous_test_result,
+             p.date_test_requested AS previous_date_test_requested,
+             p.date_test_result_received AS previous_date_test_result_received,
+             p.urgency AS previous_urgency,
+             p.order_reason AS previous_order_reason,
+             ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.order_id DESC) AS rn
+         FROM kenyaemr_etl.etl_laboratory_extract p
+         WHERE p.lab_test IN (1305, 856)
+     ),
+     BaselineTest AS (
+         -- Get earliest viral load test per patient
+         SELECT l.patient_id,
+                MID(MIN(CONCAT(DATE(l.date_test_requested), l.test_result)), 11) AS base_viral_load_test_result,
+                MIN(DATE(l.date_test_requested)) AS base_viral_load_test_date
+         FROM kenyaemr_etl.etl_laboratory_extract l
+         GROUP BY l.patient_id
+     ),
+     MissedLabPatients AS (
+         -- Get patients from etl_drug_event who have NOT done a viral load test
+         SELECT
+             de.patient_id,
+             MIN(de.date_started) AS date_started_art,
+             COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
+             fup.latest_hiv_followup_visit,
+             fup.breastfeeding_status,
+             fup.pregnancy_status,
+             fup.lmp_date,
+             fup.pg_outcome
+         FROM kenyaemr_etl.etl_drug_event de
+                  LEFT JOIN (
+             SELECT e.patient_id, MIN(e.visit_date) AS visit_date, e.date_confirmed_hiv_positive
+             FROM kenyaemr_etl.etl_hiv_enrollment e
+             GROUP BY e.patient_id
+         ) e ON de.patient_id = e.patient_id
+                  LEFT JOIN (
+             SELECT f.patient_id, MAX(f.visit_date) AS latest_hiv_followup_visit,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.breastfeeding)), 11) AS breastfeeding_status,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_status)), 11) AS pregnancy_status,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.last_menstrual_period)), 11) AS lmp_date,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_outcome)), 11) AS pg_outcome
+             FROM kenyaemr_etl.etl_patient_hiv_followup f
+             GROUP BY f.patient_id
+         ) fup ON de.patient_id = fup.patient_id
+         WHERE de.program = 'HIV'
+           AND TIMESTAMPDIFF(MONTH, de.date_started, DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)) >= 3
+           AND NOT EXISTS (
+             SELECT 1
+             FROM kenyaemr_etl.etl_laboratory_extract le
+             WHERE le.patient_id = de.patient_id
+               AND le.lab_test IN (1305, 856)
+         ) GROUP BY de.patient_id
+     )
+-- Final Query combining all the data
+SELECT
+    l.patient_id,
+    l.lab_test,
+    l.test_result,
+    l.date_created,
+    l.date_test_requested,
+    l.date_test_result_received,
+    COALESCE(l.base_viral_load_test_result, bt.base_viral_load_test_result) AS base_viral_load_test_result,
+    COALESCE(l.base_viral_load_test_date, bt.base_viral_load_test_date) AS base_viral_load_test_date,
+    l.urgency,
+    l.order_reason,
+    pt.previous_test_result,
+    pt.previous_date_test_requested,
+    pt.previous_date_test_result_received,
+    pt.previous_urgency,
+    pt.previous_order_reason,
+    l.date_started_art,
+    l.date_confirmed_hiv_positive,
+    l.latest_hiv_followup_visit,
+    l.breastfeeding_status,
+    l.pregnancy_status,
+    l.lmp_date,
+    l.pg_outcome
+FROM LatestTest l
+         LEFT JOIN PreviousTest pt ON l.patient_id = pt.patient_id AND pt.rn = 2 -- Second latest test
+         LEFT JOIN BaselineTest bt ON l.patient_id = bt.patient_id
+-- Include patients without VL tests
+UNION ALL
+SELECT
+    m.patient_id,
+    NULL AS lab_test,
+    NULL AS test_result,
+    NULL AS date_created,
+    NULL AS date_test_requested,
+    NULL AS date_test_result_received,
+    NULL AS base_viral_load_test_result,
+    NULL AS base_viral_load_test_date,
+    NULL AS urgency,
+    NULL AS order_reason,
+    NULL AS previous_test_result,
+    NULL AS previous_date_test_requested,
+    NULL AS previous_date_test_result_received,
+    NULL AS previous_urgency,
+    NULL AS previous_order_reason,
+    m.date_started_art,
+    m.date_confirmed_hiv_positive,
+    m.latest_hiv_followup_visit,
+    m.breastfeeding_status,
+    m.pregnancy_status,
+    m.lmp_date,
+    m.pg_outcome
+FROM MissedLabPatients m
+ORDER BY patient_id;
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
 
 END $$
