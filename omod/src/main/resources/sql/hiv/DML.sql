@@ -3101,7 +3101,7 @@ CREATE TABLE kenyaemr_etl.etl_viral_load_validity_tracker (
   previous_date_test_result_received DATE,
   previous_urgency VARCHAR(100),
   previous_order_reason VARCHAR(100),
-  date_started DATE,
+  date_started_art DATE,
   date_confirmed_hiv_positive DATE,
   latest_hiv_followup_visit DATE,
   breastfeeding_status VARCHAR(100),
@@ -3131,13 +3131,13 @@ INSERT INTO kenyaemr_etl.etl_viral_load_validity_tracker
     base_viral_load_test_result,
     base_viral_load_test_date,
     urgency,
- order_reason,
+    order_reason,
     previous_test_result,
     previous_date_test_requested,
     previous_date_test_result_received,
     previous_urgency,
     previous_order_reason,
-    date_started,
+    date_started_art,
     date_confirmed_hiv_positive,
     latest_hiv_followup_visit,
     breastfeeding_status,
@@ -3158,7 +3158,7 @@ WITH LatestTest AS (
         e.base_viral_load_test_date,
         x.urgency,
         x.order_reason,
-        d.date_started,
+        d.date_started_art,
         COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
         fup.latest_hiv_followup_visit,
         fup.breastfeeding_status,
@@ -3167,7 +3167,7 @@ WITH LatestTest AS (
         fup.pg_outcome
     FROM
         kenyaemr_etl.etl_laboratory_extract x
-            LEFT JOIN (SELECT d.patient_id, MIN(d.date_started) AS date_started
+            LEFT JOIN (SELECT d.patient_id, MIN(d.date_started) AS date_started_art
                        FROM kenyaemr_etl.etl_drug_event d
                        WHERE d.program = 'HIV'
                        GROUP BY d.patient_id) d
@@ -3199,17 +3199,24 @@ WITH LatestTest AS (
          -- CTE for fetching previous test data
          SELECT
              p.patient_id,
+             p.order_id,
              p.test_result AS previous_test_result,
              p.date_test_requested AS previous_date_test_requested,
              p.date_test_result_received AS previous_date_test_result_received,
              p.urgency AS previous_urgency,
              p.order_reason AS previous_order_reason,
-             ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.date_test_requested DESC) AS rn
+             ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.order_id DESC) AS rn
          FROM
              kenyaemr_etl.etl_laboratory_extract p
          WHERE
              p.lab_test IN (1305, 856)
-     )
+     ),
+     BaselineTest AS (select l.patient_id,
+                             MID(MIN(CONCAT(DATE(l.date_test_requested), l.test_result)),
+                                 11)                          AS base_viral_load_test_result,
+                             MIN(DATE(l.date_test_requested)) AS base_viral_load_test_date
+                      from kenyaemr_etl.etl_laboratory_extract l
+                      GROUP BY l.patient_id)
 -- Use the SELECT statement to pull data from the CTEs
 SELECT
     l.patient_id,
@@ -3218,8 +3225,8 @@ SELECT
     l.date_created,
     l.date_test_requested,
     l.date_test_result_received,
-    l.base_viral_load_test_result,
-    l.base_viral_load_test_date,
+    COALESCE(l.base_viral_load_test_result,bt.base_viral_load_test_result) AS base_viral_load_test_result,
+    COALESCE(l.base_viral_load_test_date,bt.base_viral_load_test_date) AS base_viral_load_test_date,
     l.urgency,
     l.order_reason,
     pt.previous_test_result,
@@ -3227,7 +3234,7 @@ SELECT
     pt.previous_date_test_result_received,
     pt.previous_urgency,
     pt.previous_order_reason,
-    l.date_started,
+    l.date_started_art,
     l.date_confirmed_hiv_positive,
     l.latest_hiv_followup_visit,
     l.breastfeeding_status,
@@ -3238,6 +3245,7 @@ FROM
     LatestTest l
         LEFT JOIN PreviousTest pt ON l.patient_id = pt.patient_id
         AND pt.rn = 2 -- Select the second latest test as the previous one
+        LEFT JOIN BaselineTest bt ON l.patient_id = bt.patient_id
 ORDER BY
     l.patient_id;
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
