@@ -2571,6 +2571,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 								   order_reason
 							FROM openmrs.orders
 							WHERE order_type_id = 3
+                              AND order_action = 'NEW'
 							  AND voided = 0
 							GROUP BY patient_id, encounter_id ,concept_id),
 		 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
@@ -2650,7 +2651,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
-	group by obs_id
+	group by order_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), set_member_conceptId=VALUES(set_member_conceptId), test_result=VALUES(test_result)
     ;
     END $$

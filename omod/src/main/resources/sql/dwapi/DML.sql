@@ -633,6 +633,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 							   order_reason
 						FROM openmrs.orders
 						WHERE order_type_id = 3
+                          AND order_action = 'NEW'
 						  AND voided = 0
 						GROUP BY patient_id, encounter_id ,concept_id),
 	 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
@@ -710,7 +711,7 @@ FROM encounter e
 		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
 		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
 		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
-group by obs_id;
+group by order_id;
 
 
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
