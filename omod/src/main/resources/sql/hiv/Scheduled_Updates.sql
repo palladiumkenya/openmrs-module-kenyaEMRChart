@@ -2733,7 +2733,6 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
 																																																 when 160578 then 'Men who have sex with men'
 																																																 when 165084 then 'Male Sex Worker'
 																																																 when 160579 then 'Female sex worker'
-																																																 when 165100 then 'Transgender'
 																																																 when 162277 then 'People in prison and other closed settings'
 																																																 when 167691 then 'Inmates'
 																																																 when 1142 then 'Prison Staff'
@@ -2788,7 +2787,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
                   max(if(o.concept_id = 1272 and o.value_coded = 1691, 'Post-exposure prophylaxis', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 167125, 'Prevention and treatment of STIs', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 118855, 'Substance abuse and mental health treatment', null)),
-                  max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of GBV', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of violence', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 1370, 'HIV testing and re-testing', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 166536, 'Pre-Exposure Prophylaxis', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 5622, 'Other', null))) as neg_referral_for,
@@ -3647,7 +3646,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
                   max(if(o.concept_id = 165093 and o.value_coded = 165149,'Post-exposure prophylaxis',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 164882,'Prevention and treatment of STIs',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 165151,'Substance abuse and mental health treatment',NULL)),
-                  max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of GBV',NULL)),
+                  max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of Violence',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 1459,'HIV testing and re-testing',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 5622,'Other',NULL)),
                   max(if(o.concept_id = 161550, o.value_text, NULL))) as referral_for_prevention_services,
@@ -3752,7 +3751,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
                                              when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
                 max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
                                                when 160579 then "Transactional sex" when 165088 then "Recurrent sex under influence of alcohol/recreational drugs" when 165089 then "Inconsistent or no condom use" when 165090 then "Injecting drug use with shared needles and/or syringes"
-                                               when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/GBV"  else "" end), "" )) as client_assessment,
+                                               when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/Violence"  else "" end), "" )) as client_assessment,
                 max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair"
                                                when 159407 then "Poor" when 1067 then "Good,Fair,Poor,N/A(Did not pick PrEP at last"  else "" end), "" )) as adherence_assessment,
                 max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
@@ -4665,14 +4664,22 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
         pp.patient_id patient_id,
         pp.location_id location_id,
         (case p.uuid
-         when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
-         when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
-         when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
-         when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-         when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
-         when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
-         when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
-         when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
+             when '9f144a34-3a4a-44a9-8486-6b7af6cc64f6' then 'TB'
+             when 'dfdc6d40-2f2f-463d-ba90-cc97350441a8' then 'HIV'
+             when 'c2ecdf11-97cd-432a-a971-cfd9bd296b83' then 'MCH-Child Services'
+             when 'b5d9e05f-f5ab-4612-98dd-adb75438ed34' then 'MCH-Mother Services'
+             when '335517a1-04bc-438b-9843-1ba49fb7fcd9' then 'TPT'
+             when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+             when '6eda83f0-09d9-11ea-8d71-362b9e155667' then 'OVC'
+             when '7447305a-18a7-11e9-ab14-d663bd873d93' then 'KVP'
+             when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+             when 'e41c3d74-37c7-4001-9f19-ef9e35224b70' then 'VIOLENCE SCREENING'
+             when '228538f4-cad9-476b-84c3-ab0086150bcc' then 'VMMC'
+             when '4b898e20-9b2d-11ee-b9d1-0242ac120002' then 'MAT'
+             when 'b2b2dd4a-3aa5-4c98-93ad-4970b06819ef' then 'NimeCONFIRM'
+             when 'ffee43c4-9ccd-4e55-8a70-93194e7fafc6' then 'NCD'
+             when '8cd42506-2ebd-485f-89d6-4bb9ed328ccc' then 'CPM'
+             when '214cad1c-bb62-4d8e-b927-810a046daf62' then 'PrEP'
          end) as program,
         pp.date_enrolled date_enrolled,
         pp.date_completed date_completed,
@@ -5372,7 +5379,7 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
         max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
         COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 166513 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-            then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
+            then  "PWUD" when 105 then "PWID"  when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
           then  "Prisoner" else "" end),null)) as priority_population_type,
         max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
@@ -8256,7 +8263,6 @@ select
     max(if(o.concept_id=160581,(case o.value_coded when 105 then 'People who inject drugs'
                                                    when 160578 then 'Men who have sex with men'
                                                    when 160579 then 'Female sex worker'
-                                                   when 165100 then 'Transgender'
                                                    when 162277 then 'People in prison and other closed settings'
                                                    when 5622 then 'Other' else '' end),null)) as key_population_type,
     max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
