@@ -139,6 +139,8 @@ join (select pi.patient_id,
              max(if(pit.uuid='f85081e2-b4be-4e48-b3a4-7994b69bb101',pi.identifier,null)) national_unique_patient_identifier,
              max(if(pit.uuid='fd52829a-75d2-4732-8e43-4bff8e5b4f1a',pi.identifier,null)) hts_recency_id,
             max(if(pit.uuid='09ebf4f9-b673-4d97-b39b-04f94088ba64',pi.identifier,null)) nhif_number,
+             max(if(pit.uuid='52c3c0c3-05b8-4b26-930e-2a6a54e14c90',pi.identifier,null)) shif_number,
+             max(if(pit.uuid='24aedd37-b5be-4e08-8311-3721b8d5100d',pi.identifier,null)) sha_number,
              greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
       from patient_identifier pi
              join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -163,6 +165,8 @@ set d.unique_patient_no=pid.upn,
     d.national_unique_patient_identifier=pid.national_unique_patient_identifier,
     d.hts_recency_id=pid.hts_recency_id,
     d.nhif_number=pid.nhif_number,
+    d.shif_number=pid.shif_number,
+    d.sha_number=pid.sha_number,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
@@ -217,6 +221,10 @@ insert into dwapi_etl.etl_hiv_enrollment (
     ever_on_pep,
     ever_on_prep,
     ever_on_haart,
+    cd4_test_result,
+    cd4_test_date,
+    viral_load_test_result,
+    viral_load_test_date,
     who_stage,
     name_of_treatment_supporter,
     relationship_of_treatment_supporter,
@@ -253,6 +261,10 @@ select
        max(if(o.concept_id=1691,o.value_coded,null)) as ever_on_pep,
        max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
        max(if(o.concept_id=1181,o.value_coded,null)) as ever_on_haart,
+       max(if(o.concept_id=5497,o.value_numeric,null)) as cd4_test_result,
+       max(if(o.concept_id=159376,o.value_datetime,null)) as cd4_test_date,
+       max(if(o.concept_id=1305 and o.value_coded=1302,'LDL',if(o.concept_id=162086,o.value_text,null))) as viral_load_test_result,
+       max(if(o.concept_id=163281,date(o.value_datetime),null)) as viral_load_test_date,
        max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
        max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
        max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
@@ -270,7 +282,7 @@ from encounter e
          ) et on et.encounter_type_id=e.encounter_type
        inner join person p on p.person_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356)
+                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356,5497,159376,1305,162086,163281)
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
 END $$
@@ -621,6 +633,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 							   order_reason
 						FROM openmrs.orders
 						WHERE order_type_id = 3
+                          AND order_action = 'NEW'
 						  AND voided = 0
 						GROUP BY patient_id, encounter_id ,concept_id),
 	 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
@@ -693,11 +706,12 @@ SELECT
 	e.voided
 FROM encounter e
 		 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+         INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
 		 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
 		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
 		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
 		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
-group by obs_id;
+group by order_id;
 
 
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
@@ -2683,7 +2697,6 @@ max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,16
 																																														 when 160578 then 'Men who have sex with men'
 																																														 when 165084 then 'Male Sex Worker'
 																																														 when 160579 then 'Female sex worker'
-																																														 when 165100 then 'Transgender'
 																																														 when 162277 then 'People in prison and other closed settings'
 																																														 when 167691 then 'Inmates'
 																																														 when 1142 then 'Prison Staff'
@@ -2737,7 +2750,7 @@ concat_ws(',', max(if(o.concept_id = 1272 and o.value_coded = 165276, 'Risk redu
             max(if(o.concept_id = 1272 and o.value_coded = 1691, 'Post-exposure prophylaxis', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 167125, 'Prevention and treatment of STIs', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 118855, 'Substance abuse and mental health treatment', null)),
-            max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of GBV', null)),
+            max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of Violence', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 1370, 'HIV testing and re-testing', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 166536, 'Pre-Exposure Prophylaxis', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 5622, 'Other', null))) as neg_referral_for,
@@ -3523,7 +3536,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
                      max(if(o.concept_id = 165093 and o.value_coded = 165149,'Post-exposure prophylaxis',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 164882,'Prevention and treatment of STIs',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 165151,'Substance abuse and mental health treatment',NULL)),
-                     max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of GBV',NULL)),
+                     max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of Violence',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 1459,'HIV testing and re-testing',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 5622,'Other',NULL)),
                      max(if(o.concept_id = 161550, o.value_text, NULL))) as referral_for_prevention_services,
@@ -3592,7 +3605,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
                                                            when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
            max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
                                                              when 160579 then "Transactional sex" when 165088 then "Recurrent sex under influence of alcohol/recreational drugs" when 165089 then "Inconsistent or no condom use" when 165090 then "Injecting drug use with shared needles and/or syringes"
-                                                             when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/GBV"  else "" end), "" )) as client_assessment,
+                                                             when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/Violence"  else "" end), "" )) as client_assessment,
            max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair"
                                                              when 159407 then "Poor" when 1067 then "Good,Fair,Poor,N/A(Did not pick PrEP at last"  else "" end), "" )) as adherence_assessment,
            max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
@@ -4109,14 +4122,22 @@ CREATE PROCEDURE sp_populate_dwapi_patient_program()
 				pp.patient_id,
 				pp.location_id,
 				(case p.uuid
-				when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
-				when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
-				when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
-				when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
-				when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
-				when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
-				when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
+				when '9f144a34-3a4a-44a9-8486-6b7af6cc64f6' then 'TB'
+				when 'dfdc6d40-2f2f-463d-ba90-cc97350441a8' then 'HIV'
+				when 'c2ecdf11-97cd-432a-a971-cfd9bd296b83' then 'MCH-Child Services'
+				when 'b5d9e05f-f5ab-4612-98dd-adb75438ed34' then 'MCH-Mother Services'
+				when '335517a1-04bc-438b-9843-1ba49fb7fcd9' then 'TPT'
+				when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+				when '6eda83f0-09d9-11ea-8d71-362b9e155667' then 'OVC'
+				when '7447305a-18a7-11e9-ab14-d663bd873d93' then 'KVP'
+                when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+                when 'e41c3d74-37c7-4001-9f19-ef9e35224b70' then 'Violence screening'
+                when '228538f4-cad9-476b-84c3-ab0086150bcc' then 'VMMC'
+                when '4b898e20-9b2d-11ee-b9d1-0242ac120002' then 'MAT'
+                when 'b2b2dd4a-3aa5-4c98-93ad-4970b06819ef' then 'NimeCONFIRM'
+                when 'ffee43c4-9ccd-4e55-8a70-93194e7fafc6' then 'NCD'
+                when '8cd42506-2ebd-485f-89d6-4bb9ed328ccc' then 'CPM'
+                when '214cad1c-bb62-4d8e-b927-810a046daf62' then 'PrEP'
 				end) as program,
 				pp.date_enrolled,
 				pp.date_completed,
@@ -4794,7 +4815,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
                 e.date_changed             as date_last_modified,
                 e.voided
         from encounter e
-                 inner join
+                 left join
              (select encounter_type_id, uuid, name from encounter_type where uuid = 'de1f9d67-b73e-4e1b-90d0-036166fc6995') et
              on et.encounter_type_id = e.encounter_type
                  inner join (select r.person_a as patient_related_to,
@@ -4811,7 +4832,7 @@ CREATE PROCEDURE sp_populate_dwapi_patient_contact()
                             on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
                                                                                       r.end_date > current_date)
                  inner join person p on p.person_id = r.patient_contact  and p.voided = 0
-                 inner join (select person_id
+                 left join (select person_id
                              from person_attribute pa
                                       join person_attribute_type t
                                            on pa.person_attribute_type_id = t.person_attribute_type_id and
@@ -4961,7 +4982,7 @@ CREATE PROCEDURE sp_populate_dwapi_client_trace()
                max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
                max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
                COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 166513 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-                   then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
+                   then  "PWUD" when 105 then "PWID"  when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
                max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
                                                then  "Prisoner" else "" end),null)) as priority_population_type,
                max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
@@ -7124,7 +7145,6 @@ CREATE PROCEDURE sp_populate_dwapi_hts_eligibility_screening()
         max(if(o.concept_id=160581,(case o.value_coded when 105 then 'People who inject drugs'
                                     when 160578 then 'Men who have sex with men'
                                     when 160579 then 'Female sex worker'
-                                    when 165100 then 'Transgender'
                                     when 162277 then 'People in prison and other closed settings'
                                     when 5622 then 'Other' else '' end),null)) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
@@ -8802,6 +8822,7 @@ BEGIN
                     max(if(o.concept_id = 1069 and o.value_coded = 155205,  'Nonverbal learning disabilities',NULL)),
                     max(if(o.concept_id = 1069 and o.value_coded = 5622,  'Others(specify)',NULL))) as disability_classification,
            case f.uuid
+               when '22c68f86-bbf0-49ba-b2d1-23fa7ccf0259' then 'HIV'
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
                when '235900ff-4d4a-4575-9759-96f325f5e291' then 'Ophthamology'
@@ -8823,6 +8844,8 @@ BEGIN
                when '998be6de-bd13-4136-ba0d-3f772139895f' then 'Cardiology'
                when '32e43fc9-6de3-48e3-aafe-3b92f167753d' then 'Fertility'
                when 'a3c01460-c346-4f3d-a627-5c7de9494ba0' then 'Dental'
+               when '6d0be8bd-5320-45a0-9463-60c9ee2b1338' then 'Renal'
+               when '57df8a60-7585-4fc0-b51b-e10e568cf53c' then 'Urology'
                when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology' end as special_clinic,
            f.uuid                                                                      as special_clinic_form_uuid,
            e.date_created,
@@ -8830,7 +8853,8 @@ BEGIN
            e.voided
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
-             inner join form f on f.form_id = e.form_id and f.uuid in ('c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
+             inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259', -- HIV
+                                                                       'c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
                                                                        '1fbd26f1-0478-437c-be1e-b8468bd03ffa', -- Psychiatry
                                                                        '235900ff-4d4a-4575-9759-96f325f5e291', -- Ophthamology
                                                                        'beec83df-6606-4019-8223-05a54a52f2b0', -- Orthopaedic
@@ -8842,20 +8866,22 @@ BEGIN
                                                                        'd9f74419-e179-426e-9aff-ec97f334a075', -- Audiology
                                                                        '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
                                                                        'efa2f992-44af-487e-aaa7-c92813a34612', -- Dermatology
-                                                                       'f97f2bf3-c26b-4adf-aacd-e09d720a14cd', -- Neurology
-                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
                                                                        '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24', -- Gastroenterology
-                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437', -- Medical
-                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61', -- Surgical
-                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0', -- Maxillofacial
-                                                                       '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
-                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
-                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4' -- Pediatrics
+                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
+                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4',-- Pediatrics
+                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437',-- Medical
+                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61',-- Surgical
+                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0',-- Maxillofacial
+                                                                       'f97f2bf3-c26b-4adf-aacd-e09d720a14cd', -- Neurology
+                                                                       'a3c01460-c346-4f3d-a627-5c7de9494ba0', -- Dental
+                                                                       '6d0be8bd-5320-45a0-9463-60c9ee2b1338', -- Renal
+                                                                       '57df8a60-7585-4fc0-b51b-e10e568cf53c', -- Urology
+                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d' -- Fertility
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
                             1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1069)
         and o.voided = 0
-    group by e.patient_id, date(e.encounter_datetime);
+    group by e.patient_id, e.encounter_id;
     SELECT "Completed processing special clinics";
 END $$
 -- end of dml procedures

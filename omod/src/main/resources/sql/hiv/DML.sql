@@ -139,6 +139,8 @@ join (select pi.patient_id,
              max(if(pit.uuid='f85081e2-b4be-4e48-b3a4-7994b69bb101',pi.identifier,null)) national_unique_patient_identifier,
              REPLACE(max(if(pit.uuid='fd52829a-75d2-4732-8e43-4bff8e5b4f1a',pi.identifier,null)),'-','') hts_recency_id,
              max(if(pit.uuid='09ebf4f9-b673-4d97-b39b-04f94088ba64',pi.identifier,null)) nhif_number,
+             max(if(pit.uuid='52c3c0c3-05b8-4b26-930e-2a6a54e14c90',pi.identifier,null)) shif_number,
+             max(if(pit.uuid='24aedd37-b5be-4e08-8311-3721b8d5100d',pi.identifier,null)) sha_number,
              greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
       from patient_identifier pi
              join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -163,6 +165,8 @@ set d.unique_patient_no=pid.upn,
     d.national_unique_patient_identifier=pid.national_unique_patient_identifier,
     d.hts_recency_id=pid.hts_recency_id,
     d.nhif_number=pid.nhif_number,
+    d.shif_number=pid.shif_number,
+    d.sha_number=pid.sha_number,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
@@ -217,7 +221,11 @@ insert into kenyaemr_etl.etl_hiv_enrollment (
     ever_on_pep,
     ever_on_prep,
     ever_on_haart,
-                                             who_stage,
+    cd4_test_result,
+    cd4_test_date,
+    viral_load_test_result,
+    viral_load_test_date,
+    who_stage,
     name_of_treatment_supporter,
     relationship_of_treatment_supporter,
     treatment_supporter_telephone,
@@ -253,6 +261,10 @@ select
        max(if(o.concept_id=1691,o.value_coded,null)) as ever_on_pep,
        max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
        max(if(o.concept_id=1181,o.value_coded,null)) as ever_on_haart,
+       max(if(o.concept_id=5497,o.value_numeric,null)) as cd4_test_result,
+       max(if(o.concept_id=159376,o.value_datetime,null)) as cd4_test_date,
+       max(if(o.concept_id=1305 and o.value_coded=1302,'LDL',if(o.concept_id=162086,o.value_text,null))) as viral_load_test_result,
+       max(if(o.concept_id=163281,o.value_datetime,null)) as viral_load_test_date,
        max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
        max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
        max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
@@ -270,7 +282,7 @@ from encounter e
          ) et on et.encounter_type_id=e.encounter_type
        inner join person p on p.person_id=e.patient_id and p.voided=0
        left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356)
+                                  and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356,5497,159376,1305,162086,163281)
 where e.voided=0
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing HIV Enrollment data ", CONCAT("Time: ", NOW());
@@ -611,91 +623,93 @@ date_created,
 date_last_modified,
 created_by
 )
+
 WITH FilteredOrders AS (SELECT patient_id,
-							   encounter_id,
-							   order_id,
-							   concept_id,
-							   date_activated,
-							   urgency,
-							   order_reason
-						FROM openmrs.orders
-						WHERE order_type_id = 3
-						  AND voided = 0
-						GROUP BY patient_id, encounter_id ,concept_id),
-	 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
-								 cs.concept_id     AS member_concept_id,
-								 c.datatype_id     AS member_datatype,
-								 c.class_id        AS member_class,
-								 n.name
-						  FROM concept_set cs
-								   INNER JOIN concept c ON cs.concept_id = c.concept_id
-								   INNER JOIN concept_name n ON c.concept_id = n.concept_id
-							  AND n.locale = 'en'
-							  AND n.concept_name_type = 'FULLY_SPECIFIED'
-						  WHERE cs.concept_set = 1000628),
-	 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
-							  from obs o
-									   inner join concept c on o.concept_id = c.concept_id
-									   inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
-									   left join concept_name n
-												 on o.value_coded = n.concept_id AND n.locale = 'en' AND
-													n.concept_name_type = 'FULLY_SPECIFIED'
-									   left join concept_name n1
-												 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													n1.concept_name_type = 'FULLY_SPECIFIED'
-							  where o.order_id is not null ),
-	 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
-								from obs o
-										 inner join concept c on o.concept_id = c.concept_id
-										 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
-										 inner join concept_name n
-													on o.concept_id = n.concept_id AND n.locale = 'en' AND
-													   n.concept_name_type = 'FULLY_SPECIFIED'
-										 left join concept_name n1
-												   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													  n1.concept_name_type = 'FULLY_SPECIFIED'
-								where o.order_id is not null ),
-	 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
-							 from obs o
-									  inner join concept c on o.concept_id = c.concept_id
-									  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
-									  inner join concept_name n
-												 on o.concept_id = n.concept_id AND n.locale = 'en' AND
-													n.concept_name_type = 'FULLY_SPECIFIED'
-									  left join concept_name n1
-												on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-												   n1.concept_name_type = 'FULLY_SPECIFIED'
-							 where o.order_id is not null )
+                               encounter_id,
+                               order_id,
+                               concept_id,
+                               date_activated,
+                               urgency,
+                               order_reason
+                        FROM openmrs.orders
+                        WHERE order_type_id = 3
+                          AND order_action = 'NEW'
+                          AND voided = 0
+                        GROUP BY patient_id, encounter_id ,concept_id),
+     LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
+                                 cs.concept_id     AS member_concept_id,
+                                 c.datatype_id     AS member_datatype,
+                                 c.class_id        AS member_class,
+                                 n.name
+                          FROM concept_set cs
+                                   INNER JOIN concept c ON cs.concept_id = c.concept_id
+                                   INNER JOIN concept_name n ON c.concept_id = n.concept_id
+                              AND n.locale = 'en'
+                              AND n.concept_name_type = 'FULLY_SPECIFIED'
+                          WHERE cs.concept_set = 1000628),
+     CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
+                              from obs o
+                                       inner join concept c on o.concept_id = c.concept_id
+                                       inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
+                                       left join concept_name n
+                                                 on o.value_coded = n.concept_id AND n.locale = 'en' AND
+                                                    n.concept_name_type = 'FULLY_SPECIFIED'
+                                       left join concept_name n1
+                                                 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+                                                    n1.concept_name_type = 'FULLY_SPECIFIED'
+                              where o.order_id is not null ),
+     NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
+                                from obs o
+                                         inner join concept c on o.concept_id = c.concept_id
+                                         inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
+                                         inner join concept_name n
+                                                    on o.concept_id = n.concept_id AND n.locale = 'en' AND
+                                                       n.concept_name_type = 'FULLY_SPECIFIED'
+                                         left join concept_name n1
+                                                   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+                                                      n1.concept_name_type = 'FULLY_SPECIFIED'
+                                where o.order_id is not null ),
+     TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
+                             from obs o
+                                      inner join concept c on o.concept_id = c.concept_id
+                                      inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
+                                      inner join concept_name n
+                                                 on o.concept_id = n.concept_id AND n.locale = 'en' AND
+                                                    n.concept_name_type = 'FULLY_SPECIFIED'
+                                      left join concept_name n1
+                                                on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
+                                                   n1.concept_name_type = 'FULLY_SPECIFIED'
+                             where o.order_id is not null )
 SELECT
-	UUID(),
-	e.encounter_id,
-	e.patient_id,
-	e.location_id,
-	coalesce(o.date_activated,obs_datetime) as visit_date,
-	e.visit_id,
-	o.order_id,
-	o.concept_id,
-	o.urgency,
-	o.order_reason,
-	lc.name as order_test_name,
-	COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
-	if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
-	COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
-	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
-	COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
-	o.date_activated as date_test_requested,
-	e.encounter_datetime as date_test_result_received,
--- test requested by
-	e.date_created,
-	e.date_changed as date_last_modified,
-	e.creator
+    UUID(),
+    e.encounter_id,
+    e.patient_id,
+    e.location_id,
+    coalesce(o.date_activated,obs_datetime) as visit_date,
+    e.visit_id,
+    o.order_id,
+    o.concept_id,
+    o.urgency,
+    o.order_reason,
+    lc.name as order_test_name,
+    COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
+    if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
+    COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
+    if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
+    COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
+    o.date_activated as date_test_requested,
+    e.encounter_datetime as date_test_result_received,
+    e.date_created,
+    e.date_changed as date_last_modified,
+    e.creator
 FROM encounter e
-		 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
-		 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
-		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
-		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
-		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
-where e.voided=0 group by obs_id;
+         INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+         INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
+         LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
+         LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
+         LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
+         LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
+where e.voided=0 group by o.order_id;
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
 encounter_id,
@@ -2688,8 +2702,7 @@ max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,16
 	                                                                                                                                                    when 160666 then 'People who use drugs' 
 	                                                                                                                                                    when 160578 then 'Men who have sex with men' 
 	                                                                                                                                                    when 165084 then 'Male Sex Worker' 
-	                                                                                                                                                    when 160579 then 'Female sex worker' 
-	                                                                                                                                                    when 165100 then 'Transgender' 
+	                                                                                                                                                    when 160579 then 'Female sex worker'
 	                                                                                                                                                    when 162277 then 'People in prison and other closed settings' 
 	                                                                                                                                                    when 167691 then 'Inmates'  
 	                                                                                                                                                    when 1142 then 'Prison Staff' 
@@ -2743,7 +2756,7 @@ concat_ws(',', max(if(o.concept_id = 1272 and o.value_coded = 165276, 'Risk redu
             max(if(o.concept_id = 1272 and o.value_coded = 1691, 'Post-exposure prophylaxis', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 167125, 'Prevention and treatment of STIs', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 118855, 'Substance abuse and mental health treatment', null)),
-            max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of GBV', null)),
+            max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of Violence', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 1370, 'HIV testing and re-testing', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 166536, 'Pre-Exposure Prophylaxis', null)),
             max(if(o.concept_id = 1272 and o.value_coded = 5622, 'Other', null))) as neg_referral_for,
@@ -3070,6 +3083,230 @@ group by c.patient_id;
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(patient_id);
 ALTER TABLE kenyaemr_etl.etl_contacts_linked ADD INDEX(visit_date);
 
+DROP TABLE IF EXISTS kenyaemr_etl.etl_viral_load_validity_tracker;
+
+CREATE TABLE kenyaemr_etl.etl_viral_load_validity_tracker (
+  patient_id INT(11) not null,
+  lab_test INT(11),
+  vl_result VARCHAR(50),
+  date_created DATE,
+  date_test_requested DATE,
+  date_test_result_received DATE,
+  base_viral_load_test_result VARCHAR(100),
+  base_viral_load_test_date VARCHAR(100),
+  urgency VARCHAR(100),
+  order_reason VARCHAR(100),
+  previous_test_result VARCHAR(100),
+  previous_date_test_requested DATE,
+  previous_date_test_result_received DATE,
+  previous_urgency VARCHAR(100),
+  previous_order_reason VARCHAR(100),
+  date_started_art DATE,
+  date_confirmed_hiv_positive DATE,
+  latest_hiv_followup_visit DATE,
+  breastfeeding_status VARCHAR(100),
+  pregnancy_status VARCHAR(100),
+  lmp_date DATE,
+  pregnancy_outcome VARCHAR(100),
+  index(patient_id),
+  index(vl_result),
+  index(date_test_requested),
+  index(base_viral_load_test_result),
+  index(previous_test_result),
+  index(previous_date_test_requested),
+  index(date_confirmed_hiv_positive),
+  index(breastfeeding_status),
+  index(pregnancy_status),
+  index(order_reason)
+);
+
+INSERT INTO kenyaemr_etl.etl_viral_load_validity_tracker
+(
+    patient_id,
+    lab_test,
+    vl_result,
+    date_created,
+    date_test_requested,
+    date_test_result_received,
+    base_viral_load_test_result,
+    base_viral_load_test_date,
+    urgency,
+    order_reason,
+    previous_test_result,
+    previous_date_test_requested,
+    previous_date_test_result_received,
+    previous_urgency,
+    previous_order_reason,
+    date_started_art,
+    date_confirmed_hiv_positive,
+    latest_hiv_followup_visit,
+    breastfeeding_status,
+    pregnancy_status,
+    lmp_date,
+    pregnancy_outcome
+)
+WITH LatestTest AS (
+    -- CTE for fetching latest test data
+    SELECT
+        x.patient_id,
+        x.lab_test,
+        x.test_result,
+        x.date_created,
+        x.date_test_requested,
+        x.date_test_result_received,
+        e.base_viral_load_test_result,
+        e.base_viral_load_test_date,
+        x.urgency,
+        x.order_reason,
+        d.date_started_art,
+        COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
+        fup.latest_hiv_followup_visit,
+        fup.breastfeeding_status,
+        fup.pregnancy_status,
+        fup.lmp_date,
+        fup.pg_outcome
+    FROM kenyaemr_etl.etl_laboratory_extract x
+             LEFT JOIN (
+        SELECT d.patient_id, MIN(d.date_started) AS date_started_art
+        FROM kenyaemr_etl.etl_drug_event d
+        WHERE d.program = 'HIV'
+        GROUP BY d.patient_id
+    ) d ON x.patient_id = d.patient_id
+             INNER JOIN (
+        SELECT e.patient_id, e.visit_date, e.date_confirmed_hiv_positive,
+               MID(MAX(CONCAT(DATE(e.visit_date), e.viral_load_test_result)), 11) AS base_viral_load_test_result,
+               MID(MAX(CONCAT(DATE(e.visit_date), e.viral_load_test_date)), 11) AS base_viral_load_test_date
+        FROM kenyaemr_etl.etl_hiv_enrollment e
+        GROUP BY e.patient_id
+    ) e ON x.patient_id = e.patient_id
+             INNER JOIN (
+        SELECT f.patient_id, f.visit_date AS latest_hiv_followup_visit,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.breastfeeding)), 11) AS breastfeeding_status,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_status)), 11) AS pregnancy_status,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.last_menstrual_period)), 11) AS lmp_date,
+               MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_outcome)), 11) AS pg_outcome
+        FROM kenyaemr_etl.etl_patient_hiv_followup f
+        GROUP BY f.patient_id
+    ) fup ON x.patient_id = fup.patient_id
+    WHERE x.lab_test IN (1305, 856)
+      AND x.date_test_requested = (
+        SELECT MAX(x2.date_test_requested)
+        FROM kenyaemr_etl.etl_laboratory_extract x2
+        WHERE x2.patient_id = x.patient_id
+          AND x2.lab_test IN (1305, 856)
+    )
+),
+     PreviousTest AS (
+         -- CTE for fetching previous test data
+         SELECT
+             p.patient_id,
+             p.order_id,
+             p.test_result AS previous_test_result,
+             p.date_test_requested AS previous_date_test_requested,
+             p.date_test_result_received AS previous_date_test_result_received,
+             p.urgency AS previous_urgency,
+             p.order_reason AS previous_order_reason,
+             ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.order_id DESC) AS rn
+         FROM kenyaemr_etl.etl_laboratory_extract p
+         WHERE p.lab_test IN (1305, 856)
+     ),
+     BaselineTest AS (
+         -- Get earliest viral load test per patient
+         SELECT l.patient_id,
+                MID(MIN(CONCAT(DATE(l.date_test_requested), l.test_result)), 11) AS base_viral_load_test_result,
+                MIN(DATE(l.date_test_requested)) AS base_viral_load_test_date
+         FROM kenyaemr_etl.etl_laboratory_extract l
+         GROUP BY l.patient_id
+     ),
+     MissedLabPatients AS (
+         -- Get patients from etl_drug_event who have NOT done a viral load test
+         SELECT
+             de.patient_id,
+             MIN(de.date_started) AS date_started_art,
+             COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
+             fup.latest_hiv_followup_visit,
+             fup.breastfeeding_status,
+             fup.pregnancy_status,
+             fup.lmp_date,
+             fup.pg_outcome
+         FROM kenyaemr_etl.etl_drug_event de
+                  LEFT JOIN (
+             SELECT e.patient_id, MIN(e.visit_date) AS visit_date, e.date_confirmed_hiv_positive
+             FROM kenyaemr_etl.etl_hiv_enrollment e
+             GROUP BY e.patient_id
+         ) e ON de.patient_id = e.patient_id
+                  LEFT JOIN (
+             SELECT f.patient_id, MAX(f.visit_date) AS latest_hiv_followup_visit,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.breastfeeding)), 11) AS breastfeeding_status,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_status)), 11) AS pregnancy_status,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.last_menstrual_period)), 11) AS lmp_date,
+                    MID(MAX(CONCAT(DATE(f.visit_date), f.pregnancy_outcome)), 11) AS pg_outcome
+             FROM kenyaemr_etl.etl_patient_hiv_followup f
+             GROUP BY f.patient_id
+         ) fup ON de.patient_id = fup.patient_id
+         WHERE de.program = 'HIV'
+           AND TIMESTAMPDIFF(MONTH, de.date_started, DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)) >= 3
+           AND NOT EXISTS (
+             SELECT 1
+             FROM kenyaemr_etl.etl_laboratory_extract le
+             WHERE le.patient_id = de.patient_id
+               AND le.lab_test IN (1305, 856)
+         ) GROUP BY de.patient_id
+     )
+-- Final Query combining all the data
+SELECT
+    l.patient_id,
+    l.lab_test,
+    l.test_result,
+    l.date_created,
+    l.date_test_requested,
+    l.date_test_result_received,
+    COALESCE(l.base_viral_load_test_result, bt.base_viral_load_test_result) AS base_viral_load_test_result,
+    COALESCE(l.base_viral_load_test_date, bt.base_viral_load_test_date) AS base_viral_load_test_date,
+    l.urgency,
+    l.order_reason,
+    pt.previous_test_result,
+    pt.previous_date_test_requested,
+    pt.previous_date_test_result_received,
+    pt.previous_urgency,
+    pt.previous_order_reason,
+    l.date_started_art,
+    l.date_confirmed_hiv_positive,
+    l.latest_hiv_followup_visit,
+    l.breastfeeding_status,
+    l.pregnancy_status,
+    l.lmp_date,
+    l.pg_outcome
+FROM LatestTest l
+         LEFT JOIN PreviousTest pt ON l.patient_id = pt.patient_id AND pt.rn = 2 -- Second latest test
+         LEFT JOIN BaselineTest bt ON l.patient_id = bt.patient_id
+-- Include patients without VL tests
+UNION ALL
+SELECT
+    m.patient_id,
+    NULL AS lab_test,
+    NULL AS test_result,
+    NULL AS date_created,
+    NULL AS date_test_requested,
+    NULL AS date_test_result_received,
+    NULL AS base_viral_load_test_result,
+    NULL AS base_viral_load_test_date,
+    NULL AS urgency,
+    NULL AS order_reason,
+    NULL AS previous_test_result,
+    NULL AS previous_date_test_requested,
+    NULL AS previous_date_test_result_received,
+    NULL AS previous_urgency,
+    NULL AS previous_order_reason,
+    m.date_started_art,
+    m.date_confirmed_hiv_positive,
+    m.latest_hiv_followup_visit,
+    m.breastfeeding_status,
+    m.pregnancy_status,
+    m.lmp_date,
+    m.pg_outcome
+FROM MissedLabPatients m
+ORDER BY patient_id;
 SELECT "Completed processing dashboard indicators", CONCAT("Time: ", NOW());
 
 END $$
@@ -3689,7 +3926,7 @@ CREATE PROCEDURE sp_populate_etl_prep_behaviour_risk_assessment()
                      max(if(o.concept_id = 165093 and o.value_coded = 165149,'Post-exposure prophylaxis',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 164882,'Prevention and treatment of STIs',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 165151,'Substance abuse and mental health treatment',NULL)),
-                     max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of GBV',NULL)),
+                     max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of Violence',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 1459,'HIV testing and re-testing',NULL)),
                      max(if(o.concept_id = 165093 and o.value_coded = 5622,'Other',NULL)),
                      max(if(o.concept_id = 161550, o.value_text, NULL))) as referral_for_prevention_services,
@@ -3758,7 +3995,7 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
                                                            when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
            max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
                                                              when 160579 then "Transactional sex" when 165088 then "Recurrent sex under influence of alcohol/recreational drugs" when 165089 then "Inconsistent or no condom use" when 165090 then "Injecting drug use with shared needles and/or syringes"
-                                                             when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/GBV"  else "" end), "" )) as client_assessment,
+                                                             when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/Violence"  else "" end), "" )) as client_assessment,
            max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair"
                                                              when 159407 then "Poor" when 1067 then "Good,Fair,Poor,N/A(Did not pick PrEP at last"  else "" end), "" )) as adherence_assessment,
            max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
@@ -4317,14 +4554,22 @@ CREATE PROCEDURE sp_populate_etl_patient_program()
 				pp.patient_id,
 				pp.location_id,
 				(case p.uuid
-				when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
-				when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
-				when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
-				when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-				when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
-				when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
-				when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
-				when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
+                     when '9f144a34-3a4a-44a9-8486-6b7af6cc64f6' then 'TB'
+                     when 'dfdc6d40-2f2f-463d-ba90-cc97350441a8' then 'HIV'
+                     when 'c2ecdf11-97cd-432a-a971-cfd9bd296b83' then 'MCH-Child Services'
+                     when 'b5d9e05f-f5ab-4612-98dd-adb75438ed34' then 'MCH-Mother Services'
+                     when '335517a1-04bc-438b-9843-1ba49fb7fcd9' then 'TPT'
+                     when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+                     when '6eda83f0-09d9-11ea-8d71-362b9e155667' then 'OVC'
+                     when '7447305a-18a7-11e9-ab14-d663bd873d93' then 'KVP'
+                     when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+                     when 'e41c3d74-37c7-4001-9f19-ef9e35224b70' then 'VIOLENCE SCREENING'
+                     when '228538f4-cad9-476b-84c3-ab0086150bcc' then 'VMMC'
+                     when '4b898e20-9b2d-11ee-b9d1-0242ac120002' then 'MAT'
+                     when 'b2b2dd4a-3aa5-4c98-93ad-4970b06819ef' then 'NimeCONFIRM'
+                     when 'ffee43c4-9ccd-4e55-8a70-93194e7fafc6' then 'NCD'
+                     when '8cd42506-2ebd-485f-89d6-4bb9ed328ccc' then 'CPM'
+                     when '214cad1c-bb62-4d8e-b927-810a046daf62' then 'PrEP'
 				end) as program,
 				pp.date_enrolled,
 				pp.date_completed,
@@ -5015,7 +5260,7 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
         date_last_modified,
         voided
     )
-    select  p.uuid,
+    select p.uuid,
             date(e.encounter_datetime) as date_created,
             encounter_id,
             e.creator                  as encounter_provider,
@@ -5028,7 +5273,7 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
             e.date_changed             as date_last_modified,
             e.voided
     from encounter e
-             inner join
+             left join
          (select encounter_type_id, uuid, name from encounter_type where uuid = 'de1f9d67-b73e-4e1b-90d0-036166fc6995') et
          on et.encounter_type_id = e.encounter_type
              inner join (select r.person_a as patient_related_to,
@@ -5046,7 +5291,7 @@ CREATE PROCEDURE sp_populate_etl_patient_contact()
                         on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
                                                                                   r.end_date > current_date)
              inner join person p on p.person_id = r.patient_contact  and p.voided = 0
-             inner join (select person_id
+             left join (select person_id
                          from person_attribute pa
                                   join person_attribute_type t
                                        on pa.person_attribute_type_id = t.person_attribute_type_id and
@@ -5197,7 +5442,7 @@ CREATE PROCEDURE sp_populate_etl_client_trace()
                max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
                max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
                COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 166513 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-                                                     then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
+                                                     then  "PWUD" when 105 then "PWID"  when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
                max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
                                                then  "Prisoner" else "" end),null)) as priority_population_type,
                max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
@@ -7381,7 +7626,6 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=160581,(case o.value_coded when 105 then 'People who inject drugs'
                                     when 160578 then 'Men who have sex with men'
                                     when 160579 then 'Female sex worker'
-                                    when 165100 then 'Transgender'
                                     when 162277 then 'People in prison and other closed settings'
                                     when 5622 then 'Other' else '' end),null)) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
@@ -8153,6 +8397,342 @@ BEGIN
     group by e.patient_id,date(e.encounter_datetime);
     SELECT "Completed processing Clinical Encounter";
 END $$
+-- Procedure sp_populate_etl_pep_management_survivor --
+DROP PROCEDURE IF EXISTS sp_populate_etl_pep_management_survivor $$
+CREATE PROCEDURE sp_populate_etl_pep_management_survivor()
+BEGIN
+    SELECT "Processing PEP management survivor";
+    INSERT INTO kenyaemr_etl.etl_pep_management_survivor (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        prc_number,
+        incident_reporting_date,
+        type_of_violence,
+        disabled,
+        other_type_of_violence,
+        type_of_assault,
+        other_type_of_assault,
+        incident_date,
+        perpetrator_identity,
+        survivor_relation_to_perpetrator,
+        perpetrator_compulsory_HIV_test_done,
+        perpetrator_compulsory_HIV_test_result,
+        perpetrator_file_number,
+        survivor_state,
+        clothing_state,
+        genitalia_examination,
+        other_injuries,
+        high_vaginal_or_anal_swab,
+        rpr_vdrl,
+        survivor_hiv_test_result,
+        given_pep,
+        referred_to_psc,
+        pdt,
+        emergency_contraception_issued,
+        reason_emergency_contraception_not_issued,
+        sti_prophylaxis_and_treatment,
+        reason_sti_prophylaxis_not_issued,
+        pep_regimen_issued,
+        reason_pep_regimen_not_issued,
+        starter_pack_given,
+        date_given_pep,
+        HBsAG_result,
+        LFTs_ALT,
+        RFTs_creatinine,
+        other_tests,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 1646, o.value_text, null )) as prc_number,
+        max(if(o.concept_id=166848,o.value_datetime,null)) as incident_reporting_date,
+        max(if(o.concept_id=165205,o.value_coded,null)) as type_of_violence,
+        max(if(o.concept_id=162558,o.value_coded,null)) as disabled,
+        max(if(o.concept_id=165138,o.value_text,null)) as other_type_of_violence,
+        concat_ws(',',nullif(max(if(o.concept_id=123160 and o.value_coded = 166060,'Oral','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 123385,'Vaginal','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 148895,'Anal','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 5622,'Other','')),'')) as type_of_assault,
+        max(if(o.concept_id=164879,o.value_text,null)) as other_type_of_assault,
+        max(if(o.concept_id=165349,o.value_datetime,null)) as incident_date,
+        max(if(o.concept_id=165230,o.value_text,null)) as perpetrator_identity,
+        max(if(o.concept_id=1530,o.value_coded,null)) as survivor_relation_to_perpetrator,
+        max(if(o.concept_id=164848,o.value_coded,null)) as perpetrator_compulsory_HIV_test_done,
+        max(if(o.concept_id=159427,o.value_coded,null)) as perpetrator_compulsory_HIV_test_result,
+        max(if(o.concept_id=1639,o.value_numeric,null)) as perpetrator_file_number,
+        max(if(o.concept_id=163042,o.value_text,null)) as survivor_state,
+        max(if(o.concept_id=163045,o.value_text,null)) as clothing_state,
+        max(if(o.concept_id=160971,o.value_text,null)) as genitalia_examination,
+        max(if(o.concept_id=165092,o.value_text,null)) as other_injuries,
+        max(if(o.concept_id=166364,o.value_text,null)) as high_vaginal_or_anal_swab,
+        max(if(o.concept_id=299,o.value_coded,null)) as rpr_vdrl,
+        max(if(o.concept_id=163760,o.value_coded,null)) as survivor_hiv_test_result,
+        max(if(o.concept_id=165171,o.value_coded,null)) as given_pep,
+        max(if(o.concept_id=165270,o.value_coded,null)) as referred_to_psc,
+        max(if(o.concept_id=167229,o.value_coded,null)) as pdt,
+        max(if(o.concept_id=165167,o.value_coded,null)) as emergency_contraception_issued,
+        max(if(o.concept_id=160138,o.value_text,null)) as reason_emergency_contraception_not_issued,
+        max(if(o.concept_id=165200,o.value_coded,null)) as sti_prophylaxis_and_treatment,
+        max(if(o.concept_id=160953,o.value_text,null)) as reason_sti_prophylaxis_not_issued,
+        max(if(o.concept_id=164845,o.value_coded,null)) as pep_regimen_issued,
+        max(if(o.concept_id=160954,o.value_text,null)) as reason_pep_regimen_not_issued,
+        max(if(o.concept_id=1263,o.value_coded,null)) as starter_pack_given,
+        max(if(o.concept_id=166865,o.value_datetime,null)) as date_given_pep,
+        max(if(o.concept_id=161472,o.value_coded,null)) as HBsAG_result,
+        max(if(o.concept_id=654,o.value_datetime,null)) as LFTs_ALT,
+        max(if(o.concept_id=790,o.value_numeric,null)) as RFTs_creatinine,
+        max(if(o.concept_id=160987,o.value_text,null)) as other_tests,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'f44b2405-226b-47c4-b98f-b826ea4725ae'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (1646,166848,165205,165138,123160,164879,165349,165230,1530,164848,159427,1639,163042,163045,160971,162558,
+                                                                           165092,166364,299,163760,165171,165270,167229,165167,160138,165200,160953,164845,160954,1263,166865,161472,654,790,160987)
+        and o.voided=0
+    where e.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing PEP management survivor";
+END $$
+
+-- Procedure sp_populate_etl_sgbv_pep_followup --
+DROP PROCEDURE IF EXISTS sp_populate_etl_sgbv_pep_followup $$
+CREATE PROCEDURE sp_populate_etl_sgbv_pep_followup()
+BEGIN
+    SELECT "Processing SGBV PEP followup";
+    INSERT INTO kenyaemr_etl.etl_sgbv_pep_followup (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        visit_number,
+        pep_completed,
+        reason_pep_not_completed,
+        hiv_test_done,
+        hiv_test_result,
+        pdt_test_done,
+        pdt_test_result,
+        HBsAG_test_done,
+        HBsAG_test_result,
+        lfts_alt,
+        rfts_creatinine,
+        three_month_post_exposure_HIV_serology_result,
+        patient_assessment,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 1724, o.value_coded, null )) as visit_number,
+        max(if(o.concept_id=165171,o.value_coded,null)) as pep_completed,
+        max(if(o.concept_id=161011,o.value_text,null)) as reason_pep_not_completed,
+        max(if(o.concept_id=1356,o.value_coded,null)) as hiv_test_done,
+        max(if(o.concept_id=159427,o.value_coded,null)) as hiv_test_result,
+        max(if(o.concept_id=163951,o.value_coded,null)) as pdt_test_done,
+        max(if(o.concept_id=167229,o.value_coded,null)) as pdt_test_result,
+        max(if(o.concept_id=161472 and o.value_coded in (1065,1066),o.value_coded,null)) as HBsAG_test_done,
+        max(if(o.concept_id=165384,o.value_coded,null)) as HBsAG_test_result,
+        max(if(o.concept_id=654,o.value_numeric,null)) as lfts_alt,
+        max(if(o.concept_id=790,o.value_coded,null)) as rfts_creatinine,
+        max(if(o.concept_id=161472 and o.value_coded in (703,664),o.value_coded,null)) as three_month_post_exposure_HIV_serology_result,
+        max(if(o.concept_id=160632,o.value_text,null)) as patient_assessment,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '155ccbe2-a33f-4a58-8ce6-57a7372071ee'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (1724,165171,161011,1356,159427,163951,167229,161472,165384,654,790,160632)
+        and o.voided=0
+    where e.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing SGBV PEP followup";
+END $$
+
+-- Procedure sp_populate_etl_sgbv_post_rape_care
+DROP PROCEDURE IF EXISTS sp_populate_etl_sgbv_post_rape_care $$
+CREATE PROCEDURE sp_populate_etl_sgbv_post_rape_care()
+BEGIN
+    SELECT "Processing SGBV Post rape care";
+    INSERT INTO kenyaemr_etl.etl_sgbv_post_rape_care (
+        patient_id,
+        visit_id,
+        encounter_id,
+        uuid,
+        location_id,
+        provider,
+        visit_date,
+        examination_date,
+        incident_date,
+        number_of_perpetrators,
+        is_perpetrator_known,
+        survivor_relation_to_perpetrator,
+        county,
+        sub_county,
+        landmark,
+        observation_on_chief_complaint,
+        chief_complaint_report,
+        circumstances_around_incident,
+        type_of_sexual_violence,
+        other_type_of_sexual_violence,
+        use_of_condoms,
+        prior_attendance_to_health_facility,
+        attended_health_facility_name,
+        date_attended_health_facility,
+        treated_at_facility,
+        given_referral_notes,
+        incident_reported_to_police,
+        police_station_name,
+        police_report_date,
+        medical_or_surgical_history,
+        additional_info_from_survivor,
+        physical_examination,
+        parity_term,
+        parity_abortion,
+        on_contraception,
+        known_pregnancy,
+        date_of_last_consensual_sex,
+        systolic,
+        diastolic,
+        demeanor,
+        changed_clothes,
+        state_of_clothes,
+        means_clothes_transported,
+        details_about_clothes_transport,
+        clothes_handed_to_police,
+        survivor_went_to_toilet,
+        survivor_bathed,
+        bath_details,
+        survivor_left_marks_on_perpetrator,
+        details_of_marks_on_perpetrator,
+        physical_injuries,
+        details_outer_genitalia,
+        details_vagina,
+        details_hymen,
+        details_anus,
+        significant_orifice,
+        pep_first_dose,
+        ecp_given,
+        stitching_done,
+        stitching_notes,
+        treated_for_sti,
+        sti_treatment_remarks,
+        other_medications,
+        referred_to,
+        web_prep_microscopy,
+        samples_packed,
+        examining_officer,
+        voided
+    )
+    select
+        e.patient_id,
+        e.visit_id,
+        e.encounter_id,
+        e.uuid,
+        e.location_id,
+        e.creator,
+        date(e.encounter_datetime) as visit_date,
+        max(if(o.concept_id = 159948, o.value_datetime, null )) as examination_date,
+        max(if(o.concept_id=162869,o.value_datetime,null)) as incident_date,
+        max(if(o.concept_id=1639,o.value_numeric,null)) as number_of_perpetrators,
+        max(if(o.concept_id=165229,o.value_coded,null)) as is_perpetrator_known,
+        max(if(o.concept_id=167214,o.value_text,null)) as survivor_relation_to_perpetrator,
+        max(if(o.concept_id=167131,o.value_text,null)) as county,
+        max(if(o.concept_id=161564,o.value_text,null)) as sub_county,
+        max(if(o.concept_id=159942,o.value_text,null)) as landmark,
+        max(if(o.concept_id=160945,o.value_text,null)) as observation_on_chief_complaint,
+        max(if(o.concept_id=166846,o.value_text,null)) as chief_complaint_report,
+        max(if(o.concept_id=160303,o.value_text,null)) as circumstances_around_incident,
+        concat_ws(',',nullif(max(if(o.concept_id=123160 and o.value_coded = 166060,'Oral','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 123385,'Vaginal','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 148895,'Anal','')),''),
+                  nullif(max(if(o.concept_id=123160 and o.value_coded = 5622,'Other','')),'')) as type_of_sexual_violence,
+        max(if(o.concept_id=161011,o.value_text,null)) as other_type_of_sexual_violence,
+        max(if(o.concept_id=1357,o.value_coded,null)) as use_of_condoms,
+        max(if(o.concept_id=166484,o.value_coded,null)) as prior_attendance_to_health_facility,
+        max(if(o.concept_id=162724,o.value_text,null)) as attended_health_facility_name,
+        max(if(o.concept_id=164093,o.value_datetime,null)) as date_attended_health_facility,
+        max(if(o.concept_id=165052,o.value_coded,null)) as treated_at_facility,
+        max(if(o.concept_id=165152,o.value_coded,null)) as given_referral_notes,
+        max(if(o.concept_id=165193,o.value_coded,null)) as incident_reported_to_police,
+        max(if(o.concept_id=161550,o.value_text,null)) as police_station_name,
+        max(if(o.concept_id=165144,o.value_datetime,null)) as police_report_date,
+        max(if(o.concept_id=160221,o.value_text,null)) as medical_or_surgical_history,
+        max(if(o.concept_id=163677,o.value_text,null)) as additional_info_from_survivor,
+        max(if(o.concept_id=1391,o.value_text,null)) as physical_examination,
+        max(if(o.concept_id=160080,o.value_numeric,null)) as parity_term,
+        max(if(o.concept_id=1823,o.value_numeric,null)) as parity_abortion,
+        max(if(o.concept_id=163400,o.value_coded,null)) as on_contraception,
+        max(if(o.concept_id=5272,o.value_coded,null)) as known_pregnancy,
+        max(if(o.concept_id=160753,o.value_datetime,null)) as date_of_last_consensual_sex,
+        max(if(o.concept_id=5085,o.value_numeric,null)) as systolic,
+        max(if(o.concept_id=5086,o.value_numeric,null)) as diastolic,
+        max(if(o.concept_id=62056,o.value_coded,null)) as demeanor,
+        max(if(o.concept_id=165171,o.value_coded,null)) as changed_clothes,
+        max(if(o.concept_id=163104,o.value_text,null)) as state_of_clothes,
+        max(if(o.concept_id=165171,o.value_coded,null)) as means_clothes_transported,
+        max(if(o.concept_id=166363,o.value_text,null)) as details_about_clothes_transport,
+        max(if(o.concept_id=165180,o.value_coded,null)) as clothes_handed_to_police,
+        max(if(o.concept_id=160258,o.value_coded,null)) as survivor_went_to_toilet,
+        max(if(o.concept_id=162997,o.value_coded,null)) as survivor_bathed,
+        max(if(o.concept_id=163048,o.value_text,null)) as bath_details,
+        max(if(o.concept_id=165241,o.value_coded,null)) as survivor_left_marks_on_perpetrator,
+        max(if(o.concept_id=161031,o.value_text,null)) as details_of_marks_on_perpetrator,
+        max(if(o.concept_id=165035,o.value_text,null)) as physical_injuries,
+        max(if(o.concept_id=160971,o.value_text,null)) as details_outer_genitalia,
+        max(if(o.concept_id=160969,o.value_text,null)) as details_vagina,
+        max(if(o.concept_id=160981,o.value_text,null)) as details_hymen,
+        max(if(o.concept_id=160962,o.value_text,null)) as details_anus,
+        max(if(o.concept_id=160943,o.value_text,null)) as significant_orifice,
+        max(if(o.concept_id=165060,o.value_coded,null)) as pep_first_dose,
+        max(if(o.concept_id=374,o.value_coded,null)) as ecp_given,
+        max(if(o.concept_id=1670,o.value_coded,null)) as stitching_done,
+        max(if(o.concept_id=165440,o.value_text,null)) as stitching_notes,
+        max(if(o.concept_id=165200,o.value_coded,null)) as treated_for_sti,
+        max(if(o.concept_id=167214,o.value_text,null)) as sti_treatment_remarks,
+        max(if(o.concept_id=160632,o.value_text,null)) as other_medications,
+        concat_ws(',',nullif(max(if(o.concept_id=160632 and o.value_coded = 165192,'Police Station','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 167254,'Safe Shelter','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 5460,'Trauma Counselling','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 160542,'OPD/CCC/HIV clinic','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 1370,'HIV Test','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 164422,'Laboratory','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 135914,'Legal','')),''),
+                  nullif(max(if(o.concept_id=160632 and o.value_coded = 5622,'Other','')),'')) as referred_to,
+        max(if(o.concept_id=164217,o.value_coded,null)) as web_prep_microscopy,
+        max(if(o.concept_id=165435,o.value_text,null)) as samples_packed,
+        max(if(o.concept_id=165225,o.value_text,null)) as examining_officer,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'c46aa4fd-8a5a-4675-90a7-a6f2119f61d8'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (159948,162869,1639,165229,167214,167131,161564,159942,160945,166846,160303,123160,161011,1357,166484,162724,164093,165052,165152,165193,161550,
+                                                                           165144,160221,163677,1391,160080,1823,163400,5272,160753,5085,5086,162056,165171,163104,161239,166363,165180,160258,162997,163048,165241,161031,
+                                                                           165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225)
+        and o.voided=0
+    where e.voided=0
+    group by e.patient_id,date(e.encounter_datetime);
+    SELECT "Completed processing SGBV post rape care";
+END $$
 
 -- Procedure sp_populate_etl_gbv_physical_emotional_abuse
 DROP PROCEDURE IF EXISTS sp_populate_etl_gbv_physical_emotional_abuse $$
@@ -8543,223 +9123,6 @@ group by e.patient_id, date(e.encounter_datetime);
 SELECT "Completed processing psychiatry";
 END $$
 
--- Procedure sp_populate_etl_special_clinics
-DROP PROCEDURE IF EXISTS sp_populate_etl_special_clinics $$
-CREATE PROCEDURE sp_populate_etl_special_clinics()
-BEGIN
-    SELECT "Processing special clinics";
-    INSERT INTO kenyaemr_etl.etl_special_clinics (
-              patient_id,
-              visit_id,
-              encounter_id,
-              uuid,
-              location_id,
-              provider,
-              visit_date,
-              visit_type,
-              referred_from,
-              acuity_finding,
-              referred_to,
-              ot_intervention,
-              assistive_technology,
-              enrolled_in_school,
-              patient_with_disability,
-              patient_has_edema,
-              nutritional_status,
-              patient_pregnant,
-              sero_status,
-              medication_condition,
-              nutritional_intervention,
-              postnatal,
-              patient_on_arv,
-              anaemia_level,
-              metabolic_disorders,
-              critical_nutrition_practices,
-              therapeutic_food,
-              supplemental_food,
-              micronutrients,
-              referral_status,
-              criteria_for_admission,
-              type_of_admission,
-              cadre,
-              neuron_developmental_findings,
-              neurodiversity_conditions,
-              learning_findings,
-              disability_classification,
-              special_clinic,
-              special_clinic_form_uuid)
-    select e.patient_id,
-           e.visit_id,
-           e.encounter_id,
-           e.uuid,
-           e.location_id,
-           e.creator,
-           date(e.encounter_datetime)                                                  as visit_date,
-           max(if(o.concept_id = 164181, o.value_coded, null))                         as visit_type,
-           max(if(o.concept_id = 161643, o.value_coded, null))                         as referred_from,
-           max(if(o.concept_id = 164448, o.value_coded, null))                         as acuity_finding,
-           max(if(o.concept_id = 163145, o.value_coded, null))                         as referred_to,
-          CONCAT_WS(',',max(if(o.concept_id = 165302 and o.value_coded = 1107,  'None',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 164806,  'Neonatal Screening',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 168287,  'Initial Assessment',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 168031,  'Neonatal Screening',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 169149,  'Environmental Assessment',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 527,  'Splinting',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 163318,  'Developmental Skills Training',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 1000534,  'Multi sensory screening',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 2002026,  'Therapeutic Activities',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 2000823,  'Sensory Stimulation',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 160130,  'Vocational Training',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 164518,  'Bladder and Bowel Management',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 164872,  'Environmental Adaptations',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 2002045,  'OT Screening',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 167696,  'Individual Psychotherapy',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 166724,  'Scar Management',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 167695,  'Group Psychotherapy',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 167809,  'Health Education/ Patient Education',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 165001,  'Home Visits (Interventions)',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 167277,  'Recreation Therapy',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 161625,  'OT in critical care',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 167813,  'OT Sexual health',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 160351,  'Teletherapy',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 163579,  'Fine and gross motor skills training',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 160563,  'Referrals IN',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 159492,  'Referrals OUT',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 1692,  'Discharge on recovery',NULL)),
-                    max(if(o.concept_id = 165302 and o.value_coded = 5622,  'Others(specify)',NULL))) as ot_intervention,
-           CONCAT_WS(',',max(if(o.concept_id = 164204 and o.value_coded = 1107,  'None',NULL)),
-                     max(if(o.concept_id = 164204 and o.value_coded = 2000819,  'Communication',NULL)),
-                     max(if(o.concept_id = 164204 and o.value_coded = 165151,  'Self Care',NULL)),
-                     max(if(o.concept_id = 164204 and o.value_coded = 168812,  'Physical',NULL)),
-                     max(if(o.concept_id = 164204 and o.value_coded = 165424,  'Cognitive/Intellectual',NULL)),
-                     max(if(o.concept_id = 164204 and o.value_coded = 2000976,  'Hearing Devices',NULL))) as assistive_technology,
-           max(if(o.concept_id = 160336, o.value_coded, null))                         as enrolled_in_school,
-           max(if(o.concept_id = 162558, o.value_coded, null))                         as patient_with_disability,
-           max(if(o.concept_id = 163894,o.value_coded,null))                           as patient_has_edema,
-           max(if(o.concept_id = 160205,o.value_coded,null))                           as nutritional_status,
-           max(if(o.concept_id  = 5272,o.value_coded,null))                            as patient_pregnant,
-           max(if(o.concept_id  = 1169,o.value_coded,null))                            as sero_status,
-           max(if(o.concept_id  = 162747,o.value_coded,null))                          as medication_condition,
-           max(if(o.concept_id  = 162696,o.value_coded,null))                          as nutritional_intervention,
-           max(if(o.concept_id = 168734,o.value_coded,null))                           as postnatal,
-           max(if(o.concept_id  = 1149,o.value_coded,null))                            as patient_on_arv,
-           max(if(o.concept_id  = 156625,o.value_coded,null))                          as anaemia_level,
-              CONCAT_WS(',',max(if(o.concept_id = 163304 and o.value_coded = 1107,  'None',NULL)),
-                     max(if(o.concept_id = 163304 and o.value_coded = 135761,  'Lypodystrophy',NULL)),
-                     max(if(o.concept_id = 163304 and o.value_coded = 141623,  'Dyslipidemia',NULL)),
-                     max(if(o.concept_id = 163304 and o.value_coded = 142473,  'Type II Diabetes',NULL))) as metabolic_disorders,
-             CONCAT_WS(',',max(if(o.concept_id = 161005 and o.value_coded = 1107,  'None',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 163300,  'Nutrition status assessment',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 161648,  'Dietary/Energy needs',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 1906,  'Sanitation',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 135797,  'Positive living behaviour',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 159364,  'Exercise',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 154358,  'Safe drinking water',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 1611,  'Prompt treatment for Opportunistic Infections',NULL)),
-                     max(if(o.concept_id = 161005 and o.value_coded = 164377,  'Drug food interactions side effects',NULL))) as critical_nutrition_practices,
-             CONCAT_WS(',',max(if(o.concept_id = 161648 and o.value_coded = 1107,  'None',NULL)),
-                     max(if(o.concept_id = 161648 and o.value_coded = 163394,  'RUTF',NULL)),
-                     max(if(o.concept_id = 161648 and o.value_coded = 163404,  'F-75',NULL)),
-                     max(if(o.concept_id = 161648 and o.value_coded = 167247,  'F-100',NULL)),
-                     max(if(o.concept_id = 161648 and o.value_coded = 159854,  'Fiesmol',NULL)),
-                     max(if(o.concept_id = 161648 and o.value_coded = 159364,  'Exercise',NULL)),
-                     max(if(o.concept_id = 161648 and o.value_coded = 5622,  'Others',NULL))) as therapeutic_food,
-             CONCAT_WS(',',max(if(o.concept_id = 159854 and o.value_coded = 1107,  'None',NULL)),
-                     max(if(o.concept_id = 159854 and o.value_coded = 159597,  'FBF',NULL)),
-                     max(if(o.concept_id = 159854 and o.value_coded = 162758,  'CSB',NULL)),
-                     max(if(o.concept_id = 159854 and o.value_coded = 166382,  'RUSF',NULL)),
-                     max(if(o.concept_id = 159854 and o.value_coded = 165577,  'Liquid nutrition supplements',NULL)),
-                     max(if(o.concept_id = 159854 and o.value_coded = 5622,  'Others',NULL))) as supplemental_food,
-             CONCAT_WS(',',max(if(o.concept_id = 5484 and o.value_coded = 1107,  'None',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 86339,  'Vitamin A',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 86343,  'B6',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 461,  'Multi-vitamins',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 104677,  'Iron-folate',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 86672,  'Zinc',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 161649,  'Multiple Micronutrients',NULL)),
-                     max(if(o.concept_id = 5484 and o.value_coded = 5622,  'Others',NULL))) as micronutrients,
-        max(if(o.concept_id  =   1788,o.value_coded,null))                          as referral_status,
-        max(if(o.concept_id  =  167381,o.value_coded,null))                         as criteria_for_admission,
-        max(if(o.concept_id  =  162477,o.value_coded,null))                         as type_of_admission,
-        max(if(o.concept_id  =  5619,o.value_coded,null))                           as cadre,
-        CONCAT_WS(',',max(if(o.concept_id = 167273 and o.value_coded = 152492,  'Cerebral palsy',NULL)),
-                    max(if(o.concept_id = 167273 and o.value_coded = 144481,  'Down syndrome',NULL)),
-                    max(if(o.concept_id = 167273 and o.value_coded = 117470,  'Hydrocephalus',NULL)),
-                    max(if(o.concept_id = 167273 and o.value_coded = 126208,  'Spina bifida',NULL))) as neuron_developmental_findings,
-        CONCAT_WS(',',max(if(o.concept_id = 165911 and o.value_coded = 121317,  'ADHD(Attention deficit hyperactivity disorder)',NULL)),
-                          max(if(o.concept_id = 165911 and o.value_coded = 121303,  'Autism',NULL))) as neurodiversity_conditions,
-        CONCAT_WS(',',max(if(o.concept_id = 165241 and o.value_coded = 118795,  'Dyslexia',NULL)),
-                      max(if(o.concept_id = 165241 and o.value_coded = 118800,  'Dysgraphia',NULL)),
-                      max(if(o.concept_id = 165241 and o.value_coded = 141644,  'Dyscalculia',NULL)),
-                      max(if(o.concept_id = 165241 and o.value_coded = 153271,  'Auditory processing',NULL)),
-                      max(if(o.concept_id = 165241 and o.value_coded = 121529,  'Language processing disorder',NULL)),
-                      max(if(o.concept_id = 165241 and o.value_coded = 155205,  'Nonverbal learning disabilities',NULL)),
-                      max(if(o.concept_id = 165241 and o.value_coded = 126456,  'Visual perceptual/visual motor deficit',NULL))) as learning_findings,
-        CONCAT_WS(',',max(if(o.concept_id = 1069 and o.value_coded = 167078,  'Neurodevelopmental',NULL)),
-                    max(if(o.concept_id = 1069 and o.value_coded = 153343,  'learning',NULL)),
-                    max(if(o.concept_id = 1069 and o.value_coded = 160176,  'Neurodiversity conditions',NULL)),
-                    max(if(o.concept_id = 1069 and o.value_coded = 156923,  'Intelectual disability',NULL)),
-                    max(if(o.concept_id = 1069 and o.value_coded = 142616,  'Delayed developmental milestone',NULL)),
-                    max(if(o.concept_id = 1069 and o.value_coded = 155205,  'Nonverbal learning disabilities',NULL)),
-                    max(if(o.concept_id = 1069 and o.value_coded = 5622,  'Others(specify)',NULL))) as disability_classification,
-           case f.uuid
-               when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
-               when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
-               when '235900ff-4d4a-4575-9759-96f325f5e291' then 'Ophthamology'
-               when 'beec83df-6606-4019-8223-05a54a52f2b0' then 'Orthopaedic'
-               when '062a24b5-728b-4639-8176-197e8f458490' then 'Occupational Therapy'
-               when '18c209ac-0787-4b51-b9aa-aa8b1581239c' then 'Physiotherapy'
-               when 'b8357314-0f6a-4fc9-a5b7-339f47095d62' then 'Nutrition'
-               when '31a371c6-3cfe-431f-94db-4acadad8d209' then 'Oncology'
-               when 'd9f74419-e179-426e-9aff-ec97f334a075' then 'Audiology'
-               when '998be6de-bd13-4136-ba0d-3f772139895f' then 'Cardiology'
-               when 'efa2f992-44af-487e-aaa7-c92813a34612' then 'Dermatology'
-               when 'f97f2bf3-c26b-4adf-aacd-e09d720a14cd' then 'Neurology'
-               when '35ab0825-33af-49e7-ac01-bb0b05753732' then 'Obstetric'
-               when '9f6543e4-0821-4f9c-9264-94e45dc35e17' then 'Diabetic'
-               when 'd95e44dd-e389-42ae-a9b6-1160d8eeebc4' then 'Pediatrics'
-               when '00aa7662-e3fd-44a5-8f3a-f73eb7afa437' then 'Medical'
-               when 'da1f7e74-5371-4997-8a02-b7b9303ddb61' then 'Surgical'
-               when 'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0' then 'Maxillofacial'
-               when '998be6de-bd13-4136-ba0d-3f772139895f' then 'Cardiology'
-               when '32e43fc9-6de3-48e3-aafe-3b92f167753d' then 'Fertility'
-               when 'a3c01460-c346-4f3d-a627-5c7de9494ba0' then 'Dental'
-               when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology' end as special_clinic,
-           f.uuid                                                                      as special_clinic_form_uuid
-    from encounter e
-             inner join person p on p.person_id = e.patient_id and p.voided = 0
-             inner join form f on f.form_id = e.form_id and f.uuid in ('c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
-                                                                       '1fbd26f1-0478-437c-be1e-b8468bd03ffa', -- Psychiatry
-                                                                       '235900ff-4d4a-4575-9759-96f325f5e291', -- Ophthamology
-                                                                       'beec83df-6606-4019-8223-05a54a52f2b0', -- Orthopaedic
-                                                                       '35ab0825-33af-49e7-ac01-bb0b05753732', -- Obstetric/Gynaecology
-                                                                       '062a24b5-728b-4639-8176-197e8f458490', -- Occupational Therapy Clinic
-                                                                       '18c209ac-0787-4b51-b9aa-aa8b1581239c', -- Physiotherapy
-                                                                       'b8357314-0f6a-4fc9-a5b7-339f47095d62', -- Nutrition
-                                                                       '31a371c6-3cfe-431f-94db-4acadad8d209', -- Oncology
-                                                                       'd9f74419-e179-426e-9aff-ec97f334a075', -- Audiology
-                                                                       '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
-                                                                       'efa2f992-44af-487e-aaa7-c92813a34612', -- Dermatology
-                                                                       'f97f2bf3-c26b-4adf-aacd-e09d720a14cd', -- Neurology
-                                                                       '9f6543e4-0821-4f9c-9264-94e45dc35e17', -- Diabetic
-                                                                       '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24', -- Gastroenterology
-                                                                       '00aa7662-e3fd-44a5-8f3a-f73eb7afa437', -- Medical
-                                                                       'da1f7e74-5371-4997-8a02-b7b9303ddb61', -- Surgical
-                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0', -- Maxillofacial
-                                                                       '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
-                                                                       '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
-                                                                       'a3c01460-c346-4f3d-a627-5c7de9494ba0', -- Dental
-                                                                       'd95e44dd-e389-42ae-a9b6-1160d8eeebc4' -- Pediatrics
-        )
-             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
-                            1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1069)
-        and o.voided = 0
-    where e.voided = 0
-    group by e.patient_id, date(e.encounter_datetime);
-    SELECT "Completed processing special clinics";
-END $$
-    -- end of dml procedures
-
 SET sql_mode=@OLD_SQL_MODE $$
 
 -- ------------------------------------------- running all procedures -----------------------------
@@ -8856,7 +9219,6 @@ CALL sp_populate_etl_gbv_physical_emotional_abuse();
 CALL sp_populate_etl_family_planning();
 CALL sp_populate_etl_physiotherapy();
 CALL sp_populate_etl_psychiatry();
-CALL sp_populate_etl_special_clinics();
 CALL sp_update_next_appointment_date();
 CALL sp_update_dashboard_table();
 

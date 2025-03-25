@@ -111,7 +111,6 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_physical_emotional_abuse;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_family_planning;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_physiotherapy;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_psychiatry;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics
@@ -141,6 +140,8 @@ unique_prep_number VARCHAR(50),
 district_reg_no VARCHAR(50),
 hei_no VARCHAR(50),
 cwc_number VARCHAR(50),
+sha_number VARCHAR(100),
+shif_number VARCHAR(100),
 phone_number VARCHAR(50) DEFAULT NULL,
 birth_place VARCHAR(50) DEFAULT NULL,
 citizenship VARCHAR(50) DEFAULT NULL,
@@ -194,6 +195,10 @@ ever_on_pmtct INT(11),
 ever_on_pep INT(11),
 ever_on_prep INT(11),
 ever_on_haart INT(11),
+cd4_test_result INT(11),
+cd4_test_date DATE,
+viral_load_test_result INT(11),
+viral_load_test_date DATE,
 who_stage INT(11),
 name_of_treatment_supporter VARCHAR(255),
 relationship_of_treatment_supporter INT(11),
@@ -4080,7 +4085,6 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_special_clinics table";
-
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$

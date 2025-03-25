@@ -147,6 +147,8 @@ max(if(pit.uuid='ca125004-e8af-445d-9436-a43684150f8b',pi.identifier,null)) driv
 max(if(pit.uuid='f85081e2-b4be-4e48-b3a4-7994b69bb101',pi.identifier,null)) national_unique_patient_identifier,
 REPLACE(max(if(pit.uuid='fd52829a-75d2-4732-8e43-4bff8e5b4f1a',pi.identifier,null)),'-','') hts_recency_id,
 max(if(pit.uuid='09ebf4f9-b673-4d97-b39b-04f94088ba64',pi.identifier,null)) nhif_number,
+max(if(pit.uuid='52c3c0c3-05b8-4b26-930e-2a6a54e14c90',pi.identifier,null)) shif_number,
+max(if(pit.uuid='24aedd37-b5be-4e08-8311-3721b8d5100d',pi.identifier,null)) sha_number,
 greatest(ifnull(max(pi.date_changed),'0000-00-00'),max(pi.date_created)) as latest_date
 from patient_identifier pi
 join patient_identifier_type pit on pi.identifier_type=pit.patient_identifier_type_id
@@ -174,6 +176,8 @@ set d.unique_patient_no=pid.UPN,
     d.national_unique_patient_identifier=pid.national_unique_patient_identifier,
     d.hts_recency_id=pid.hts_recency_id,
     d.nhif_number=pid.nhif_number,
+    d.shif_number=pid.shif_number,
+    d.sha_number=pid.sha_number,
     d.date_last_modified=if(pid.latest_date > ifnull(d.date_last_modified,'0000-00-00'),pid.latest_date,d.date_last_modified)
 ;
 
@@ -233,7 +237,11 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
       ever_on_pep,
       ever_on_prep,
       ever_on_haart,
-                                                 who_stage,
+      cd4_test_result,
+      cd4_test_date,
+      viral_load_test_result,
+      viral_load_test_date,
+      who_stage,
       name_of_treatment_supporter,
       relationship_of_treatment_supporter,
       treatment_supporter_telephone,
@@ -269,6 +277,10 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         max(if(o.concept_id=1691,o.value_coded,null)) as ever_on_pep,
         max(if(o.concept_id=165269,o.value_coded,null)) as ever_on_prep,
         max(if(o.concept_id=1181,o.value_coded,null)) as ever_on_haart,
+        max(if(o.concept_id=5497,o.value_numeric,null)) as cd4_test_result,
+        max(if(o.concept_id=159376,o.value_datetime,null)) as cd4_test_date,
+        max(if(o.concept_id=1305 and o.value_coded=1302,'LDL',if(o.concept_id=162086,o.value_text,null))) as viral_load_test_result,
+        max(if(o.concept_id=163281,date(o.value_datetime),null)) as viral_load_test_date,
         max(if(o.concept_id=5356,o.value_coded,null)) as who_stage,
         max(if(o.concept_id=160638,left(trim(o.value_text),100),null)) as name_of_treatment_supporter,
         max(if(o.concept_id=160640,o.value_coded,null)) as relationship_of_treatment_supporter,
@@ -286,7 +298,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
         ) et on et.encounter_type_id=e.encounter_type
         join person p on p.person_id=e.patient_id and p.voided=0
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
-                                 and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356)
+                                 and o.concept_id in (160555,160540,160534,160535,161551,159599,160554,160632,160533,160638,160640,160642,160641,164932,160563,5629,1174,1088,161555,164855,164384,1148,1691,165269,1181,5356,5497,159376,1305,162086,163281)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -296,7 +308,7 @@ CREATE PROCEDURE sp_update_etl_hiv_enrollment(IN last_update_time DATETIME)
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),encounter_provider=VALUES(encounter_provider), patient_type=VALUES(patient_type), date_first_enrolled_in_care=VALUES(date_first_enrolled_in_care),entry_point=VALUES(entry_point),transfer_in_date=VALUES(transfer_in_date),
       facility_transferred_from=VALUES(facility_transferred_from),district_transferred_from=VALUES(district_transferred_from),previous_regimen=VALUES(previous_regimen),date_started_art_at_transferring_facility=VALUES(date_started_art_at_transferring_facility),date_confirmed_hiv_positive=VALUES(date_confirmed_hiv_positive),facility_confirmed_hiv_positive=VALUES(facility_confirmed_hiv_positive),
       arv_status=VALUES(arv_status),ever_on_pmtct=VALUES(ever_on_pmtct),ever_on_pep=VALUES(ever_on_pep),ever_on_prep=VALUES(ever_on_prep),ever_on_haart=VALUES(ever_on_haart),who_stage=VALUES(who_stage),name_of_treatment_supporter=VALUES(name_of_treatment_supporter),relationship_of_treatment_supporter=VALUES(relationship_of_treatment_supporter),treatment_supporter_telephone=VALUES(treatment_supporter_telephone),treatment_supporter_address=VALUES(treatment_supporter_address),in_school=VALUES(in_school),orphan=VALUES(orphan),voided=VALUES(voided),
-      date_of_discontinuation=VALUES(date_of_discontinuation),discontinuation_reason=(discontinuation_reason);
+      date_of_discontinuation=VALUES(date_of_discontinuation),discontinuation_reason=(discontinuation_reason),cd4_test_result=VALUES(cd4_test_result), cd4_test_date=VALUES(cd4_test_date),viral_load_test_result=VALUES(viral_load_test_result), viral_load_test_date=VALUES(viral_load_test_date);
 
     END $$
 -- DELIMITER ;
@@ -2559,6 +2571,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 								   order_reason
 							FROM openmrs.orders
 							WHERE order_type_id = 3
+                              AND order_action = 'NEW'
 							  AND voided = 0
 							GROUP BY patient_id, encounter_id ,concept_id),
 		 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
@@ -2630,6 +2643,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 		e.creator
 	FROM encounter e
 			 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+             INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
 			 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
 			 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
 			 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
@@ -2637,7 +2651,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
-	group by obs_id
+	group by order_id
     ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), set_member_conceptId=VALUES(set_member_conceptId), test_result=VALUES(test_result)
     ;
     END $$
@@ -2719,7 +2733,6 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
 																																																 when 160578 then 'Men who have sex with men'
 																																																 when 165084 then 'Male Sex Worker'
 																																																 when 160579 then 'Female sex worker'
-																																																 when 165100 then 'Transgender'
 																																																 when 162277 then 'People in prison and other closed settings'
 																																																 when 167691 then 'Inmates'
 																																																 when 1142 then 'Prison Staff'
@@ -2774,7 +2787,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
                   max(if(o.concept_id = 1272 and o.value_coded = 1691, 'Post-exposure prophylaxis', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 167125, 'Prevention and treatment of STIs', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 118855, 'Substance abuse and mental health treatment', null)),
-                  max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of GBV', null)),
+                  max(if(o.concept_id = 1272 and o.value_coded = 141814, 'Prevention of violence', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 1370, 'HIV testing and re-testing', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 166536, 'Pre-Exposure Prophylaxis', null)),
                   max(if(o.concept_id = 1272 and o.value_coded = 5622, 'Other', null))) as neg_referral_for,
@@ -3633,7 +3646,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
                   max(if(o.concept_id = 165093 and o.value_coded = 165149,'Post-exposure prophylaxis',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 164882,'Prevention and treatment of STIs',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 165151,'Substance abuse and mental health treatment',NULL)),
-                  max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of GBV',NULL)),
+                  max(if(o.concept_id = 165093 and o.value_coded = 165273,'Prevention of Violence',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 1459,'HIV testing and re-testing',NULL)),
                   max(if(o.concept_id = 165093 and o.value_coded = 5622,'Other',NULL)),
                   max(if(o.concept_id = 161550, o.value_text, NULL))) as referral_for_prevention_services,
@@ -3738,7 +3751,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
                                              when 160119 then "On ART for less than 6 months" when 162854 then "Not on ART" else "" end), "" )) as risk_for_hiv_positive_partner,
                 max(if(o.concept_id = 162189, (case o.value_coded when 159385 then "Has Sex with more than one partner" when 1402 then "Sex partner(s)at high risk for HIV and HIV status unknown"
                                                when 160579 then "Transactional sex" when 165088 then "Recurrent sex under influence of alcohol/recreational drugs" when 165089 then "Inconsistent or no condom use" when 165090 then "Injecting drug use with shared needles and/or syringes"
-                                               when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/GBV"  else "" end), "" )) as client_assessment,
+                                               when 164845 then "Recurrent use of Post Exposure Prophylaxis (PEP)" when 112992 then "Recent STI" when 141814 then "Ongoing IPV/Violence"  else "" end), "" )) as client_assessment,
                 max(if(o.concept_id = 164075, (case o.value_coded when 159405 then "Good" when 159406 then "Fair"
                                                when 159407 then "Poor" when 1067 then "Good,Fair,Poor,N/A(Did not pick PrEP at last"  else "" end), "" )) as adherence_assessment,
                 max(if(o.concept_id = 160582, (case o.value_coded when 163293 then "Sick" when 1107 then "None"
@@ -4651,14 +4664,22 @@ CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
         pp.patient_id patient_id,
         pp.location_id location_id,
         (case p.uuid
-         when "9f144a34-3a4a-44a9-8486-6b7af6cc64f6" then "TB"
-         when "dfdc6d40-2f2f-463d-ba90-cc97350441a8" then "HIV"
-         when "c2ecdf11-97cd-432a-a971-cfd9bd296b83" then "MCH-Child Services"
-         when "b5d9e05f-f5ab-4612-98dd-adb75438ed34" then "MCH-Mother Services"
-         when "335517a1-04bc-438b-9843-1ba49fb7fcd9" then "TPT"
-         when "24d05d30-0488-11ea-8d71-362b9e155667" then "OTZ"
-         when "6eda83f0-09d9-11ea-8d71-362b9e155667" then "OVC"
-         when "7447305a-18a7-11e9-ab14-d663bd873d93" then "KP"
+             when '9f144a34-3a4a-44a9-8486-6b7af6cc64f6' then 'TB'
+             when 'dfdc6d40-2f2f-463d-ba90-cc97350441a8' then 'HIV'
+             when 'c2ecdf11-97cd-432a-a971-cfd9bd296b83' then 'MCH-Child Services'
+             when 'b5d9e05f-f5ab-4612-98dd-adb75438ed34' then 'MCH-Mother Services'
+             when '335517a1-04bc-438b-9843-1ba49fb7fcd9' then 'TPT'
+             when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+             when '6eda83f0-09d9-11ea-8d71-362b9e155667' then 'OVC'
+             when '7447305a-18a7-11e9-ab14-d663bd873d93' then 'KVP'
+             when '24d05d30-0488-11ea-8d71-362b9e155667' then 'OTZ'
+             when 'e41c3d74-37c7-4001-9f19-ef9e35224b70' then 'VIOLENCE SCREENING'
+             when '228538f4-cad9-476b-84c3-ab0086150bcc' then 'VMMC'
+             when '4b898e20-9b2d-11ee-b9d1-0242ac120002' then 'MAT'
+             when 'b2b2dd4a-3aa5-4c98-93ad-4970b06819ef' then 'NimeCONFIRM'
+             when 'ffee43c4-9ccd-4e55-8a70-93194e7fafc6' then 'NCD'
+             when '8cd42506-2ebd-485f-89d6-4bb9ed328ccc' then 'CPM'
+             when '214cad1c-bb62-4d8e-b927-810a046daf62' then 'PrEP'
          end) as program,
         pp.date_enrolled date_enrolled,
         pp.date_completed date_completed,
@@ -5226,7 +5247,7 @@ select  p.uuid,
         e.date_changed             as date_last_modified,
         e.voided
 from encounter e
-         inner join
+         left join
      (select encounter_type_id, uuid, name from encounter_type where uuid = 'de1f9d67-b73e-4e1b-90d0-036166fc6995') et
      on et.encounter_type_id = e.encounter_type
          inner join (select r.person_a as patient_related_to,
@@ -5243,7 +5264,7 @@ from encounter e
                     on e.patient_id = r.patient_contact and r.voided = 0 and (r.end_date is null or
                                                                               r.end_date > current_date)
          inner join person p on p.person_id = r.patient_contact  and p.voided = 0
-         inner join (select person_id
+         left join (select person_id
                      from person_attribute pa
                               join person_attribute_type t
                                    on pa.person_attribute_type_id = t.person_attribute_type_id and
@@ -5358,7 +5379,7 @@ CREATE PROCEDURE sp_update_etl_kp_contact(IN last_update_time DATETIME)
         max(if(o.concept_id=160555,o.value_datetime,null)) as date_first_enrolled_in_kp,
         max(if(o.concept_id=160535,left(trim(o.value_text),100),null)) as facility_transferred_from,
         COALESCE(max(if(o.concept_id=165241,(case o.value_coded when 162277 then "Prison Inmate" when 1142 THEN "Prison Staff" when 163488 then "Prison Community" end),null)),max(if(o.concept_id=164929,(case o.value_coded when 166513 then "FSW" when 160578 then "MSM" when 165084 then "MSW" when 165085
-            then  "PWUD" when 105 then "PWID"  when 165100 then "Transgender" when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
+            then  "PWUD" when 105 then "PWID"  when 162277 then "People in prison and other closed settings" when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 6096 then "Discordant Couple" when 1175 then "Not applicable"  else "" end),null))) as key_population_type,
         max(if(o.concept_id=138643,(case o.value_coded when 159674 then "Fisher Folk" when 162198 then "Truck Driver" when 160549 then "Adolescent and Young Girls" when 162277
           then  "Prisoner" else "" end),null)) as priority_population_type,
         max(if(o.concept_id=167131,o.value_text,null)) as implementation_county,
@@ -8242,7 +8263,6 @@ select
     max(if(o.concept_id=160581,(case o.value_coded when 105 then 'People who inject drugs'
                                                    when 160578 then 'Men who have sex with men'
                                                    when 160579 then 'Female sex worker'
-                                                   when 165100 then 'Transgender'
                                                    when 162277 then 'People in prison and other closed settings'
                                                    when 5622 then 'Other' else '' end),null)) as key_population_type,
     max(if(o.concept_id=138643,(case o.value_coded when 159674 then 'Fisher folk'
@@ -10536,7 +10556,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_family_planning(last_update_time);
     CALL sp_update_etl_physiotherapy(last_update_time);
     CALL sp_update_etl_psychiatry(last_update_time);
-    CALL sp_update_etl_special_clinics(last_update_time);
+    -- CALL sp_update_etl_special_clinics(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();
