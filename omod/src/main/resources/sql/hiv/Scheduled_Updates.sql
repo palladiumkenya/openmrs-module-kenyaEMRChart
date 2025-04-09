@@ -10587,7 +10587,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_family_planning(last_update_time);
     CALL sp_update_etl_physiotherapy(last_update_time);
     CALL sp_update_etl_psychiatry(last_update_time);
-    CALL sp_update_etl_special_clinics(last_update_time);
+--    CALL sp_update_etl_special_clinics(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();
