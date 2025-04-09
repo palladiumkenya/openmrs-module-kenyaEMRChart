@@ -354,7 +354,7 @@ select e.patient_id,
            when '6d0be8bd-5320-45a0-9463-60c9ee2b1338' then 'Renal'
            when '57df8a60-7585-4fc0-b51b-e10e568cf53c' then 'Urology'
            when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology'
-           when '4b5f79f5-f6bf-4dc2-b5c3-f5d77506775c' then 'Hearing'  end                    as special_clinic,
+           when '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' then 'Hearing'  end                    as special_clinic,
        f.uuid                                                                                         as special_clinic_form_uuid
 from encounter e
          inner join person p on p.person_id = e.patient_id and p.voided = 0
