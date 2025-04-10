@@ -1862,6 +1862,7 @@ SELECT "Successfully created etl_generalized_anxiety_disorder table";
     other_poor_adherence_reasons varchar(255),
     prep_contraindications VARCHAR(255),
     treatment_plan VARCHAR(255),
+    reason_for_starting_prep INT(11),
     switching_option VARCHAR(255),
     switching_date DATE,
     prep_type VARCHAR(10),
