@@ -10254,6 +10254,13 @@ BEGIN
               neuron_developmental_findings,
               neurodiversity_conditions,
               learning_findings,
+              screening_site,
+              communication_mode,
+              neonatal_risk_factor,
+              presence_of_comobidities,
+              first_screening_date,
+              first_screening_outcome,
+              second_screening_outcome,
               disability_classification,
               special_clinic,
               special_clinic_form_uuid)
@@ -10364,6 +10371,21 @@ BEGIN
                       max(if(o.concept_id = 165241 and o.value_coded = 121529,  'Language processing disorder',NULL)),
                       max(if(o.concept_id = 165241 and o.value_coded = 155205,  'Nonverbal learning disabilities',NULL)),
                       max(if(o.concept_id = 165241 and o.value_coded = 126456,  'Visual perceptual/visual motor deficit',NULL))) as learning_findings,
+        max(if(o.concept_id = 1000494, o.value_coded, null))                         as screening_site,
+        max(if(o.concept_id = 164209, o.value_coded, null))                         as communication_mode,
+        max(if(o.concept_id = 165430, o.value_coded, null))                         as neonatal_risk_factor,
+        CONCAT_WS(',',max(if(o.concept_id = 162747 and o.value_coded = 117086,  'Recurrent ear infections',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 117087,  'Chronic ear disease',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 140903,  'Noise exposure',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 119481,  'Diabetes',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 117399,  'HTN',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 148117,  'Autoimmune diseases',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 116838,  'Head injury',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 1169,  'HIV',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 112141,  'TB',NULL))) as presence_of_comobidities,
+        max(if(o.concept_id = 1000088, o.value_datetime, null))                     as first_screening_date,
+        max(if(o.concept_id = 162737, o.value_coded, null))                         as first_screening_outcome,
+        max(if(o.concept_id = 166663, o.value_coded, null))                         as second_screening_outcome,
         CONCAT_WS(',',max(if(o.concept_id = 1069 and o.value_coded = 167078,  'Neurodevelopmental',NULL)),
                     max(if(o.concept_id = 1069 and o.value_coded = 153343,  'learning',NULL)),
                     max(if(o.concept_id = 1069 and o.value_coded = 160176,  'Neurodiversity conditions',NULL)),
@@ -10392,7 +10414,8 @@ BEGIN
                when '998be6de-bd13-4136-ba0d-3f772139895f' then 'Cardiology'
                when '32e43fc9-6de3-48e3-aafe-3b92f167753d' then 'Fertility'
                when 'a3c01460-c346-4f3d-a627-5c7de9494ba0' then 'Dental'
-               when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology' end as special_clinic,
+               when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology'
+               when '4b5f79f5-f6bf-4dc2-b5c3-f5d77506775c' then 'Hearing'  end as special_clinic,
            f.uuid                                                                      as special_clinic_form_uuid
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
@@ -10417,10 +10440,11 @@ BEGIN
                                                                        '998be6de-bd13-4136-ba0d-3f772139895f', -- Cardiology
                                                                        '32e43fc9-6de3-48e3-aafe-3b92f167753d', -- Fertility
                                                                        'a3c01460-c346-4f3d-a627-5c7de9494ba0', -- Dental
-                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0'  -- Maxillofacial
+                                                                       'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0',  -- Maxillofacial
+                                                                       '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' -- Hearing
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
-                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1069)
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,1069)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10459,6 +10483,13 @@ BEGIN
                             neuron_developmental_findings=VALUES(neuron_developmental_findings),
                             neurodiversity_conditions=VALUES(neurodiversity_conditions),
                             learning_findings=VALUES(learning_findings),
+                            screening_site=VALUES(screening_site),
+                            communication_mode=VALUES(communication_mode),
+                            neonatal_risk_factor=VALUES(neonatal_risk_factor),
+                            presence_of_comobidities=VALUES(presence_of_comobidities),
+                            first_screening_date=VALUES(first_screening_date),
+                            first_screening_outcome=VALUES(first_screening_outcome),
+                            second_screening_outcome=VALUES(second_screening_outcome),
                             disability_classification=VALUES(disability_classification);
     SELECT "Completed updating special clinics";
 END $$
@@ -10556,7 +10587,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_family_planning(last_update_time);
     CALL sp_update_etl_physiotherapy(last_update_time);
     CALL sp_update_etl_psychiatry(last_update_time);
-    -- CALL sp_update_etl_special_clinics(last_update_time);
+--    CALL sp_update_etl_special_clinics(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_dashboard_table();
