@@ -424,6 +424,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       next_appointment_reason,
       appointment_consent,
       stability,
+      differentiated_care_group,
       differentiated_care,
       insurance_type,
       other_insurance_specify,
@@ -600,7 +601,8 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
         max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
         max(if(o.concept_id=1855,o.value_coded,null)) as stability,
-        max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
+        max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care_group,
+        max(if(o.concept_id in (164946,165287),o.value_coded,null)) as differentiated_care,
         max(if(o.concept_id=159356,o.value_coded,null)) as insurance_type,
         max(if(o.concept_id=161011,o.value_text,null)) as other_insurance_specify,
         max(if(o.concept_id=165911,o.value_coded,null)) as insurance_status,
@@ -614,7 +616,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
         left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
                                  and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632,161033,163530,5596,1427,5624,1053,160653,374,160575,
                                  1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430, 164948,
-                                 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
+                                 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,164946,165287,
                                  121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288,1855, 164947, 162549,162877,160596,1109,162309,1113,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -634,7 +636,7 @@ CREATE PROCEDURE sp_update_etl_hiv_followup(IN last_update_time DATETIME)
       tb_status=VALUES(tb_status),tb_treatment_no=VALUES(tb_treatment_no),general_examination=VALUES(general_examination),system_examination=VALUES(system_examination),skin_findings=VALUES(skin_findings),eyes_findings=VALUES(eyes_findings),ent_findings=VALUES(ent_findings),chest_findings=VALUES(chest_findings),
       cvs_findings=VALUES(cvs_findings),abdomen_findings=VALUES(abdomen_findings),cns_findings=VALUES(cns_findings),genitourinary_findings=VALUES(genitourinary_findings),ctx_adherence=VALUES(ctx_adherence),ctx_dispensed=VALUES(ctx_dispensed),dapsone_adherence=VALUES(dapsone_adherence),dapsone_dispensed=VALUES(dapsone_dispensed),inh_dispensed=VALUES(inh_dispensed),arv_adherence=VALUES(arv_adherence),poor_arv_adherence_reason=VALUES(poor_arv_adherence_reason),
       poor_arv_adherence_reason_other=VALUES(poor_arv_adherence_reason_other),pwp_disclosure=VALUES(pwp_disclosure),pwp_pead_disclosure=VALUES(pwp_pead_disclosure),pwp_partner_tested=VALUES(pwp_partner_tested),condom_provided=VALUES(condom_provided),substance_abuse_screening=VALUES(substance_abuse_screening),screened_for_sti=VALUES(screened_for_sti),cacx_screening=VALUES(cacx_screening), sti_partner_notification=VALUES(sti_partner_notification),at_risk_population=VALUES(at_risk_population),
-      system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date),appointment_consent=VALUES(appointment_consent), next_appointment_reason=VALUES(next_appointment_reason), differentiated_care=VALUES(differentiated_care),ever_had_menses=VALUES(ever_had_menses),menopausal=VALUES(menopausal),prophylaxis_given=VALUES(prophylaxis_given),started_anti_TB=VALUES(started_anti_TB),tb_rx_date=VALUES(tb_rx_date),
+      system_review_finding=VALUES(system_review_finding), next_appointment_date=VALUES(next_appointment_date), refill_date=VALUES(refill_date),appointment_consent=VALUES(appointment_consent), next_appointment_reason=VALUES(next_appointment_reason),differentiated_care_group=VALUES(differentiated_care_group),differentiated_care=VALUES(differentiated_care),ever_had_menses=VALUES(ever_had_menses),menopausal=VALUES(menopausal),prophylaxis_given=VALUES(prophylaxis_given),started_anti_TB=VALUES(started_anti_TB),tb_rx_date=VALUES(tb_rx_date),
       insurance_type=VALUES(insurance_type),other_insurance_specify=VALUES(other_insurance_specify),insurance_status=VALUES(insurance_status),voided=VALUES(voided)
     ;
 

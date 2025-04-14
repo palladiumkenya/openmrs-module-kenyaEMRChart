@@ -400,6 +400,7 @@ refill_date,
 appointment_consent,
 next_appointment_reason,
 stability,
+differentiated_care_group,
 differentiated_care,
 insurance_type,
 other_insurance_specify,
@@ -578,7 +579,8 @@ max(if(o.concept_id=162549,o.value_datetime,null)) as refill_date,
 max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
 max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
 max(if(o.concept_id=1855,o.value_coded,null)) as stability,
-max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
+max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care_group,
+max(if(o.concept_id in (164946,165287),o.value_coded,null)) as differentiated_care,
 max(if(o.concept_id=159356,o.value_coded,null)) as insurance_type,
 max(if(o.concept_id=161011,o.value_text,null)) as other_insurance_specify,
 max(if(o.concept_id=165911,o.value_coded,null)) as insurance_status,
@@ -588,7 +590,7 @@ from encounter e
 inner join form f on f.form_id = e.form_id and f.uuid in ('22c68f86-bbf0-49ba-b2d1-23fa7ccf0259','23b4ebbd-29ad-455e-be0e-04aa6bc30798','465a92f2-baf8-42e9-9612-53064be868e8')
 left outer join obs o on o.encounter_id=e.encounter_id and o.voided=0
 	and o.concept_id in (1282,1246,161643,5089,5085,5086,5090,5088,5087,5242,5092,1343,162584,163515,5356,167394,5272,5632, 161033,163530,5596,1427,5624,1053,160653,374,160575,1659,161654,161652,162229,162230,1658,160582,160632,159423,5616,161557,159777,112603,161558,160581,5096,163300, 164930, 160581, 1154, 160430,162877, 164948, 164949, 164950, 1271, 307, 12, 162202, 1272, 163752, 163414, 162275, 160557, 162747,
-121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911)
+121764, 164933, 160080, 1823, 164940, 164934, 164935, 159615, 160288, 1855, 164947,162549,162877,160596,1109,1113,162309,1729,162737,159615,1120,163309,164936,1123,1124,1125,164937,1126,166607,159356,161011,165911,165287,164946)
 group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
 END $$
@@ -2705,7 +2707,7 @@ max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,16
 																																														 when 162198 then 'Truck driver'
 																																														 when 6096 then 'Discordant'
 																																														 when 160549 then 'Adolescent and young girls'
-																																														 when 5622 then 'Other'  else null end),null)) as key_population_type,
+																																														 when 5622 then 'Other' end),null)) as key_population_type,
 max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
 max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_hiv,
 max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
