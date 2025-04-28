@@ -244,8 +244,6 @@ poor_arv_adherence_reason_other,
 (case sti_partner_notification when 1065 then "Yes" when 1066 then "No" else "" end) as sti_partner_notification,
 (case experienced_gbv when 1065 then 'Yes' when 1066 then 'No' end) as experienced_gbv,
 (case depression_screening when 1065 then 'Yes' when 1066 then 'No' end) as depression_screening,
-(case differentiated_care /*when 164942 then "Standard Care" when 164943 then "Fast Track" when 164944 then "Community ART Distribution - HCW Led" when 164945 then "Community ART Distribution - Peer Led" */when 163488 then "Community ART distribution group"
-           when 1537 then "Facility ART Distribution Group" end) as differentiated_care,
 (case established_differentiated_care when 164942 then 'Standard Care' when 164943 then 'Fast Track' when 166443 then 'Health care worker Led facility ART group(HFAG)'
            when 166444 then 'Peer Led Facility ART Group(PFAG)' when 1555 then 'Health care worker Led Community ART group(HCAG)' when 164945 then 'Peer Led Community ART Group(PCAG)'
            when 1000478 then 'Community Pharmacy(CP)' when 164944 then 'Community ART Distribution Points(CAPD)' when 166583 then 'Individual patient ART Community Distribution(IACD)' end) as established_differentiated_care,
@@ -256,6 +254,17 @@ refill_date,
 (case appointment_consent when 1065 then "Yes" when 1066 then "No" else "" end) as appointment_consent,
 (case next_appointment_reason when 160523 then "Follow up" when 1283 then "Lab tests" when 159382 then "Counseling" when 160521 then "Pharmacy Refill" when 5622 then "Other"  else "" end) as next_appointment_reason,
 (case stability when 1 then "Yes" when 2 then "No" when 0 then "No" when 1175 then "Not applicable" else "" end) as stability,
+(case differentiated_care_group when 1537 then "Facility ART distribution group" when 163488 then "Community ART distribution group" end) as differentiated_care_group,
+(case differentiated_care
+     when 164942 then "Standard Care"
+     when 164943 then "Fast Track"
+     when 166443 then "Health care worker Led facility ART group(HFAG)"
+     when 166444 then "Peer Led Facility ART Group(PFAG)"
+     when 1555 then "Health care worker Led Community ART group(HCAG)"
+     when 164945 then "Peer Led Community ART Group(PCAG)"
+     when 1000478 then "Community Pharmacy(CP)"
+     when 164944 then "Community ART Distribution Points(CAPD)"
+     when 166583 then "Individual patient ART Community Distribution(IACD)" end)  as differentiated_care,
 (case insurance_type when 1917 then "NHIF" when 1107 then "None" when 5622 then "Other" else "" end) as insurance_type,
 other_insurance_specify,
 (case insurance_status when 161636 then "Active" when 1118 then "Inactive" else "" end) as insurance_status
@@ -2643,6 +2652,7 @@ from kenyaemr_etl.etl_vmmc_circumcision_procedure;
       location_id,
       encounter_id,
       (case visit_type when 1246 then 'Scheduled' when 160101 then 'Unscheduled' end) as visit_type,
+      days_since_circumcision,
       (case has_adverse_event when 1065 then 'Yes' when 1066 then 'No' end) as has_adverse_event,
       adverse_event,
       severity,
