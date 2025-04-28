@@ -321,6 +321,8 @@ substance_abuse_screening INT(11),
 screened_for_sti INT(11),
 cacx_screening INT(11),
 sti_partner_notification INT(11),
+experienced_gbv INT(11),
+depression_screening INT(11),
 at_risk_population INT(11),
 system_review_finding INT(11),
 next_appointment_date DATE,
@@ -329,6 +331,7 @@ appointment_consent INT(11),
 next_appointment_reason INT(11),
 stability INT(11),
 differentiated_care INT(11),
+established_differentiated_care INT(11),
 insurance_type INT(11),
 other_insurance_specify VARCHAR(200),
 insurance_status INT(11),
@@ -3420,6 +3423,7 @@ CREATE TABLE dwapi_etl.etl_drug_order (
   provider INT(11),
   order_id INT(11),
   urgency VARCHAR(50),
+  drug_id INT(11),
   drug_concept_id VARCHAR(50),
   drug_short_name VARCHAR(50),
   drug_name VARCHAR(255),
@@ -3444,7 +3448,8 @@ CREATE TABLE dwapi_etl.etl_drug_order (
   INDEX(encounter_id),
   INDEX(patient_id),
   INDEX(patient_id, visit_date),
-  INDEX(order_id)
+  INDEX(order_id),
+  INDEX(drug_id)
 );
 SELECT "Successfully created etl_drug_orders table";
 
@@ -4070,13 +4075,57 @@ CREATE TABLE dwapi_etl.etl_special_clinics
     date_last_modified DATE,
     voided             INT(11),
     CONSTRAINT FOREIGN KEY (patient_id)
-        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
     CONSTRAINT unique_uuid UNIQUE (uuid),
     INDEX (patient_id),
     INDEX (visit_type),
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_special_clinics table";
+
+-- Create etl_kvp_clinical_enrollment table
+CREATE TABLE dwapi_etl.etl_kvp_clinical_enrollment
+(
+    patient_id                            INT(11)  NOT NULL,
+    visit_id                              INT(11) DEFAULT NULL,
+    encounter_id                          INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                  CHAR(38) NOT NULL,
+    location_id                           INT(11)  NOT NULL,
+    provider                              INT(11)  NOT NULL,
+    visit_date                            DATE,
+    contacted_by_pe_for_health_services   INT(11),
+    has_regular_non_paying_sexual_partner INT(11),
+    number_of_sexual_partners             INT(11),
+    year_started_fsw                      INT(11),
+    year_started_msm                      INT(11),
+    year_started_using_drugs              INT(11),
+    trucker_duration_on_transit           INT(11),
+    duration_working_as_trucker           INT(11),
+    duration_working_as_fisherfolk        INT(11),
+    year_tested_discordant_couple         INT(11),
+    ever_experienced_violence             INT(11),
+    type_of_violence_experienced          INT(11),
+    ever_tested_for_hiv                   INT(11),
+    latest_hiv_test_method                INT(11),
+    latest_hiv_test_results               INT(11),
+    willing_to_test_for_hiv               INT(11),
+    reason_not_willing_to_test_for_hiv    VARCHAR(255),
+    receiving_hiv_care                    INT(11),
+    hiv_care_facility                     INT(11),
+    other_hiv_care_facility               INT(11),
+    ccc_number                            VARCHAR(50),
+    consent_followup                      INT(11),
+    date_created                          DATETIME NOT NULL,
+    date_last_modified                    DATETIME,
+    voided                                INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_kvp_clinical_enrollment table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
