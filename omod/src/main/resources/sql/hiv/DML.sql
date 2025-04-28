@@ -403,6 +403,7 @@ system_review_finding,
 appointment_consent,
 next_appointment_reason,
 stability,
+differentiated_care_group,
 differentiated_care,
 established_differentiated_care,
 insurance_type,
@@ -582,7 +583,8 @@ max(if(o.concept_id=159615,o.value_coded,null)) as system_review_finding,
 max(if(o.concept_id=166607,o.value_coded,null)) as appointment_consent,
 max(if(o.concept_id=160288,o.value_coded,null)) as next_appointment_reason,
 max(if(o.concept_id=1855,o.value_coded,null)) as stability,
-max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care,
+max(if(o.concept_id=164947,o.value_coded,null)) as differentiated_care_group,
+max(if(o.concept_id in (164946,165287),o.value_coded,null)) as differentiated_care,
 max(if(o.concept_id=164946 OR o.concept_id = 165287,o.value_coded,null)) as established_differentiated_care,
 max(if(o.concept_id=159356,o.value_coded,null)) as insurance_type,
 max(if(o.concept_id=161011,o.value_text,null)) as other_insurance_specify,
@@ -1417,7 +1419,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=1473,o.value_text,null)) as delivery_assistant,
 				max(if(o.concept_id=1379 and o.value_coded=161651,o.value_coded,null)) as counseling_on_infant_feeding,
 				max(if(o.concept_id=1379 and o.value_coded=161096,o.value_coded,null)) as counseling_on_exclusive_breastfeeding,
-				max(if(o.concept_id=1379 and o.value_coded=162091,o.value_coded,null)) as counseling_on_infant_feeding_for_hiv_infected,
+                max(if(o.concept_id=162091,o.value_coded,null)) as counseling_on_infant_feeding_for_hiv_infected,
 				max(if(o.concept_id=1151,o.value_coded,null)) as mother_decision,
 				max(if(o.concept_id=163454,o.value_coded,null)) as placenta_complete,
 				max(if(o.concept_id=1602,o.value_coded,null)) as maternal_death_audited,
@@ -1456,7 +1458,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,162091,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -4214,6 +4216,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
         other_poor_adherence_reasons,
         prep_contraindications,
         treatment_plan,
+        reason_for_starting_prep,
         switching_option,
         switching_date,
         prep_type,
@@ -4285,6 +4288,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
                   max(if(o.concept_id = 165106 and o.value_coded = 127750, "Not willing",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
         max(if(o.concept_id = 165109, (case o.value_coded when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 1257 then "Continue" else "" end), "" )) as treatment_plan,
+        max(if(o.concept_id = 159623, o.value_coded, null)) as reason_for_starting_prep,
         max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
         max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
         max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
@@ -4302,7 +4306,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
              inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
-                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354) and o.voided=0
+                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354,159623) and o.voided=0
     where e.voided=0
     group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
@@ -7298,6 +7302,7 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
       location_id,
       encounter_id,
       visit_type,
+      days_since_circumcision,
       has_adverse_event,
       adverse_event,
       severity,
@@ -7314,6 +7319,7 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
       select
         e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
                            max(if(o.concept_id = 164181,o.value_coded,null)) as visit_type,
+                           max(if(o.concept_id = 161011,o.value_text,null)) as days_since_circumcision,
                            max(if(o.concept_id = 162871,o.value_coded,null)) as has_adverse_event,
                            concat_ws(',', max(if(o.concept_id = 162875 and o.value_coded = 114403, 'Pain', null)),
                                  max(if(o.concept_id = 162875 and o.value_coded = 147241, 'Bleeding', null)),
@@ -7713,8 +7719,8 @@ CREATE PROCEDURE sp_populate_etl_hts_eligibility_screening()
         max(if(o.concept_id=5632,(case o.value_coded when 1065 then "YES" when 1066 THEN "NO" when 162570 THEN "Declined to answer" else "" end),null)) as breastfeeding_mother,
         max(if(o.concept_id=162699,o.value_coded,null)) as eligible_for_test,
         max(if(o.concept_id=1788,o.value_coded,null)) as referred_for_testing,
-        max(if(o.concept_id=164082,(case o.value_coded when 165087 then "Client is eligible" when 165091 then "Based on HIV Risk category from EMR" when 1163 then "Both eligible and risk category" else "" end),null)) as reason_to_test,
-        max(if(o.concept_id=160416,(case o.value_coded when 165078 then "Client is NOT eligible" when 165091 then "Based on HIV Risk category from EMR" when 1163 then "Both eligible and risk category" else "" end),null)) as reason_not_to_test,
+        max(if(o.concept_id=164082,(case o.value_coded when 165087 then "HCW Provider Discretion" when 165091 then "Based on Risk screening findings" when 1163 then "ML Risk category" when 163510 then "HTS Guidelines" else "" end),null)) as reason_to_test,
+        max(if(o.concept_id=160416,(case o.value_coded when 165087 then "HCW Provider Discretion" when 165091 then "Based on Risk screening findings" when 1163 then "ML Risk category" when 163510 then "HTS Guidelines" else "" end),null)) as reason_not_to_test,
        concat_ws(',', max(if(o.concept_id = 159803 and o.value_coded = 167156, 'Declined testing', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 165029, 'Wants to test with partner', null)),
                   max(if(o.concept_id = 159803 and o.value_coded = 160589, 'Stigma related issues', null)),
@@ -7843,7 +7849,7 @@ BEGIN
             OR COALESCE(o.order_reason_non_coded, '') = 'previously existing orders'
         )
       AND e.voided = 0
-    GROUP BY o.order_group_id, o.patient_id, o.encounter_id, o.order_id;
+    GROUP BY o.order_group_id, o.patient_id, o.encounter_id;
 
     SELECT 'Completed processing drug orders';
 END $$
