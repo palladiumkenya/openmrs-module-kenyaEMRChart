@@ -186,6 +186,7 @@ INSERT INTO kenyaemr_etl.etl_special_clinics (patient_id,
       first_screening_date,
       first_screening_outcome,
       second_screening_outcome,
+      symptoms_for_otc,
       disability_classification,
       special_clinic,
       special_clinic_form_uuid)
@@ -320,6 +321,14 @@ select e.patient_id,
         max(if(o.concept_id = 1000088, o.value_datetime, null))                     as first_screening_date,
         max(if(o.concept_id = 162737, o.value_coded, null))                         as first_screening_outcome,
         max(if(o.concept_id = 166663, o.value_coded, null))                         as second_screening_outcome,
+        CONCAT_WS(',',max(if(o.concept_id = 5219 and o.value_coded = 114403,  'Pain',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 130842,  'Immobility',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 140468,  'Muscle tenseness',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 119775,  'Muscle spasms',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 163894,  'Swelling',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 111525,  'Loss of function',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 116554,  'Joint stiffness',NULL)),
+                     max(if(o.concept_id = 5219 and o.value_coded = 5622,  'Other',NULL))) as symptoms_for_otc,
        CONCAT_WS(',', max(if(o.concept_id = 1069 and o.value_coded = 167078, 'Neurodevelopmental', NULL)),
                  max(if(o.concept_id = 1069 and o.value_coded = 153343, 'learning', NULL)),
                  max(if(o.concept_id = 1069 and o.value_coded = 160176, 'Neurodiversity conditions', NULL)),
@@ -390,7 +399,7 @@ from encounter e
                                                                        162747, 162696, 168734,
                                                                        1149, 156625, 163304, 161005, 161648, 159854,
                                                                        5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 1069)
+                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,1069)
     and o.voided = 0
 where e.voided = 0
 group by e.patient_id, e.encounter_id;

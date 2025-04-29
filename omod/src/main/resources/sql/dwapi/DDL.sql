@@ -4063,6 +4063,7 @@ CREATE TABLE dwapi_etl.etl_special_clinics
     first_screening_date               DATE,
     first_screening_outcome        INT(11),
     second_screening_outcome        INT(11),
+    symptoms_for_otc                VARCHAR(255),
     disability_classification        VARCHAR(255),
     special_clinic           VARCHAR(255),
     special_clinic_form_uuid CHAR(38),
