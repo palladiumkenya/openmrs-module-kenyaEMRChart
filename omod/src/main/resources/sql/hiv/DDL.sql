@@ -769,6 +769,12 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     baby_azt_dispensed INT(11),
     baby_nvp_dispensed INT(11),
     clinical_notes VARCHAR(200) DEFAULT NULL,
+    stimulation_done INT(11),
+    suction_done INT(11),
+    oxygen_given INT(11),
+    bag_mask_ventilation_provided INT(11),
+    induction_done INT(11),
+    artificial_rapture_done INT(11),
 
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
