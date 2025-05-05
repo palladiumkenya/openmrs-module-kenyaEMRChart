@@ -111,6 +111,8 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_gbv_physical_emotional_abuse;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_family_planning;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_physiotherapy;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_psychiatry;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_high_iit_intervention;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_home_visit_checklist;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
 
 -- create table etl_patient_demographics
@@ -4151,6 +4153,76 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_special_clinics table";
+
+-- Create etl_high_iit_intervention table
+CREATE TABLE kenyaemr_etl.etl_high_iit_intervention
+(
+    uuid                                                        char(38),
+    provider                                                    INT(11),
+    patient_id                                                  INT(11)  NOT NULL,
+    visit_id                                                    INT(11),
+    visit_date                                                  DATE,
+    location_id                                                 INT(11) DEFAULT NULL,
+    encounter_id                                                INT(11)  NOT NULL PRIMARY KEY,
+    interventions_offered                                       VARCHAR(255),
+    appointment_mgt_interventions                               VARCHAR(255),
+    reminder_methods                                            VARCHAR(255),
+    enrolled_in_ushauri                                         INT(11),
+    appointment_mngt_intervention_date                          DATE,
+    date_assigned_case_manager                                  DATE,
+    eacs_recommended                                            INT(11),
+    enrolled_in_psychosocial_support_group                      INT(11),
+    robust_literacy_interventions_date                          DATE,
+    expanding_differentiated_service_delivery_interventions     INT(11),
+    enrolled_in_nishauri                                        INT(11),
+    expanded_differentiated_service_delivery_interventions_date DATE,
+    date_created                                                DATETIME NOT NULL,
+    date_last_modified                                          DATETIME,
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_high_iit_intervention table";
+
+-- Create etl_home_visit_checklist table
+CREATE TABLE kenyaemr_etl.etl_home_visit_checklist
+(
+    uuid                              char(38),
+    provider                          INT(11),
+    patient_id                        INT(11)  NOT NULL,
+    visit_id                          INT(11),
+    visit_date                        DATE,
+    location_id                       INT(11) DEFAULT NULL,
+    encounter_id                      INT(11)  NOT NULL PRIMARY KEY,
+    independence_in_daily_activities  VARCHAR(255),
+    other_independence_activities     VARCHAR(255),
+    meeting_basic_needs               VARCHAR(255),
+    other_basic_needs                 VARCHAR(255),
+    disclosure_to_sexual_partner      INT(11),
+    disclosure_to_household_members   INT(11),
+    disclosure_to                     VARCHAR(255),
+    mode_of_storing_arv_drugs         VARCHAR(255),
+    arv_drugs_taking_regime           VARCHAR(255),
+    receives_household_social_support INT(11),
+    household_social_support_given    VARCHAR(255),
+    receives_community_social_support INT(11),
+    community_social_support_given    VARCHAR(255),
+    linked_to_non_clinical_services   VARCHAR(255),
+    linked_to_other_services          VARCHAR(255),
+    has_mental_health_issues          INT(11),
+    suffering_stressful_situation     INT(11),
+    uses_drugs_alcohol                INT(11),
+    has_side_medications_effects      INT(11),
+    medication_side_effects           VARCHAR(255),
+    assessment_notes                  VARCHAR(255),
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_home_visit_checklist table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
