@@ -4151,8 +4151,8 @@ CREATE TABLE dwapi_etl.etl_high_iit_intervention
     visit_date                                                  DATE,
     location_id                                                 INT(11) DEFAULT NULL,
     encounter_id                                                INT(11)  NOT NULL PRIMARY KEY,
-    interventions_offered                                       VARCHAR(255),
-    appointment_mgt_interventions                               VARCHAR(255),
+    interventions_offered                                       VARCHAR(500),
+    appointment_mgt_interventions                               VARCHAR(500),
     reminder_methods                                            VARCHAR(255),
     enrolled_in_ushauri                                         INT(11),
     appointment_mngt_intervention_date                          DATE,
@@ -4165,6 +4165,7 @@ CREATE TABLE dwapi_etl.etl_high_iit_intervention
     expanded_differentiated_service_delivery_interventions_date DATE,
     date_created                                                DATETIME NOT NULL,
     date_last_modified                                          DATETIME,
+    voided                                                      INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
     CONSTRAINT unique_uuid UNIQUE (uuid),
     INDEX (visit_date)
@@ -4204,6 +4205,7 @@ CREATE TABLE dwapi_etl.etl_home_visit_checklist
     assessment_notes                  VARCHAR(255),
     date_created                      DATETIME NOT NULL,
     date_last_modified                DATETIME,
+    voided                            INT(11),
     CONSTRAINT FOREIGN KEY (patient_id) REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
     CONSTRAINT unique_uuid UNIQUE (uuid),
     INDEX (visit_date)
