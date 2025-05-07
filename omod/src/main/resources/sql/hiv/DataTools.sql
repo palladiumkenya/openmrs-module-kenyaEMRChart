@@ -2629,7 +2629,13 @@ select
     specific_other_device,
     device_size,
     lot_number,
-    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
+    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_type,
+    (case anaesthesia_used
+         when 103960 then 'Lignocaine + Bupivacaine'
+         when 72505 then 'Bupivacaine'
+         when 104983 then 'Lignocaine + Prilocaine'
+         when 82514 then 'Prilocaine'
+         when 78849 then 'Lignocaine' end) as anaesthesia_used,
     anaesthesia_concentration,
     anaesthesia_volume,
     time_of_first_placement_cut,

@@ -3187,6 +3187,7 @@ CREATE TABLE dwapi_etl.etl_vmmc_circumcision_procedure
     specific_other_device          varchar(100),
     device_size                    varchar(100),
     lot_number                     varchar(100),
+    anaesthesia_type               INT(11),
     anaesthesia_used               INT(11),
     anaesthesia_concentration      varchar(100),
     anaesthesia_volume             INT(11),

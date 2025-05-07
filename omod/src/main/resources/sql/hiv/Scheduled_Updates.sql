@@ -7756,6 +7756,7 @@ insert into kenyaemr_etl.etl_vmmc_circumcision_procedure(
     specific_other_device,
     device_size,
     lot_number,
+    anaesthesia_type,
     anaesthesia_used,
     anaesthesia_concentration,
     anaesthesia_volume,
@@ -7783,8 +7784,9 @@ select
   max(if(o.concept_id = 163042,o.value_text,null)) as specific_other_device,
   max(if(o.concept_id = 163049,o.value_text,null)) as device_size,
   max(if(o.concept_id = 164964,o.value_text,null)) as lot_number,
-  max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_used,
-  max(if(o.concept_id = 160047,o.value_numeric,null)) as anaesthesia_concentration,
+    max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_type,
+    max(if(o.concept_id = 165139,o.value_coded,null)) as anaesthesia_used,
+    max(if(o.concept_id = 1444,o.value_text,null)) as anaesthesia_concentration,
   max(if(o.concept_id = 166650,o.value_numeric,null)) as anaesthesia_volume,
   max(if(o.concept_id = 160715,o.value_datetime,null)) as time_of_first_placement_cut,
   max(if(o.concept_id = 167132,o.value_datetime,null)) as time_of_last_device_closure,
@@ -7809,7 +7811,7 @@ select
 from encounter e
     inner join person p on p.person_id=e.patient_id and p.voided=0
     inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
-    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133) and o.voided=0
+    inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164964,164254,1444,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133,165139) and o.voided=0
 where e.voided=0
 and e.date_created >= last_update_time
    or e.date_changed >= last_update_time
@@ -7827,6 +7829,7 @@ ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
      specific_other_device=VALUES(specific_other_device),
      device_size=VALUES(device_size),
      lot_number=VALUES(lot_number),
+     anaesthesia_type=VALUES(anaesthesia_type),
      anaesthesia_used=VALUES(anaesthesia_used),
      anaesthesia_concentration=VALUES(anaesthesia_concentration),
      anaesthesia_volume=VALUES(anaesthesia_volume),
@@ -8000,13 +8003,13 @@ BEGIN
       max(if(o.concept_id = 160554,o.value_datetime,null)) as hiv_test_date,
       max(if(o.concept_id = 159599,o.value_datetime,null)) as art_start_date,
       max(if(o.concept_id = 164855,o.value_coded,null)) as current_regimen,
-      max(if(o.concept_id = 162053,o.value_text,null)) as ccc_number,
+      max(if(o.concept_id = 162053,o.value_numeric,null)) as ccc_number,
       max(if(o.concept_id = 5096,o.value_datetime,null)) as next_appointment_date,
       max(if(o.concept_id = 165239,o.value_coded,null)) as hiv_care_facility,
       max(if(o.concept_id = 161550,o.value_text,null)) as hiv_care_facility_name,
-      max(if(o.concept_id = 856,o.value_coded,null)) as vl,
+       max(if(o.concept_id = 856,o.value_numeric,if(o.concept_id = 1305, 'LDL',null))) as vl,
       max(if(o.concept_id = 5497,o.value_numeric,null)) as cd4_count,
-      max(if(o.concept_id = 1628 and o.value_coded = 147241,o.value_coded,null)) as bleeding_disorder,
+      max(if(o.concept_id = 165241 and o.value_coded = 147241,o.value_coded,null)) as bleeding_disorder,
       max(if(o.concept_id = 1628 and o.value_coded = 119481,o.value_coded,null)) as diabetes,
       concat_ws(',', max(if(o.concept_id = 1728 and o.value_coded = 123529, 'Urethral Discharge', null)),
                 max(if(o.concept_id = 1728 and o.value_coded = 118990, 'Genital Sore', null)),
@@ -8053,8 +8056,8 @@ BEGIN
     from encounter e
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ('d42aeb3d-d5d2-4338-a154-f75ddac78b59')
-             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
-                                                                                      5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,1305,
+                                                                                      5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,165241,
                                                                                       1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272) and o.voided=0
     where e.voided=0
         and e.date_created >= last_update_time
