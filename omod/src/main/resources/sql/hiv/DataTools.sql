@@ -659,7 +659,14 @@ SELECT "Successfully created pharmacy extract table";
       (case prophylaxis_given when 105281 then "SULFAMETHOXAZOLE / TRIMETHOPRIM" when 74250 then "DAPSONE"  when 1107 then "None" else "" end) as prophylaxis_given,
       (case baby_azt_dispensed when 160123 then "Zidovudine for PMTCT" when 1066 then "No" when 1175 then "Not Applicable" else "" end) as baby_azt_dispensed,
       (case baby_nvp_dispensed when 80586 then "NEVIRAPINE" when 1066 then "No" when 1175 then "Not Applicable" else "" end) as baby_nvp_dispensed,
-      clinical_notes
+      clinical_notes,
+      (case stimulation_done when 1065 then "Yes" when 1066 then "No" end) as stimulation_done,
+      (case suction_done when 1065 then "Yes" when 1066 then "No" end) as suction_done,
+      (case oxygen_given when 1065 then "Yes" when 1066 then "No" end) as oxygen_given,
+      (case bag_mask_ventilation_provided when 1065 then "Yes" when 1066 then "No" end) as bag_mask_ventilation_provided,
+      (case induction_done when 1065 then "Yes" when 1066 then "No" end) as induction_done,
+      (case artificial_rapture_done when 1065 then "Yes" when 1066 then "No" end) as artificial_rapture_done
+
 
     from kenyaemr_etl.etl_mchs_delivery;
 

@@ -1352,6 +1352,12 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
             baby_azt_dispensed,
             baby_nvp_dispensed,
             clinical_notes,
+            stimulation_done,
+            suction_done,
+            oxygen_given,
+            bag_mask_ventilation_provided,
+            induction_done,
+            artificial_rapture_done,
             voided
 		)
 			select
@@ -1429,11 +1435,18 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 				max(if(o.concept_id = 1282 and o.value_coded = 160123,1,0)) as baby_azt_dispensed,
 				max(if(o.concept_id = 1282 and o.value_coded = 80586,1,0)) as baby_nvp_dispensed,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
+				max(if(o.concept_id=168751,o.value_coded,null)) as stimulation_done,
+				max(if(o.concept_id=1284,o.value_coded,null)) as suction_done,
+				max(if(o.concept_id=113316,o.value_coded,null)) as oxygen_given,
+				max(if(o.concept_id=165647,o.value_coded,null)) as bag_mask_ventilation_provided,
+				max(if(o.concept_id=113602,o.value_coded,null)) as induction_done,
+				max(if(o.concept_id=163445,o.value_coded,null)) as artificial_rapture_done,
 				e.voided
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,162091,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159521,159427,164848,161557,1436,1109,5576,159595,163784,159395,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159521,159427,164848,161557,1436,1109,5576,159595,163784,159395,168751,1284,113316,165647,113602,163445,159949)
+           (update ETL for delivery form)
 				inner join
 				(
 					select form_id, uuid,name from form where
