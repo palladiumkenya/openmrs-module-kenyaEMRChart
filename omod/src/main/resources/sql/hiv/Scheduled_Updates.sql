@@ -10694,11 +10694,11 @@ BEGIN
            e.encounter_id,
            concat_ws(',', max(if(o.concept_id = 166937 and o.value_coded = 160947,'Appointment management', null)), max(if(o.concept_id = 166937 and o.value_coded = 164836, 'Assigning Case managers', null)),
                      max(if(o.concept_id = 166937 and o.value_coded = 167809, 'Robust client literacy', null)), max(if(o.concept_id = 166937 and o.value_coded = 164947, 'Expanding Differentiated Service Delivery', null))) as interventions_offered,
-           concat_ws(',', max(if(o.concept_id = 166937 and o.value_coded = 162135, 'Individualized discussion with the recipient of care to understand their preferences for appointments', null)),
-                     max(if(o.concept_id = 166937 and o.value_coded = 166065, 'Agree on a plan if the recipient of care cannot honor their given appointments', null)),
-                     max(if(o.concept_id = 166937 and o.value_coded = 163164, 'Willngness to receive reminders', null)),
-                     max(if(o.concept_id = 166937 and o.value_coded = 167733, 'Immediate follow up via phone calls on the day of missed appointment, next day and intensely up to 7 days', null)),
-                     max(if(o.concept_id = 166937 and o.value_coded = 164965, 'Physical tracing by the CHW/Volunteers if not returned by day 7', null))
+           concat_ws(',', max(if(o.concept_id = 165353 and o.value_coded = 162135, 'Individualized discussion with the recipient of care to understand their preferences for appointments', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 166065, 'Agree on a plan if the recipient of care cannot honor their given appointments', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 163164, 'Willngness to receive reminders', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 167733, 'Immediate follow up via phone calls on the day of missed appointment, next day and intensely up to 7 days', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 164965, 'Physical tracing by the CHW/Volunteers if not returned by day 7', null))
            ) as appointment_mgt_interventions,
            concat_ws(',', max(if(o.concept_id = 166607 and o.value_coded = 162135,'SMS', null)), max(if(o.concept_id = 166607 and o.value_coded = 166065,'Phone call', null))) as reminder_methods,
            max(if(o.concept_id = 163777, o.value_coded, null))                 as enrolled_in_ushauri,
@@ -10717,7 +10717,7 @@ BEGIN
              inner join form f on f.form_id = e.form_id and f.uuid = '6817d322-f938-4f38-8ccf-caa6fa7a499f'
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (166937, 166607, 163777, 5096, 160753, 168804,
-                                                                           165163, 162869, 164947, 163766, 166865)
+                                                                           165163, 162869, 164947, 163766, 166865,165353)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10790,38 +10790,38 @@ BEGIN
            e.encounter_id,
            concat_ws(',', max(if(o.concept_id = 162063 and o.value_coded = 161650, 'Feeding', null)), max(if(o.concept_id = 162063 and o.value_coded = 159438, 'Grooming', null)),
                      max(if(o.concept_id = 162063 and o.value_coded = 1000360, 'Toileting', null)),max(if(o.concept_id = 162063 and o.value_coded = 5622, 'Other', null)))   as independence_in_daily_activities,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as other_independence_activities,
+           max(if(o.concept_id = 160632, o.value_text, null))                    as other_independence_activities,
            concat_ws(',', max(if(o.concept_id = 168076 and o.value_coded = 165474, 'Clothing', null)), max(if(o.concept_id = 168076 and o.value_coded = 159597, 'Food', null)),
                      max(if(o.concept_id = 168076 and o.value_coded = 157519, 'Shelter', null)),max(if(o.concept_id = 168076 and o.value_coded = 5622, 'Other', null))) as meeting_basic_needs,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as other_basic_needs,
+           max(if(o.concept_id = 162725, o.value_text, null))                    as other_basic_needs,
            max(if(o.concept_id = 167144, o.value_coded, null))                   as disclosure_to_sexual_partner,
            max(if(o.concept_id = 159425, o.value_coded, null))                   as disclosure_to_household_members,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as disclosure_to,
+           max(if(o.concept_id = 163108, o.value_text, null))                    as disclosure_to,
            max(if(o.concept_id = 165250, o.value_text, null))                    as mode_of_storing_arv_drugs,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as arv_drugs_taking_regime,
+           max(if(o.concept_id = 163104, o.value_text, null))                    as arv_drugs_taking_regime,
            max(if(o.concept_id = 165302, o.value_coded, null))                   as receives_household_social_support,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as household_social_support_given,
+           max(if(o.concept_id = 161011, o.value_text, null))                    as household_social_support_given,
            max(if(o.concept_id = 165052, o.value_coded, null))                   as receives_community_social_support,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as community_social_support_given,
+           max(if(o.concept_id = 165225, o.value_text, null))                    as community_social_support_given,
            concat_ws(',', max(if(o.concept_id = 159550 and o.value_coded = 167814, 'Legal', null)),max(if(o.concept_id = 159550 and o.value_coded = 115125, 'Nutritional', null)),
                      max(if(o.concept_id = 159550 and o.value_coded = 167180, 'Spiritual', null)),max(if(o.concept_id = 159550 and o.value_coded = 5622, 'Other', null)))  as linked_to_non_clinical_services,
-           max(if(o.concept_id = 165250, o.value_text, null))                    as linked_to_other_services,
+           max(if(o.concept_id = 164879, o.value_text, null))                    as linked_to_other_services,
            max(if(o.concept_id = 165034, o.value_coded, null))                   as has_mental_health_issues,
            max(if(o.concept_id = 165241, o.value_coded, null))                   as suffering_stressful_situation,
            max(if(o.concept_id = 1288, o.value_coded, null))                     as uses_drugs_alcohol,
            max(if(o.concept_id = 159935, o.value_coded, null))                   as has_side_medications_effects,
            max(if(o.concept_id = 163076, o.value_text, null))                    as medication_side_effects,
-           max(if(o.concept_id = 163076, o.value_coded, null))                   as assessment_notes,
+           max(if(o.concept_id = 162169, o.value_text, null))                   as assessment_notes,
            e.date_created,
            e.date_changed
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
              inner join form f on f.form_id = e.form_id and f.uuid = 'ac3152de-1728-4786-828a-7fb4db0fc384'
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (162063, 165250, 168076, 167144, 159425,
-                                                                           165302,
+                                                                          (162063, 160632,162725,163108,163104,161011, 168076, 167144, 159425,
+                                                                           165302,165225,164879,165250,
                                                                            165052, 159550, 165034, 165241, 1288, 159935,
-                                                                           163076)
+                                                                           163076,162169)
         and o.voided = 0
     where e.voided = 0
 and e.date_created >= last_update_time
