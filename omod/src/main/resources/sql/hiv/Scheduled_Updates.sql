@@ -1272,7 +1272,6 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 
                             and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159521,159427,164848,161557,1436,1109,5576,159595,163784,159395,168751,1284,113316,165647,113602,163445,159949)
-      (update ETL for delivery form)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1292,7 +1291,7 @@ CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
       counseling_on_infant_feeding_for_hiv_infected=VALUES(counseling_on_infant_feeding_for_hiv_infected),mother_decision=VALUES(mother_decision),placenta_complete=VALUES(placenta_complete),maternal_death_audited=VALUES(maternal_death_audited),cadre=VALUES(cadre),delivery_complications=VALUES(delivery_complications),coded_delivery_complications=VALUES(coded_delivery_complications),other_delivery_complications=VALUES(other_delivery_complications),duration_of_labor=VALUES(duration_of_labor),baby_sex=VALUES(baby_sex),
       baby_condition=VALUES(baby_condition),teo_given=VALUES(teo_given),birth_weight=VALUES(birth_weight),bf_within_one_hour=VALUES(bf_within_one_hour),birth_with_deformity=VALUES(birth_with_deformity),type_of_birth_deformity=VALUES(type_of_birth_deformity),
       final_test_result=VALUES(final_test_result),patient_given_result=VALUES(patient_given_result),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given)
-      ,baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),clinical_notes=VALUES(clinical_notes),stimulation_done=VALUES(stimulation_done),delivery_outcome=VALUES(delivery_outcome),stimulation_done=VALUES(stimulation_done),suction_done=VALUES(suction_done),oxygen_given=VALUES(oxygen_given),bag_mask_ventilation_provided=VALUES(bag_mask_ventilation_provided),induction_done=VALUES(induction_done),artificial_rapture_done=VALUES(artificial_rapture_done)
+      ,baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),clinical_notes=VALUES(clinical_notes),stimulation_done=VALUES(stimulation_done),delivery_outcome=VALUES(delivery_outcome),suction_done=VALUES(suction_done),oxygen_given=VALUES(oxygen_given),bag_mask_ventilation_provided=VALUES(bag_mask_ventilation_provided),induction_done=VALUES(induction_done),artificial_rapture_done=VALUES(artificial_rapture_done)
 
     ;
 
