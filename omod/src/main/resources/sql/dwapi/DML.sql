@@ -823,6 +823,15 @@ date_created,
 date_last_modified,
 voided
 )
+
+WITH encounter_facility AS (
+  SELECT 
+    o.encounter_id,
+    LEFT(TRIM(o.value_text), 100) AS to_facility_raw
+  FROM obs o
+  WHERE o.voided = 0 AND o.concept_id = 159495
+)
+
 select
 e.patient_id,
 e.uuid,
@@ -847,7 +856,7 @@ coalesce(max(if(o.concept_id=164384, o.value_datetime, null)),max(if(o.concept_i
 max(if(o.concept_id=1285, o.value_coded, null)) as trf_out_verified,
 max(if(o.concept_id=164133, o.value_datetime, null)) as trf_out_verification_date,
 max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
-max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
+COALESCE(l.`name`, ef.to_facility_raw) AS to_facility_name,
 max(if(o.concept_id=160649, o.value_datetime, null)) as to_date,
 max(if(o.concept_id=1599, o.value_coded, null)) as death_reason,
 max(if(o.concept_id=1748, o.value_coded, null)) as specific_death_cause,
@@ -866,6 +875,9 @@ inner join
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
 	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871')
 ) et on et.encounter_type_id=e.encounter_type
+LEFT JOIN encounter_facility ef ON ef.encounter_id = e.encounter_id
+LEFT JOIN location l ON l.uuid = ef.to_facility_raw
+
 group by e.encounter_id;
 SELECT "Completed processing discontinuation data ", CONCAT("Time: ", NOW());
 END $$
@@ -1446,8 +1458,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159521,159427,164848,161557,1436,1109,5576,159595,163784,159395,168751,1284,113316,165647,113602,163445,159949)
-           (update ETL for delivery form)
-				inner join
+           	inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
