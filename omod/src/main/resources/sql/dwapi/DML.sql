@@ -1458,7 +1458,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159521,159427,164848,161557,1436,1109,5576,159595,163784,159395,168751,1284,113316,165647,113602,163445,159949)
-           	inner join
+				inner join
 				(
 					select form_id, uuid,name from form where
 						uuid in('496c7cc3-0eea-4e84-a04c-2292949e2f7f')
