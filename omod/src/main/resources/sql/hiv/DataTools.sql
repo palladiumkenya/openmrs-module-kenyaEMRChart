@@ -2629,7 +2629,13 @@ select
     specific_other_device,
     device_size,
     lot_number,
-    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_used,
+    (case anaesthesia_used when 161914 then 'Local Anaesthesia' when 162797 then 'Topical Anaesthesia' end) as anaesthesia_type,
+    (case anaesthesia_used
+         when 103960 then 'Lignocaine + Bupivacaine'
+         when 72505 then 'Bupivacaine'
+         when 104983 then 'Lignocaine + Prilocaine'
+         when 82514 then 'Prilocaine'
+         when 78849 then 'Lignocaine' end) as anaesthesia_used,
     anaesthesia_concentration,
     anaesthesia_volume,
     time_of_first_placement_cut,
@@ -3160,6 +3166,7 @@ ALTER TABLE kenyaemr_datatools.clinical_encounter
     ADD INDEX (visit_date);
 SELECT "Successfully created clinical_encounter table";
 
+-- Create table kvp_clinical_enrollment
 create table kenyaemr_datatools.kvp_clinical_enrollment as
 select  patient_id,
         visit_id,
@@ -3201,6 +3208,79 @@ ALTER TABLE kenyaemr_datatools.kvp_clinical_enrollment
 ALTER TABLE kenyaemr_datatools.kvp_clinical_enrollment
     ADD INDEX (visit_date);
 SELECT "Successfully created kenyaemr_datatools.kvp_clinical_enrollment table";
+
+-- Create table high_iit_intervention
+create table kenyaemr_datatools.high_iit_intervention as
+select uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        interventions_offered,
+        appointment_mgt_interventions,
+        reminder_methods,
+        case enrolled_in_ushauri when 1065 then 'Yes' when 1066 then 'No' end as enrolled_in_ushauri,
+        appointment_mngt_intervention_date,
+        date_assigned_case_manager,
+        case eacs_recommended when 1065 then 'Yes' when 1066 then 'No' end as eacs_recommended,
+        case enrolled_in_psychosocial_support_group when 1065 then 'Yes' when 1066 then 'No' end as enrolled_in_psychosocial_support_group,
+        robust_literacy_interventions_date,
+        case expanding_differentiated_service_delivery_interventions when 166443 then 'Offer options for community delivery of drugs including courier if eligible for MMD' end as expanding_differentiated_service_delivery_interventions,
+        case enrolled_in_nishauri when 1065 then 'Yes' when 1066 then 'No' end as enrolled_in_nishauri,
+        expanded_differentiated_service_delivery_interventions_date,
+        date_created,
+        date_last_modified
+from kenyaemr_etl.etl_high_iit_intervention;
+ALTER TABLE kenyaemr_datatools.high_iit_intervention
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.high_iit_intervention
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.high_iit_intervention
+    ADD INDEX (visit_date);
+SELECT "Successfully created kenyaemr_datatools.high_iit_intervention table";
+
+-- Create table home_visit_checklist
+create table kenyaemr_datatools.home_visit_checklist as
+select     uuid,
+           provider,
+           patient_id,
+           visit_id,
+           visit_date,
+           location_id,
+           encounter_id,
+           independence_in_daily_activities,
+           other_independence_activities,
+           meeting_basic_needs,
+           other_basic_needs,
+           case disclosure_to_sexual_partner when 1065 then 'Yes' when 1066 then 'No' end as disclosure_to_sexual_partner,
+           case disclosure_to_household_members when 1065 then 'Yes' when 1066 then 'No' end as disclosure_to_household_members,
+           disclosure_to,
+           mode_of_storing_arv_drugs,
+           arv_drugs_taking_regime,
+           case receives_household_social_support when 1065 then 'Yes' when 1066 then 'No' end as receives_household_social_support,
+           household_social_support_given,
+           case receives_community_social_support when 1065 then 'Yes' when 1066 then 'No' end as receives_community_social_support,
+           community_social_support_given,
+#          linked_to_non_clinical_services,
+           linked_to_other_services,
+           case has_mental_health_issues when 1065 then 'Yes' when 1066 then 'No' end as has_mental_health_issues,
+           case suffering_stressful_situation when 1065 then 'Yes' when 1066 then 'No' end as suffering_stressful_situation,
+           case uses_drugs_alcohol when 1065 then 'Yes' when 1066 then 'No' end as uses_drugs_alcohol,
+           case has_side_medications_effects when 1065 then 'Yes' when 1066 then 'No' end as has_side_medications_effects,
+           medication_side_effects,
+           assessment_notes,
+           date_created,
+           date_last_modified
+from kenyaemr_etl.etl_home_visit_checklist;
+ALTER TABLE kenyaemr_datatools.home_visit_checklist
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.home_visit_checklist
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.home_visit_checklist
+    ADD INDEX (visit_date);
+SELECT "Successfully created kenyaemr_datatools.home_visit_checklist table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

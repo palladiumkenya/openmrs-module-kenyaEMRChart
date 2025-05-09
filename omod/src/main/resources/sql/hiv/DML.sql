@@ -7241,6 +7241,7 @@ BEGIN
             specific_other_device,
             device_size,
             lot_number,
+            anaesthesia_type,
             anaesthesia_used,
             anaesthesia_concentration,
             anaesthesia_volume,
@@ -7268,8 +7269,9 @@ BEGIN
             max(if(o.concept_id = 163042,o.value_text,null)) as specific_other_device,
             max(if(o.concept_id = 163049,o.value_text,null)) as device_size,
             max(if(o.concept_id = 164964,o.value_text,null)) as lot_number,
-            max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_used,
-            max(if(o.concept_id = 160047,o.value_numeric,null)) as anaesthesia_concentration,
+            max(if(o.concept_id = 164254,o.value_coded,null)) as anaesthesia_type,
+            max(if(o.concept_id = 165139,o.value_coded,null)) as anaesthesia_used,
+            max(if(o.concept_id = 1444,o.value_text,null)) as anaesthesia_concentration,
             max(if(o.concept_id = 166650,o.value_numeric,null)) as anaesthesia_volume,
             max(if(o.concept_id = 160715,o.value_datetime,null)) as time_of_first_placement_cut,
             max(if(o.concept_id = 167132,o.value_datetime,null)) as time_of_last_device_closure,
@@ -7294,7 +7296,7 @@ BEGIN
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('5ee93f48-960b-11ec-b909-0242ac120002')
-                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164964,164254,160047,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133) and o.voided=0
+                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167118,167119,163042,167120,163042,163049,164964,164254,1444,166650,160715,163138,167132,162871,162875,162760,162749,1473,163556,164141,166014,167133,165139) and o.voided=0
         where e.voided=0
         group by e.patient_id,date(e.encounter_datetime);
 
@@ -7431,14 +7433,14 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
             max(if(o.concept_id = 160554,o.value_datetime,null)) as hiv_test_date,
             max(if(o.concept_id = 159599,o.value_datetime,null)) as art_start_date,
             max(if(o.concept_id = 164855,o.value_coded,null)) as current_regimen,
-            max(if(o.concept_id = 162053,o.value_text,null)) as ccc_number,
+            max(if(o.concept_id = 162053,o.value_numeric,null)) as ccc_number,
             max(if(o.concept_id = 5096,o.value_datetime,null)) as next_appointment_date,
             max(if(o.concept_id = 165239,o.value_coded,null)) as hiv_care_facility,
             max(if(o.concept_id = 161550,o.value_text,null)) as hiv_care_facility_name,
-            max(if(o.concept_id = 856,o.value_coded,null)) as vl,
+            max(if(o.concept_id = 856,o.value_numeric,if(o.concept_id = 1305, 'LDL',null))) as vl,
             max(if(o.concept_id = 5497,o.value_numeric,null)) as cd4_count,
-            max(if(o.concept_id = 1628 and o.value_coded = 147241,o.value_coded,null)) as bleeding_disorder,
-            max(if(o.concept_id = 1628 and o.value_coded = 119481,o.value_coded,null)) as diabetes,
+            max(if(o.concept_id = 165241 and o.value_coded = 147241,o.value_coded,null)) as bleeding_disorder,
+            max(if(o.concept_id = 165241 and o.value_coded = 119481,o.value_coded,null)) as diabetes,
             concat_ws(',', max(if(o.concept_id = 1728 and o.value_coded = 123529, 'Urethral Discharge', null)),
                       max(if(o.concept_id = 1728 and o.value_coded = 118990, 'Genital Sore', null)),
                       max(if(o.concept_id = 1728 and o.value_coded = 163606, 'Pain on Urination', null)),
@@ -7484,7 +7486,7 @@ CREATE PROCEDURE sp_populate_etl_vmmc_client_followup()
         from encounter e
                  inner join person p on p.person_id=e.patient_id and p.voided=0
                  inner join form f on f.form_id=e.form_id and f.uuid in ('d42aeb3d-d5d2-4338-a154-f75ddac78b59')
-                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,
+                 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167093,1710,159427,160554,164855,159599,162053,5096,165239,161550,856,1305,165241,
                                                                                           5497,1628,1728,163047,1794,163104,21,887,160557,164896,163393,54,161536,
                                                                                           1410,5085,5086,5242,5088,1855,165070,162169,167118,167119,167120,163049,163042,1272) and o.voided=0
         where e.voided=0
@@ -9246,6 +9248,155 @@ select e.patient_id,
     SELECT "Completed processing KVP Clinical enrollment";
 END $$
 
+-- Procedure sp_populate_etl_high_iit_intervention
+DROP PROCEDURE IF EXISTS sp_populate_etl_high_iit_intervention $$
+CREATE PROCEDURE sp_populate_etl_high_iit_intervention()
+BEGIN
+    SELECT "Processing High IIT Intervention";
+    INSERT INTO kenyaemr_etl.etl_high_iit_intervention (
+            uuid,
+            provider,
+            patient_id,
+            visit_id,
+            visit_date,
+            location_id,
+            encounter_id,
+            interventions_offered,
+            appointment_mgt_interventions,
+            reminder_methods,
+            enrolled_in_ushauri,
+            appointment_mngt_intervention_date,
+            date_assigned_case_manager,
+            eacs_recommended,
+            enrolled_in_psychosocial_support_group,
+            robust_literacy_interventions_date,
+            expanding_differentiated_service_delivery_interventions,
+            enrolled_in_nishauri,
+            expanded_differentiated_service_delivery_interventions_date,
+            date_created,
+            date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                          as visit_date,
+           e.location_id,
+           e.encounter_id,
+           concat_ws(',', max(if(o.concept_id = 166937 and o.value_coded = 160947,'Appointment management', null)), max(if(o.concept_id = 166937 and o.value_coded = 164836, 'Assigning Case managers', null)),
+                     max(if(o.concept_id = 166937 and o.value_coded = 167809, 'Robust client literacy', null)), max(if(o.concept_id = 166937 and o.value_coded = 164947, 'Expanding Differentiated Service Delivery', null))) as interventions_offered,
+           concat_ws(',', max(if(o.concept_id = 165353 and o.value_coded = 162135, 'Individualized discussion with the recipient of care to understand their preferences for appointments', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 166065, 'Agree on a plan if the recipient of care cannot honor their given appointments', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 163164, 'Willngness to receive reminders', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 167733, 'Immediate follow up via phone calls on the day of missed appointment, next day and intensely up to 7 days', null)),
+                     max(if(o.concept_id = 165353 and o.value_coded = 164965, 'Physical tracing by the CHW/Volunteers if not returned by day 7', null))
+           ) as appointment_mgt_interventions,
+           concat_ws(',', max(if(o.concept_id = 166607 and o.value_coded = 162135,'SMS', null)), max(if(o.concept_id = 166607 and o.value_coded = 166065,'Phone call', null))) as reminder_methods,
+           max(if(o.concept_id = 163777, o.value_coded, null))                 as enrolled_in_ushauri,
+           max(if(o.concept_id = 5096, o.value_datetime, null))                as appointment_mngt_intervention_date,
+           max(if(o.concept_id = 160753, o.value_datetime, null))              as date_assigned_case_manager,
+           max(if(o.concept_id = 168804, o.value_coded, null))                 as eacs_recommended,
+           max(if(o.concept_id = 165163, o.value_coded, null))                 as enrolled_in_psychosocial_support_group,
+           max(if(o.concept_id = 162869, o.value_datetime, null))              as robust_literacy_interventions_date,
+           max(if(o.concept_id = 164947, o.value_coded, null))                 as expanding_differentiated_service_delivery_interventions,
+           max(if(o.concept_id = 163766, o.value_coded, null))                 as enrolled_in_nishauri,
+           max(if(o.concept_id = 166865, o.value_datetime, null))              as expanded_differentiated_service_delivery_interventions_date,
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = '6817d322-f938-4f38-8ccf-caa6fa7a499f'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (166937, 166607, 163777, 5096, 160753, 168804,
+                                                                           165163, 162869, 164947, 163766, 166865,165353)
+        and o.voided = 0
+    where e.voided = 0
+    group by e.patient_id, date(e.encounter_datetime);
+    SELECT "Completed processing High IIT Intervention";
+END $$
+
+-- Procedure sp_populate_etl_home_visit_checklist
+DROP PROCEDURE IF EXISTS sp_populate_etl_home_visit_checklist $$
+CREATE PROCEDURE sp_populate_etl_home_visit_checklist()
+BEGIN
+    SELECT "Processing Home visit checklist";
+    INSERT INTO kenyaemr_etl.etl_home_visit_checklist (
+           uuid,
+           provider,
+           patient_id,
+           visit_id,
+           visit_date,
+           location_id,
+           encounter_id,
+           independence_in_daily_activities,
+           other_independence_activities,
+           meeting_basic_needs,
+           other_basic_needs,
+           disclosure_to_sexual_partner,
+           disclosure_to_household_members,
+           disclosure_to,
+           mode_of_storing_arv_drugs,
+           arv_drugs_taking_regime,
+           receives_household_social_support,
+           household_social_support_given,
+           receives_community_social_support,
+           community_social_support_given,
+           linked_to_non_clinical_services,
+           linked_to_other_services,
+           has_mental_health_issues,
+           suffering_stressful_situation,
+           uses_drugs_alcohol,
+           has_side_medications_effects,
+           medication_side_effects,
+           assessment_notes,
+           date_created,
+           date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           concat_ws(',', max(if(o.concept_id = 162063 and o.value_coded = 161650, 'Feeding', null)), max(if(o.concept_id = 162063 and o.value_coded = 159438, 'Grooming', null)),
+                     max(if(o.concept_id = 162063 and o.value_coded = 1000360, 'Toileting', null)),max(if(o.concept_id = 162063 and o.value_coded = 5622, 'Other', null)))   as independence_in_daily_activities,
+           max(if(o.concept_id = 160632, o.value_text, null))                    as other_independence_activities,
+           concat_ws(',', max(if(o.concept_id = 168076 and o.value_coded = 165474, 'Clothing', null)), max(if(o.concept_id = 168076 and o.value_coded = 159597, 'Food', null)),
+                     max(if(o.concept_id = 168076 and o.value_coded = 157519, 'Shelter', null)),max(if(o.concept_id = 168076 and o.value_coded = 5622, 'Other', null))) as meeting_basic_needs,
+           max(if(o.concept_id = 162725, o.value_text, null))                    as other_basic_needs,
+           max(if(o.concept_id = 167144, o.value_coded, null))                   as disclosure_to_sexual_partner,
+           max(if(o.concept_id = 159425, o.value_coded, null))                   as disclosure_to_household_members,
+           max(if(o.concept_id = 163108, o.value_text, null))                    as disclosure_to,
+           max(if(o.concept_id = 165250, o.value_text, null))                    as mode_of_storing_arv_drugs,
+           max(if(o.concept_id = 163104, o.value_text, null))                    as arv_drugs_taking_regime,
+           max(if(o.concept_id = 165302, o.value_coded, null))                   as receives_household_social_support,
+           max(if(o.concept_id = 161011, o.value_text, null))                    as household_social_support_given,
+           max(if(o.concept_id = 165052, o.value_coded, null))                   as receives_community_social_support,
+           max(if(o.concept_id = 165225, o.value_text, null))                    as community_social_support_given,
+           concat_ws(',', max(if(o.concept_id = 159550 and o.value_coded = 167814, 'Legal', null)),max(if(o.concept_id = 159550 and o.value_coded = 115125, 'Nutritional', null)),
+                     max(if(o.concept_id = 159550 and o.value_coded = 167180, 'Spiritual', null)),max(if(o.concept_id = 159550 and o.value_coded = 5622, 'Other', null)))  as linked_to_non_clinical_services,
+           max(if(o.concept_id = 164879, o.value_text, null))                    as linked_to_other_services,
+           max(if(o.concept_id = 165034, o.value_coded, null))                   as has_mental_health_issues,
+           max(if(o.concept_id = 165241, o.value_coded, null))                   as suffering_stressful_situation,
+           max(if(o.concept_id = 1288, o.value_coded, null))                     as uses_drugs_alcohol,
+           max(if(o.concept_id = 159935, o.value_coded, null))                   as has_side_medications_effects,
+           max(if(o.concept_id = 163076, o.value_text, null))                    as medication_side_effects,
+           max(if(o.concept_id = 162169, o.value_text, null))                   as assessment_notes,
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'ac3152de-1728-4786-828a-7fb4db0fc384'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                                                          (162063, 160632,162725,163108,163104,161011, 168076, 167144, 159425,
+                                                                           165302,165225,164879,165250,
+                                                                           165052, 159550, 165034, 165241, 1288, 159935,
+                                                                           163076,162169)
+        and o.voided = 0
+    where e.voided = 0
+    group by e.patient_id, date(e.encounter_datetime);
+    SELECT "Completed processing home visit checklist";
+END $$
+
 SET sql_mode=@OLD_SQL_MODE $$
 
 -- ------------------------------------------- running all procedures -----------------------------
@@ -9343,6 +9494,8 @@ CALL sp_populate_etl_family_planning();
 CALL sp_populate_etl_physiotherapy();
 CALL sp_populate_etl_psychiatry();
 CALL sp_populate_etl_kvp_clinical_enrollment();
+CALL sp_populate_etl_high_iit_intervention();
+CALL sp_populate_etl_home_visit_checklist();
 CALL sp_update_next_appointment_date();
 CALL sp_update_dashboard_table();
 
