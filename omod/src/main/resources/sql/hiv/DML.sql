@@ -854,6 +854,15 @@ non_natural_cause,
 date_created,
 date_last_modified
 )
+
+WITH encounter_facility AS (
+  SELECT 
+    o.encounter_id,
+    LEFT(TRIM(o.value_text), 100) AS to_facility_raw
+  FROM obs o
+  WHERE o.voided = 0 AND o.concept_id = 159495
+)
+
 select
 e.patient_id,
 e.uuid,
@@ -878,7 +887,7 @@ coalesce(max(if(o.concept_id=164384, o.value_datetime, null)),max(if(o.concept_i
 max(if(o.concept_id=1285, o.value_coded, null)) as trf_out_verified,
 max(if(o.concept_id=164133, o.value_datetime, null)) as trf_out_verification_date,
 max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
-max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
+COALESCE(l.`name`, ef.to_facility_raw) AS to_facility_name,
 max(if(o.concept_id=160649, o.value_datetime, null)) as to_date,
 max(if(o.concept_id=1599, o.value_coded, null)) as death_reason,
 max(if(o.concept_id=1748, o.value_coded, null)) as specific_death_cause,
@@ -896,6 +905,8 @@ inner join
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
 	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871')
 ) et on et.encounter_type_id=e.encounter_type
+LEFT JOIN encounter_facility ef ON ef.encounter_id = e.encounter_id
+LEFT JOIN location l ON l.uuid = ef.to_facility_raw
 where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing discontinuation data ", CONCAT("Time: ", NOW());

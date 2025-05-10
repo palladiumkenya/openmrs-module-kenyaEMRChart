@@ -678,6 +678,14 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
       date_created,
       date_last_modified
     )
+      WITH encounter_facility AS (
+        SELECT 
+          o.encounter_id,
+          LEFT(TRIM(o.value_text), 100) AS to_facility_raw
+        FROM obs o
+        WHERE o.voided = 0 AND o.concept_id = 159495
+      )
+
       select
         e.patient_id,
         e.uuid,
@@ -700,7 +708,7 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
         max(if(o.concept_id=1285, o.value_coded, null)) as trf_out_verified,
         max(if(o.concept_id=164133, o.value_datetime, null)) as trf_out_verification_date,
         max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
-        max(if(o.concept_id=159495, left(trim(o.value_text),100), null)) as to_facility,
+        COALESCE(l.`name`, ef.to_facility_raw) AS to_facility_name,
         max(if(o.concept_id=160649, o.value_datetime, null)) as to_date,
         max(if(o.concept_id=1599, o.value_coded, null)) as death_reason,
         max(if(o.concept_id=1748, o.value_coded, null)) as specific_death_cause,
@@ -717,6 +725,8 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
             uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
                     '7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93')
         ) et on et.encounter_type_id=e.encounter_type
+        LEFT JOIN encounter_facility ef ON ef.encounter_id = e.encounter_id
+        LEFT JOIN location l ON l.uuid = ef.to_facility_raw
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
