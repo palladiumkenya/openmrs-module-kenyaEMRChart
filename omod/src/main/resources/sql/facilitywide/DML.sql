@@ -187,6 +187,9 @@ INSERT INTO kenyaemr_etl.etl_special_clinics (patient_id,
       first_screening_outcome,
       second_screening_outcome,
       symptoms_for_otc,
+      nutritional_details,
+      first_0_6_months,
+      second_6_12_months,
       disability_classification,
       special_clinic,
       special_clinic_form_uuid)
@@ -329,6 +332,9 @@ select e.patient_id,
                      max(if(o.concept_id = 5219 and o.value_coded = 111525,  'Loss of function',NULL)),
                      max(if(o.concept_id = 5219 and o.value_coded = 116554,  'Joint stiffness',NULL)),
                      max(if(o.concept_id = 5219 and o.value_coded = 5622,  'Other',NULL))) as symptoms_for_otc,
+       max(if(o.concept_id = 159402, o.value_coded, null))                         as nutritional_details,
+       max(if(o.concept_id = 985, o.value_coded, null))                         as first_0_6_months,
+       max(if(o.concept_id = 1151, o.value_coded, null))                         as second_6_12_months,
        CONCAT_WS(',', max(if(o.concept_id = 1069 and o.value_coded = 167078, 'Neurodevelopmental', NULL)),
                  max(if(o.concept_id = 1069 and o.value_coded = 153343, 'learning', NULL)),
                  max(if(o.concept_id = 1069 and o.value_coded = 160176, 'Neurodiversity conditions', NULL)),
@@ -399,7 +405,7 @@ from encounter e
                                                                        162747, 162696, 168734,
                                                                        1149, 156625, 163304, 161005, 161648, 159854,
                                                                        5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,1069)
+                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069)
     and o.voided = 0
 where e.voided = 0
 group by e.patient_id, e.encounter_id;
