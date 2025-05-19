@@ -10279,6 +10279,7 @@ BEGIN
               provider,
               visit_date,
               visit_type,
+              pregnantOrLactating,
               referred_from,
               acuity_finding,
               referred_to,
@@ -10297,6 +10298,7 @@ BEGIN
               anaemia_level,
               metabolic_disorders,
               critical_nutrition_practices,
+              maternal_nutrition,
               therapeutic_food,
               supplemental_food,
               micronutrients,
@@ -10329,6 +10331,7 @@ BEGIN
            e.creator,
            date(e.encounter_datetime)                                                  as visit_date,
            max(if(o.concept_id = 164181, o.value_coded, null))                         as visit_type,
+           max(if(o.concept_id = 5272, o.value_coded, null))                           as pregnantOrLactating,
            max(if(o.concept_id = 161643, o.value_coded, null))                         as referred_from,
            max(if(o.concept_id = 164448, o.value_coded, null))                         as acuity_finding,
            max(if(o.concept_id = 163145, o.value_coded, null))                         as referred_to,
@@ -10390,6 +10393,7 @@ BEGIN
                      max(if(o.concept_id = 161005 and o.value_coded = 154358,  'Safe drinking water',NULL)),
                      max(if(o.concept_id = 161005 and o.value_coded = 1611,  'Prompt treatment for Opportunistic Infections',NULL)),
                      max(if(o.concept_id = 161005 and o.value_coded = 164377,  'Drug food interactions side effects',NULL))) as critical_nutrition_practices,
+             max(if(o.concept_id = 163300, o.value_coded, null))                                            as maternal_nutrition,
              CONCAT_WS(',',max(if(o.concept_id = 161648 and o.value_coded = 1107,  'None',NULL)),
                      max(if(o.concept_id = 161648 and o.value_coded = 163394,  'RUTF',NULL)),
                      max(if(o.concept_id = 161648 and o.value_coded = 163404,  'F-75',NULL)),
@@ -10512,7 +10516,7 @@ BEGIN
                                                                        '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' -- Hearing
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
-                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069)
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,163300,5272)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10523,6 +10527,7 @@ BEGIN
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),
                             visit_date=VALUES(visit_date),
                             visit_type=VALUES(visit_type),
+                            pregnantOrLactating=VALUES(pregnantOrLactating),
                             referred_from=VALUES(referred_from),
                             acuity_finding=VALUES(acuity_finding),
                             referred_to=VALUES(referred_to),
@@ -10541,6 +10546,7 @@ BEGIN
                             anaemia_level=VALUES(anaemia_level),
                             metabolic_disorders=VALUES(metabolic_disorders),
                             critical_nutrition_practices=VALUES(critical_nutrition_practices),
+                            maternal_nutrition=VALUES(maternal_nutrition),
                             therapeutic_food=VALUES(therapeutic_food),
                             supplemental_food=VALUES(supplemental_food),
                             micronutrients=VALUES(micronutrients),
