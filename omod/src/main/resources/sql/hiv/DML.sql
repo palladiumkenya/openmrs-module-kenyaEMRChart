@@ -1447,7 +1447,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				max(if(o.concept_id=159616,o.value_numeric,null)) as duration_of_labor,
 				max(if(o.concept_id=1587,o.value_coded,null)) as baby_sex,
 				max(if(o.concept_id=159917,o.value_coded,null)) as baby_condition,
-				max(if(o.concept_id=1282 and o.value_coded = 84893,1,0)) as teo_given,
+				max(if(o.concept_id=1570, o.value_coded, null)) as teo_given,
 				max(if(o.concept_id=5916,o.value_numeric,null)) as birth_weight,
 				max(if(o.concept_id=161543,o.value_coded,null)) as bf_within_one_hour,
 				max(if(o.concept_id=164122,o.value_coded,null)) as birth_with_deformity,
@@ -1482,7 +1482,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 
-														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,168751,1284,113316,165647,113602,163445,159949)
+														and o.concept_id in(162054,1590,160704,1282,159369,984,161094,1396,161930,163783,166665,299,1427,5596,164359,1789,5630,5599,161928,1856,162093,159603,159604,159605,162131,1572,1473,1379,1151,163454,1602,1573,162093,1576,120216,159616,1587,159917,1282,5916,161543,164122,159427,164848,161557,1436,1109,5576,159595,163784,159395,168751,1284,113316,165647,113602,163445,159949,1570)
 				inner join
 				(
 					select form_id, uuid,name from form where
@@ -7963,7 +7963,7 @@ BEGIN
                       from obs o
                                inner join encounter e on e.encounter_id=o.encounter_id
                                inner join person p on p.person_id=o.person_id and p.voided=0
-                               inner join form f on f.form_id=e.form_id and f.uuid = 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30'
+                               inner join form f on f.form_id=e.form_id and f.uuid in ('d3ea25c7-a3e8-4f57-a6a9-e802c3565a30','e8f98494-af35-4bb8-9fc7-c409c8fed843')
                       where concept_id in(984,1418,161011,1410,5096) and o.voided=0
                       group by o.obs_group_id,o.concept_id, e.encounter_datetime
                   ) t
