@@ -4107,6 +4107,7 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     provider                 INT(11)  NOT NULL,
     visit_date               DATE,
     visit_type               INT(11),
+    pregnantOrLactating      INT(11),
     referred_from            INT(11),
     acuity_finding           INT(11),
     referred_to              INT(11),
@@ -4125,6 +4126,7 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     anaemia_level               INT(11),
     metabolic_disorders         VARCHAR(255),
     critical_nutrition_practices   VARCHAR(255),
+    maternal_nutrition            INT(11),
     therapeutic_food        VARCHAR(255),
     supplemental_food       VARCHAR(255),
     micronutrients        VARCHAR(255),
@@ -4147,6 +4149,7 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     first_0_6_months        INT(11),
     second_6_12_months        INT(11),
     disability_classification  VARCHAR(255),
+    next_appointment_date       DATE,
     special_clinic           VARCHAR(255),
     special_clinic_form_uuid CHAR(38),
     CONSTRAINT FOREIGN KEY (patient_id)

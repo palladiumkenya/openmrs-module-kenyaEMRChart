@@ -151,6 +151,7 @@ INSERT INTO kenyaemr_etl.etl_special_clinics (patient_id,
       provider,
       visit_date,
       visit_type,
+      pregnantOrLactating,
       referred_from,
       acuity_finding,
       referred_to,
@@ -169,6 +170,7 @@ INSERT INTO kenyaemr_etl.etl_special_clinics (patient_id,
       anaemia_level,
       metabolic_disorders,
       critical_nutrition_practices,
+      maternal_nutrition,
       therapeutic_food,
       supplemental_food,
       micronutrients,
@@ -201,6 +203,7 @@ select e.patient_id,
        e.creator,
        date(e.encounter_datetime)                                                                     as visit_date,
        max(if(o.concept_id = 164181, o.value_coded, null))                                            as visit_type,
+       max(if(o.concept_id = 5272, o.value_coded, null))                                              as pregnantOrLactating,
        max(if(o.concept_id = 161643, o.value_coded, null))                                            as referred_from,
        max(if(o.concept_id = 164448, o.value_coded, null))                                            as acuity_finding,
        max(if(o.concept_id = 163145, o.value_coded, null))                                            as referred_to,
@@ -268,6 +271,7 @@ select e.patient_id,
                         NULL)),
                  max(if(o.concept_id = 161005 and o.value_coded = 164377, 'Drug food interactions side effects',
                         NULL)))                                                                       as critical_nutrition_practices,
+       max(if(o.concept_id = 163300, o.value_coded, null))                                            as maternal_nutrition,
        CONCAT_WS(',', max(if(o.concept_id = 161648 and o.value_coded = 1107, 'None', NULL)),
                  max(if(o.concept_id = 161648 and o.value_coded = 163394, 'RUTF', NULL)),
                  max(if(o.concept_id = 161648 and o.value_coded = 163404, 'F-75', NULL)),
@@ -405,12 +409,13 @@ from encounter e
                                                                        162747, 162696, 168734,
                                                                        1149, 156625, 163304, 161005, 161648, 159854,
                                                                        5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069)
+                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,163300,5272)
     and o.voided = 0
 where e.voided = 0
 group by e.patient_id, e.encounter_id;
 SELECT "Completed processing special clinics";
 END $$
+
     -- end of dml procedures
 
 SET sql_mode=@OLD_SQL_MODE $$
@@ -426,7 +431,7 @@ INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('init
 SET populate_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_etl_daily_revenue_summary();
-CALL sp_populate_etl_special_clinics();
+-- CALL sp_populate_etl_special_clinics();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 
