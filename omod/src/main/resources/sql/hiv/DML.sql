@@ -3208,10 +3208,10 @@ WITH LatestTest AS (
         SELECT
             patient_id,
             MAX(visit_date) AS latest_hiv_followup_visit,
-            MAX(breastfeeding) AS breastfeeding_status,
-            MAX(pregnancy_status) AS pregnancy_status,
-            MAX(last_menstrual_period) AS lmp_date,
-            MAX(pregnancy_outcome) AS pg_outcome
+            MID(MAX(CONCAT(visit_date,breastfeeding)),11) AS breastfeeding_status,
+            MID(MAX(CONCAT(visit_date,pregnancy_status)),11) AS pregnancy_status,
+            MID(MAX(CONCAT(visit_date,last_menstrual_period)),11) AS lmp_date,
+            MID(MAX(CONCAT(pregnancy_outcome)),11) AS pg_outcome
         FROM kenyaemr_etl.etl_patient_hiv_followup
         GROUP BY patient_id
     ) fup ON x.patient_id = fup.patient_id
@@ -3269,10 +3269,10 @@ WITH LatestTest AS (
              SELECT
                  patient_id,
                  MAX(visit_date) AS latest_hiv_followup_visit,
-                 MAX(breastfeeding) AS breastfeeding_status,
-                 MAX(pregnancy_status) AS pregnancy_status,
-                 MAX(last_menstrual_period) AS lmp_date,
-                 MAX(pregnancy_outcome) AS pg_outcome
+                 MID(MAX(CONCAT(visit_date, breastfeeding)), 11)         AS breastfeeding_status,
+                 MID(MAX(CONCAT(visit_date, pregnancy_status)), 11)      AS pregnancy_status,
+                 MID(MAX(CONCAT(visit_date, last_menstrual_period)), 11) AS lmp_date,
+                 MID(MAX(CONCAT(visit_date, pregnancy_outcome)), 11)     AS pg_outcome
              FROM kenyaemr_etl.etl_patient_hiv_followup
              GROUP BY patient_id
          ) fup ON de.patient_id = fup.patient_id
