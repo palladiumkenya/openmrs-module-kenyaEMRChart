@@ -193,6 +193,7 @@ INSERT INTO kenyaemr_etl.etl_special_clinics (patient_id,
       first_0_6_months,
       second_6_12_months,
       disability_classification,
+      treatment_intervention,
       special_clinic,
       special_clinic_form_uuid)
 select e.patient_id,
@@ -347,6 +348,16 @@ select e.patient_id,
                  max(if(o.concept_id = 1069 and o.value_coded = 155205, 'Nonverbal learning disabilities', NULL)),
                  max(if(o.concept_id = 1069 and o.value_coded = 5622, 'Others(specify)',
                         NULL)))                                                                       as disability_classification,
+        CONCAT_WS(',',max(if(o.concept_id = 165531 and o.value_coded = 167004,  'Assessing',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 2001239,  'Counselling Delivery',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 162308,  'Measurement taking',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 119758,  'Fabrication',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 159630,  'Fitting',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 5622,  'Assistive Technology Training',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 2001627,  'Casting',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 1000474,  'PWD assessment & Categorization',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 160068,  'Referral',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 142608,  'Delivery',NULL))) as treatment_intervention,
        case f.uuid
            when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
            when '22c68f86-bbf0-49ba-b2d1-23fa7ccf0259' then 'HIV'
@@ -409,7 +420,7 @@ from encounter e
                                                                        162747, 162696, 168734,
                                                                        1149, 156625, 163304, 161005, 161648, 159854,
                                                                        5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,163300,5272)
+                                                                       165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,163300,5272)
     and o.voided = 0
 where e.voided = 0
 group by e.patient_id, e.encounter_id;

@@ -106,6 +106,7 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     first_0_6_months        INT(11),
     second_6_12_months        INT(11),
     disability_classification     VARCHAR(255),
+    treatment_intervention     VARCHAR(255),
     next_appointment_date         DATE,
     special_clinic                VARCHAR(255),
     special_clinic_form_uuid      CHAR(38),
