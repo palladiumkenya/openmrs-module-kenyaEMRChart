@@ -965,6 +965,8 @@ SELECT "Successfully created post natal visit table";
 			VitaminA_1_and_half_yr,
 			VitaminA_2_yr ,
 			VitaminA_2_to_5_yr,
+            HPV_1,
+            HPV_2,
 			influenza,
 			sequence,
             case fully_immunized when 1065 then 'Yes' when 1066 then 'No' end as fully_immunized

@@ -1907,6 +1907,8 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       VitaminA_1_and_half_yr,
       VitaminA_2_yr ,
       VitaminA_2_to_5_yr,
+      HPV_1,
+      HPV_1,
       influenza,
       sequence,
       fully_immunized
@@ -1942,6 +1944,8 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
         max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
         max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
         max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
+        max(if(vaccine="HPV" and sequence=1, date_given, "")) as HPV_1,
+        max(if(vaccine="HPV" and sequence=2, date_given, "")) as HPV_2,
         max(if(vaccine="HEMOPHILUS INFLUENZA B", date_given, "")) as influenza,
         y.sequence as sequence,
         y.fully_immunized as fully_immunized
@@ -1991,7 +1995,8 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
                  name as encounter_type,
                  max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
                                           when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
-                                          when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID" when 5261 then "HEMOPHILUS INFLUENZA B" end), "")) as vaccine,
+                                          when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles"
+                                          when value_coded=84879 then "TETANUS TOXOID" when value_coded = 5261 then "HEMOPHILUS INFLUENZA B" when value_coded = 159708 then "HPV"  end), "")) as vaccine,
                  max(if(concept_id=1418, value_numeric, "")) as sequence,
                  max(if(concept_id=1410, date_given, "")) as date_given,
                  max(if(concept_id=164134, value_coded, "")) as fully_immunized,
@@ -2023,7 +2028,8 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       DPT_Hep_B_Hib_1=VALUES(DPT_Hep_B_Hib_1),DPT_Hep_B_Hib_2=VALUES(DPT_Hep_B_Hib_2),DPT_Hep_B_Hib_3=VALUES(DPT_Hep_B_Hib_3),PCV_10_1=VALUES(PCV_10_1),PCV_10_2=VALUES(PCV_10_2),PCV_10_3=VALUES(PCV_10_3),
       ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),ROTA_3=VALUES(ROTA_3),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2), Yellow_fever=VALUES(Yellow_fever),
       Measles_6_months=VALUES(Measles_6_months), VitaminA_6_months=VALUES(VitaminA_6_months),VitaminA_1_yr=VALUES(VitaminA_1_yr),
-      VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr),fully_immunized=VALUES(fully_immunized),influenza=VALUES(influenza),sequence=VALUES(sequence)
+      VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr),fully_immunized=VALUES(fully_immunized),
+      influenza=VALUES(influenza),sequence=VALUES(sequence),HPV_1=VALUES(HPV_1),HPV_2=VALUES(HPV_2)
     ;
     END $$
 

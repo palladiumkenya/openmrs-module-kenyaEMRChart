@@ -2100,6 +2100,8 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
       VitaminA_2_yr ,
       VitaminA_2_to_5_yr,
       fully_immunized,
+      HPV_1,
+      HPV_2,
       influenza,
       sequence,
       voided
@@ -2136,6 +2138,8 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
       max(if(vaccine="Vitamin A" and sequence=3, date_given, "")) as VitaminA_1_and_half_yr,
       max(if(vaccine="Vitamin A" and sequence=4, date_given, "")) as VitaminA_2_yr,
       max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
+      max(if(vaccine="HPV" and sequence=1, date_given, "")) as HPV_1,
+      max(if(vaccine="HPV" and sequence=2, date_given, "")) as HPV_2,
       max(if(vaccine="HEMOPHILUS INFLUENZA B", date_given, "")) as influenza,
       y.sequence as sequence,
       y.fully_immunized as fully_immunized,
@@ -2184,7 +2188,8 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
                  name as encounter_type,
                  max(if(concept_id=984 , (case when value_coded=886 then "BCG" when value_coded=783 then "OPV" when value_coded=1422 then "IPV"
                                                when value_coded=781 then "DPT" when value_coded=162342 then "PCV" when value_coded=83531 then "ROTA"
-                                               when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles" when value_coded=84879 then "TETANUS TOXOID" when 5261 then "HEMOPHILUS INFLUENZA B" end), "")) as vaccine,
+                                               when value_coded=162586 then "measles_rubella"  when value_coded=5864 then "yellow_fever" when value_coded=36 then "measles"
+                                               when value_coded=84879 then "TETANUS TOXOID" when value_coded = 5261 then "HEMOPHILUS INFLUENZA B" when value_coded = 159708 then "HPV" end), "")) as vaccine,
                  max(if(concept_id=1418, value_numeric, "")) as sequence,
                  max(if(concept_id=1410, date_given, "")) as date_given,
                  max(if(concept_id=164134, value_coded, "")) as fully_immunized,
