@@ -6043,20 +6043,21 @@ date_last_modified,
 voided
 )
 select
-       e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
-       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =1065 or o.value_coded =1066),o.value_coded, "" )) as ipv,
-       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =158358 or o.value_coded =1066),o.value_coded, "" )) as physical_ipv,
-       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =118688 or o.value_coded =1066),o.value_coded, "" )) as emotional_ipv,
-       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =152370 or o.value_coded =1066),o.value_coded, "" )) as sexual_ipv,
-       max(if(o.obs_group = 141814 and o.concept_id = 160658 and (o.value_coded =1582 or o.value_coded =1066),o.value_coded, "" )) as ipv_relationship,
-       e.date_created as date_created,
-       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
-       e.voided as voided
+    e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+    max(if(o.concept_id = 165116,o.value_coded, NULL)) as ipv,
+    max(if(o.concept_id = 165117,o.value_coded, NULL )) as physical_ipv,
+    max(if(o.concept_id = 165034,o.value_coded, NULL )) as emotional_ipv,
+    max(if(o.concept_id = 165070, o.value_coded, NULL )) as sexual_ipv,
+    max(if(o.concept_id = 165045, o.value_coded, NULL )) as ipv_relationship,
+    e.date_created as date_created,
+    if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+    e.voided as voided
 from encounter e
-       inner join person p on p.person_id=e.patient_id and p.voided=0
-       inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
-inner join (select o.encounter_id as encounter_id,o.person_id, o.obs_id,o.concept_id as obs_group,o1.concept_id as concept_id, o1.value_coded as value_coded,o1.date_created,o1.voided
-            from obs o join obs o1 on o.obs_id = o1.obs_group_id and o1.concept_id =160658 and o.concept_id =141814)o on o.encounter_id = e.encounter_id and o.voided=0
+         inner join person p on p.person_id=e.patient_id and p.voided=0
+         inner join form f on f.form_id=e.form_id and f.uuid in ('03767614-1384-4ce3-aea9-27e2f4e67d01','94eec122-83a1-11ea-bc55-0242ac130003')
+         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160658,165116,165117,165034,165070,165045,141814)
+    and o.voided=0
+where e.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing gbv screening data ", CONCAT("Time: ", NOW());
