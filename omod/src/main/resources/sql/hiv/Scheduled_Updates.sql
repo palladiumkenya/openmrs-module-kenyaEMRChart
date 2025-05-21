@@ -10319,6 +10319,7 @@ BEGIN
               first_0_6_months,
               second_6_12_months,
               disability_classification,
+              treatment_intervention,
               special_clinic,
               special_clinic_form_uuid)
     select e.patient_id,
@@ -10463,6 +10464,16 @@ BEGIN
                     max(if(o.concept_id = 1069 and o.value_coded = 142616,  'Delayed developmental milestone',NULL)),
                     max(if(o.concept_id = 1069 and o.value_coded = 155205,  'Nonverbal learning disabilities',NULL)),
                     max(if(o.concept_id = 1069 and o.value_coded = 5622,  'Others(specify)',NULL))) as disability_classification,
+        CONCAT_WS(',',max(if(o.concept_id = 165531 and o.value_coded = 167004,  'Assessing',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 2001239,  'Counselling Delivery',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 162308,  'Measurement taking',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 119758,  'Fabrication',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 159630,  'Fitting',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 5622,  'Assistive Technology Training',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 2001627,  'Casting',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 1000474,  'PWD assessment & Categorization',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 160068,  'Referral',NULL)),
+                    max(if(o.concept_id = 165531 and o.value_coded = 142608,  'Delivery',NULL))) as treatment_intervention,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
@@ -10514,7 +10525,7 @@ BEGIN
                                                                        '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' -- Hearing
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
-                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,163300,5272)
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,163300,5272)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10566,7 +10577,8 @@ BEGIN
                             nutritional_details=VALUES(nutritional_details),
                             first_0_6_months=VALUES(first_0_6_months),
                             second_6_12_months=VALUES(second_6_12_months),
-                            disability_classification=VALUES(disability_classification);
+                            disability_classification=VALUES(disability_classification),
+                            treatment_intervention=VALUES(treatment_intervention);
     SELECT "Completed updating special clinics";
 END $$
 
