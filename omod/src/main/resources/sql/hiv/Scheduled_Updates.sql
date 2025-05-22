@@ -10326,6 +10326,7 @@ BEGIN
               second_6_12_months,
               disability_classification,
               treatment_intervention,
+              area_of_service,
               special_clinic,
               special_clinic_form_uuid)
     select e.patient_id,
@@ -10339,7 +10340,7 @@ BEGIN
            max(if(o.concept_id = 5272, o.value_coded, null))                           as pregnantOrLactating,
            max(if(o.concept_id = 161643, o.value_coded, null))                         as referred_from,
            max(if(o.concept_id = 164448, o.value_coded, null))                         as acuity_finding,
-           max(if(o.concept_id = 163145, o.value_coded, null))                         as referred_to,
+           max(if(o.concept_id in (163145,1788),o.value_coded,null))                   as referred_to,
           CONCAT_WS(',',max(if(o.concept_id = 165302 and o.value_coded = 1107,  'None',NULL)),
                     max(if(o.concept_id = 165302 and o.value_coded = 164806,  'Neonatal Screening',NULL)),
                     max(if(o.concept_id = 165302 and o.value_coded = 168287,  'Initial Assessment',NULL)),
@@ -10480,6 +10481,7 @@ BEGIN
                     max(if(o.concept_id = 165531 and o.value_coded = 1000474,  'PWD assessment & Categorization',NULL)),
                     max(if(o.concept_id = 165531 and o.value_coded = 160068,  'Referral',NULL)),
                     max(if(o.concept_id = 165531 and o.value_coded = 142608,  'Delivery',NULL))) as treatment_intervention,
+                    max(if(o.concept_id = 168146, o.value_coded, null))                               as area_of_service,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
@@ -10531,7 +10533,7 @@ BEGIN
                                                                        '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' -- Hearing
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
-                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,163300,5272)
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,168146,1788,163300,5272)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10584,7 +10586,8 @@ BEGIN
                             first_0_6_months=VALUES(first_0_6_months),
                             second_6_12_months=VALUES(second_6_12_months),
                             disability_classification=VALUES(disability_classification),
-                            treatment_intervention=VALUES(treatment_intervention);
+                            treatment_intervention=VALUES(treatment_intervention),
+                            area_of_service=VALUES(area_of_service);
     SELECT "Completed updating special clinics";
 END $$
 

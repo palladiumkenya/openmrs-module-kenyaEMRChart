@@ -4092,6 +4092,7 @@ CREATE TABLE dwapi_etl.etl_special_clinics
     second_6_12_months        INT(11),
     disability_classification        VARCHAR(255),
     treatment_intervention        VARCHAR(255),
+    area_of_service                INT(11),
     special_clinic           VARCHAR(255),
     next_appointment_date DATE,
     special_clinic_form_uuid CHAR(38),
