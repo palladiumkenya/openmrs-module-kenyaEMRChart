@@ -9704,6 +9704,135 @@ BEGIN
     SELECT "Completed processing special clinics";
 END $$
 
+
+-- Procedure sp_populate_etl_adr_assessment_tool
+DROP PROCEDURE IF EXISTS sp_populate_etl_adr_assessment_tool $$
+CREATE PROCEDURE sp_populate_etl_adr_assessment_tool()
+BEGIN
+    SELECT "Processing ADR assessment tool";
+    INSERT INTO kenyaemr_etl.etl_adr_assessment_tool (
+           uuid,
+           provider,
+           patient_id,
+           visit_id,
+           visit_date,
+           location_id,
+           encounter_id,
+           weight_taken ,
+           weight_not_taken_specify,
+           taking_arvs_everyday,
+           not_taking_arvs_everyday,
+           correct_dosage_per_weight,
+           dosage_not_correct_specify,
+           arv_dosage_frequency,
+           other_medication_dosage_frequency,
+           arv_medication_time,
+           arv_timing_working,
+           arv_timing_not_working_specify,
+           other_medication_time,
+           other_medication_timing_working,
+           other_medication_timing_not_working_specify,
+           arv_frequency_difficult_to_follow,
+           difficult_arv_to_follow_specify,
+           difficulty_with_arv_tablets_or_liquids,
+           difficulty_with_arv_tablets_or_liquids_specify,
+           othe_drugs_frequency_difficult_to_follow,
+           difficult_other_drugs_to_follow_specify,
+           difficulty_other_drugs_tablets_or_liquids,
+           difficulty_other_drugs_tablets_or_liquids_specify,
+           arv_difficulty_due_to_taste_or_size,
+           arv_difficulty_due_to_taste_or_size_specify,
+           arv_symptoms_on_intake,
+           laboratory_abnormalities,
+           laboratory_abnormalities_specify,
+           summary_findings,
+           severity_of_reaction,
+           reaction_seriousness,
+           reason_for_seriousness,
+           action_taken_on_reaction,
+           reaction_resolved_on_dose_change,
+           reaction_reappeared_after_drug_introduced,
+           laboratory_investigations_done,
+           outcome,
+           reported_adr_to_pharmacy_board,
+           name_of_adr,
+           adr_report_number,
+           date_created,
+           date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 163515, o.value_coded, null))                   as weight_taken,
+           max(if(o.concept_id = 160632, o.value_text, null))                as weight_not_taken_specify,
+           max(if(o.concept_id = 162736, o.value_coded, null)) as taking_arvs_everyday,
+           max(if(o.concept_id = 161011, o.value_text, null))   as not_taking_arvs_everyday,
+           max(if(o.concept_id = 160582, o.value_coded, null))   as correct_dosage_per_weight,
+           max(if(o.concept_id = 164378, o.value_text, null))     as dosage_not_correct_specify,
+           max(if(o.concept_id = 160855, o.value_coded, null))   as arv_dosage_frequency,
+           max(if(o.concept_id = 159367, o.value_coded, null))     as other_medication_dosage_frequency,
+           max(if(o.concept_id = 161076, o.value_coded, null))   as arv_medication_time,
+           max(if(o.concept_id = 160119, o.value_coded, null))   as arv_timing_working,
+           max(if(o.concept_id = 164879, o.value_text, null))   as arv_timing_not_working_specify,
+           max(if(o.concept_id = 1724, o.value_coded, null))   as other_medication_time,
+           max(if(o.concept_id = 1417, o.value_coded, null))   as other_medication_timing_working,
+           max(if(o.concept_id = 160618, o.value_text, null))   as other_medication_timing_not_working_specify,
+           max(if(o.concept_id = 163331, o.value_coded, null))   as arv_frequency_difficult_to_follow,
+           max(if(o.concept_id = 163322, o.value_text, null))   as difficult_arv_to_follow_specify,
+           max(if(o.concept_id = 161911, o.value_coded, null))   as difficulty_with_arv_tablets_or_liquids,
+           max(if(o.concept_id = 159395, o.value_text, null))   as difficulty_with_arv_tablets_or_liquids_specify,
+           max(if(o.concept_id = 1803, o.value_coded, null))   as othe_drugs_frequency_difficult_to_follow,
+           max(if(o.concept_id = 165399, o.value_text, null))   as difficult_other_drugs_to_follow_specify,
+           max(if(o.concept_id = 1198, o.value_coded, null))   as difficulty_other_drugs_tablets_or_liquids,
+           max(if(o.concept_id = 162169, o.value_text, null))   as difficulty_other_drugs_tablets_or_liquids_specify,
+           max(if(o.concept_id = 166365, o.value_coded, null))   as arv_difficulty_due_to_taste_or_size,
+           max(if(o.concept_id = 162749, o.value_text, null))   as arv_difficulty_due_to_taste_or_size_specify,         
+           concat_ws(',', max(if(o.concept_id = 1729 and o.value_coded = 122983, 'Vomiting', null)), max(if(o.concept_id = 1729 and o.value_coded = 832, 'Rapid or excessive weight loss', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 140937, 'Rapid or excessive weight gain', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 879, 'Itching of the skin', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 139084, 'Headache', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 142412, 'Diarrhea', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 5192, 'Yellowness of eyes', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 512, 'Rash on the skin', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 141830, 'Dizziness', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 141597, 'Sleep Disturbance', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 137601, 'Increased appetite', null)),
+                     max(if(o.concept_id = 1729 and o.value_coded = 6031, 'Decreased appetite', null)), 
+                     max(if(o.concept_id = 1729 and o.value_coded = 5622, 'Other changes or concerns', null)))   as arv_symptoms_on_intake,
+          max(if(o.concept_id = 164217, o.value_coded, null))                   as laboratory_abnormalities,
+          max(if(o.concept_id = 1356, o.value_coded, null))                   as laboratory_abnormalities_specify,
+          max(if(o.concept_id = 162165, o.value_text, null))                    as summary_findings,
+          max(if(o.concept_id = 162760, o.value_coded, null))                   as severity_of_reaction,
+          max(if(o.concept_id = 162867, o.value_coded, null))                   as reaction_seriousness,
+          max(if(o.concept_id = 168296, o.value_coded, null))                    as reason_for_seriousness,
+          max(if(o.concept_id = 1255, o.value_coded, null))                   as action_taken_on_reaction,
+          max(if(o.concept_id = 6097, o.value_coded, null))                   as reaction_resolved_on_dose_change,
+          max(if(o.concept_id = 159924, o.value_coded, null))                   as reaction_reappeared_after_drug_introduced,
+          max(if(o.concept_id = 164422, o.value_text, null))                   as laboratory_investigations_done,
+          max(if(o.concept_id = 163105, o.value_coded, null))                   as outcome,
+          max(if(o.concept_id = 162871, o.value_coded, null))                   as reported_adr_to_pharmacy_board,
+          max(if(o.concept_id = 162872, o.value_text, null))                   as name_of_adr,
+          max(if(o.concept_id = 162054, o.value_text, null))                   as adr_report_number,
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'cc27af13-69ee-49e2-8a43-e1b1926403c1'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in                                               
+                                (162054, 162872,162871,163105,164422,160119,1724,162736,159367,
+                                159924, 6097, 1255, 168296,162867,160618,163515,160632,160855,
+                                162760,162165,1356,164217,1729, 162749,163322,163331,160582,1417,
+                                166365, 162169, 1198, 165399, 1803, 159395,161011,164378,161076,
+                                161911,164879)
+        and o.voided = 0
+    where e.voided = 0
+    group by e.patient_id, date(e.encounter_datetime);
+    SELECT "Completed processing ADR assessment tool";
+END $$
+
 SET sql_mode=@OLD_SQL_MODE $$
 
 -- ------------------------------------------- running all procedures -----------------------------
@@ -9804,6 +9933,7 @@ CALL sp_populate_etl_kvp_clinical_enrollment();
 CALL sp_populate_etl_high_iit_intervention();
 CALL sp_populate_etl_home_visit_checklist();
 CALL sp_populate_etl_special_clinics();
+CALL sp_populate_etl_adr_assessment_tool();
 CALL sp_update_next_appointment_date();
 CALL sp_update_dashboard_table();
 
