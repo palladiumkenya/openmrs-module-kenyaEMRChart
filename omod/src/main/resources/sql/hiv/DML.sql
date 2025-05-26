@@ -8205,6 +8205,17 @@ BEGIN
                                 pat.appointment_service_id = 15
          group by sc.patient_id, sc.visit_date) apt on apt.patient_id = sc.patient_id and apt.visit_date = sc.visit_date
     set sc.next_appointment_date = apt.patAppt;
+
+        -- Orthopaedic appointment update query
+        update kenyaemr_etl.etl_special_clinics sc
+            inner join
+            (select sc.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, sc.next_appointment_date etlAppt
+             from kenyaemr_etl.etl_special_clinics sc
+                      inner join kenyaemr_etl.etl_patient_appointment pat
+                                 on pat.patient_id = sc.patient_id and pat.visit_date = sc.visit_date and
+                                    pat.appointment_service_id = 43
+             group by sc.patient_id, sc.visit_date) apt on apt.patient_id = sc.patient_id and apt.visit_date = sc.visit_date
+        set sc.next_appointment_date = apt.patAppt;
       SELECT "Completed updating next appointment date";
 END $$
 
