@@ -9094,6 +9094,17 @@ BEGIN
        group by fup.patient_id, fup.visit_date) apt on apt.patient_id = fup.patient_id and apt.visit_date = fup.visit_date
   set fup.next_appointment_date = apt.patAppt
   where fup.date_created >= last_update_time;
+
+   update kenyaemr_etl.etl_special_clinics sc
+        inner join
+        (select sc.patient_id, pat.visit_date, max(pat.start_date_time) patAppt, sc.next_appointment_date etlAppt
+         from kenyaemr_etl.etl_special_clinics sc
+                  inner join kenyaemr_etl.etl_patient_appointment pat
+                             on pat.patient_id = sc.patient_id and pat.visit_date = sc.visit_date and
+                                pat.appointment_service_id in (15,43)
+         group by sc.patient_id, sc.visit_date) apt on apt.patient_id = sc.patient_id and apt.visit_date = sc.visit_date
+    set sc.next_appointment_date = apt.patAppt
+    where sc.date_created >= last_update_time;
   
       SELECT "Completed updating next appointment date";
 END $$
