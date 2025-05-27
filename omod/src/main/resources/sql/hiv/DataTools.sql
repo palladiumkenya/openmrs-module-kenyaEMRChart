@@ -3284,6 +3284,73 @@ ALTER TABLE kenyaemr_datatools.home_visit_checklist
     ADD INDEX (visit_date);
 SELECT "Successfully created kenyaemr_datatools.home_visit_checklist table";
 
+-- Create NCD Enrolment Table
+
+create table kenyaemr_datatools.etl_ncd_enrollment as
+select  patient_id,
+            uuid,
+            provider,
+            visit_id,
+            visit_date,
+            encounter_id,
+            location_id,
+            case patient_complaint when 1065 then 'Yes' when 1066 then 'No' end as patient_complaint,
+            case specific_complaint when 147104 then 'Blurring of vision' when 135592 then 'Loss of consciousness' when 156046 then 'Recurrent dizziness'
+            when 116860 then 'Foot complaints' when 141600 then 'Shortness of breath on activity' when 130987 then 'Palpitations (Heart racing)' when 6005 then 'Focal weakness'
+            when 112961 then 'Fainting' when 5622 then 'Other' end as specific_complaint,
+            case disease_type when 142486 then 'Diabetes' when 117399 then 'Hypertension' when 166020 then 'Co-morbid' end as disease_type,
+            case diabetes_condition when 1000488 then 'New DM patient' when 1000489 then 'Known DM patient' end as diabetes_condition,
+            case diabetes_type when 142474 then 'Type 1 Diabetes Mellitus' when 2004524 then 'Type 2 Diabetes Mellitus' when 117807 then 'Gestational Diabetes Mellitus'
+            when 126985 then 'Diabetes secondary to other causes' end as diabetes_type,
+            case hypertension_condition when 1000490 then 'New HTN patient' when 1000491 then 'Known HTN patient' end as hypertension_condition,
+            hypertension_stage,
+            hypertension_type,
+            case co-morbid_condition when 1000492 then 'New co-morbid patient' when 1000493 then 'Known Co-morbid patient' end as co-morbid_condition,
+            diagnosis_date,
+            case hiv_status when 664 then 'HIV Negative' when 703 then 'HIV Positive' when 1067 then 'Unknown' end as hiv_status,
+            case hiv_positive_on_art when 1065 then 'Yes' when 1066 then 'No' end as hiv_positive_on_art,
+            case tb_screening when 1660 then 'No TB Signs' when 142177 then 'Presumed TB' when 1662 then 'TB Confirmed' when 160737 then 'TB Screening Not Done' end as tb_screening,
+            case smoke_check when 1065 then 'Yes' when 1066 then 'No' when 158939 then 'Stopped' end as smoke_check,
+            date_stopped_smoke,
+            case drink_alcohol when 1065 then 'Yes' when 1066 then 'No' when 159452 then 'Stopped' end as drink_alcohol,
+            date_stopped_alcohol,
+            case cessation_counseling when 1065 then 'Yes' when 1066 then 'No' end as cessation_counseling,
+            case physical_activity when 1065 then 'Yes' when 1066 then 'No' end as physical_activity,
+            case diet_routine when 1065 then 'Yes' when 1066 then 'No' end as diet_routine,
+            case examination_findings when 1107 then 'None' when 143050 then 'Cyanosis' when 142630 then 'Dehydration' when 140125 then 'Finger Clubbing' when 136443 then 'Jaundice'
+            when 116334 then 'Lethargic' when 126952 then 'Lymph Node Axillary' when 126939 then 'Lymph Nodes Inguinal' when 1861 then 'Nasal Flaring' when 460 then 'Oedema' when 5334 then 'Oral thrush'
+            when 5245 then 'Pallor' when 206 then 'Convulsions' when 823 then 'Wasting' end as examination_findings,
+            case cardiovascular when 1115 then 'Normal' when 1116 then 'Abnormal' end as cardiovascular,
+            case respiratory when 1115 then 'Normal' when 1116 then 'Abnormal' end as respiratory,
+            case abdominal_pelvic when 1115 then 'Normal' when 1116 then 'Abnormal' end as abdominal_pelvic,
+            case neurological when 1115 then 'Normal' when 1116 then 'Abnormal' end as neurological,
+            case oral_exam when 1115 then 'Normal' when 1116 then 'Abnormal' end as oral_exam,
+            case foot_risk when 166674 then 'High Risk' when 166675 then 'Low Risk' end as foot_risk,
+            case foot_low_risk when 164188 then 'Intact protective sensation' when 158955 then 'Pedal Pulses Present' when 155871 then 'No deformity' when 123919 then 'No prior foot ulcer'
+            when 164009 then 'No amputation' end as foot_low_risk,
+            case foot_high_risk when 166844 then 'Loss of protective sensation' when 150518 then 'Absent pedal pulses' when 142677 then 'Foot deformity' when 123919 then 'History of foot ulcer'
+            when 164009 then 'Prior amputation' end as foot_high_risk,
+            case diabetic_foot when 1065 then 'Yes' when 1066 then 'No' end as diabetic_foot,
+            case treatment_given when 168812 then 'Diet & physical activity' when 167915 then 'Oral glucose-lowering agents (OGLAs)' when 167962 then 'Insulin and OGLAs' when 78056 then 'Insulin'
+            when 2024964 then 'Anti hypertensives' when 2028777 then 'Herbal' when 5622 then 'Others' end as treatment_given,
+            case lifestyle_advice when 168812 then 'Physical Activities' when 168807 then 'Support Group' when 900009 then 'Nutrition' when 2022484 then 'Mental wellbeing' when 121712 then 'Alcohol'
+            when 156830 then 'Alcohol Cessation' when 137093 then 'Tobacco Cessation' when 1000023 then 'Other substances' when 2028777 then 'Herbal use or alternative therapies advise remarks' end as lifestyle_advice,
+            nutrition_assessment,
+            case footcare_outcome when 162130 then 'Ulcer healed' when 2001766 then 'Surgical debridement' when 164009 then 'Amputation' when 5240 then 'Loss to follow up' when 1654 then 'Admitted'
+            when 1648 then 'Referred' end as footcare_outcome,
+            clinical_notes,
+            date_created,
+            date_last_modified,
+            voided
+from kenyaemr_etl.etl_ncd_enrollment;
+ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
+    ADD INDEX (visit_date);
+SELECT "Successfully created kenyaemr_datatools.etl_ncd_enrollment table";
+
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
