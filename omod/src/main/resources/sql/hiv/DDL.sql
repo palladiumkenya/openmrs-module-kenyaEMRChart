@@ -114,6 +114,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_psychiatry;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_high_iit_intervention;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_home_visit_checklist;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_enrollment;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -4233,6 +4234,65 @@ CREATE TABLE kenyaemr_etl.etl_home_visit_checklist
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_home_visit_checklist table";
+-- ------------ create table etl_ncd_enrollment-----------------------
+
+CREATE TABLE kenyaemr_etl.etl_ncd_enrollment (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL PRIMARY KEY,
+patient_complaint INT(11),
+specific_complaint INT(11),
+disease_type INT(11),
+diabetes_condition INT(11),
+diabetes_type INT(11),
+diabetes_diagnosis_date DATE,
+hypertension_condition INT(11),
+hypertension_stage VARCHAR(100),
+hypertension_type INT(11),
+co-morbid_condition INT(11),
+diagnosis_date DATE,
+hiv_status INT(11),
+hiv_positive_on_art INT(11),
+tb_screening INT(11),
+smoke_check INT(11),
+date_stopped_smoke DATE,
+drink_alcohol INT(11),
+date_stopped_alcohol DATE,
+cessation_counseling INT(11),
+physical_activity INT(11),
+diet_routine INT(11),
+examination_findings INT(11),
+cardiovascular INT(11),
+respiratory INT(11),
+abdominal_pelvic INT(11),
+neurological INT(11),
+oral_exam INT(11),
+foot_risk INT(11),
+foot_low_risk INT(11),
+foot_high_risk INT(11),
+diabetic_foot INT(11),
+treatment_given INT(11),
+lifestyle_advice INT(11),
+nutrition_assessment VARCHAR(255),
+footcare_outcome INT(11),
+clinical_notes VARCHAR(255),
+
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+INDEX(visit_date),
+INDEX(encounter_id),
+INDEX(patient_id),
+INDEX(disease_type),
+INDEX(diabetes_type),
+INDEX(hypertension_type)
+);
+SELECT "Successfully created etl_ncd_enrollment table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

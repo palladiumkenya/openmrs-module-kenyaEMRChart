@@ -10914,6 +10914,157 @@ and e.date_created >= last_update_time
      date_last_modified=VALUES(date_last_modified);
 SELECT "Completed processing home visit checklist";
 END $$
+
+-- ------------- populate etl_ncd_enrollment-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_ncd_enrollment $$
+CREATE PROCEDURE sp_populate_etl_ncd_enrollment(IN last_update_time DATETIME)
+BEGIN
+SELECT "Processing NCD Enrollment data ", CONCAT("Time: ", NOW());
+
+insert into kenyaemr_etl.etl_ncd_enrollment(
+    patient_id,
+    uuid,
+    provider,
+    visit_id,
+    visit_date,
+    encounter_id,
+    location_id,
+    patient_complaint,
+    specific_complaint,
+    disease_type,
+    diabetes_condition,
+    diabetes_type,
+    hypertension_condition,
+    hypertension_stage,
+    hypertension_type,
+    co-morbid_condition,
+    diagnosis_date,
+    hiv_status,
+    hiv_positive_on_art,
+    tb_screening,
+    smoke_check,
+    date_stopped_smoke,
+    drink_alcohol,
+    date_stopped_alcohol,
+    cessation_counseling,
+    physical_activity,
+    diet_routine,
+    examination_findings,
+    cardiovascular,
+    respiratory,
+    abdominal_pelvic,
+    neurological,
+    oral_exam,
+    foot_risk,
+    foot_low_risk,
+    foot_high_risk,
+    diabetic_foot,
+    treatment_given,
+    lifestyle_advice,
+    nutrition_assessment,
+    footcare_outcome,
+    clinical_notes,
+    date_created,
+    date_last_modified,
+    voided
+    )
+select
+       e.patient_id,
+       e.uuid,
+       e.creator,
+       e.visit_id,
+       date(e.encounter_datetime) as visit_date,
+       e.encounter_id,
+       e.location_id,
+       max(if(o.concept_id = 1628, o.value_coded, null))   as patient_complaint,
+       max(if(o.concept_id = 5219, o.value_coded, null))   as specific_complaint,
+       max(if(o.concept_id = 1000485, o.value_coded, null))   as disease_type,
+       max(if(o.concept_id = 119481, o.value_coded, null))   as diabetes_condition,
+       max(if(o.concept_id = 152909, o.value_coded, null))   as diabetes_type,
+       max(if(o.concept_id = 160223, o.value_coded, null))   as hypertension_condition,
+       max(if(o.concept_id = 162725, o.value_text, null))   as hypertension_stage,
+       max(if(o.concept_id = 162725, o.value_text, null))   as hypertension_type,
+       max(if(o.concept_id = 162747, o.value_coded, null))   as co-morbid_condition,
+       max(if(o.concept_id = 162869, o.value_datetime, null))   as diagnosis_date,
+       max(if(o.concept_id = 1169, o.value_coded, null))   as hiv_status,
+       max(if(o.concept_id = 163783, o.value_coded, null))   as hiv_positive_on_art,
+       max(if(o.concept_id = 165198, o.value_coded, null))   as tb_screening,
+       max(if(o.concept_id = 152722, o.value_coded, null))   as smoke_check,
+       max(if(o.concept_id = 1191, o.value_datetime, null))   as date_stopped_smoke,
+       max(if(o.concept_id = 159449, o.value_coded, null))   as drink_alcohol,
+       max(if(o.concept_id = 1191, o.value_datetime, null))   as date_stopped_alcohol,
+       max(if(o.concept_id = 1455, o.value_coded, null))   as cessation_counseling,
+       max(if(o.concept_id = 1000519, o.value_coded, null))   as physical_activity,
+       max(if(o.concept_id = 1000520, o.value_coded, null))   as diet_routine,
+       max(if(o.concept_id = 162737, o.value_coded, null))   as examination_findings,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as cardiovascular,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as respiratory,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as abdominal_pelvic,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as neurological,
+       max(if(o.concept_id = 163308, o.value_coded, null))   as oral_exam,
+       max(if(o.concept_id = 166879, o.value_coded, null))   as foot_risk,
+       max(if(o.concept_id = 166676, o.value_coded, null))   as foot_low_risk,
+       max(if(o.concept_id = 1284, o.value_coded, null))   as foot_high_risk,
+       max(if(o.concept_id = 1284, o.value_coded, null))   as diabetic_foot,
+       max(if(o.concept_id = 166665, o.value_coded, null))   as treatment_given,
+       max(if(o.concept_id = 165070, o.value_coded, null))   as lifestyle_advice,
+       max(if(o.concept_id = 165250, o.value_text, null))   as nutrition_assessment,
+       max(if(o.concept_id = 162737, o.value_coded, null))   as footcare_outcome,
+       max(if(o.concept_id = 160632, o.value_text, null))   as clinical_notes,
+       e.date_created as date_created,
+       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
+                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,160632) and o.voided=0
+where e.voided=0
+group by e.patient_id,visit_date
+ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+        visit_date=VALUES(visit_date),
+        patient_complaint=VALUES(patient_complaint),
+        specific_complaint=VALUES(specific_complaint),
+        disease_type=VALUES(disease_type),
+        diabetes_condition=VALUES(diabetes_condition),
+        diabetes_type=VALUES(diabetes_type),
+        hypertension_condition=VALUES(hypertension_condition),
+        hypertension_stage=VALUES(hypertension_stage),
+        hypertension_type=VALUES(hypertension_type),
+        co-morbid_condition=VALUES(co-morbid_condition),
+        diagnosis_date=VALUES(diagnosis_date),
+        hiv_status=VALUES(hiv_status),
+        hiv_positive_on_art=VALUES(hiv_positive_on_art),
+        tb_screening=VALUES(tb_screening),
+        smoke_check=VALUES(smoke_check),
+        date_stopped_smoke=VALUES(date_stopped_smoke),
+        drink_alcohol=VALUES(drink_alcohol),
+        date_stopped_alcohol=VALUES(date_stopped_alcohol),
+        cessation_counseling=VALUES(cessation_counseling),
+        physical_activity=VALUES(physical_activity),
+        diet_routine=VALUES(diet_routine),
+        examination_findings=VALUES(examination_findings),
+        cardiovascular=VALUES(cardiovascular),
+        respiratory=VALUES(respiratory),
+        abdominal_pelvic=VALUES(abdominal_pelvic),
+        neurological=VALUES(neurological),
+        oral_exam=VALUES(oral_exam),
+        foot_risk=VALUES(foot_risk),
+        foot_low_risk=VALUES(foot_low_risk),
+        foot_high_risk=VALUES(foot_high_risk),
+        diabetic_foot=VALUES(diabetic_foot),
+        treatment_given=VALUES(treatment_given),
+        lifestyle_advice=VALUES(lifestyle_advice),
+        nutrition_assessment=VALUES(nutrition_assessment),
+        footcare_outcome=VALUES(footcare_outcome),
+        clinical_notes=VALUES(clinical_notes),
+        date_created=VALUES(date_created),
+        date_last_modified=VALUES(date_last_modified),
+        voided=VALUES(voided);
+
+SELECT "Completed processing NCD Enrollment data ", CONCAT("Time: ", NOW());
+END $$
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -11013,6 +11164,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_home_visit_checklist(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
+    CALL sp_populate_etl_ncd_enrollment(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
