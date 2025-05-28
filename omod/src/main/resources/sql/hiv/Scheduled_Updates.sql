@@ -10967,6 +10967,8 @@ insert into kenyaemr_etl.etl_ncd_enrollment(
     clinical_notes,
     date_created,
     date_last_modified,
+    date_of_discontinuation,
+    discontinuation_reason,
     voided
     )
 select
@@ -11013,7 +11015,10 @@ select
        max(if(o.concept_id = 162737, o.value_coded, null))   as footcare_outcome,
        max(if(o.concept_id = 160632, o.value_text, null))   as clinical_notes,
        e.date_created as date_created,
-       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
+       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+       max(if(o.concept_id=164384, o.value_datetime, null)) as date_of_discontinuation,
+       max(if(o.concept_id=161555, o.value_coded, null)) as discontinuation_reason,
+       e.voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'

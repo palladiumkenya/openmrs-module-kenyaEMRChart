@@ -3341,6 +3341,8 @@ select  patient_id,
             clinical_notes,
             date_created,
             date_last_modified,
+            date_of_discontinuation,
+            (case discontinuation_reason when 159492 then "Transferred out" when 1067 then "Unknown" when 160034 then "Died" when 5622 then "Other" when 819 then "819" else "" end) as discontinuation_reason,
             voided
 from kenyaemr_etl.etl_ncd_enrollment;
 ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
