@@ -9090,6 +9090,7 @@ BEGIN
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
              inner join form f on f.form_id = e.form_id and f.uuid = 'c7f47cea-207b-11e9-ab14-d663bd873d93'
+             left outer join patient_program_discontinuation d on d.patient_id=e.patient_id
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (165004, 165027, 5570, 165030, 165031, 165032,
                                                                            163191, 169043, 159813, 123160, 165205,
@@ -9305,6 +9306,8 @@ insert into dwapi_etl.etl_ncd_enrollment(
     clinical_notes,
     date_created,
     date_last_modified,
+    date_of_discontinuation,
+    discontinuation_reason,
     voided
     )
 select
@@ -9351,12 +9354,15 @@ select
        max(if(o.concept_id = 162737, o.value_coded, null))   as footcare_outcome,
        max(if(o.concept_id = 160632, o.value_text, null))   as clinical_notes,
        e.date_created as date_created,
-       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
+       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+       max(if(o.concept_id=164384, o.value_datetime, null)) as date_of_discontinuation,
+       max(if(o.concept_id=161555, o.value_coded, null)) as discontinuation_reason,
+       e.voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
-                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,160632) and o.voided=0
+                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,160632,164384,161555) and o.voided=0
 where e.voided=0
 group by e.patient_id,visit_date;
 
