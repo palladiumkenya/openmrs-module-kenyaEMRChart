@@ -879,7 +879,8 @@ et.uuid,
 	when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
 	when '5cf00d9e-09da-11ea-8d71-362b9e155667' then 'OVC'
 	when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
-	when '4f02dfed-a2ec-40c2-b546-85dab5831871' then 'VMMC'
+	when '4f02dfed-a2ec-40c2-b546-85dab5831871' then 'VMMC',
+	when 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97' then 'NCD'
 end) as program_name,
 e.encounter_id,
 coalesce(max(if(o.concept_id=161555, o.value_coded, null)),max(if(o.concept_id=159786, o.value_coded, null))) as reason_discontinued,
@@ -903,7 +904,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
-	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871')
+	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871', 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97')
 ) et on et.encounter_type_id=e.encounter_type
 LEFT JOIN encounter_facility ef ON ef.encounter_id = e.encounter_id
 LEFT JOIN location l ON l.uuid = ef.to_facility_raw
@@ -9718,6 +9719,9 @@ insert into kenyaemr_etl.etl_ncd_enrollment(
     visit_date,
     encounter_id,
     location_id,
+    referred_from,
+    referred_from_department,
+    referred_from_department_other,
     patient_complaint,
     specific_complaint,
     disease_type,
@@ -9752,11 +9756,11 @@ insert into kenyaemr_etl.etl_ncd_enrollment(
     lifestyle_advice,
     nutrition_assessment,
     footcare_outcome,
+    referred_to,
+    reasons_for_referral,
     clinical_notes,
     date_created,
     date_last_modified,
-    date_of_discontinuation,
-    discontinuation_reason,
     voided
     )
 select
@@ -9767,6 +9771,9 @@ select
        date(e.encounter_datetime) as visit_date,
        e.encounter_id,
        e.location_id,
+       max(if(o.concept_id = 161550, o.value_text, null))   as referred_from,
+       max(if(o.concept_id = 159371, o.value_coded, null))   as referred_from_department,
+       max(if(o.concept_id = 161011, o.value_text, null))   as referred_from_department_other,
        max(if(o.concept_id = 1628, o.value_coded, null))   as patient_complaint,
        max(if(o.concept_id = 5219, o.value_coded, null))   as specific_complaint,
        max(if(o.concept_id = 1000485, o.value_coded, null))   as disease_type,
@@ -9801,18 +9808,18 @@ select
        max(if(o.concept_id = 165070, o.value_coded, null))   as lifestyle_advice,
        max(if(o.concept_id = 165250, o.value_text, null))   as nutrition_assessment,
        max(if(o.concept_id = 162737, o.value_coded, null))   as footcare_outcome,
+       max(if(o.concept_id = 162724, o.value_text, null )) as referred_to,
+       max(if(o.concept_id = 159623, o.value_text, null )) as reasons_for_referral,
        max(if(o.concept_id = 160632, o.value_text, null))   as clinical_notes,
        e.date_created as date_created,
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
-       max(if(o.concept_id=164384, o.value_datetime, null)) as date_of_discontinuation,
-       max(if(o.concept_id=161555, o.value_coded, null)) as discontinuation_reason,
        e.voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
        left outer join patient_program_discontinuation d on d.patient_id=e.patient_id
-       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
-                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,160632,164384,161555) and o.voided=0
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
+                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,162724,159623,160632) and o.voided=0
 where e.voided=0
 group by e.patient_id,visit_date;
 

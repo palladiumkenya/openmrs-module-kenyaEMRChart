@@ -3294,10 +3294,11 @@ select  patient_id,
             visit_date,
             encounter_id,
             location_id,
+            referred_from,
+            referred_from_department,
+            referred_from_department_other,
             case patient_complaint when 1065 then 'Yes' when 1066 then 'No' end as patient_complaint,
-            case specific_complaint when 147104 then 'Blurring of vision' when 135592 then 'Loss of consciousness' when 156046 then 'Recurrent dizziness'
-            when 116860 then 'Foot complaints' when 141600 then 'Shortness of breath on activity' when 130987 then 'Palpitations (Heart racing)' when 6005 then 'Focal weakness'
-            when 112961 then 'Fainting' when 5622 then 'Other' end as specific_complaint,
+            specific_complaint,
             case disease_type when 142486 then 'Diabetes' when 117399 then 'Hypertension' when 166020 then 'Co-morbid' end as disease_type,
             case diabetes_condition when 1000488 then 'New DM patient' when 1000489 then 'Known DM patient' end as diabetes_condition,
             case diabetes_type when 142474 then 'Type 1 Diabetes Mellitus' when 2004524 then 'Type 2 Diabetes Mellitus' when 117807 then 'Gestational Diabetes Mellitus'
@@ -3317,9 +3318,7 @@ select  patient_id,
             case cessation_counseling when 1065 then 'Yes' when 1066 then 'No' end as cessation_counseling,
             case physical_activity when 1065 then 'Yes' when 1066 then 'No' end as physical_activity,
             case diet_routine when 1065 then 'Yes' when 1066 then 'No' end as diet_routine,
-            case examination_findings when 1107 then 'None' when 143050 then 'Cyanosis' when 142630 then 'Dehydration' when 140125 then 'Finger Clubbing' when 136443 then 'Jaundice'
-            when 116334 then 'Lethargic' when 126952 then 'Lymph Node Axillary' when 126939 then 'Lymph Nodes Inguinal' when 1861 then 'Nasal Flaring' when 460 then 'Oedema' when 5334 then 'Oral thrush'
-            when 5245 then 'Pallor' when 206 then 'Convulsions' when 823 then 'Wasting' end as examination_findings,
+            examination_findings,
             case cardiovascular when 1115 then 'Normal' when 1116 then 'Abnormal' end as cardiovascular,
             case respiratory when 1115 then 'Normal' when 1116 then 'Abnormal' end as respiratory,
             case abdominal_pelvic when 1115 then 'Normal' when 1116 then 'Abnormal' end as abdominal_pelvic,
@@ -3331,18 +3330,16 @@ select  patient_id,
             case foot_high_risk when 166844 then 'Loss of protective sensation' when 150518 then 'Absent pedal pulses' when 142677 then 'Foot deformity' when 123919 then 'History of foot ulcer'
             when 164009 then 'Prior amputation' end as foot_high_risk,
             case diabetic_foot when 1065 then 'Yes' when 1066 then 'No' end as diabetic_foot,
-            case treatment_given when 168812 then 'Diet & physical activity' when 167915 then 'Oral glucose-lowering agents (OGLAs)' when 167962 then 'Insulin and OGLAs' when 78056 then 'Insulin'
-            when 2024964 then 'Anti hypertensives' when 2028777 then 'Herbal' when 5622 then 'Others' end as treatment_given,
-            case lifestyle_advice when 168812 then 'Physical Activities' when 168807 then 'Support Group' when 900009 then 'Nutrition' when 2022484 then 'Mental wellbeing' when 121712 then 'Alcohol'
-            when 156830 then 'Alcohol Cessation' when 137093 then 'Tobacco Cessation' when 1000023 then 'Other substances' when 2028777 then 'Herbal use or alternative therapies advise remarks' end as lifestyle_advice,
+            treatment_given,
+            lifestyle_advice,
             nutrition_assessment,
             case footcare_outcome when 162130 then 'Ulcer healed' when 2001766 then 'Surgical debridement' when 164009 then 'Amputation' when 5240 then 'Loss to follow up' when 1654 then 'Admitted'
             when 1648 then 'Referred' end as footcare_outcome,
+            referred_to,
+            reasons_for_referral,
             clinical_notes,
             date_created,
             date_last_modified,
-            date_of_discontinuation,
-            (case discontinuation_reason when 159492 then "Transferred out" when 1067 then "Unknown" when 160034 then "Died" when 5622 then "Other" when 819 then "819" else "" end) as discontinuation_reason,
             voided
 from kenyaemr_etl.etl_ncd_enrollment;
 ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment

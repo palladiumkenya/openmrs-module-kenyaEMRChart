@@ -10930,6 +10930,9 @@ insert into kenyaemr_etl.etl_ncd_enrollment(
     visit_date,
     encounter_id,
     location_id,
+    referred_from,
+    referred_from_department,
+    referred_from_department_other,
     patient_complaint,
     specific_complaint,
     disease_type,
@@ -10964,11 +10967,11 @@ insert into kenyaemr_etl.etl_ncd_enrollment(
     lifestyle_advice,
     nutrition_assessment,
     footcare_outcome,
+    referred_to,
+    reasons_for_referral,
     clinical_notes,
     date_created,
     date_last_modified,
-    date_of_discontinuation,
-    discontinuation_reason,
     voided
     )
 select
@@ -10979,6 +10982,9 @@ select
        date(e.encounter_datetime) as visit_date,
        e.encounter_id,
        e.location_id,
+       max(if(o.concept_id = 161550, o.value_text, null))   as referred_from,
+       max(if(o.concept_id = 159371, o.value_coded, null))   as referred_from_department,
+       max(if(o.concept_id = 161011, o.value_text, null))   as referred_from_department_other,
        max(if(o.concept_id = 1628, o.value_coded, null))   as patient_complaint,
        max(if(o.concept_id = 5219, o.value_coded, null))   as specific_complaint,
        max(if(o.concept_id = 1000485, o.value_coded, null))   as disease_type,
@@ -11013,17 +11019,17 @@ select
        max(if(o.concept_id = 165070, o.value_coded, null))   as lifestyle_advice,
        max(if(o.concept_id = 165250, o.value_text, null))   as nutrition_assessment,
        max(if(o.concept_id = 162737, o.value_coded, null))   as footcare_outcome,
+       max(if(o.concept_id = 162724, o.value_text, null )) as referred_to,
+       max(if(o.concept_id = 159623, o.value_text, null )) as reasons_for_referral,
        max(if(o.concept_id = 160632, o.value_text, null))   as clinical_notes,
        e.date_created as date_created,
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
-       max(if(o.concept_id=164384, o.value_datetime, null)) as date_of_discontinuation,
-       max(if(o.concept_id=161555, o.value_coded, null)) as discontinuation_reason,
        e.voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
-       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
-                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,160632) and o.voided=0
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
+                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,162724,159623,160632) and o.voided=0
 where e.voided=0
 group by e.patient_id,visit_date
 ON DUPLICATE KEY UPDATE provider=VALUES(provider),
