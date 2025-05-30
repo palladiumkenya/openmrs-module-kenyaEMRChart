@@ -7743,7 +7743,8 @@ BEGIN
          group by sc.patient_id, sc.visit_date) apt on apt.patient_id = sc.patient_id and apt.visit_date = sc.visit_date
     set sc.next_appointment_date = apt.patAppt;
 
-
+      SELECT "Completed updating next appointment date";
+END $$
 -- Procedure sp_populate_dwapi_art_fast_track --
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_art_fast_track $$
 CREATE PROCEDURE sp_populate_dwapi_art_fast_track()
