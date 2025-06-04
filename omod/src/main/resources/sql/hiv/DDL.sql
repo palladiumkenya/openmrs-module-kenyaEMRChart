@@ -2339,7 +2339,7 @@ CREATE TABLE kenyaemr_etl.etl_patient_contact (
     remarks                VARCHAR(255),
     appointment_date       DATETIME,
     voided INT(11),
-    CONSTRAINT FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_contact(patient_id),
+    FOREIGN KEY (client_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
     CONSTRAINT unique_uuid UNIQUE(uuid),
     INDEX(date_created),
     INDEX(id),
