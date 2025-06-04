@@ -114,6 +114,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_psychiatry;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_high_iit_intervention;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_home_visit_checklist;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_adr_assessment_tool;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -4233,6 +4234,66 @@ CREATE TABLE kenyaemr_etl.etl_home_visit_checklist
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_home_visit_checklist table";
+
+-- Create etl_adr_assessment_tool table
+CREATE TABLE kenyaemr_etl.etl_adr_assessment_tool
+(
+    patient_id                                INT(11)  NOT NULL,
+    visit_id                                  INT(11) DEFAULT NULL,
+    encounter_id                              INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                      CHAR(38) NOT NULL,
+    location_id                               INT(11)  NOT NULL,
+    provider                                  INT(11)  NOT NULL,
+    visit_date                                DATE,
+    weight_taken                              INT(11),
+    weight_not_taken_specify                  VARCHAR(255),
+    taking_arvs_everyday                      INT(11),
+    not_taking_arvs_everyday                  VARCHAR(255),
+    correct_dosage_per_weight                 INT(11),
+    dosage_not_correct_specify                VARCHAR(255),
+    arv_dosage_frequency                      INT(11),
+    other_medication_dosage_frequency          INT(11),
+    arv_medication_time      INT(11),
+    arv_timing_working    INT(11),
+    arv_timing_not_working_specify                   VARCHAR(255),
+    other_medication_time                      INT(11),
+    other_medication_timing_working                            INT(11),
+    other_medication_time_not_working_specify          VARCHAR(255),
+    arv_frequency_difficult_to_follow              INT(11),
+    difficult_arv_to_follow_specify                VARCHAR(255),
+    difficulty_with_arv_tablets_or_liquids INT(11),
+    difficulty_with_arv_tablets_or_liquids_specify   VARCHAR(255),
+    othe_drugs_frequency_difficult_to_follow              INT(11),
+    difficult_other_drugs_to_follow_specify                VARCHAR(255),
+    difficulty_other_drugs_tablets_or_liquids INT(11),
+    difficulty_other_drugs_tablets_or_liquids_specify   VARCHAR(255),
+    arv_difficulty_due_to_taste_or_size INT(11),
+    arv_difficulty_due_to_taste_or_size_specify   VARCHAR(255),
+    arv_symptoms_on_intake varchar(500),
+    laboratory_abnormalities INT(11),
+    laboratory_abnormalities_specify INT(11),
+    summary_findings                            VARCHAR(500),
+    severity_of_reaction                     INT(11),
+    reaction_seriousness                     INT(11),
+    reason_for_seriousness              INT(11),
+    action_taken_on_reaction         INT(11),
+    reaction_resolved_on_dose_change INT(11),
+    reaction_reappeared_after_drug_introduced INT(11),
+    laboratory_investigations_done VARCHAR(255),
+    outcome  INT(11),
+    reported_adr_to_pharmacy_board INT(11),
+    name_of_adr VARCHAR(255),
+    adr_report_number INT(50),
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_adr_assessment_tool table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
