@@ -10915,9 +10915,9 @@ and e.date_created >= last_update_time
 SELECT "Completed processing home visit checklist";
 END $$
 
--- Procedure sp_populate_etl_adr_assessment_tool
-DROP PROCEDURE IF EXISTS sp_populate_etl_adr_assessment_tool $$
-CREATE PROCEDURE sp_populate_etl_adr_assessment_tool(IN last_update_time DATETIME)
+-- Procedure sp_update_etl_adr_assessment_tool
+DROP PROCEDURE IF EXISTS sp_update_etl_adr_assessment_tool $$
+CREATE PROCEDURE sp_update_etl_adr_assessment_tool(IN last_update_time DATETIME)
 BEGIN
     SELECT "Processing ADR assessment tool";
     INSERT INTO kenyaemr_etl.etl_adr_assessment_tool (
@@ -10941,7 +10941,7 @@ BEGIN
            arv_timing_not_working_specify,
            other_medication_time,
            other_medication_timing_working,
-           other_medication_timing_not_working_specify,
+           other_medication_time_not_working_specify,
            arv_frequency_difficult_to_follow,
            difficult_arv_to_follow_specify,
            difficulty_with_arv_tablets_or_liquids,
@@ -10989,7 +10989,7 @@ BEGIN
            max(if(o.concept_id = 164879, o.value_text, null))   as arv_timing_not_working_specify,
            max(if(o.concept_id = 1724, o.value_coded, null))   as other_medication_time,
            max(if(o.concept_id = 1417, o.value_coded, null))   as other_medication_timing_working,
-           max(if(o.concept_id = 160618, o.value_text, null))   as other_medication_timing_not_working_specify,
+           max(if(o.concept_id = 160618, o.value_text, null))   as other_medication_time_not_working_specify,
            max(if(o.concept_id = 163331, o.value_coded, null))   as arv_frequency_difficult_to_follow,
            max(if(o.concept_id = 163322, o.value_text, null))   as difficult_arv_to_follow_specify,
            max(if(o.concept_id = 161911, o.value_coded, null))   as difficulty_with_arv_tablets_or_liquids,
@@ -11189,8 +11189,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_home_visit_checklist(last_update_time);
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
+    CALL sp_update_etl_adr_assessment_tool(last_update_time);
     CALL sp_update_dashboard_table();
-    CALL sp_populate_etl_adr_assessment_tool(last_update_time);
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
     DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
