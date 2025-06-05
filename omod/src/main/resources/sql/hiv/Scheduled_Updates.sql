@@ -1908,7 +1908,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       VitaminA_2_yr ,
       VitaminA_2_to_5_yr,
       HPV_1,
-      HPV_1,
+      HPV_2,
       influenza,
       sequence,
       fully_immunized
@@ -10339,7 +10339,9 @@ BEGIN
               treatment_intervention,
               area_of_service,
               special_clinic,
-              special_clinic_form_uuid)
+              special_clinic_form_uuid,
+              date_created,
+              date_last_modified)
     select e.patient_id,
            e.visit_id,
            e.encounter_id,
@@ -10516,7 +10518,9 @@ BEGIN
                when 'a3c01460-c346-4f3d-a627-5c7de9494ba0' then 'Dental'
                when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology'
                when '4b5f79f5-f6bf-4dc2-b5c3-f5d77506775c' then 'Hearing'  end as special_clinic,
-           f.uuid                                                                      as special_clinic_form_uuid
+           f.uuid                                                                      as special_clinic_form_uuid,
+           e.date_created,
+           e.date_changed as date_last_modified
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
              inner join form f on f.form_id = e.form_id and f.uuid in ('c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
@@ -11060,7 +11064,7 @@ BEGIN
                             arv_timing_not_working_specify=VALUES(arv_timing_not_working_specify),
                             other_medication_time=VALUES(other_medication_time),
                             other_medication_timing_working=VALUES(other_medication_timing_working),
-                            other_medication_timing_not_working_specify=VALUES(other_medication_timing_not_working_specify),
+                            other_medication_time_not_working_specify=VALUES(other_medication_time_not_working_specify),
                             arv_frequency_difficult_to_follow=VALUES(arv_frequency_difficult_to_follow),
                             difficult_arv_to_follow_specify=VALUES(difficult_arv_to_follow_specify),
                             difficulty_with_arv_tablets_or_liquids=VALUES(difficulty_with_arv_tablets_or_liquids),
