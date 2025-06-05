@@ -4157,6 +4157,8 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     next_appointment_date       DATE,
     special_clinic           VARCHAR(255),
     special_clinic_form_uuid CHAR(38),
+    date_created                          DATETIME NOT NULL,
+    date_last_modified                    DATETIME,
     CONSTRAINT FOREIGN KEY (patient_id)
         REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
     CONSTRAINT unique_uuid UNIQUE (uuid),

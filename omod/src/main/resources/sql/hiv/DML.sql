@@ -9470,7 +9470,9 @@ BEGIN
                                                   area_of_service,
                                                   patient_referred_to,
                                                   special_clinic,
-                                                  special_clinic_form_uuid)
+                                                  special_clinic_form_uuid,
+                                                  date_created,
+                                                  date_last_modified)
     select e.patient_id,
            e.visit_id,
            e.encounter_id,
@@ -9662,7 +9664,9 @@ BEGIN
                when '57df8a60-7585-4fc0-b51b-e10e568cf53c' then 'Urology'
                when '6b4fa553-f2b3-47d0-a4c5-fc11f38b0b24' then 'Gastroenterology'
                when '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' then 'Hearing'  end                    as special_clinic,
-           f.uuid                                                                                         as special_clinic_form_uuid
+           f.uuid                                                                                         as special_clinic_form_uuid,
+           e.date_created,
+           e.date_changed as date_last_modified
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
              inner join form f on f.form_id = e.form_id and f.uuid in ('c5055956-c3bb-45f2-956f-82e114c57aa7', -- ENT
