@@ -4291,7 +4291,7 @@ INDEX(hypertension_type)
 );
 SELECT "Successfully created etl_ncd_enrollment table";
 
--- ------------ create table etl_ncd_followup-----------------------
+-------------- create table etl_ncd_followup-----------------------
 
 CREATE TABLE dwapi_etl.etl_ncd_followup (
 uuid char(38),
@@ -4335,7 +4335,7 @@ INDEX(disease_type),
 INDEX(diabetes_type),
 INDEX(hypertension_type)
 );
-SELECT "Successfully created etl_ncd_followup table";
+SELECT "Successfully created etl_ncd_follow_up table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

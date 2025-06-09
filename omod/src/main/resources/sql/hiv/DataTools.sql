@@ -3393,7 +3393,7 @@ ALTER TABLE kenyaemr_datatools.etl_ncd_followup
     ADD INDEX (patient_id);
 ALTER TABLE kenyaemr_datatools.etl_ncd_followup
     ADD INDEX (visit_date);
-SELECT "Successfully created kenyaemr_datatools.etl_ncd_followup table";
+SELECT "Successfully created kenyaemr_datatools.etl_ncd_follow_up table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

@@ -11304,7 +11304,7 @@ ON DUPLICATE KEY UPDATE provider=VALUES(provider),
 SELECT "Completed processing NCD Enrollment data ", CONCAT("Time: ", NOW());
 END $$
 
--- ------------- populate etl_ncd_followup-------------------------
+--------------- populate etl_ncd_follow_up-------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_ncd_followup $$
 CREATE PROCEDURE sp_populate_etl_ncd_followup()
