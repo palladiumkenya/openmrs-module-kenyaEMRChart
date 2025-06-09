@@ -3294,6 +3294,7 @@ select  patient_id,
             visit_date,
             encounter_id,
             location_id,
+            visit_type,
             referred_from,
             referred_from_department,
             referred_from_department_other,
@@ -3325,12 +3326,12 @@ select  patient_id,
             case neurological when 1115 then 'Normal' when 1116 then 'Abnormal' end as neurological,
             case oral_exam when 1115 then 'Normal' when 1116 then 'Abnormal' end as oral_exam,
             case foot_risk when 166674 then 'High Risk' when 166675 then 'Low Risk' end as foot_risk,
-            case foot_low_risk when 164188 then 'Intact protective sensation' when 158955 then 'Pedal Pulses Present' when 155871 then 'No deformity' when 123919 then 'No prior foot ulcer'
-            when 164009 then 'No amputation' end as foot_low_risk,
-            case foot_high_risk when 166844 then 'Loss of protective sensation' when 150518 then 'Absent pedal pulses' when 142677 then 'Foot deformity' when 123919 then 'History of foot ulcer'
-            when 164009 then 'Prior amputation' end as foot_high_risk,
+            foot_low_risk,
+            foot_high_risk,
             case diabetic_foot when 1065 then 'Yes' when 1066 then 'No' end as diabetic_foot,
+            describe_diabetic_foot_type,
             treatment_given,
+            other_treatment_given,
             lifestyle_advice,
             nutrition_assessment,
             case footcare_outcome when 162130 then 'Ulcer healed' when 2001766 then 'Surgical debridement' when 164009 then 'Amputation' when 5240 then 'Loss to follow up' when 1654 then 'Admitted'
@@ -3349,6 +3350,50 @@ ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
 ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
     ADD INDEX (visit_date);
 SELECT "Successfully created kenyaemr_datatools.etl_ncd_enrollment table";
+
+-- Create NCD Follow Up Table
+
+create table kenyaemr_datatools.etl_ncd_followup as
+select  patient_id,
+            uuid,
+            provider,
+            visit_id,
+            visit_date,
+            encounter_id,
+            location_id,
+            visit_type,
+            case tobacco_use when 159450 then 'Yes' when 159452 then 'Stopped' when 1090 then 'No' end as tobacco_use,
+            case drink_alcohol when 159450 then 'Yes' when 159452 then 'Stopped' when 1090 then 'No' end as drink_alcohol,
+            case physical_activity when 1065 then 'Yes' when 1066 then 'No' end as physical_activity,
+            case healthy_diet when 1065 then 'Yes' when 1066 then 'No' end as healthy_diet,
+            case patient_complaint when 1065 then 'Yes' when 1066 then 'No' end as patient_complaint,
+            specific_complaint,
+            other_specific_complaint,
+            examination_findings,
+            case cardiovascular when 1115 then 'Normal' when 1116 then 'Abnormal' end as cardiovascular,
+            case abdominal_pelvic when 1115 then 'Normal' when 1116 then 'Abnormal' end as abdominal_pelvic,
+            case neurological when 1115 then 'Normal' when 1116 then 'Abnormal' end as neurological,
+            case oral_exam when 1115 then 'Normal' when 1116 then 'Abnormal' end as oral_exam,
+            foot_exam,
+            case diabetic_foot when 1065 then 'Yes' when 1066 then 'No' end as diabetic_foot,
+            foot_risk_assessment,
+            case diabetic_foot_risk when 166675 then 'Low Risk' when 166674 then 'High Risk' end as diabetic_foot_risk,
+            case adhering_medication when 159405 then 'Yes' when 159407 then 'No' when 1175 then 'N/A' end as adhering_medication,
+            referred_to,
+            case reasons_for_referral when 159405 then 'Further management of HTN' when 159407 then 'Nutrition' when 1175 then 'Physiotherapy'
+            when 1666 then 'Surgical review' when 1112 then 'CVD review' when 222 then 'Renal review' when 6621 then 'Further management of DM' end as reasons_for_referral,
+            clinical_notes,
+            date_created,
+            date_last_modified,
+            voided
+from kenyaemr_etl.etl_ncd_followup;
+ALTER TABLE kenyaemr_datatools.etl_ncd_followup
+    ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
+ALTER TABLE kenyaemr_datatools.etl_ncd_followup
+    ADD INDEX (patient_id);
+ALTER TABLE kenyaemr_datatools.etl_ncd_followup
+    ADD INDEX (visit_date);
+SELECT "Successfully created kenyaemr_datatools.etl_ncd_followup table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

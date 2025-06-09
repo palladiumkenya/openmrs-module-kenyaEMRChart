@@ -9260,7 +9260,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_ncd_enrollment $$
 CREATE PROCEDURE sp_populate_dwapi_ncd_enrollment()
 BEGIN
-SELECT "Processing NCD Enrollment data ", CONCAT("Time: ", NOW());
+SELECT "Processing NCD Enrollment data ";
 
 insert into dwapi_etl.etl_ncd_enrollment(
     patient_id,
@@ -9270,6 +9270,7 @@ insert into dwapi_etl.etl_ncd_enrollment(
     visit_date,
     encounter_id,
     location_id,
+    visit_type,
     referred_from,
     referred_from_department,
     referred_from_department_other,
@@ -9303,7 +9304,9 @@ insert into dwapi_etl.etl_ncd_enrollment(
     foot_low_risk,
     foot_high_risk,
     diabetic_foot,
+    describe_diabetic_foot_type,
     treatment_given,
+    other_treatment_given,
     lifestyle_advice,
     nutrition_assessment,
     footcare_outcome,
@@ -9322,11 +9325,20 @@ select
        date(e.encounter_datetime) as visit_date,
        e.encounter_id,
        e.location_id,
+       max(if(o.concept_id = 164181, o.value_coded, null))  as visit_type,
        max(if(o.concept_id = 161550, o.value_text, null))   as referred_from,
        max(if(o.concept_id = 159371, o.value_coded, null))   as referred_from_department,
        max(if(o.concept_id = 161011, o.value_text, null))   as referred_from_department_other,
        max(if(o.concept_id = 1628, o.value_coded, null))   as patient_complaint,
-       max(if(o.concept_id = 5219, o.value_coded, null))   as specific_complaint,
+       concat_ws(',',nullif(max(if(o.concept_id=5219 and o.value_coded =147104 ,'Blurring of vision','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded =135592,'Loss of consciousness','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded =156046,'Recurrent dizziness','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded = 116860,'Foot complaints','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded = 141600,'Shortness of breath on activity','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded = 130987,'Palpitations (Heart racing)','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded = 6005,'Focal weakness','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded = 112961,'Fainting','')),''),
+                        nullif(max(if(o.concept_id=5219 and o.value_coded = 5622,'Other','')),'')) as specific_complaint,
        max(if(o.concept_id = 1000485, o.value_coded, null))   as disease_type,
        max(if(o.concept_id = 119481, o.value_coded, null))   as diabetes_condition,
        max(if(o.concept_id = 152909, o.value_coded, null))   as diabetes_type,
@@ -9345,18 +9357,55 @@ select
        max(if(o.concept_id = 1455, o.value_coded, null))   as cessation_counseling,
        max(if(o.concept_id = 1000519, o.value_coded, null))   as physical_activity,
        max(if(o.concept_id = 1000520, o.value_coded, null))   as diet_routine,
-       max(if(o.concept_id = 162737, o.value_coded, null))   as examination_findings,
+       concat_ws(',',nullif(max(if(o.concept_id=162737 and o.value_coded =1107 ,'None','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded =143050,'Cyanosis','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded =142630,'Dehydration','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 140125,'Finger Clubbing','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 136443,'Jaundice','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 116334,'Lethargic','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 126952,'Lymph Node Axillary','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 126939,'Lymph Nodes Inguinal','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 1861,'Nasal Flaring','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 460,'Oedema','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 5334,'Oral thrush','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 5245,'Pallor','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 206,'Convulsions','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 823,'Wasting','')),'')) as examination_findings,
        max(if(o.concept_id = 1124, o.value_coded, null))   as cardiovascular,
        max(if(o.concept_id = 1124, o.value_coded, null))   as respiratory,
        max(if(o.concept_id = 1124, o.value_coded, null))   as abdominal_pelvic,
        max(if(o.concept_id = 1124, o.value_coded, null))   as neurological,
        max(if(o.concept_id = 163308, o.value_coded, null))   as oral_exam,
        max(if(o.concept_id = 166879, o.value_coded, null))   as foot_risk,
-       max(if(o.concept_id = 166676, o.value_coded, null))   as foot_low_risk,
-       max(if(o.concept_id = 1284, o.value_coded, null))   as foot_high_risk,
+       concat_ws(',',nullif(max(if(o.concept_id=166676 and o.value_coded =164188,'Intact protective sensation','')),''),
+                               nullif(max(if(o.concept_id=166676 and o.value_coded =158955,'Pedal Pulses Present','')),''),
+                               nullif(max(if(o.concept_id=166676 and o.value_coded =155871,'No deformity','')),''),
+                               nullif(max(if(o.concept_id=166676 and o.value_coded = 123919,'No prior foot ulcer','')),''),
+                               nullif(max(if(o.concept_id=166676 and o.value_coded = 164009,'No amputation','')),'')) as foot_low_risk,
+       concat_ws(',',nullif(max(if(o.concept_id=1284 and o.value_coded =166844,'Loss of protective sensation','')),''),
+                                      nullif(max(if(o.concept_id=1284 and o.value_coded =150518,'Absent pedal pulses','')),''),
+                                      nullif(max(if(o.concept_id=1284 and o.value_coded =142677,'Foot deformity','')),''),
+                                      nullif(max(if(o.concept_id=1284 and o.value_coded = 123919,'History of foot ulcer','')),''),
+                                      nullif(max(if(o.concept_id=1284 and o.value_coded = 164009,'Prior amputation','')),'')) as foot_high_risk,
        max(if(o.concept_id = 1284, o.value_coded, null))   as diabetic_foot,
-       max(if(o.concept_id = 166665, o.value_coded, null))   as treatment_given,
-       max(if(o.concept_id = 165070, o.value_coded, null))   as lifestyle_advice,
+       max(if(o.concept_id = 165250, o.value_text, null))   as describe_diabetic_foot_type,
+       concat_ws(',',nullif(max(if(o.concept_id=166665 and o.value_coded =168812,'Diet & physical activity','')),''),
+                                             nullif(max(if(o.concept_id=166665 and o.value_coded =167915,'Oral glucose-lowering agents (OGLAs)','')),''),
+                                             nullif(max(if(o.concept_id=166665 and o.value_coded =167962,'Insulin and OGLAs','')),''),
+                                             nullif(max(if(o.concept_id=166665 and o.value_coded = 78056,'Insulin','')),''),
+                                             nullif(max(if(o.concept_id=166665 and o.value_coded = 2024964,'Anti hypertensives','')),''),
+                                             nullif(max(if(o.concept_id=166665 and o.value_coded = 2028777,'Herbal','')),''),
+                                             nullif(max(if(o.concept_id=166665 and o.value_coded = 5622,'Others','')),'')) as treatment_given,
+       max(if(o.concept_id = 161011, o.value_text, null))  as other_treatment_given,
+       concat_ws(',',nullif(max(if(o.concept_id=165070 and o.value_coded =168812,'Physical Activities','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded =168807,'Support Group','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded =900009,'Nutrition','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded = 2022484,'Mental wellbeing','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded = 121712,'Alcohol','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded = 156830,'Alcohol Cessation','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded = 137093,'Tobacco Cessation','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded = 1000023,'Other substances','')),''),
+                                                    nullif(max(if(o.concept_id=165070 and o.value_coded = 2028777,'Herbal use or alternative therapies advise remarks','')),'')) as lifestyle_advice,
        max(if(o.concept_id = 165250, o.value_text, null))   as nutrition_assessment,
        max(if(o.concept_id = 162737, o.value_coded, null))   as footcare_outcome,
        max(if(o.concept_id = 162724, o.value_text, null )) as referred_to,
@@ -9368,15 +9417,127 @@ select
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
-       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
-                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,166665,165070,165250,162737,162724,159623,160632) and o.voided=0
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
+                                                                                 162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,165250,166665,161011,165070,165250,162737,162724,159623,160632) and o.voided=0
 where e.voided=0
 group by e.patient_id,visit_date;
 
-SELECT "Completed processing NCD Enrollment data ", CONCAT("Time: ", NOW());
+SELECT "Completed processing NCD Enrollment data ";
 END $$
 
 -- end of ncd enrolment procedures
+
+-- ------------- populate etl_ncd_followup-------------------------
+
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_etl_ncd_followup $$
+CREATE PROCEDURE sp_populate_dwapi_etl_ncd_followup()
+BEGIN
+SELECT "Processing NCD Follow Up data ";
+
+insert into dwapi_etl.etl_ncd_followup(
+    patient_id,
+    uuid,
+    provider,
+    visit_id,
+    visit_date,
+    encounter_id,
+    location_id,
+    visit_type,
+    tobacco_use,
+    drink_alcohol,
+    physical_activity,
+    healthy_diet,
+    patient_complaint,
+    specific_complaint,
+    other_specific_complaint,
+    examination_findings,
+    cardiovascular,
+    respiratory,
+    abdominal_pelvic,
+    neurological,
+    oral_exam,
+    foot_exam,
+    diabetic_foot,
+    foot_risk_assessment,
+    diabetic_foot_risk,
+    adhering_medication,
+    referred_to,
+    reasons_for_referral,
+    clinical_notes,
+    date_created,
+    date_last_modified,
+    voided
+    )
+select
+       e.patient_id,
+       e.uuid,
+       e.creator,
+       e.visit_id,
+       date(e.encounter_datetime) as visit_date,
+       e.encounter_id,
+       e.location_id,
+       max(if(o.concept_id = 164181, o.value_coded, null))  as visit_type,
+       max(if(o.concept_id = 152722, o.value_coded, null))   as tobacco_use,
+       max(if(o.concept_id = 159449, o.value_coded, null))   as drink_alcohol,
+       max(if(o.concept_id = 1000519, o.value_coded, null))   as physical_activity,
+       max(if(o.concept_id = 1000520, o.value_coded, null))   as healthy_diet,
+       max(if(o.concept_id = 6042, o.value_coded, null))   as patient_complaint,
+       concat_ws(',',nullif(max(if(o.concept_id=6042 and o.value_coded =111103 ,'Stroke','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded =159298,'Visual impairment','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded =139069,'Heart failure','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded = 163411,'Foot ulcers/deformity','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded = 6033,'Renal disease','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded = 116123,'Erectile dysfunction','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded = 118983,'Peripheral Neuropathy','')),''),
+                        nullif(max(if(o.concept_id=6042 and o.value_coded = 5622,'Other','')),'')) as specific_complaint,
+       max(if(o.concept_id = 161011, o.value_coded, null))   as other_specific_complaint,
+       concat_ws(',',nullif(max(if(o.concept_id=162737 and o.value_coded =1107 ,'None','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded =143050,'Cyanosis','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded =142630,'Dehydration','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 140125,'Finger Clubbing','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 136443,'Jaundice','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 116334,'Lethargic','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 126952,'Lymph Node Axillary','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 126939,'Lymph Nodes Inguinal','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 1861,'Nasal Flaring','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 460,'Oedema','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 5334,'Oral thrush','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 5245,'Pallor','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 206,'Convulsions','')),''),
+                               nullif(max(if(o.concept_id=162737 and o.value_coded = 823,'Wasting','')),'')) as examination_findings,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as cardiovascular,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as respiratory,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as abdominal_pelvic,
+       max(if(o.concept_id = 1124, o.value_coded, null))   as neurological,
+       max(if(o.concept_id = 163308, o.value_coded, null))   as oral_exam,
+       concat_ws(',',nullif(max(if(o.concept_id=1127 and o.value_coded =163411 ,'Calluses','')),''),
+                                      nullif(max(if(o.concept_id=1127 and o.value_coded =1116,'Ulcers','')),''),
+                                      nullif(max(if(o.concept_id=1127 and o.value_coded = 165471,'Deformity','')),'')) as foot_exam,
+       max(if(o.concept_id = 1284, o.value_coded, null))   as diabetic_foot,
+       concat_ws(',',nullif(max(if(o.concept_id=1284 and o.value_coded =166844 ,'Loss of sensation','')),''),
+                                             nullif(max(if(o.concept_id=1284 and o.value_coded =150518,'Absent pulses','')),''),
+                                             nullif(max(if(o.concept_id=1284 and o.value_coded =142677,'Foot deformity','')),''),
+                                             nullif(max(if(o.concept_id=1284 and o.value_coded =123919,'History of ulcer','')),''),
+                                             nullif(max(if(o.concept_id=1284 and o.value_coded =164009,'Prior amputation','')),'')) as foot_risk_assessment,
+       max(if(o.concept_id = 166879, o.value_coded, null))   as diabetic_foot_risk,
+       max(if(o.concept_id = 164075, o.value_coded, null))   as adhering_medication,
+       max(if(o.concept_id = 162724, o.value_text, null )) as referred_to,
+       max(if(o.concept_id = 159623, o.value_text, null )) as reasons_for_referral,
+       max(if(o.concept_id = 160632, o.value_text, null))   as clinical_notes,
+       e.date_created as date_created,
+       if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+       e.voided
+from encounter e
+       inner join person p on p.person_id=e.patient_id and p.voided=0
+       inner join form f on f.form_id = e.form_id and f.uuid = '3e1057da-f130-44d9-b2bb-53e039b953c6'
+       left outer join patient_program_discontinuation d on d.patient_id=e.patient_id
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,152722,159449,1000519,1000520,6042,6042,161011,162737,1124,1124,1124,1124,163308,
+       1127,1284,1284,166879,164075,162724,159623,160632) and o.voided=0
+where e.voided=0
+group by e.patient_id,visit_date;
+
+SELECT "Completed processing NCD FollowUp data ";
+END $$
 
 		SET sql_mode=@OLD_SQL_MODE $$
 
@@ -9478,6 +9639,7 @@ CALL sp_populate_dwapi_high_iit_intervention();
 CALL sp_populate_dwapi_home_visit_checklist();
 CALL sp_update_dwapi_next_appointment_date();
 CALL sp_populate_dwapi_ncd_enrollment();
+CALL sp_populate_dwapi_etl_ncd_followup();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

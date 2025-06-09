@@ -118,7 +118,11 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_adr_assessment_tool;
 =======
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_enrollment;
+<<<<<<< HEAD
 >>>>>>> 8afe3a6 (created NCD enrollment ETL)
+=======
+DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_followup;
+>>>>>>> e9f07a8 (changes on enrollment and added follow up)
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -4250,6 +4254,7 @@ visit_id INT(11),
 visit_date DATE,
 location_id INT(11) DEFAULT NULL,
 encounter_id INT(11) NOT NULL PRIMARY KEY,
+visit_type VARCHAR(255) DEFAULT NULL,
 referred_from INT(11),
 referred_from_department INT(11),
 referred_from_department_other VARCHAR(100),
@@ -4284,7 +4289,9 @@ foot_risk INT(11),
 foot_low_risk VARCHAR(255),
 foot_high_risk VARCHAR(255),
 diabetic_foot INT(11),
+describe_diabetic_foot_type VARCHAR(255),
 treatment_given VARCHAR(255),
+other_treatment_given VARCHAR(255),
 lifestyle_advice VARCHAR(255),
 nutrition_assessment VARCHAR(255),
 footcare_outcome INT(11),
@@ -4364,6 +4371,52 @@ CREATE TABLE kenyaemr_etl.etl_adr_assessment_tool
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_adr_assessment_tool table";
+
+-- ------------ create table etl_ncd_followup-----------------------
+
+CREATE TABLE kenyaemr_etl.etl_ncd_followup (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL PRIMARY KEY,
+visit_type VARCHAR(255) DEFAULT NULL,
+tobacco_use INT(11),
+drink_alcohol INT(11),
+physical_activity INT(11),
+healthy_diet INT(11),
+patient_complaint INT(11),
+specific_complaint VARCHAR(255),
+other_specific_complaint VARCHAR(255),
+examination_findings VARCHAR(255),
+cardiovascular INT(11),
+respiratory INT(11),
+abdominal_pelvic INT(11),
+neurological INT(11),
+oral_exam INT(11),
+foot_exam VARCHAR(255),
+diabetic_foot INT(11),
+foot_risk_assessment VARCHAR(100),
+diabetic_foot_risk INT(11),
+adhering_medication INT(11),
+referred_to VARCHAR(255),
+reasons_for_referral VARCHAR(255),
+clinical_notes VARCHAR(255),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+voided INT(11),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+INDEX(visit_date),
+INDEX(encounter_id),
+INDEX(patient_id),
+INDEX(disease_type),
+INDEX(diabetes_type),
+INDEX(hypertension_type)
+);
+SELECT "Successfully created etl_ncd_followup table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
