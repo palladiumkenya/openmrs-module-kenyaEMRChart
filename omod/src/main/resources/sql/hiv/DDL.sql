@@ -4377,7 +4377,7 @@ SELECT "Successfully created etl_adr_assessment_tool table";
 CREATE TABLE kenyaemr_etl.etl_ncd_followup (
 uuid char(38),
 provider INT(11),
-patient_id INT(11) NOT NULL ,
+patient_id INT(11) NOT NULL,
 visit_id INT(11),
 visit_date DATE,
 location_id INT(11) DEFAULT NULL,
