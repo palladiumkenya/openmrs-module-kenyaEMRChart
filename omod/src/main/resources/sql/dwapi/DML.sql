@@ -850,7 +850,6 @@ et.uuid,
 	when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
 	when '4f02dfed-a2ec-40c2-b546-85dab5831871' then 'VMMC'
 	when 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97' then 'NCD'
-	when '3e1057da-f130-44d9-b2bb-53e039b953c6' then 'NCD Followup'
 end) as program_name,
 e.encounter_id,
 coalesce(max(if(o.concept_id=161555, o.value_coded, null)),max(if(o.concept_id=159786, o.value_coded, null))) as reason_discontinued,
@@ -875,7 +874,7 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
-	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871','c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97','3e1057da-f130-44d9-b2bb-53e039b953c6')
+	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871','c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97')
 ) et on et.encounter_type_id=e.encounter_type
 LEFT JOIN encounter_facility ef ON ef.encounter_id = e.encounter_id
 LEFT JOIN location l ON l.uuid = ef.to_facility_raw
@@ -9283,7 +9282,7 @@ insert into dwapi_etl.etl_ncd_enrollment(
     hypertension_condition,
     hypertension_stage,
     hypertension_type,
-    co-morbid_condition,
+    comorbid_condition,
     diagnosis_date,
     hiv_status,
     hiv_positive_on_art,
@@ -9346,7 +9345,7 @@ select
        max(if(o.concept_id = 160223, o.value_coded, null))   as hypertension_condition,
        max(if(o.concept_id = 162725, o.value_text, null))   as hypertension_stage,
        max(if(o.concept_id = 162725, o.value_text, null))   as hypertension_type,
-       max(if(o.concept_id = 162747, o.value_coded, null))   as co-morbid_condition,
+       max(if(o.concept_id = 162747, o.value_coded, null))   as comorbid_condition,
        max(if(o.concept_id = 162869, o.value_datetime, null))   as diagnosis_date,
        max(if(o.concept_id = 1169, o.value_coded, null))   as hiv_status,
        max(if(o.concept_id = 163783, o.value_coded, null))   as hiv_positive_on_art,

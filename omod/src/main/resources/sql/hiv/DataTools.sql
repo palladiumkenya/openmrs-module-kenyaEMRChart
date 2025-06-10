@@ -3286,7 +3286,7 @@ SELECT "Successfully created kenyaemr_datatools.home_visit_checklist table";
 
 -- Create NCD Enrolment Table
 
-create table kenyaemr_datatools.etl_ncd_enrollment as
+create table kenyaemr_datatools.ncd_enrollment as
 select  patient_id,
             uuid,
             provider,
@@ -3307,7 +3307,7 @@ select  patient_id,
             case hypertension_condition when 1000490 then 'New HTN patient' when 1000491 then 'Known HTN patient' end as hypertension_condition,
             hypertension_stage,
             hypertension_type,
-            case co-morbid_condition when 1000492 then 'New co-morbid patient' when 1000493 then 'Known Co-morbid patient' end as co-morbid_condition,
+            case comorbid_condition when 1000492 then 'New co-morbid patient' when 1000493 then 'Known Co-morbid patient' end as comorbid_condition,
             diagnosis_date,
             case hiv_status when 664 then 'HIV Negative' when 703 then 'HIV Positive' when 1067 then 'Unknown' end as hiv_status,
             case hiv_positive_on_art when 1065 then 'Yes' when 1066 then 'No' end as hiv_positive_on_art,
@@ -3343,17 +3343,17 @@ select  patient_id,
             date_last_modified,
             voided
 from kenyaemr_etl.etl_ncd_enrollment;
-ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
+ALTER TABLE kenyaemr_datatools.ncd_enrollment
     ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
-ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
+ALTER TABLE kenyaemr_datatools.ncd_enrollment
     ADD INDEX (patient_id);
-ALTER TABLE kenyaemr_datatools.etl_ncd_enrollment
+ALTER TABLE kenyaemr_datatools.ncd_enrollment
     ADD INDEX (visit_date);
-SELECT "Successfully created kenyaemr_datatools.etl_ncd_enrollment table";
+SELECT "Successfully created kenyaemr_datatools.ncd_enrollment table";
 
 -- Create NCD Follow Up Table
 
-create table kenyaemr_datatools.etl_ncd_followup as
+create table kenyaemr_datatools.ncd_followup as
 select  patient_id,
             uuid,
             provider,
@@ -3387,13 +3387,13 @@ select  patient_id,
             date_last_modified,
             voided
 from kenyaemr_etl.etl_ncd_followup;
-ALTER TABLE kenyaemr_datatools.etl_ncd_followup
+ALTER TABLE kenyaemr_datatools.ncd_followup
     ADD FOREIGN KEY (patient_id) REFERENCES kenyaemr_datatools.patient_demographics (patient_id);
-ALTER TABLE kenyaemr_datatools.etl_ncd_followup
+ALTER TABLE kenyaemr_datatools.ncd_followup
     ADD INDEX (patient_id);
-ALTER TABLE kenyaemr_datatools.etl_ncd_followup
+ALTER TABLE kenyaemr_datatools.ncd_followup
     ADD INDEX (visit_date);
-SELECT "Successfully created kenyaemr_datatools.etl_ncd_follow_up table";
+SELECT "Successfully created kenyaemr_datatools.ncd_follow_up table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

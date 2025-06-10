@@ -11094,10 +11094,10 @@ BEGIN
      date_last_modified=VALUES(date_last_modified);
     SELECT "Completed processing ADR assessment tool";
 END $$
--- ------------- populate etl_ncd_enrollment-------------------------
+-- ------------- Procedure sp_update_etl_ncd_enrollment-------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ncd_enrollment $$
-CREATE PROCEDURE sp_populate_etl_ncd_enrollment(IN last_update_time DATETIME)
+DROP PROCEDURE IF EXISTS sp_update_etl_ncd_enrollment $$
+CREATE PROCEDURE sp_update_etl_ncd_enrollment(IN last_update_time DATETIME)
 BEGIN
 SELECT "Processing NCD Enrollment data ", CONCAT("Time: ", NOW());
 
@@ -11121,7 +11121,7 @@ insert into kenyaemr_etl.etl_ncd_enrollment(
     hypertension_condition,
     hypertension_stage,
     hypertension_type,
-    co-morbid_condition,
+    comorbid_condition,
     diagnosis_date,
     hiv_status,
     hiv_positive_on_art,
@@ -11184,7 +11184,7 @@ select
        max(if(o.concept_id = 160223, o.value_coded, null))   as hypertension_condition,
        max(if(o.concept_id = 162725, o.value_text, null))   as hypertension_stage,
        max(if(o.concept_id = 162725, o.value_text, null))   as hypertension_type,
-       max(if(o.concept_id = 162747, o.value_coded, null))   as co-morbid_condition,
+       max(if(o.concept_id = 162747, o.value_coded, null))   as comorbid_condition,
        max(if(o.concept_id = 162869, o.value_datetime, null))   as diagnosis_date,
        max(if(o.concept_id = 1169, o.value_coded, null))   as hiv_status,
        max(if(o.concept_id = 163783, o.value_coded, null))   as hiv_positive_on_art,
@@ -11270,7 +11270,7 @@ ON DUPLICATE KEY UPDATE provider=VALUES(provider),
         hypertension_condition=VALUES(hypertension_condition),
         hypertension_stage=VALUES(hypertension_stage),
         hypertension_type=VALUES(hypertension_type),
-        co-morbid_condition=VALUES(co-morbid_condition),
+        comorbid_condition=VALUES(comorbid_condition),
         diagnosis_date=VALUES(diagnosis_date),
         hiv_status=VALUES(hiv_status),
         hiv_positive_on_art=VALUES(hiv_positive_on_art),
@@ -11304,10 +11304,10 @@ ON DUPLICATE KEY UPDATE provider=VALUES(provider),
 SELECT "Completed processing NCD Enrollment data ", CONCAT("Time: ", NOW());
 END $$
 
---------------- populate etl_ncd_follow_up-------------------------
+--------------- procedure sp_update_etl_ncd_followup -------------------------
 
-DROP PROCEDURE IF EXISTS sp_populate_etl_ncd_followup $$
-CREATE PROCEDURE sp_populate_etl_ncd_followup()
+DROP PROCEDURE IF EXISTS sp_update_etl_ncd_followup $$
+CREATE PROCEDURE sp_update_etl_ncd_followup()
 BEGIN
 SELECT "Processing NCD Follow Up data ";
 
@@ -11543,8 +11543,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_etl_adr_assessment_tool(last_update_time);
-    CALL sp_populate_etl_ncd_enrollment(last_update_time);
-    CALL sp_populate_etl_ncd_followup(last_update_time);
+    CALL sp_update_etl_ncd_enrollment(last_update_time);
+    CALL sp_update_etl_ncd_followup(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
