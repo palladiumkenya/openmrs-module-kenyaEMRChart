@@ -114,15 +114,9 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_psychiatry;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_high_iit_intervention;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_home_visit_checklist;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
-<<<<<<< HEAD
 DROP TABLE IF EXISTS kenyaemr_etl.etl_adr_assessment_tool;
-=======
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_enrollment;
-<<<<<<< HEAD
->>>>>>> 8afe3a6 (created NCD enrollment ETL)
-=======
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_followup;
->>>>>>> e9f07a8 (changes on enrollment and added follow up)
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
