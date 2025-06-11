@@ -9091,7 +9091,6 @@ BEGIN
     from encounter e
              inner join person p on p.person_id = e.patient_id and p.voided = 0
              inner join form f on f.form_id = e.form_id and f.uuid = 'c7f47cea-207b-11e9-ab14-d663bd873d93'
-             left outer join patient_program_discontinuation d on d.patient_id=e.patient_id
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (165004, 165027, 5570, 165030, 165031, 165032,
                                                                            163191, 169043, 159813, 123160, 165205,
@@ -9417,7 +9416,6 @@ select
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
-       left outer join dwapi_etl.patient_program_discontinuation d on d.patient_id=e.patient_id
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
                                                                                  162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,165250,166665,161011,165070,165250,162737,162724,159623,160632) and o.voided=0
 where e.voided=0
