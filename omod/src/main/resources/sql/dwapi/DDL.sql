@@ -101,6 +101,8 @@ DROP TABLE IF EXISTS dwapi_etl.etl_high_iit_intervention;
 DROP TABLE IF EXISTS dwapi_etl.etl_home_visit_checklist;
 DROP TABLE IF EXISTS dwapi_etl.etl_special_clinics;
 DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
+DROP TABLE IF EXISTS dwapi_etl.etl_ncd_enrollment;
+DROP TABLE IF EXISTS dwapi_etl.etl_ncd_followup;
 
 -- create table etl_patient_demographics
 create table dwapi_etl.etl_patient_demographics (
@@ -4222,6 +4224,116 @@ CREATE TABLE dwapi_etl.etl_home_visit_checklist
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_home_visit_checklist table";
+-- ------------ create table etl_ncd_enrollment-----------------------
+
+CREATE TABLE dwapi_etl.etl_ncd_enrollment (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL PRIMARY KEY,
+visit_type VARCHAR(255) DEFAULT NULL,
+referred_from INT(11),
+referred_from_department INT(11),
+referred_from_department_other VARCHAR(100),
+patient_complaint INT(11),
+specific_complaint VARCHAR(500),
+disease_type INT(11),
+diabetes_condition INT(11),
+diabetes_type INT(11),
+hypertension_condition INT(11),
+hypertension_stage VARCHAR(100),
+hypertension_type INT(11),
+comorbid_condition INT(11),
+diagnosis_date DATE,
+hiv_status INT(11),
+hiv_positive_on_art INT(11),
+tb_screening INT(11),
+smoke_check INT(11),
+date_stopped_smoke DATE,
+drink_alcohol INT(11),
+date_stopped_alcohol DATE,
+cessation_counseling INT(11),
+physical_activity INT(11),
+diet_routine INT(11),
+examination_findings VARCHAR(255),
+cardiovascular INT(11),
+respiratory INT(11),
+abdominal_pelvic INT(11),
+neurological INT(11),
+oral_exam INT(11),
+foot_risk INT(11),
+foot_low_risk VARCHAR(500),
+foot_high_risk VARCHAR(500),
+diabetic_foot INT(11),
+describe_diabetic_foot_type VARCHAR(255),
+treatment_given VARCHAR(255),
+other_treatment_given VARCHAR(255),
+lifestyle_advice VARCHAR(255),
+nutrition_assessment VARCHAR(255),
+footcare_outcome INT(11),
+referred_to VARCHAR(255),
+reasons_for_referral VARCHAR(255),
+clinical_notes VARCHAR(255),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+voided INT(11),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+INDEX(visit_date),
+INDEX(encounter_id),
+INDEX(patient_id),
+INDEX(disease_type),
+INDEX(diabetes_type),
+INDEX(hypertension_type)
+);
+SELECT "Successfully created etl_ncd_enrollment table";
+
+-------------- create table etl_ncd_followup-----------------------
+
+CREATE TABLE dwapi_etl.etl_ncd_followup (
+uuid char(38),
+provider INT(11),
+patient_id INT(11) NOT NULL ,
+visit_id INT(11),
+visit_date DATE,
+location_id INT(11) DEFAULT NULL,
+encounter_id INT(11) NOT NULL PRIMARY KEY,
+visit_type VARCHAR(255) DEFAULT NULL,
+tobacco_use INT(11),
+drink_alcohol INT(11),
+physical_activity INT(11),
+healthy_diet INT(11),
+patient_complaint INT(11),
+specific_complaint VARCHAR(500),
+other_specific_complaint VARCHAR(500),
+examination_findings VARCHAR(500),
+cardiovascular INT(11),
+respiratory INT(11),
+abdominal_pelvic INT(11),
+neurological INT(11),
+oral_exam INT(11),
+foot_exam VARCHAR(255),
+diabetic_foot INT(11),
+foot_risk_assessment VARCHAR(100),
+diabetic_foot_risk INT(11),
+adhering_medication INT(11),
+referred_to VARCHAR(255),
+reasons_for_referral VARCHAR(255),
+clinical_notes VARCHAR(255),
+date_created DATETIME NOT NULL,
+date_last_modified DATETIME,
+voided INT(11),
+CONSTRAINT FOREIGN KEY (patient_id) REFERENCES kenyaemr_etl.etl_patient_demographics(patient_id),
+CONSTRAINT unique_uuid UNIQUE(uuid),
+INDEX(visit_date),
+INDEX(encounter_id),
+INDEX(patient_id),
+INDEX(visit_id)
+);
+SELECT "Successfully created etl_ncd_follow_up table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
