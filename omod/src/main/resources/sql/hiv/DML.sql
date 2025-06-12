@@ -3199,12 +3199,16 @@ WITH LatestTest AS (
         fup.lmp_date,
         fup.pg_outcome
     FROM kenyaemr_etl.etl_laboratory_extract x
-             LEFT JOIN (
-        SELECT patient_id, MIN(date_started) AS date_started_art
-        FROM kenyaemr_etl.etl_drug_event
-        WHERE program = 'HIV'
-        GROUP BY patient_id
-    ) d ON x.patient_id = d.patient_id
+             INNER JOIN (SELECT x1.patient_id, x1.date_test_requested, MAX(x1.order_id) AS max_order_id
+                         FROM kenyaemr_etl.etl_laboratory_extract x1
+                         WHERE x1.lab_test IN (1305, 856)
+                         GROUP BY x1.patient_id, x1.date_test_requested) y ON x.patient_id = y.patient_id
+        AND x.date_test_requested = y.date_test_requested
+        AND x.order_id = y.max_order_id
+             LEFT JOIN (SELECT patient_id, MIN(date_started) AS date_started_art
+                        FROM kenyaemr_etl.etl_drug_event
+                        WHERE program = 'HIV'
+                        GROUP BY patient_id) d ON x.patient_id = d.patient_id
              LEFT JOIN (
         SELECT patient_id, MIN(visit_date) AS visit_date, MAX(date_confirmed_hiv_positive) AS date_confirmed_hiv_positive
         FROM kenyaemr_etl.etl_hiv_enrollment
@@ -3283,7 +3287,6 @@ WITH LatestTest AS (
              GROUP BY patient_id
          ) fup ON de.patient_id = fup.patient_id
          WHERE de.program = 'HIV'
-           AND TIMESTAMPDIFF(MONTH, de.date_started, DATE_SUB(CURDATE(), INTERVAL 7 DAY)) >= 3
            AND NOT EXISTS (
              SELECT 1
              FROM kenyaemr_etl.etl_laboratory_extract le
