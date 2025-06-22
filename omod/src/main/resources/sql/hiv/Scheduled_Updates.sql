@@ -11302,10 +11302,10 @@ select
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
-       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,
+       inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,6042,161011,120240,161011,
                                                                                  162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,165250,166665,161011,165070,165250,162737,162724,159623,160632) and o.voided=0
 where e.voided=0
-group by e.patient_id,visit_date
+group by e.encounter_id
 ON DUPLICATE KEY UPDATE provider=VALUES(provider),
         visit_date=VALUES(visit_date),
         patient_complaint=VALUES(patient_complaint),
@@ -11456,7 +11456,7 @@ from encounter e
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,152722,159449,1000519,1000520,6042,6042,161011,162737,1124,1124,1124,1124,163308,
        1127,1284,1284,166879,164075,162724,159623,160632) and o.voided=0
 where e.voided=0
-group by e.patient_id,visit_date
+group by e.encounter_id
 ON DUPLICATE KEY UPDATE provider=VALUES(provider),
         visit_date=VALUES(visit_date),
         visit_type=VALUES(visit_type),
