@@ -1909,6 +1909,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       VitaminA_2_to_5_yr,
       HPV_1,
       HPV_2,
+      HPV_3,
       influenza,
       sequence,
       fully_immunized
@@ -1946,6 +1947,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
         max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
         max(if(vaccine="HPV" and sequence=1, date_given, "")) as HPV_1,
         max(if(vaccine="HPV" and sequence=2, date_given, "")) as HPV_2,
+        max(if(vaccine="HPV" and sequence=3, date_given, "")) as HPV_3,
         max(if(vaccine="HEMOPHILUS INFLUENZA B", date_given, "")) as influenza,
         y.sequence as sequence,
         y.fully_immunized as fully_immunized
@@ -2029,8 +2031,7 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
       ROTA_1=VALUES(ROTA_1),ROTA_2=VALUES(ROTA_2),ROTA_3=VALUES(ROTA_3),Measles_rubella_1=VALUES(Measles_rubella_1),Measles_rubella_2=VALUES(Measles_rubella_2), Yellow_fever=VALUES(Yellow_fever),
       Measles_6_months=VALUES(Measles_6_months), VitaminA_6_months=VALUES(VitaminA_6_months),VitaminA_1_yr=VALUES(VitaminA_1_yr),
       VitaminA_1_and_half_yr=VALUES(VitaminA_1_and_half_yr),VitaminA_2_yr=VALUES(VitaminA_2_yr),VitaminA_2_to_5_yr=VALUES(VitaminA_2_to_5_yr),fully_immunized=VALUES(fully_immunized),
-      influenza=VALUES(influenza),sequence=VALUES(sequence),HPV_1=VALUES(HPV_1),HPV_2=VALUES(HPV_2)
-    ;
+      influenza=VALUES(influenza),sequence=VALUES(sequence),HPV_1=VALUES(HPV_1),HPV_2=VALUES(HPV_2),HPV_3=VALUES(HPV_3);
     END $$
 
 
@@ -2039,8 +2040,6 @@ CREATE PROCEDURE sp_update_etl_hei_immunization(IN last_update_time DATETIME)
 DROP PROCEDURE IF EXISTS sp_update_etl_tb_enrollment $$
 CREATE PROCEDURE sp_update_etl_tb_enrollment(IN last_update_time DATETIME)
   BEGIN
-
-
 
     insert into kenyaemr_etl.etl_tb_enrollment(
       patient_id,
