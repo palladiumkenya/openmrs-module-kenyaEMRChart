@@ -7987,7 +7987,7 @@ from encounter e
     inner join person p on p.person_id=e.patient_id and p.voided=0
     inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
     left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-    (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181)
+    (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495)
 group by e.patient_id,date(e.encounter_datetime);
 SELECT "Completed processing Clinical Encounter";
 END $$
