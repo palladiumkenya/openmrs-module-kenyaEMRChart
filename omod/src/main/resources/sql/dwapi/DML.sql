@@ -7976,8 +7976,8 @@ select
     max(if(o.concept_id=1896,(case o.value_coded when 1072 then 'Daycase' when 161018 THEN 'Overnight' when 1275 THEN 'Longer stay' else '' end),null)) as hospital_stay,
     max(if(o.concept_id=1272,(case o.value_coded when 1065 then 'Yes' when 1066 THEN 'No' else '' end),null)) as referral_needed,
     max(if(o.concept_id=160632,o.value_text,null)) as refferal_ordered,
-    max(if(o.concept_id=162724,(case o.value_coded when 164407 then 'Other health facility' when 163266 THEN 'This health facility' else '' end),null)) as referral_to,
-    max(if(o.concept_id=162724,o.value_text,null)) as other_facility,
+    max(if(o.concept_id=163145,(case o.value_coded when 164407 then 'Other health facility' when 163266 THEN 'This health facility' else '' end),null)) as referral_to,
+    max(if(o.concept_id=159495,o.value_text,null)) as other_facility,
     max(if(o.concept_id=162724,o.value_text,null)) as this_facility,
     e.date_created,
     if(max(o.date_created) > min(e.date_created), max(o.date_created),
@@ -7987,7 +7987,7 @@ from encounter e
     inner join person p on p.person_id=e.patient_id and p.voided=0
     inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
     left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-    (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181)
+    (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495)
 group by e.patient_id,date(e.encounter_datetime);
 SELECT "Completed processing Clinical Encounter";
 END $$
