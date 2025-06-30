@@ -453,7 +453,6 @@ INSERT INTO kenyaemr_etl.etl_script_status(script_name, start_time) VALUES('init
 SET populate_script_id = LAST_INSERT_ID();
 
 CALL sp_populate_etl_daily_revenue_summary();
--- CALL sp_populate_etl_special_clinics();
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= populate_script_id;
 

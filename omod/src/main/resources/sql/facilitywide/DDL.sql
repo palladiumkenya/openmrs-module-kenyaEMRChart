@@ -11,7 +11,6 @@ INSERT INTO kenyaemr_etl.etl_script_status (script_name, start_time) VALUES('ini
 SET script_id = LAST_INSERT_ID();
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_daily_revenue_summary;
-DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Create etl_daily_revenue_summary table
@@ -119,7 +118,6 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_special_clinics table";
-
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
 END $$
