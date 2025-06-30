@@ -1107,6 +1107,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     VitaminA_2_to_5_yr VARCHAR(50),
     HPV_1 VARCHAR(50),
     HPV_2 VARCHAR(50),
+    HPV_3 VARCHAR(50),
     influenza VARCHAR(50),
     sequence VARCHAR(50),
     fully_immunized INT(11),

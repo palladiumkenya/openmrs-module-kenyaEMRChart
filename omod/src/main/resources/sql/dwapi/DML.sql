@@ -2103,6 +2103,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
       fully_immunized,
       HPV_1,
       HPV_2,
+      HPV_3,
       influenza,
       sequence,
       voided
@@ -2141,6 +2142,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_immunization()
       max(if(vaccine="Vitamin A" and sequence=5, date_given, "")) as VitaminA_2_to_5_yr,
       max(if(vaccine="HPV" and sequence=1, date_given, "")) as HPV_1,
       max(if(vaccine="HPV" and sequence=2, date_given, "")) as HPV_2,
+      max(if(vaccine="HPV" and sequence=3, date_given, "")) as HPV_3,
       max(if(vaccine="HEMOPHILUS INFLUENZA B", date_given, "")) as influenza,
       y.sequence as sequence,
       y.fully_immunized as fully_immunized,
