@@ -4121,7 +4121,6 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     nutritional_status        INT(11),
     patient_pregnant        INT(11),
     sero_status        INT(11),
-    medication_condition        INT(11),
     nutritional_intervention     INT(11),
     postnatal               INT(11),
     patient_on_arv               INT(11),
@@ -4154,6 +4153,7 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     treatment_intervention  VARCHAR(255),
     area_of_service INT(11),
     next_appointment_date       DATE,
+    orthopaedic_patient_no  INT(11),
     special_clinic           VARCHAR(255),
     special_clinic_form_uuid CHAR(38),
     CONSTRAINT FOREIGN KEY (patient_id)
