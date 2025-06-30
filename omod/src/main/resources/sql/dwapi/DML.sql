@@ -7901,7 +7901,7 @@ select
     concat_ws(',',nullif(max(if(o.concept_id=165104 and o.value_coded = 1107,'None','')),''),
     nullif(max(if(o.concept_id=165104 and o.value_coded = 5490,'Psychosocial therapy','')),''),
     nullif(max(if(o.concept_id=165104 and o.value_coded = 165151,'Substance Abuse Counseling','')),''),
-    nullif(max(if(o.concept_id=165104 and o.value_coded = 1380,'Nutritional and Diatary','')),''),
+    nullif(max(if(o.concept_id=165104 and o.value_coded = 1380,'Nutritional and Dietary','')),''),
     nullif(max(if(o.concept_id=165104 and o.value_coded = 156277,'Family Counseling','')),''),
     nullif(max(if(o.concept_id=165104 and o.value_coded = 5622,'Other','')),''),
     nullif(max(if(o.concept_id=165104,o.value_text,'')),'')) as counselling_ordered,
