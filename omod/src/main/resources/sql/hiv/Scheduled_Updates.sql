@@ -10305,7 +10305,6 @@ BEGIN
               nutritional_status,
               patient_pregnant,
               sero_status,
-              medication_condition,
               nutritional_intervention,
               postnatal,
               patient_on_arv,
@@ -10337,6 +10336,7 @@ BEGIN
               disability_classification,
               treatment_intervention,
               area_of_service,
+              orthopaedic_patient_no,
               special_clinic,
               special_clinic_form_uuid,
               date_created,
@@ -10393,7 +10393,6 @@ BEGIN
            max(if(o.concept_id = 160205,o.value_coded,null))                           as nutritional_status,
            max(if(o.concept_id  = 5272,o.value_coded,null))                            as patient_pregnant,
            max(if(o.concept_id  = 1169,o.value_coded,null))                            as sero_status,
-           max(if(o.concept_id  = 162747,o.value_coded,null))                          as medication_condition,
            max(if(o.concept_id  = 162696,o.value_coded,null))                           as nutritional_intervention,
            max(if(o.concept_id = 168734,o.value_coded,null))                          as postnatal,
            max(if(o.concept_id  =1149,o.value_coded,null))                            as patient_on_arv,
@@ -10456,10 +10455,19 @@ BEGIN
         CONCAT_WS(',',max(if(o.concept_id = 162747 and o.value_coded = 117086,  'Recurrent ear infections',NULL)),
                      max(if(o.concept_id = 162747 and o.value_coded = 117087,  'Chronic ear disease',NULL)),
                      max(if(o.concept_id = 162747 and o.value_coded = 140903,  'Noise exposure',NULL)),
-                     max(if(o.concept_id = 162747 and o.value_coded = 119481,  'Diabetes',NULL)),
-                     max(if(o.concept_id = 162747 and o.value_coded = 117399,  'HTN',NULL)),
+                     max(if(o.concept_id = 162747 and (o.value_coded = 119481 OR o.value_coded = 127706),  'Diabetes',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 117399,  'Hypertension',NULL)),
                      max(if(o.concept_id = 162747 and o.value_coded = 148117,  'Autoimmune diseases',NULL)),
                      max(if(o.concept_id = 162747 and o.value_coded = 116838,  'Head injury',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 114698,  'Osteoarthritis',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 114662,  'Osteoporosis',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 127417,  'Rheumatoid arthritis',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 115115,  'Obesity',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 117762,  'Gout',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 153690,  'Lupus',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 119955,  'Hip dysplasia',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 113125,  'Scoliosis',NULL)),
+                     max(if(o.concept_id = 162747 and o.value_coded = 5622,  'Other',NULL)),
                      max(if(o.concept_id = 162747 and o.value_coded = 1169,  'HIV',NULL)),
                      max(if(o.concept_id = 162747 and o.value_coded = 112141,  'TB',NULL))) as presence_of_comobidities,
         max(if(o.concept_id = 1000088, o.value_datetime, null))                     as first_screening_date,
@@ -10494,6 +10502,7 @@ BEGIN
                     max(if(o.concept_id = 165531 and o.value_coded = 160068,  'Referral',NULL)),
                     max(if(o.concept_id = 165531 and o.value_coded = 142608,  'Delivery',NULL))) as treatment_intervention,
                     max(if(o.concept_id = 168146, o.value_coded, null))                               as area_of_service,
+                    max(if(o.concept_id = 159893, o.value_numeric, null))                            as orthopaedic_patient_no,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '1fbd26f1-0478-437c-be1e-b8468bd03ffa' then 'Psychiatry'
@@ -10546,8 +10555,8 @@ BEGIN
                                                                        'b40d369c-31d0-4c1d-a80a-7e4b7f73bea0',  -- Maxillofacial
                                                                        '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' -- Hearing
         )
-             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162747,162696,168734,
-                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,168146,163300,5272)
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162696,168734,
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,168146,159893,1788,163300,5272)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10570,7 +10579,6 @@ BEGIN
                             nutritional_status=VALUES(nutritional_status),
                             patient_pregnant=VALUES(patient_pregnant),
                             sero_status=VALUES(sero_status),
-                            medication_condition=VALUES(medication_condition),
                             nutritional_intervention=VALUES(nutritional_intervention),
                             postnatal=VALUES(postnatal),
                             patient_on_arv=VALUES(patient_on_arv),
@@ -10601,7 +10609,8 @@ BEGIN
                             second_6_12_months=VALUES(second_6_12_months),
                             disability_classification=VALUES(disability_classification),
                             treatment_intervention=VALUES(treatment_intervention),
-                            area_of_service=VALUES(area_of_service);
+                            area_of_service=VALUES(area_of_service),
+                            orthopaedic_patient_no=VALUES(orthopaedic_patient_no);
     SELECT "Completed updating special clinics";
 END $$
 
