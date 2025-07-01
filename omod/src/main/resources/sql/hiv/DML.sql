@@ -9473,7 +9473,6 @@ BEGIN
                                                   treatment_intervention,
                                                   area_of_service,
                                                   orthopaedic_patient_no,
-                                                  patient_referred_to,
                                                   special_clinic,
                                                   special_clinic_form_uuid,
                                                   date_created,
@@ -9650,7 +9649,6 @@ BEGIN
                     max(if(o.concept_id = 165531 and o.value_coded = 142608,  'Delivery',NULL))) as treatment_intervention,
                     max(if(o.concept_id = 168146, o.value_coded, null))                               as area_of_service,
                     max(if(o.concept_id = 159893, o.value_numeric, null))                            as orthopaedic_patient_no,
-                    max(if(o.concept_id = 1788, o.value_coded, null))                               as patient_referred_to,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '22c68f86-bbf0-49ba-b2d1-23fa7ccf0259' then 'HIV'
@@ -9714,7 +9712,7 @@ BEGIN
                                                                            160336, 162558, 163894, 160205, 5272, 1169,162696, 168734,
                                                                            1149, 156625, 163304, 161005, 161648, 159854,
                                                                            5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                           165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,168146,159893,1788,163300,5272)
+                                                                           165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,168146,159893,163300,5272)
         and o.voided = 0
     where e.voided = 0
     group by e.patient_id, e.encounter_id;
