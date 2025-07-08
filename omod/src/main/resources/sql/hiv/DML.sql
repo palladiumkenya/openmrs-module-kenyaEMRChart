@@ -9431,6 +9431,7 @@ BEGIN
                                                   visit_type,
                                                   pregnantOrLactating,
                                                   referred_from,
+												  eye_assessed,
                                                   acuity_finding,
                                                   referred_to,
                                                   ot_intervention,
@@ -9487,6 +9488,7 @@ BEGIN
            max(if(o.concept_id = 164181, o.value_coded, null))                                            as visit_type,
            max(if(o.concept_id = 5272, o.value_coded, null))                                              as pregnantOrLactating,
            max(if(o.concept_id = 161643, o.value_coded, null))                                            as referred_from,
+		   max(if(o.concept_id = 160348, o.value_coded, null))                                            as eye_assessed,
            max(if(o.concept_id = 164448, o.value_coded, null))                                            as acuity_finding,
            max(if(o.concept_id = 163145, o.value_coded, null))                                            as referred_to,
            CONCAT_WS(',', max(if(o.concept_id = 165302 and o.value_coded = 1107, 'None', NULL)),
@@ -9712,7 +9714,7 @@ BEGIN
                                                                            160336, 162558, 163894, 160205, 5272, 1169,162696, 168734,
                                                                            1149, 156625, 163304, 161005, 161648, 159854,
                                                                            5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                           165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,168146,159893,163300,5272)
+                                                                           165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,168146,159893,163300,5272,160348)
         and o.voided = 0
     where e.voided = 0
     group by e.patient_id, e.encounter_id;
