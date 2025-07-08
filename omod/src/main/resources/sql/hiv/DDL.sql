@@ -117,6 +117,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_patient_appointment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_adr_assessment_tool;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_followup;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -4115,6 +4116,7 @@ CREATE TABLE kenyaemr_etl.etl_special_clinics
     visit_type               INT(11),
     pregnantOrLactating      INT(11),
     referred_from            INT(11),
+	eye_assessed             INT(11),
     acuity_finding           INT(11),
     referred_to              INT(11),
     ot_intervention          VARCHAR(255),

@@ -4054,6 +4054,7 @@ CREATE TABLE dwapi_etl.etl_special_clinics
     visit_type               INT(11),
     pregnantOrLactating      INT(11),
     referred_from            INT(11),
+	eye_assessed             INT(11),
     acuity_finding           INT(11),
     referred_to              INT(11),
     ot_intervention          VARCHAR(255),

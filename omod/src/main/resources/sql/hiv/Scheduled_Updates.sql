@@ -10295,6 +10295,7 @@ BEGIN
               visit_type,
               pregnantOrLactating,
               referred_from,
+			  eye_assessed,
               acuity_finding,
               referred_to,
               ot_intervention,
@@ -10351,6 +10352,7 @@ BEGIN
            max(if(o.concept_id = 164181, o.value_coded, null))                         as visit_type,
            max(if(o.concept_id = 5272, o.value_coded, null))                           as pregnantOrLactating,
            max(if(o.concept_id = 161643, o.value_coded, null))                         as referred_from,
+		  max(if(o.concept_id = 160348, o.value_coded, null))                          as eye_assessed,
            max(if(o.concept_id = 164448, o.value_coded, null))                         as acuity_finding,
            max(if(o.concept_id in (163145,1788),o.value_coded,null))                   as referred_to,
           CONCAT_WS(',',max(if(o.concept_id = 165302 and o.value_coded = 1107,  'None',NULL)),
@@ -10556,7 +10558,7 @@ BEGIN
                                                                        '54462245-2cb6-4ca9-a15a-ba35adfa0e8f' -- Hearing
         )
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161643,164448,163145,165302,164204,160336,162558,163894,160205,5272,1169,162696,168734,
-                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,168146,159893,163300,5272)
+                                        1149,156625,163304,161005,161648,159854,5484,1788,167381,162477,5619,167273,165911,165241,1000494,164209,165430,162747,1000088,162737,166663,5219,159402,985,1151,1069,165531,168146,159893,163300,5272,160348)
         and o.voided = 0
     where e.voided = 0 and e.date_created >= last_update_time
        or e.date_changed >= last_update_time
@@ -10569,6 +10571,7 @@ BEGIN
                             visit_type=VALUES(visit_type),
                             pregnantOrLactating=VALUES(pregnantOrLactating),
                             referred_from=VALUES(referred_from),
+	                        eye_assessed=VALUES(eye_assessed),
                             acuity_finding=VALUES(acuity_finding),
                             referred_to=VALUES(referred_to),
                             ot_intervention=VALUES(ot_intervention),
