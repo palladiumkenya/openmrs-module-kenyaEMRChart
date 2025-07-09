@@ -103,6 +103,7 @@ DROP TABLE IF EXISTS dwapi_etl.etl_special_clinics;
 DROP TABLE IF EXISTS dwapi_etl.etl_patient_appointment;
 DROP TABLE IF EXISTS dwapi_etl.etl_ncd_enrollment;
 DROP TABLE IF EXISTS dwapi_etl.etl_ncd_followup;
+DROP TABLE IF EXISTS dwapi_etl.etl_inpatient_discharge;
 
 -- create table etl_patient_demographics
 create table dwapi_etl.etl_patient_demographics (
@@ -4340,6 +4341,32 @@ INDEX(patient_id),
 INDEX(visit_id)
 );
 SELECT "Successfully created etl_ncd_follow_up table";
+
+-- Create etl_inpatient_discharge table
+CREATE TABLE dwapi_etl.etl_inpatient_discharge
+(
+    patient_id                            INT(11)  NOT NULL,
+    visit_id                              INT(11) DEFAULT NULL,
+    encounter_id                          INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                  CHAR(38) NOT NULL,
+    location_id                           INT(11)  NOT NULL,
+    provider                              INT(11)  NOT NULL,
+    visit_date                            DATE,
+    discharge_instructions                VARCHAR(255),
+    discharge_status                      INT(11),
+    follow_up_date                        DATE,
+    followup_specialist                   INT(11),
+    date_created                          DATETIME NOT NULL,
+    date_last_modified                    DATETIME,
+    voided                                INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES dwapi_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_inpatient_discharge table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 
