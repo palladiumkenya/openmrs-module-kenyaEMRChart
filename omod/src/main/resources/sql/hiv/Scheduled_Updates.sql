@@ -11361,7 +11361,7 @@ ON DUPLICATE KEY UPDATE provider=VALUES(provider),
 SELECT "Completed processing NCD Enrollment data ", CONCAT("Time: ", NOW());
 END $$
 
---------------- procedure sp_update_etl_ncd_followup -------------------------
+-- procedure sp_update_etl_ncd_followup -------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_ncd_followup $$
 CREATE PROCEDURE sp_update_etl_ncd_followup(IN last_update_time DATETIME)
@@ -11499,6 +11499,61 @@ ON DUPLICATE KEY UPDATE provider=VALUES(provider),
 SELECT "Completed processing NCD Follow Up data ", CONCAT("Time: ", NOW());
 END $$
 
+DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_discharge $$
+CREATE PROCEDURE sp_update_etl_inpatient_discharge(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing inpatient discharge data...";
+
+    insert into kenyaemr_etl.etl_inpatient_discharge(
+        patient_id,
+        uuid,
+        provider,
+        visit_id,
+        visit_date,
+        encounter_id,
+        location_id,
+        discharge_instructions,
+        discharge_status,
+        follow_up_date,
+        followup_specialist,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.patient_id,
+        e.uuid,
+        e.creator,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.encounter_id,
+        e.location_id,
+        max(if(o.concept_id = 160632, o.value_text, null))  as discharge_instructions,
+        max(if(o.concept_id = 1695, o.value_coded, null))   as discharge_status,
+        max(if(o.concept_id = 5096, o.value_datetime, null))   as follow_up_date,
+        max(if(o.concept_id = 167079, o.value_coded, null))   as followup_specialist,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '98a781d2-b777-4756-b4c9-c9b0deb3483c'
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160632,1695,5096,167079) and o.voided=0
+    where e.voided=0
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+                            visit_date=VALUES(visit_date),
+                            discharge_instructions=VALUES(discharge_instructions),
+                            discharge_status=VALUES(discharge_status),
+                            follow_up_date=VALUES(follow_up_date),
+                            followup_specialist=VALUES(followup_specialist),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided=VALUES(voided);
+
+    SELECT "Completed processing Inpatient discharge data ";
+END $$
+
 -- end of scheduled updates procedures
 
     SET sql_mode=@OLD_SQL_MODE $$
@@ -11601,6 +11656,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_adr_assessment_tool(last_update_time);
     CALL sp_update_etl_ncd_enrollment(last_update_time);
     CALL sp_update_etl_ncd_followup(last_update_time);
+    CALL sp_update_etl_inpatient_discharge(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
