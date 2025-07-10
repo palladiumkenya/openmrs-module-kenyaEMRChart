@@ -716,7 +716,7 @@ FROM encounter e
          LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
          LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
          LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
-where e.voided=0 group by o.order_id;
+where e.voided=0;
 /*-- >>>>>>>>>>>>>>> -----------------------------------  Wagners input ------------------------------------------------------------
 insert into kenyaemr_etl.etl_laboratory_extract(
 encounter_id,
