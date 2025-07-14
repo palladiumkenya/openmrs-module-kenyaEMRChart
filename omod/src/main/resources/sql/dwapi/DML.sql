@@ -824,20 +824,34 @@ date_last_modified,
 voided
 )
 
-WITH encounter_facility AS (
-  SELECT 
-    o.encounter_id,
-    LEFT(TRIM(o.value_text), 100) AS to_facility_raw
-  FROM obs o
-  WHERE o.voided = 0 AND o.concept_id = 159495
-)
-
-select
+SELECT 
+  q.patient_id,
+  q.uuid,
+  q.visit_id,
+  q.encounter_datetime,
+  q.program_uuid,
+  q.program_name,
+  q.encounter_id,
+  q.reason_discontinued,
+  q.effective_discontinuation_date,
+  q.trf_out_verified,
+  q.trf_out_verification_date,
+  q.date_died,
+  COALESCE(l.`name`, q.to_facility_raw) AS to_facility_name,
+  q.to_date,
+  q.death_reason,
+  q.specific_death_cause,
+  q.natural_causes,
+  q.non_natural_cause,
+  q.date_created,
+  q.date_last_modified,
+  q.voided
+FROM (select
 e.patient_id,
 e.uuid,
 e.visit_id,
 e.encounter_datetime, -- trying to make us of index
-et.uuid,
+et.uuid as program_uuid,
 (case et.uuid
 	when '2bdada65-4c72-4a48-8730-859890e25cee' then 'HIV'
 	when 'd3e3d723-7458-4b4e-8998-408e8a551a84' then 'TB'
@@ -857,7 +871,7 @@ coalesce(max(if(o.concept_id=164384, o.value_datetime, null)),max(if(o.concept_i
 max(if(o.concept_id=1285, o.value_coded, null)) as trf_out_verified,
 max(if(o.concept_id=164133, o.value_datetime, null)) as trf_out_verification_date,
 max(if(o.concept_id=1543, o.value_datetime, null)) as date_died,
-COALESCE(l.`name`, ef.to_facility_raw) AS to_facility_name,
+MAX(IF(o.concept_id=159495, LEFT(TRIM(o.value_text), 100), NULL)) AS to_facility_raw,
 max(if(o.concept_id=160649, o.value_datetime, null)) as to_date,
 max(if(o.concept_id=1599, o.value_coded, null)) as death_reason,
 max(if(o.concept_id=1748, o.value_coded, null)) as specific_death_cause,
@@ -876,10 +890,8 @@ inner join
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
 	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871','c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97')
 ) et on et.encounter_type_id=e.encounter_type
-LEFT JOIN encounter_facility ef ON ef.encounter_id = e.encounter_id
-LEFT JOIN location l ON l.uuid = ef.to_facility_raw
-
-group by e.encounter_id;
+group by e.encounter_id) q
+LEFT JOIN location l ON l.uuid = q.to_facility_raw;
 SELECT "Completed processing discontinuation data ", CONCAT("Time: ", NOW());
 END $$
 
