@@ -9122,7 +9122,6 @@ BEGIN
                                                                            164401, 164956, 165153, 165154, 160632,
                                                                            159811, 165239, 162724, 162053, 165036)
         and o.voided = 0
-    where e.voided = 0
     group by e.patient_id, date(e.encounter_datetime);
     SELECT "Completed processing KVP Clinical enrollment";
 END $$
@@ -9489,7 +9488,6 @@ from encounter e
        inner join form f on f.form_id = e.form_id and f.uuid = 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97'
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,6042,161011,120240,161011,
                                                                                  162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,165250,166665,161011,165070,165250,162737,162724,159623,160632) and o.voided=0
-where e.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing NCD Enrollment data ";
@@ -9602,10 +9600,53 @@ from encounter e
        inner join form f on f.form_id = e.form_id and f.uuid = '3e1057da-f130-44d9-b2bb-53e039b953c6'
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,152722,159449,1000519,1000520,6042,6042,161011,162737,1124,1124,1124,1124,163308,
        1127,1284,1284,166879,164075,162724,159623,160632) and o.voided=0
-where e.voided=0
 group by e.encounter_id;
 
 SELECT "Completed processing NCD FollowUp data ";
+END $$
+
+DROP PROCEDURE IF EXISTS sp_populate_dwapi_etl_inpatient_admission $$
+CREATE PROCEDURE sp_populate_dwapi_etl_inpatient_admission()
+BEGIN
+    SELECT "Processing inpatient admission data... ";
+    insert into dwapi_etl.etl_inpatient_admission(
+        patient_id,
+        uuid,
+        provider,
+        visit_id,
+        visit_date,
+        encounter_id,
+        location_id,
+        admission_date,
+        payment_mode,
+        admission_location_id,
+        admission_location_name,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.patient_id,
+        e.uuid,
+        e.creator,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.encounter_id,
+        e.location_id,
+        max(if(o.concept_id = 1640, o.value_datetime, null))  as admission_date,
+        max(if(o.concept_id = 168882, o.value_coded, null))   as payment_mode,
+        max(if(o.concept_id = 169403, o.value_text, null))   as admission_location_id,
+        MAX(CASE WHEN o.concept_id = 169403 THEN (SELECT l.name FROM location l WHERE l.location_id = CAST(o.value_text AS UNSIGNED)) ELSE NULL END)  as admission_location_name,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '6a90499a-7d82-4fac-9692-b8bd879f0348'
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1640,168882,169403) and o.voided=0
+    group by e.encounter_id;
+
+    SELECT "Completed processing Inpatient admission data... ";
 END $$
 
 DROP PROCEDURE IF EXISTS sp_populate_dwapi_etl_inpatient_discharge $$
@@ -9648,7 +9689,6 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid = '98a781d2-b777-4756-b4c9-c9b0deb3483c'
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160632,1695,5096,167079) and o.voided=0
-    where e.voided=0
     group by e.encounter_id;
 
     SELECT "Completed processing Inpatient discharge data ";
@@ -9754,6 +9794,7 @@ CALL sp_populate_dwapi_high_iit_intervention();
 CALL sp_populate_dwapi_home_visit_checklist();
 CALL sp_populate_dwapi_ncd_enrollment();
 CALL sp_populate_dwapi_etl_ncd_followup();
+CALL sp_populate_dwapi_etl_inpatient_admission();
 CALL sp_populate_dwapi_etl_inpatient_discharge();
 CALL sp_update_dwapi_next_appointment_date();
 

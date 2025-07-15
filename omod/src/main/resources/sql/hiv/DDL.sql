@@ -118,6 +118,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_adr_assessment_tool;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_enrollment;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_inpatient_admission;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_inpatient_discharge;
 
 -- create table etl_patient_demographics
@@ -4417,6 +4418,34 @@ INDEX(patient_id),
 INDEX(visit_id)
 );
 SELECT "Successfully created etl_ncd_follow_up table";
+
+-- Create etl_inpatient_admission table
+CREATE TABLE kenyaemr_etl.etl_inpatient_admission
+(
+    patient_id              INT(11)  NOT NULL,
+    visit_id                INT(11) DEFAULT NULL,
+    encounter_id            INT(11)  NOT NULL PRIMARY KEY,
+    uuid                    CHAR(38) NOT NULL,
+    location_id             INT(11)  NOT NULL,
+    provider                INT(11)  NOT NULL,
+    visit_date              DATE,
+    admission_date          DATE,
+    payment_mode            INT(11),
+    admission_location_id   INT(11),
+    admission_location_name VARCHAR(255),
+    date_created            DATETIME NOT NULL,
+    date_last_modified      DATETIME,
+    voided                  INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date),
+    INDEX (admission_date),
+    INDEX (payment_mode)
+);
+SELECT "Successfully created etl_inpatient_admission table";
 
 -- Create etl_inpatient_discharge table
 CREATE TABLE kenyaemr_etl.etl_inpatient_discharge

@@ -11511,6 +11511,59 @@ ON DUPLICATE KEY UPDATE provider=VALUES(provider),
 SELECT "Completed processing NCD Follow Up data ", CONCAT("Time: ", NOW());
 END $$
 
+DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_admission $$
+CREATE PROCEDURE sp_update_etl_inpatient_admission()
+BEGIN
+    SELECT "Processing inpatient admission data... ";
+    insert into kenyaemr_etl.etl_inpatient_admission(
+        patient_id,
+        uuid,
+        provider,
+        visit_id,
+        visit_date,
+        encounter_id,
+        location_id,
+        admission_date,
+        payment_mode,
+        admission_location_id,
+        admission_location_name,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.patient_id,
+        e.uuid,
+        e.creator,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.encounter_id,
+        e.location_id,
+        max(if(o.concept_id = 1640, o.value_datetime, null))  as admission_date,
+        max(if(o.concept_id = 168882, o.value_coded, null))   as payment_mode,
+        max(if(o.concept_id = 169403, o.value_text, null))   as admission_location_id,
+        MAX(CASE WHEN o.concept_id = 169403 THEN (SELECT l.name FROM location l WHERE l.location_id = CAST(o.value_text AS UNSIGNED)) ELSE NULL END)  as admission_location_name,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '6a90499a-7d82-4fac-9692-b8bd879f0348'
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1640,168882,169403) and o.voided=0
+    where e.voided=0
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+                            visit_date=VALUES(visit_date),
+                            admission_date=VALUES(admission_date),
+                            payment_mode=VALUES(payment_mode),
+                            admission_location=VALUES(admission_location),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided=VALUES(voided);
+
+    SELECT "Completed processing Inpatient admission data... ";
+END $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_discharge $$
 CREATE PROCEDURE sp_update_etl_inpatient_discharge(IN last_update_time DATETIME)
 BEGIN
@@ -11668,6 +11721,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_adr_assessment_tool(last_update_time);
     CALL sp_update_etl_ncd_enrollment(last_update_time);
     CALL sp_update_etl_ncd_followup(last_update_time);
+    CALL sp_update_etl_inpatient_admission(last_update_time);
     CALL sp_update_etl_inpatient_discharge(last_update_time);
     CALL sp_update_dashboard_table();
 
