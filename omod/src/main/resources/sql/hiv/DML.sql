@@ -3293,7 +3293,7 @@ WITH LatestTest AS (
              SELECT
                  v.patient_id,
                  v.visit_date AS latest_hiv_followup_visit,
-                 v.breastfeeding,
+                 v.breastfeeding AS breastfeeding_status,
                  v.pregnancy_status,
                  v.last_menstrual_period AS lmp_date,
                  v.pregnancy_outcome AS pg_outcome
