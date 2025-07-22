@@ -11512,7 +11512,7 @@ SELECT "Completed processing NCD Follow Up data ", CONCAT("Time: ", NOW());
 END $$
 
 DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_admission $$
-CREATE PROCEDURE sp_update_etl_inpatient_admission()
+CREATE PROCEDURE sp_update_etl_inpatient_admission(IN last_update_time DATETIME)
 BEGIN
     SELECT "Processing inpatient admission data... ";
     insert into kenyaemr_etl.etl_inpatient_admission(
@@ -11556,7 +11556,7 @@ BEGIN
                             visit_date=VALUES(visit_date),
                             admission_date=VALUES(admission_date),
                             payment_mode=VALUES(payment_mode),
-                            admission_location=VALUES(admission_location),
+                            admission_location_id=VALUES(admission_location_id),
                             date_created=VALUES(date_created),
                             date_last_modified=VALUES(date_last_modified),
                             voided=VALUES(voided);

@@ -3204,6 +3204,8 @@ WITH LatestTest AS (
         x.date_test_requested,
         x.date_test_result_received,
         d.date_started_art,
+        x.order_reason,
+        x.urgency,
         COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
         fup.latest_hiv_followup_visit,
         fup.breastfeeding_status,
@@ -3287,16 +3289,26 @@ WITH LatestTest AS (
              FROM kenyaemr_etl.etl_hiv_enrollment
              GROUP BY patient_id
          ) e ON de.patient_id = e.patient_id
-                  LEFT JOIN (
+            LEFT JOIN (
              SELECT
-                 patient_id,
-                 MAX(visit_date) AS latest_hiv_followup_visit,
-                 MID(MAX(CONCAT(visit_date, breastfeeding)), 11)         AS breastfeeding_status,
-                 MID(MAX(CONCAT(visit_date, pregnancy_status)), 11)      AS pregnancy_status,
-                 MID(MAX(CONCAT(visit_date, last_menstrual_period)), 11) AS lmp_date,
-                 MID(MAX(CONCAT(visit_date, pregnancy_outcome)), 11)     AS pg_outcome
-             FROM kenyaemr_etl.etl_patient_hiv_followup
-             GROUP BY patient_id
+                 v.patient_id,
+                 v.visit_date AS latest_hiv_followup_visit,
+                 v.breastfeeding AS breastfeeding_status,
+                 v.pregnancy_status,
+                 v.last_menstrual_period AS lmp_date,
+                 v.pregnancy_outcome AS pg_outcome
+             FROM
+                 kenyaemr_etl.etl_patient_hiv_followup AS v
+                     INNER JOIN (
+                     SELECT
+                         patient_id,
+                         MAX(visit_date) AS max_visit_date
+                     FROM
+                         kenyaemr_etl.etl_patient_hiv_followup
+                     GROUP BY
+                         patient_id
+                 ) AS latest_visits ON v.patient_id = latest_visits.patient_id
+                     AND v.visit_date = latest_visits.max_visit_date
          ) fup ON de.patient_id = fup.patient_id
          WHERE de.program = 'HIV'
            AND NOT EXISTS (
@@ -3317,8 +3329,8 @@ SELECT
     l.date_test_result_received,
     bt.base_viral_load_test_result,
     bt.base_viral_load_test_date,
-    NULL AS urgency,
-    NULL AS order_reason,
+    l.urgency,
+    l.order_reason,
     pt.previous_test_result,
     pt.previous_date_test_requested,
     pt.previous_date_test_result_received,
