@@ -4,7 +4,7 @@
 
     <groupId>org.openmrs.module</groupId>
     <artifactId>kenyaemrCharts</artifactId>
-    <version>1.6.9</version>
+    <version>1.7.0-snapshot</version>
     <packaging>pom</packaging>
     <name>KenyaEMR ETL Management</name>
     <description>dhoc charts</description>
