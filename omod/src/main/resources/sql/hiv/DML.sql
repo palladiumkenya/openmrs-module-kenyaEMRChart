@@ -2837,11 +2837,10 @@ inner join (
              where o.concept_id in (1040, 1326, 1000630, 164962, 164964, 162502) and o.voided=0
              group by e.encounter_id, o.obs_group_id
            ) t on e.encounter_id = t.encounter_id
-where e.voided=0  dna
+where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing hts tests";
-END $$jkhk
-dfh
+END $$
 
 -- ------------------------------------ POPULATE HTS LINKAGES AND REFERRALS -------------------------------
 
