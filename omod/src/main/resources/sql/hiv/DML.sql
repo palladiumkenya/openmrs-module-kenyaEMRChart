@@ -638,7 +638,7 @@ WITH FilteredOrders AS (SELECT patient_id,
                                date_activated,
                                urgency,
                                order_reason
-                        FROM openmrs.orders
+                        FROM orders
                         WHERE order_type_id = 3
                           AND order_action IN ('NEW','REVISE')
                           AND voided = 0
