@@ -638,7 +638,7 @@ WITH FilteredOrders AS (SELECT patient_id,
                                date_activated,
                                urgency,
                                order_reason
-                        FROM openmrs.orders
+                        FROM orders
                         WHERE order_type_id = 3
                           AND order_action IN ('NEW','REVISE')
                           AND voided = 0
@@ -2819,7 +2819,7 @@ from encounter e
 	inner join person p on p.person_id=e.patient_id and p.voided=0
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,165241,
-                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093,165241)
+                                                                                 160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093) and o.voided=0
 inner join (
              select
                o.person_id,
@@ -2841,7 +2841,6 @@ where e.voided=0
 group by e.encounter_id;
 SELECT "Completed processing hts tests";
 END $$
-
 
 -- ------------------------------------ POPULATE HTS LINKAGES AND REFERRALS -------------------------------
 
