@@ -7190,21 +7190,49 @@ END $$
       visit_date,
       location_id,
       encounter_id,
+      little_interest,
+      feeling_down,
+      trouble_sleeping,
+      feeling_tired,
+      poor_appetite,
+      feeling_bad,
+      trouble_concentrating,
+      moving_or_speaking_slowly,
+      self_hurtful_thoughts,
       PHQ_9_rating,
+      pfa_offered,
+      client_referred,
+      facility_referred,
+      facility_name,
+      services_referred_for,
       date_created,
       date_last_modified,
       voided
 )
 select
        e.uuid,e.creator,e.patient_id,e.visit_id, date(e.encounter_datetime) as visit_date, e.location_id, e.encounter_id,
+       max(if(o.concept_id = 167006,o.value_coded,null)) as little_interest,
+       max(if(o.concept_id = 167007,o.value_coded,null)) as feeling_down,
+       max(if(o.concept_id = 167068,o.value_coded,null)) as trouble_sleeping,
+       max(if(o.concept_id = 167069,o.value_coded,null)) as feeling_tired,
+       max(if(o.concept_id = 167070,o.value_coded,null)) as poor_appetite,
+       max(if(o.concept_id = 167071,o.value_coded,null)) as feeling_bad,
+       max(if(o.concept_id = 167072,o.value_coded,null)) as trouble_concentrating,
+       max(if(o.concept_id = 167073,o.value_coded,null)) as moving_or_speaking_slowly,
+       max(if(o.concept_id = 167074,o.value_coded,null)) as self_hurtful_thoughts,
        max(if(o.concept_id = 165110,o.value_coded,null)) as PHQ_9_rating,
+       max(if(o.concept_id = 165302,o.value_coded,null)) as pfa_offered,
+       max(if(o.concept_id = 166656,o.value_coded,null)) as client_referred,
+       max(if(o.concept_id = 166636,o.value_coded,null)) as facility_referred,
+       max(if(o.concept_id = 162724,o.value_text,null)) as facility_name,
+       GROUP_CONCAT(if(o.concept_id = 168146,(case o.value_coded when 167061 then 'Psychiatric service' when 163312 then 'Psychotherapy service' end),null) SEPARATOR ' | ') as services_referred_for,
        e.date_created as date_created,
        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
        e.voided as voided
 from encounter e
        inner join person p on p.person_id=e.patient_id and p.voided=0
        inner join form f on f.form_id=e.form_id and f.uuid in ('5fe533ee-0c40-4a1f-a071-dc4d0fbb0c17')
-inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (165110) and o.voided=0
+inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167006,167007,167068,167069,167070,167071,167072,167073,167074,165110,165302,166656,166636,162724,168146) and o.voided=0
 where e.voided=0 and e.date_created >= last_update_time
                 or e.date_changed >= last_update_time
                 or e.date_voided >= last_update_time
