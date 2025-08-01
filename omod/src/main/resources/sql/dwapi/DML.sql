@@ -1847,6 +1847,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
 			exit_date,
             exit_reason,
             hiv_status_at_exit,
+		    encounter_type,
             date_created,
             date_last_modified,
 		    voided
@@ -1901,6 +1902,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_enrolment()
 			  max(if(o.concept_id=160753,o.value_datetime,null)) as exit_date,
 			  max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
 			  max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as hiv_status_at_exit,
+                case et.uuid when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCHCS_HEI_COMPLETION' when '415f5136-ca4a-49a8-8db3-f994187c3af6' then 'MCHCS_HEI_ENROLLMENT' end as encounter_type,
 			  e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
         e.voided
@@ -2762,7 +2764,8 @@ max(if((o.concept_id=160581 or o.concept_id=165241) and o.value_coded in (105,16
 																																														 when 5622 then 'Other' end),null)) as key_population_type,
 max(if(o.concept_id=160581 and o.value_coded in(159674,162198,160549,162277,1175,165192), (case o.value_coded when 159674 then "Fisher folk" when 162198 then "Truck driver" when 160549 then "Adolescent and young girls" when 162277 then "Prisoner" when 1175 then "Not applicable" when 165192 then "Military and other uniformed services" else null end),null)) as priority_population_type,
 max(if(o.concept_id=164401,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as ever_tested_for_hiv,
-max(if(o.concept_id=159813,o.value_numeric,null)) as months_since_last_test,
+floor(case when max(if(o.concept_id=159813, o.value_numeric, null)) > 1200 then null
+           else max(if(o.concept_id=159813, o.value_numeric, null)) end) as months_since_last_test,
 max(if(o.concept_id=164951,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_disabled,
 concat_ws(',',nullif(max(if(o.concept_id=162558 and o.value_coded = 120291,"Hearing impairment",'')),''),
                  nullif(max(if(o.concept_id=162558 and o.value_coded =147215,"Visual impairment",'')),''),
@@ -2819,7 +2822,7 @@ from encounter e
 	inner join form f on f.form_id=e.form_id and f.uuid in ("402dc5d7-46da-42d4-b2be-f43ea4ad87b0","b08471f6-0892-4bf7-ab2b-bf79797b8ea4")
 inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (162084, 164930, 160581, 164401, 164951, 162558,160632, 1710, 164959, 164956,160581,165241,
                                                                                  160540,159427, 164848, 6096, 1659, 164952, 163042, 159813,165215,163556,161550,1887,1272,164359,160481,229,167163,167162,165093)
-inner join (
+left join (
              select
                o.person_id,
                o.encounter_id,
