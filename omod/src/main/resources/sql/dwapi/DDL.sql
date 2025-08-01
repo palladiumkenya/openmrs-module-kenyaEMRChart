@@ -971,6 +971,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     exit_date DATE,
     exit_reason INT(11),
     hiv_status_at_exit VARCHAR(50),
+    encounter_type VARCHAR(250),
     date_created DATETIME NOT NULL,
     date_last_modified DATETIME,
     voided INT(11),
