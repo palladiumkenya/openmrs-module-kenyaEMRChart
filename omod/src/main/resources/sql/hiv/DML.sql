@@ -8379,6 +8379,7 @@ BEGIN
         procedures_prescribed,
         procedures_ordered,
         patient_outcome,
+		diagnosis_category,                                             
         general_examination,
         admission_needed,
         date_of_patient_admission,
@@ -8455,6 +8456,7 @@ BEGIN
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 127896,'Lumbar Puncture','')),''),
                   nullif(max(if(o.concept_id=164174,o.value_text,'')),'')) as procedures_ordered,
         max(if(o.concept_id=160433,o.value_coded,null)) as patient_outcome,
+		max(if(o.concept_id=2031533,(case o.value_coded when 1687 then 'New' when 2031534 THEN 'Existing' else '' end),null)) as diagnosis_category,
         concat_ws(',',nullif(max(if(o.concept_id=162737 and o.value_coded =1107 ,'None','')),''),
                          nullif(max(if(o.concept_id=162737 and o.value_coded =136443,'Jaundice','')),''),
                          nullif(max(if(o.concept_id=162737 and o.value_coded =460,'Oedema','')),''),
@@ -8502,7 +8504,7 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495)
+                                                                          (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495,2031533)
         and o.voided=0
     where e.voided=0
     group by e.patient_id,date(e.encounter_datetime);
@@ -9523,7 +9525,9 @@ BEGIN
                                                   disability_classification,
                                                   treatment_intervention,
                                                   area_of_service,
+												  diagnosis_category,
                                                   orthopaedic_patient_no,
+												  patient_outcome,
                                                   special_clinic,
                                                   special_clinic_form_uuid,
                                                   date_created,
@@ -9700,7 +9704,9 @@ BEGIN
                     max(if(o.concept_id = 165531 and o.value_coded = 160068,  'Referral',NULL)),
                     max(if(o.concept_id = 165531 and o.value_coded = 142608,  'Delivery',NULL))) as treatment_intervention,
                     max(if(o.concept_id = 168146, o.value_coded, null))                               as area_of_service,
+		            max(if(o.concept_id=2031533,(case o.value_coded when 1687 then 'New' when 2031534 THEN 'Existing' else '' end),null)) as diagnosis_category,
                     max(if(o.concept_id = 159893, o.value_numeric, null))                            as orthopaedic_patient_no,
+		            max(if(o.concept_id = 160433, o.value_coded, null))                              as patient_outcome,
            case f.uuid
                when 'c5055956-c3bb-45f2-956f-82e114c57aa7' then 'ENT'
                when '22c68f86-bbf0-49ba-b2d1-23fa7ccf0259' then 'HIV'
@@ -9764,7 +9770,7 @@ BEGIN
                                                                            160336, 162558, 163894, 160205, 5272, 1169,162696, 168734,
                                                                            1149, 156625, 163304, 161005, 161648, 159854,
                                                                            5484, 1788, 167381, 162477, 5619, 167273, 165911,
-                                                                           165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,168146,159893,163300,5272,160348)
+                                                                           165241,1000494,164209,165430,162747,1000088,162737,166663, 5219,159402,985,1151,1069,165531,168146,159893,163300,5272,160348,2031533,160433)
         and o.voided = 0
     where e.voided = 0
     group by e.patient_id, e.encounter_id;
