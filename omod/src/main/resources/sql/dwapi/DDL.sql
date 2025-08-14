@@ -587,6 +587,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     viral_load INT(11),
     ldl INT(11),
     arv_status INT(11),
+    hivtesttype varchar(50),
     test_1_kit_name VARCHAR(50),
     test_1_kit_lot_no VARCHAR(50) DEFAULT NULL,
     test_1_kit_expiry DATE DEFAULT NULL,
