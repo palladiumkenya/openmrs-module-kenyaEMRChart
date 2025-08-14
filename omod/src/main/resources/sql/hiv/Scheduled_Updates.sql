@@ -11606,7 +11606,10 @@ BEGIN
         e.voided
     from encounter e
              inner join person p on p.person_id=e.patient_id and p.voided=0
-             inner join form f on f.form_id = e.form_id and f.uuid = '6a90499a-7d82-4fac-9692-b8bd879f0348'
+             inner join (select encounter_type_id, uuid, name
+                         from encounter_type
+                         where uuid = 'e22e39fd-7db2-45e7-80f1-60fa0d5a4378') et
+                        on et.encounter_type_id = e.encounter_type
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1640,168882,169403) and o.voided=0
     where e.voided=0
     and e.date_created >= last_update_time
