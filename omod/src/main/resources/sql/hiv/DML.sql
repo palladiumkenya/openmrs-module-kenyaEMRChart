@@ -1188,7 +1188,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
 				max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
-        max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" else "" end),null)) as hivtesttype
+        max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" else "" end),null)) as hiv_test_type
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
