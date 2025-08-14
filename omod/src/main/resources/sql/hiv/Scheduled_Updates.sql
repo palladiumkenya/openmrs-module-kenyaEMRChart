@@ -1018,7 +1018,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
         max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
         max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
-        max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" else "" end),null)) as hiv_test_type
+        max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" else "" end),null)) as hiv_test_type,
         max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
         max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
