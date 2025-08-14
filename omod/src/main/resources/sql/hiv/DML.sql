@@ -1071,6 +1071,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			viral_load,
 			ldl,
 			arv_status,
+      hiv_test_type,
 			test_1_kit_name,
 			test_1_kit_lot_no,
 			test_1_kit_expiry,
@@ -1187,6 +1188,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
 				max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
+        max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" else "" end),null)) as hiv_test_type,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -1291,7 +1293,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,299)
+														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,299,164181)
 				inner join
 				(
 					select form_id, uuid,name from form where
