@@ -1044,7 +1044,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
 			viral_load,
 			ldl,
 			arv_status,
-            hiv_test_type
+            hiv_test_type,
 			test_1_kit_name,
 			test_1_kit_lot_no,
 			test_1_kit_expiry,
