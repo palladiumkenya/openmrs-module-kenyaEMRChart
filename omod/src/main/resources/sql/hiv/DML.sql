@@ -1071,7 +1071,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			viral_load,
 			ldl,
 			arv_status,
-      hivtesttype,
+      hiv_test_type,
 			test_1_kit_name,
 			test_1_kit_lot_no,
 			test_1_kit_expiry,
