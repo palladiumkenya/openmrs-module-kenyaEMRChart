@@ -11848,7 +11848,6 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_inpatient_admission(last_update_time);
     CALL sp_update_etl_inpatient_discharge(last_update_time);
     CALL sp_update_doctor_progress_note(last_update_time);
-    CALL sp_update_doctor_progress_note(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
