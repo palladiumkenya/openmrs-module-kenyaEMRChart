@@ -16,6 +16,7 @@ insert into kenyaemr_etl.etl_patient_demographics(
     Gender,
     DOB,
     dead,
+    cause_of_death,
     date_created,
     date_last_modified,
     voided,
@@ -30,6 +31,7 @@ select
        p.gender,
        p.birthdate,
        p.dead,
+       p.cause_of_death,
        p.date_created,
        if((p.date_last_modified='0000-00-00 00:00:00' or p.date_last_modified=p.date_created),NULL,p.date_last_modified) as date_last_modified,
        p.voided,
@@ -44,6 +46,7 @@ FROM (
             p.gender,
             p.birthdate,
             p.dead,
+            p.cause_of_death,
             p.date_created,
             greatest(ifnull(p.date_changed,'0000-00-00 00:00:00'),ifnull(pn.date_changed,'0000-00-00 00:00:00')) as date_last_modified,
             p.voided,
@@ -8374,6 +8377,7 @@ BEGIN
         provider,
         visit_date,
         visit_type,
+        referred_from,
         therapy_ordered,
         other_therapy_ordered,
         counselling_ordered,
@@ -8406,6 +8410,7 @@ BEGIN
         e.creator,
         date(e.encounter_datetime) as visit_date,
         max(if(o.concept_id=164181,(case o.value_coded when 164180 then 'New visit' when 160530 THEN 'Revisit' when 160563 THEN 'Transfer in' else '' end),null)) as visit_type,
+        max(if(o.concept_id=160338, o.value_coded = 164180, null)) as referred_from,
         concat_ws(',',nullif(max(if(o.concept_id=164174 and o.value_coded = 1107,'None','')),''),
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 165225,'Support service provided','')),''),
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 163319,'Behavioural activation therapy','')),''),
@@ -8506,7 +8511,7 @@ BEGIN
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-                                                                          (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495,2031533)
+                                                                          (164174,160632,165104,162737,1651,1640,160338,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495,2031533)
         and o.voided=0
     where e.voided=0
     group by e.patient_id,date(e.encounter_datetime);
@@ -10271,7 +10276,7 @@ BEGIN
         e.voided
     from encounter e
              inner join person p on p.person_id=e.patient_id and p.voided=0
-             inner join form f on f.form_id = e.form_id and f.uuid = '6a90499a-7d82-4fac-9692-b8bd879f0348'
+             inner join form f on f.form_id = e.form_id and f.uuid = '49f3686d-b83c-4263-a5a1-89040f643a78'
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1640,168882,169403) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
@@ -10323,6 +10328,47 @@ BEGIN
     group by e.encounter_id;
 
     SELECT "Completed processing Inpatient discharge data ";
+END $$
+
+DROP PROCEDURE IF EXISTS sp_populate_etl_doctor_progress_note $$
+CREATE PROCEDURE sp_populate_etl_doctor_progress_note()
+BEGIN
+    SELECT "Processing Doctor's progress note data... ";
+    insert into kenyaemr_etl.etl_doctor_progress_note(
+        patient_id,
+        uuid,
+        provider,
+        visit_id,
+        visit_date,
+        encounter_id,
+        location_id,
+        referral,
+        next_review_date,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.patient_id,
+        e.uuid,
+        e.creator,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.encounter_id,
+        e.location_id,
+        max(if(o.concept_id = 1695, o.value_coded, null)) as referral,
+        max(if(o.concept_id = 167132, o.value_datetime, null))  as next_review_date,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '87379b0a-738b-4799-9736-cdac614cee2a'
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167132,1695) and o.voided=0
+    where e.voided=0
+    group by e.encounter_id;
+
+    SELECT "Completed processing Doctor's progress notes data... ";
 END $$
 
 SET sql_mode=@OLD_SQL_MODE $$
@@ -10429,6 +10475,7 @@ CALL sp_populate_etl_adr_assessment_tool();
 CALL sp_populate_etl_ncd_enrollment();
 CALL sp_populate_etl_inpatient_admission();
 CALL sp_populate_etl_inpatient_discharge();
+CALL sp_populate_etl_doctor_progress_note();
 CALL sp_update_next_appointment_date();
 CALL sp_update_dashboard_table();
 

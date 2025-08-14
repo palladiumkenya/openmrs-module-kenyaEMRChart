@@ -120,6 +120,7 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_ncd_followup;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_inpatient_admission;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_inpatient_discharge;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_doctor_progress_note;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -165,6 +166,7 @@ cadre VARCHAR(100) DEFAULT NULL,
 kdod_rank VARCHAR(100) DEFAULT NULL,
 unit VARCHAR(100) DEFAULT NULL,
 dead INT(11),
+cause_of_death INT(11),
 death_date DATE DEFAULT NULL,
 voided INT(11),
 date_created DATETIME NOT NULL,
@@ -3676,6 +3678,7 @@ CREATE TABLE kenyaemr_etl.etl_clinical_encounter (
      provider 				INT(11) NOT NULL,
      visit_date 			DATE,
      visit_type 			VARCHAR(100),
+     referred_from 			INT(11),
      therapy_ordered 		VARCHAR(100),
      other_therapy_ordered 	VARCHAR(100),
      counselling_ordered 		VARCHAR(100),
@@ -4492,6 +4495,30 @@ CREATE TABLE kenyaemr_etl.etl_inpatient_discharge
     INDEX (discharge_status)
 );
 SELECT "Successfully created etl_inpatient_discharge table";
+
+-- Create etl_doctor_progress_note table
+CREATE TABLE kenyaemr_etl.etl_doctor_progress_note
+(
+    patient_id         INT(11)  NOT NULL,
+    visit_id           INT(11) DEFAULT NULL,
+    encounter_id       INT(11)  NOT NULL PRIMARY KEY,
+    uuid               CHAR(38) NOT NULL,
+    location_id        INT(11)  NOT NULL,
+    provider           INT(11)  NOT NULL,
+    visit_date         DATE,
+    referral           INT(11),
+    next_review_date   DATETIME,
+    date_created       DATETIME NOT NULL,
+    date_last_modified DATETIME,
+    voided             INT(11),
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_doctor_progress_note table";
 
 UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where id= script_id;
 

@@ -14,6 +14,7 @@ family_name,
 Gender,
 DOB,
 dead,
+cause_of_death,
 date_created,
 date_last_modified,
 voided,
@@ -28,6 +29,7 @@ p.family_name,
 p.gender,
 p.birthdate,
 p.dead,
+p.cause_of_death,
 p.date_created,
 if((p.date_last_modified='0000-00-00 00:00:00' or p.date_last_modified=p.date_created),NULL,p.date_last_modified) as date_last_modified,
 p.voided,
@@ -42,6 +44,7 @@ pn.family_name,
 p.gender,
 p.birthdate,
 p.dead,
+p.cause_of_death,
 p.date_created,
 greatest(ifnull(p.date_changed,'0000-00-00 00:00:00'),ifnull(pn.date_changed,'0000-00-00 00:00:00')) as date_last_modified,
 p.voided,
@@ -62,7 +65,7 @@ given_name = p.given_name,
 middle_name=p.middle_name, 
 family_name=p.family_name, 
 DOB=p.birthdate, 
-dead=p.dead, voided=p.voided, death_date=p.death_date;
+dead=p.dead, voided=p.voided, death_date=p.death_date,cause_of_death=p.cause_of_death;
 
 -- update etl_patient_demographics with patient attributes: birthplace, citizenship, mother_name, phone number and kin's details
 update kenyaemr_etl.etl_patient_demographics d 
@@ -9167,6 +9170,7 @@ INSERT INTO kenyaemr_etl.etl_clinical_encounter (
     provider,
     visit_date,
     visit_type,
+    referred_from,
     therapy_ordered,
     other_therapy_ordered,
     counselling_ordered,
@@ -9199,6 +9203,7 @@ select
     e.creator,
     date(e.encounter_datetime) as visit_date,
     max(if(o.concept_id=164181,(case o.value_coded when 164180 then 'New visit' when 160530 THEN 'Revisit' when 160563 THEN 'Transfer in' else '' end),null)) as visit_type,
+    max(if(o.concept_id=160338, o.value_coded ,null)) as referred_from,
     concat_ws(',',nullif(max(if(o.concept_id=164174 and o.value_coded = 1107,'None','')),''),
     nullif(max(if(o.concept_id=164174 and o.value_coded = 165225,'Support service provided','')),''),
     nullif(max(if(o.concept_id=164174 and o.value_coded = 163319,'Behavioural activation therapy','')),''),
@@ -9299,7 +9304,7 @@ from encounter e
     inner join person p on p.person_id=e.patient_id and p.voided=0
     inner join form f on f.form_id = e.form_id and f.uuid = 'e958f902-64df-4819-afd4-7fb061f59308'
     left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
-    (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495,2031533)
+    (164174,160632,165104,162737,1651,1640,162477,1655,1000075,1896,1272,162724,160433,164181,163145,159495,2031533,160338)
     and o.voided=0
 where e.voided=0
   and e.date_created >= last_update_time
@@ -9311,6 +9316,7 @@ group by e.patient_id
 ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),
     provider=VALUES(provider),
     visit_type=VALUES(visit_type),
+    referred_from=VALUES(referred_from),
     therapy_ordered=VALUES(therapy_ordered),
     other_therapy_ordered=VALUES(other_therapy_ordered),
     counselling_ordered=VALUES(counselling_ordered),
@@ -11370,6 +11376,11 @@ from encounter e
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,161550,159371,161011,1628,5219,1000485,119481,152909,160223,162725,162725,162747,162869,1169,163783,165198,152722,1191,1455,1000519,1000520,6042,161011,120240,161011,
                                                                                  162737,1124,1124,1124,1124,163308,166879,166676,1284,1284,165250,166665,161011,165070,165250,162737,162724,159623,160632) and o.voided=0
 where e.voided=0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE provider=VALUES(provider),
         visit_date=VALUES(visit_date),
@@ -11521,6 +11532,11 @@ from encounter e
        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164181,152722,159449,1000519,1000520,6042,6042,161011,162737,1124,1124,1124,1124,163308,
        1127,1284,1284,166879,164075,162724,159623,160632) and o.voided=0
 where e.voided=0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
 group by e.encounter_id
 ON DUPLICATE KEY UPDATE provider=VALUES(provider),
         visit_date=VALUES(visit_date),
@@ -11593,6 +11609,11 @@ BEGIN
              inner join form f on f.form_id = e.form_id and f.uuid = '6a90499a-7d82-4fac-9692-b8bd879f0348'
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1640,168882,169403) and o.voided=0
     where e.voided=0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
     group by e.encounter_id
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),
                             visit_date=VALUES(visit_date),
@@ -11647,6 +11668,11 @@ BEGIN
              inner join form f on f.form_id = e.form_id and f.uuid = '98a781d2-b777-4756-b4c9-c9b0deb3483c'
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (160632,1695,5096,167079) and o.voided=0
     where e.voided=0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
     group by e.encounter_id
     ON DUPLICATE KEY UPDATE provider=VALUES(provider),
                             visit_date=VALUES(visit_date),
@@ -11658,7 +11684,60 @@ BEGIN
                             date_last_modified=VALUES(date_last_modified),
                             voided=VALUES(voided);
 
-    SELECT "Completed processing Inpatient discharge data ";
+SELECT "Completed processing Inpatient discharge data ";
+END $$
+
+DROP PROCEDURE IF EXISTS sp_update_doctor_progress_note $$
+CREATE PROCEDURE sp_update_doctor_progress_note(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing Doctor's progress note data... ";
+    insert into kenyaemr_etl.etl_doctor_progress_note(
+        patient_id,
+        uuid,
+        provider,
+        visit_id,
+        visit_date,
+        encounter_id,
+        location_id,
+        referral,
+        next_review_date,
+        date_created,
+        date_last_modified,
+        voided
+    )
+    select
+        e.patient_id,
+        e.uuid,
+        e.creator,
+        e.visit_id,
+        date(e.encounter_datetime) as visit_date,
+        e.encounter_id,
+        e.location_id,
+        max(if(o.concept_id = 1695, o.value_coded, null)) as referral,
+        max(if(o.concept_id = 167132, o.value_datetime, null))  as next_review_date,
+        e.date_created as date_created,
+        if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified,
+        e.voided
+    from encounter e
+             inner join person p on p.person_id=e.patient_id and p.voided=0
+             inner join form f on f.form_id = e.form_id and f.uuid = '87379b0a-738b-4799-9736-cdac614cee2a'
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (167132,1695) and o.voided=0
+    where e.voided=0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.encounter_id
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+                            visit_date=VALUES(visit_date),
+                            referral=VALUES(referral),
+                            next_review_date=VALUES(next_review_date),
+                            date_created=VALUES(date_created),
+                            date_last_modified=VALUES(date_last_modified),
+                            voided=VALUES(voided);
+
+SELECT "Completed processing Doctor's progress notes data... ";
 END $$
 
 -- end of scheduled updates procedures
@@ -11765,6 +11844,8 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_ncd_followup(last_update_time);
     CALL sp_update_etl_inpatient_admission(last_update_time);
     CALL sp_update_etl_inpatient_discharge(last_update_time);
+    CALL sp_update_doctor_progress_note(last_update_time);
+    CALL sp_update_doctor_progress_note(last_update_time);
     CALL sp_update_dashboard_table();
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
