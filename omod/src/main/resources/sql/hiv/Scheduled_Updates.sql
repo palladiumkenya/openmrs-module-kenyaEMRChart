@@ -1703,7 +1703,7 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
         max(if(o.concept_id=160753,o.value_datetime,null)) as exit_date,
         max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
         max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as hiv_status_at_exit,
-        case et.uuid when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCHCS_HEI_COMPLETION' when '415f5136-ca4a-49a8-8db3-f994187c3af6' then 'MCHCS_HEI_ENROLLMENT' end as encounter_type,
+        case et.uuid when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCHCS_HEI_COMPLETION' when '5feee3f1-aa16-4513-8bd0-5d9b27ef1208' then 'MCHCS_HEI_COMPLETION' when '415f5136-ca4a-49a8-8db3-f994187c3af6' then 'MCHCS_HEI_ENROLLMENT' end as encounter_type,
         e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
       from encounter e
@@ -1713,7 +1713,7 @@ CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
-            uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
+            uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb','5feee3f1-aa16-4513-8bd0-5d9b27ef1208')
         ) et on et.encounter_type_id=e.encounter_type
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time

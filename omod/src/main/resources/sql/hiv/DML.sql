@@ -1927,7 +1927,7 @@ BEGIN
 			  max(if(o.concept_id=160753,o.value_datetime,null)) as exit_date,
 			  max(if(o.concept_id=161555,o.value_coded,null)) as exit_reason,
 			  max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as hiv_status_at_exit,
-			  case et.uuid when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCHCS_HEI_COMPLETION' when '415f5136-ca4a-49a8-8db3-f994187c3af6' then 'MCHCS_HEI_ENROLLMENT' end as encounter_type,
+			  case et.uuid when '01894f88-dc73-42d4-97a3-0929118403fb' then 'MCHCS_HEI_COMPLETION' when '5feee3f1-aa16-4513-8bd0-5d9b27ef1208' then 'MCHCS_HEI_COMPLETION' when '415f5136-ca4a-49a8-8db3-f994187c3af6' then 'MCHCS_HEI_ENROLLMENT' end as encounter_type,
 			  e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
 			from encounter e
@@ -1938,7 +1938,7 @@ BEGIN
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
-						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb')
+						uuid in('415f5136-ca4a-49a8-8db3-f994187c3af6','01894f88-dc73-42d4-97a3-0929118403fb','5feee3f1-aa16-4513-8bd0-5d9b27ef1208')
 				) et on et.encounter_type_id=e.encounter_type
 				where e.voided=0
 			group by e.patient_id,visit_date ;
@@ -3199,36 +3199,43 @@ INSERT INTO kenyaemr_etl.etl_viral_load_validity_tracker
     lmp_date,
     pregnancy_outcome
 )
-WITH LatestTest AS (
+WITH LabPatients AS (
     SELECT
         x.patient_id,
         x.lab_test,
-        x.test_result,
+        x.test_result AS vl_result,
         x.date_created,
         x.date_test_requested,
         x.date_test_result_received,
-        d.date_started_art,
-        x.order_reason,
+        bt.base_viral_load_test_result,
+        bt.base_viral_load_test_date,
         x.urgency,
-        COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
+        x.order_reason,
+        pt.previous_test_result,
+        pt.previous_date_test_requested,
+        pt.previous_date_test_result_received,
+        pt.previous_urgency,
+        pt.previous_order_reason,
+        d.date_started_art,
+        e.date_confirmed_hiv_positive,
         fup.latest_hiv_followup_visit,
         fup.breastfeeding_status,
         fup.pregnancy_status,
         fup.lmp_date,
         fup.pg_outcome
     FROM kenyaemr_etl.etl_laboratory_extract x
-             INNER JOIN (SELECT x1.patient_id, x1.date_test_requested, MAX(x1.order_id) AS max_order_id
-                         FROM kenyaemr_etl.etl_laboratory_extract x1
-                         WHERE x1.lab_test IN (1305, 856)
-                         GROUP BY x1.patient_id, x1.date_test_requested) y ON x.patient_id = y.patient_id
-        AND x.date_test_requested = y.date_test_requested
-        AND x.order_id = y.max_order_id
-             LEFT JOIN (SELECT patient_id, MIN(date_started) AS date_started_art
-                        FROM kenyaemr_etl.etl_drug_event
-                        WHERE program = 'HIV'
-                        GROUP BY patient_id) d ON x.patient_id = d.patient_id
              LEFT JOIN (
-        SELECT patient_id, MIN(visit_date) AS visit_date, MAX(date_confirmed_hiv_positive) AS date_confirmed_hiv_positive
+        SELECT
+            patient_id,
+            MIN(date_started) AS date_started_art
+        FROM kenyaemr_etl.etl_drug_event
+        WHERE program = 'HIV'
+        GROUP BY patient_id
+    ) d ON x.patient_id = d.patient_id
+             LEFT JOIN (
+        SELECT
+            patient_id,
+            MAX(date_confirmed_hiv_positive) AS date_confirmed_hiv_positive
         FROM kenyaemr_etl.etl_hiv_enrollment
         GROUP BY patient_id
     ) e ON x.patient_id = e.patient_id
@@ -3236,13 +3243,39 @@ WITH LatestTest AS (
         SELECT
             patient_id,
             MAX(visit_date) AS latest_hiv_followup_visit,
-            MID(MAX(CONCAT(visit_date,breastfeeding)),11) AS breastfeeding_status,
-            MID(MAX(CONCAT(visit_date,pregnancy_status)),11) AS pregnancy_status,
-            MID(MAX(CONCAT(visit_date,last_menstrual_period)),11) AS lmp_date,
-            MID(MAX(CONCAT(pregnancy_outcome)),11) AS pg_outcome
+            MID(MAX(CONCAT(visit_date, breastfeeding)), 11) AS breastfeeding_status,
+            MID(MAX(CONCAT(visit_date, pregnancy_status)), 11) AS pregnancy_status,
+            MID(MAX(CONCAT(visit_date, last_menstrual_period)), 11) AS lmp_date,
+            MID(MAX(CONCAT(visit_date, pregnancy_outcome)), 11) AS pg_outcome
         FROM kenyaemr_etl.etl_patient_hiv_followup
         GROUP BY patient_id
     ) fup ON x.patient_id = fup.patient_id
+             LEFT JOIN (
+        SELECT
+            l.patient_id,
+            l.test_result AS base_viral_load_test_result,
+            l.date_test_requested AS base_viral_load_test_date
+        FROM kenyaemr_etl.etl_laboratory_extract l
+        WHERE l.lab_test IN (1305, 856)
+          AND (l.patient_id, l.date_test_requested) IN (
+            SELECT patient_id, MIN(date_test_requested)
+            FROM kenyaemr_etl.etl_laboratory_extract
+            WHERE lab_test IN (1305, 856)
+            GROUP BY patient_id
+        )
+    ) bt ON x.patient_id = bt.patient_id
+             LEFT JOIN (
+        SELECT
+            p.patient_id,
+            p.test_result AS previous_test_result,
+            p.date_test_requested AS previous_date_test_requested,
+            p.date_test_result_received AS previous_date_test_result_received,
+            p.urgency AS previous_urgency,
+            p.order_reason AS previous_order_reason,
+            ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.date_test_requested DESC) AS rn
+        FROM kenyaemr_etl.etl_laboratory_extract p
+        WHERE p.lab_test IN (1305, 856)
+    ) pt ON x.patient_id = pt.patient_id AND pt.rn = 2
     WHERE x.lab_test IN (1305, 856)
       AND x.date_test_requested = (
         SELECT MAX(date_test_requested)
@@ -3251,35 +3284,74 @@ WITH LatestTest AS (
           AND x2.lab_test IN (1305, 856)
     )
 ),
-     PreviousTest AS (
+     TransferInWithEnrollmentVL AS (
+         -- Patients who have transfer in and VL at enrollment, and NO VL in lab
          SELECT
-             p.patient_id,
-             p.test_result AS previous_test_result,
-             p.date_test_requested AS previous_date_test_requested,
-             p.date_test_result_received AS previous_date_test_result_received,
-             p.urgency AS previous_urgency,
-             p.order_reason AS previous_order_reason,
-             ROW_NUMBER() OVER (PARTITION BY p.patient_id ORDER BY p.date_test_requested DESC) AS rn
-         FROM kenyaemr_etl.etl_laboratory_extract p
-         WHERE p.lab_test IN (1305, 856)
-     ),
-     BaselineTest AS (
-         SELECT
-             l.patient_id,
-             l.test_result AS base_viral_load_test_result,
-             l.date_test_requested AS base_viral_load_test_date
-         FROM kenyaemr_etl.etl_laboratory_extract l
-         WHERE l.lab_test IN (1305, 856)
-           AND (l.patient_id, l.date_test_requested) IN (
-             SELECT patient_id, MIN(date_test_requested)
-             FROM kenyaemr_etl.etl_laboratory_extract
-             WHERE lab_test IN (1305, 856)
+             e.patient_id,
+             NULL AS lab_test,
+             e.viral_load_test_result AS vl_result,
+             e.date_created,
+             e.viral_load_test_date AS date_test_requested,
+             NULL AS date_test_result_received,
+             e.viral_load_test_result AS base_viral_load_test_result,
+             e.viral_load_test_date AS base_viral_load_test_date,
+             NULL AS urgency,
+             NULL AS order_reason,
+             NULL AS previous_test_result,
+             NULL AS previous_date_test_requested,
+             NULL AS previous_date_test_result_received,
+             NULL AS previous_urgency,
+             NULL AS previous_order_reason,
+             de.date_started_art,
+             e.date_confirmed_hiv_positive,
+             fup.latest_hiv_followup_visit,
+             fup.breastfeeding_status,
+             fup.pregnancy_status,
+             fup.lmp_date,
+             fup.pg_outcome
+         FROM kenyaemr_etl.etl_hiv_enrollment e
+                  LEFT JOIN (
+             SELECT patient_id, MIN(date_started) AS date_started_art
+             FROM kenyaemr_etl.etl_drug_event
+             WHERE program = 'HIV'
              GROUP BY patient_id
+         ) de ON e.patient_id = de.patient_id
+                  LEFT JOIN (
+             SELECT
+                 patient_id,
+                 MAX(visit_date) AS latest_hiv_followup_visit,
+                 MID(MAX(CONCAT(visit_date, breastfeeding)),11) AS breastfeeding_status,
+                 MID(MAX(CONCAT(visit_date, pregnancy_status)),11) AS pregnancy_status,
+                 MID(MAX(CONCAT(visit_date, last_menstrual_period)),11) AS lmp_date,
+                 MID(MAX(CONCAT(visit_date, pregnancy_outcome)),11) AS pg_outcome
+             FROM kenyaemr_etl.etl_patient_hiv_followup
+             GROUP BY patient_id
+         ) fup ON e.patient_id = fup.patient_id
+         WHERE e.patient_type = 160563 -- transfer in
+           AND e.viral_load_test_result IS NOT NULL
+           AND NOT EXISTS (
+             SELECT 1 FROM kenyaemr_etl.etl_laboratory_extract l
+             WHERE l.patient_id = e.patient_id
+               AND l.lab_test IN (1305, 856)
          )
      ),
      MissedLabPatients AS (
          SELECT
              de.patient_id,
+             NULL AS lab_test,
+             NULL AS vl_result,
+             NULL AS date_created,
+             NULL AS date_test_requested,
+             NULL AS date_test_result_received,
+             NULL AS base_viral_load_test_result,
+             NULL AS base_viral_load_test_date,
+             NULL AS urgency,
+             NULL AS order_reason,
+             NULL AS previous_test_result,
+             NULL AS previous_date_test_requested,
+             NULL AS previous_date_test_result_received,
+             NULL AS previous_urgency,
+             NULL AS previous_order_reason,
              MIN(de.date_started) AS date_started_art,
              COALESCE(e.date_confirmed_hiv_positive, e.visit_date) AS date_confirmed_hiv_positive,
              fup.latest_hiv_followup_visit,
@@ -3289,11 +3361,12 @@ WITH LatestTest AS (
              fup.pg_outcome
          FROM kenyaemr_etl.etl_drug_event de
                   LEFT JOIN (
-             SELECT patient_id, MIN(visit_date) AS visit_date, MAX(date_confirmed_hiv_positive) AS date_confirmed_hiv_positive
+             SELECT patient_id, MIN(visit_date) AS visit_date,
+                    MAX(date_confirmed_hiv_positive) AS date_confirmed_hiv_positive
              FROM kenyaemr_etl.etl_hiv_enrollment
              GROUP BY patient_id
          ) e ON de.patient_id = e.patient_id
-            LEFT JOIN (
+                  LEFT JOIN (
              SELECT
                  v.patient_id,
                  v.visit_date AS latest_hiv_followup_visit,
@@ -3301,70 +3374,35 @@ WITH LatestTest AS (
                  v.pregnancy_status,
                  v.last_menstrual_period AS lmp_date,
                  v.pregnancy_outcome AS pg_outcome
-             FROM
-                 kenyaemr_etl.etl_patient_hiv_followup AS v
-                     INNER JOIN (
-                     SELECT
-                         patient_id,
-                         MAX(visit_date) AS max_visit_date
-                     FROM
-                         kenyaemr_etl.etl_patient_hiv_followup
-                     GROUP BY
-                         patient_id
-                 ) AS latest_visits ON v.patient_id = latest_visits.patient_id
-                     AND v.visit_date = latest_visits.max_visit_date
+             FROM kenyaemr_etl.etl_patient_hiv_followup v
+                      INNER JOIN (
+                 SELECT patient_id, MAX(visit_date) AS max_visit_date
+                 FROM kenyaemr_etl.etl_patient_hiv_followup
+                 GROUP BY patient_id
+             ) latest_visits
+                                 ON v.patient_id = latest_visits.patient_id AND v.visit_date = latest_visits.max_visit_date
          ) fup ON de.patient_id = fup.patient_id
          WHERE de.program = 'HIV'
            AND NOT EXISTS (
-             SELECT 1
-             FROM kenyaemr_etl.etl_laboratory_extract le
+             SELECT 1 FROM kenyaemr_etl.etl_laboratory_extract le
              WHERE le.patient_id = de.patient_id
                AND le.lab_test IN (1305, 856)
          )
+           -- Exclude transfer-in with VL at enrollment, these are handled above
+           AND NOT EXISTS (
+             SELECT 1 FROM kenyaemr_etl.etl_hiv_enrollment e
+             WHERE e.patient_id = de.patient_id
+               AND e.patient_type = 160563
+               AND e.viral_load_test_result IS NOT NULL
+         )
          GROUP BY de.patient_id
      )
--- Final Output
-SELECT
-    l.patient_id,
-    l.lab_test,
-    l.test_result,
-    l.date_created,
-    l.date_test_requested,
-    l.date_test_result_received,
-    bt.base_viral_load_test_result,
-    bt.base_viral_load_test_date,
-    l.urgency,
-    l.order_reason,
-    pt.previous_test_result,
-    pt.previous_date_test_requested,
-    pt.previous_date_test_result_received,
-    pt.previous_urgency,
-    pt.previous_order_reason,
-    l.date_started_art,
-    l.date_confirmed_hiv_positive,
-    l.latest_hiv_followup_visit,
-    l.breastfeeding_status,
-    l.pregnancy_status,
-    l.lmp_date,
-    l.pg_outcome
-FROM LatestTest l
-         LEFT JOIN PreviousTest pt ON l.patient_id = pt.patient_id AND pt.rn = 2
-         LEFT JOIN BaselineTest bt ON l.patient_id = bt.patient_id
+
+SELECT * FROM LabPatients
 UNION ALL
-SELECT
-    m.patient_id,
-    NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL,
-    NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL,
-    m.date_started_art,
-    m.date_confirmed_hiv_positive,
-    m.latest_hiv_followup_visit,
-    m.breastfeeding_status,
-    m.pregnancy_status,
-    m.lmp_date,
-    m.pg_outcome
-FROM MissedLabPatients m
+SELECT * FROM TransferInWithEnrollmentVL
+UNION ALL
+SELECT * FROM MissedLabPatients
 ORDER BY patient_id;
 
 SELECT "Completed processing Viral Load validity tracker", CONCAT("Time: ", NOW());
@@ -8410,7 +8448,7 @@ BEGIN
         e.creator,
         date(e.encounter_datetime) as visit_date,
         max(if(o.concept_id=164181,(case o.value_coded when 164180 then 'New visit' when 160530 THEN 'Revisit' when 160563 THEN 'Transfer in' else '' end),null)) as visit_type,
-        max(if(o.concept_id=160338, o.value_coded = 164180, null)) as referred_from,
+        max(if(o.concept_id=160338, o.value_coded, null)) as referred_from,
         concat_ws(',',nullif(max(if(o.concept_id=164174 and o.value_coded = 1107,'None','')),''),
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 165225,'Support service provided','')),''),
                   nullif(max(if(o.concept_id=164174 and o.value_coded = 163319,'Behavioural activation therapy','')),''),
