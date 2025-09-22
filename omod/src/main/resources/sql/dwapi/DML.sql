@@ -635,18 +635,26 @@ date_last_modified,
 created_by,
 voided
 )
-WITH FilteredOrders AS (SELECT patient_id,
-							   encounter_id,
-							   order_id,
-							   concept_id,
-							   date_activated,
-							   urgency,
-							   order_reason
-						FROM openmrs.orders
-						WHERE order_type_id = 3
-                          AND order_action IN ('NEW','REVISE')
-						  AND voided = 0
-						GROUP BY patient_id, encounter_id ,concept_id),
+WITH RankedOrders AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (PARTITION BY patient_id, encounter_id, concept_id ORDER BY order_id DESC) as rn
+    FROM orders
+    WHERE order_type_id = 3
+      AND order_action IN ('NEW','REVISE')
+      AND voided = 0
+),
+     FilteredOrders AS (SELECT patient_id,
+                               encounter_id,
+                               order_id,
+                               concept_id,
+                               date_activated,
+                               urgency,
+                               order_reason,
+                               order_action,
+                               fulfiller_comment
+                        FROM RankedOrders
+                        WHERE rn = 1),
 	 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
 								 cs.concept_id     AS member_concept_id,
 								 c.datatype_id     AS member_datatype,
@@ -669,7 +677,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 												 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 													n1.concept_name_type = 'FULLY_SPECIFIED'
 							  where o.order_id is not null ),
-	 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
+	 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name, o.obs_datetime
 								from obs o
 										 inner join concept c on o.concept_id = c.concept_id
 										 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
@@ -680,7 +688,7 @@ WITH FilteredOrders AS (SELECT patient_id,
 												   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 													  n1.concept_name_type = 'FULLY_SPECIFIED'
 								where o.order_id is not null ),
-	 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
+	 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name, o.obs_datetime
 							 from obs o
 									  inner join concept c on o.concept_id = c.concept_id
 									  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
@@ -696,7 +704,7 @@ SELECT
 	e.encounter_id,
 	e.patient_id,
 	e.location_id,
-	coalesce(o.date_activated,obs_datetime) as visit_date,
+    COALESCE(o.date_activated,COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime)) as visit_date,
 	e.visit_id,
 	o.order_id,
 	o.concept_id,
@@ -709,7 +717,7 @@ SELECT
 	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
 	COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
 	o.date_activated as date_test_requested,
-	e.encounter_datetime as date_test_result_received,
+    COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime) as date_test_result_received,
 -- test requested by
 	e.date_created,
 	e.date_changed as date_last_modified,
