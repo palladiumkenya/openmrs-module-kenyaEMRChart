@@ -2618,18 +2618,26 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
       date_last_modified,
       created_by
     )
-	WITH FilteredOrders AS (SELECT patient_id,
-								   encounter_id,
-								   order_id,
-								   concept_id,
-								   date_activated,
-								   urgency,
-								   order_reason
-							FROM orders
-							WHERE order_type_id = 3
-                              AND order_action IN ('NEW','REVISE')
-							  AND voided = 0
-							GROUP BY patient_id, encounter_id ,concept_id),
+    WITH RankedOrders AS (
+        SELECT
+            *,
+            ROW_NUMBER() OVER (PARTITION BY patient_id, encounter_id, concept_id ORDER BY order_id DESC) as rn
+        FROM orders
+        WHERE order_type_id = 3
+          AND order_action IN ('NEW','REVISE')
+          AND voided = 0
+    ),
+         FilteredOrders AS (SELECT patient_id,
+                                   encounter_id,
+                                   order_id,
+                                   concept_id,
+                                   date_activated,
+                                   urgency,
+                                   order_reason,
+                                   order_action,
+                                   fulfiller_comment
+                            FROM RankedOrders
+                            WHERE rn = 1),
 		 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
 									 cs.concept_id     AS member_concept_id,
 									 c.datatype_id     AS member_datatype,
@@ -2652,7 +2660,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 													 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 														n1.concept_name_type = 'FULLY_SPECIFIED'
 								  where o.order_id is not null ),
-		 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name
+		 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name, o.obs_datetime
 									from obs o
 											 inner join concept c on o.concept_id = c.concept_id
 											 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
@@ -2663,7 +2671,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 													   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
 														  n1.concept_name_type = 'FULLY_SPECIFIED'
 									where o.order_id is not null ),
-		 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name
+		 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name, o.obs_datetime
 								 from obs o
 										  inner join concept c on o.concept_id = c.concept_id
 										  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
@@ -2679,7 +2687,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 		e.encounter_id,
 		e.patient_id,
 		e.location_id,
-		coalesce(o.date_activated,obs_datetime) as visit_date,
+        COALESCE(o.date_activated,COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime)) as visit_date,
 		e.visit_id,
 		o.order_id,
 		o.concept_id,
@@ -2692,7 +2700,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
 		if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
 		COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
 		o.date_activated as date_test_requested,
-		e.encounter_datetime as date_test_result_received,
+        COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime) as date_test_result_received,
 -- test requested by
 		e.date_created,
 		e.date_changed as date_last_modified,
@@ -2708,8 +2716,7 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
 	group by order_id
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), set_member_conceptId=VALUES(set_member_conceptId), test_result=VALUES(test_result)
-    ;
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date), lab_test=VALUES(lab_test), set_member_conceptId=VALUES(set_member_conceptId), test_result=VALUES(test_result);
     END $$
 -- DELIMITER ;
 
@@ -11849,6 +11856,7 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_inpatient_discharge(last_update_time);
     CALL sp_update_doctor_progress_note(last_update_time);
     CALL sp_update_dashboard_table();
+
 
     UPDATE kenyaemr_etl.etl_script_status SET stop_time=NOW() where  id= update_script_id;
     DELETE FROM kenyaemr_etl.etl_script_status where script_name in ("KenyaEMR_Data_Tool", "scheduled_updates") and start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);
