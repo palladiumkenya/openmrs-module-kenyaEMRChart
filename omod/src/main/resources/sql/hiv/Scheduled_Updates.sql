@@ -1448,6 +1448,8 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       external_genitalia_examination,
       ovarian_examination,
       pelvic_lymph_node_exam,
+      hiv_test_type,
+      hiv_test_timing,
       final_test_result,
       syphilis_results,
       patient_given_result,
@@ -1526,6 +1528,8 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=160971,o.value_text,null)) as external_genitalia_examination,
         max(if(o.concept_id=160975,o.value_text,null)) as ovarian_examination,
         max(if(o.concept_id=160972,o.value_text,null)) as pelvic_lymph_node_exam,
+        max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" end),null)) as hiv_test_type,
+        max(if(o.concept_id=163783 and (o.value_coded = 162080 or o.value_coded = 162080 or o.value_coded = 1118),o.value_coded,null)) as hiv_test_timing,
         max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
         max(if(o.concept_id=299,o.value_coded,null)) as syphilis_results,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -1533,7 +1537,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
         max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
         max(if(o.concept_id=165218,o.value_coded,null)) as pnc_hiv_test_timing_mother,
-        max(if(o.concept_id=163783,o.value_coded,null)) as mother_haart_given,
+        max(if(o.concept_id=163783 and (o.value_coded = 1065 or o.value_coded = 1066 or o.value_coded = 164142),o.value_coded,null)) as mother_haart_given,
         max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
         max(if(o.concept_id=166665,o.value_coded,null)) as infant_prophylaxis_timing,
         max(if(o.concept_id=1282,o.value_coded,null)) as baby_azt_dispensed,
@@ -1568,7 +1572,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
                             and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                1724,167017,163783,162642,166665,165218,160632,299,159395)
+                                                1724,167017,163783,162642,166665,165218,160632,299,159395,164181)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1586,7 +1590,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       oxygen_saturation=VALUES(oxygen_saturation),weight=VALUES(weight),height=VALUES(height),muac=VALUES(muac),hemoglobin=VALUES(hemoglobin),arv_status=VALUES(arv_status),general_condition=VALUES(general_condition),breast=VALUES(breast),cs_scar=VALUES(cs_scar),gravid_uterus=VALUES(gravid_uterus),episiotomy=VALUES(episiotomy),
       lochia=VALUES(lochia),pallor=VALUES(pallor),pph=VALUES(pph),mother_hiv_status=VALUES(mother_hiv_status),condition_of_baby=VALUES(condition_of_baby),baby_feeding_method=VALUES(baby_feeding_method),umblical_cord=VALUES(umblical_cord),baby_immunization_started=VALUES(baby_immunization_started),family_planning_counseling=VALUES(family_planning_counseling),uterus_examination=VALUES(uterus_examination),
       uterus_cervix_examination=VALUES(uterus_cervix_examination),vaginal_examination=VALUES(vaginal_examination),parametrial_examination=VALUES(parametrial_examination),external_genitalia_examination=VALUES(external_genitalia_examination),ovarian_examination=VALUES(ovarian_examination),pelvic_lymph_node_exam=VALUES(pelvic_lymph_node_exam),
-      final_test_result=VALUES(final_test_result),
+      final_test_result=VALUES(final_test_result),hiv_test_type=VALUES(hiv_test_type),hiv_test_timing=VALUES(hiv_test_timing),
       patient_given_result=VALUES(patient_given_result),couple_counselled=VALUES(couple_counselled),partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),mother_haart_given=VALUES(mother_haart_given),prophylaxis_given=VALUES(prophylaxis_given),infant_prophylaxis_timing=VALUES(infant_prophylaxis_timing),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed)
       ,maternal_condition=VALUES(maternal_condition),iron_supplementation=VALUES(iron_supplementation),fistula_screening=VALUES(fistula_screening),cacx_screening=VALUES(cacx_screening),cacx_screening_method=VALUES(cacx_screening_method),family_planning_status=VALUES(family_planning_status),family_planning_method=VALUES(family_planning_method)
       ,referred_from=VALUES(referred_from),referred_to=VALUES(referred_to),referral_reason=VALUES(referral_reason), clinical_notes=VALUES(clinical_notes),appointment_date=VALUES(appointment_date),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding),pnc_hiv_test_timing_mother=VALUES(pnc_hiv_test_timing_mother),other_maternal_complications=VALUES(other_maternal_complications),syphilis_results=VALUES(syphilis_results)

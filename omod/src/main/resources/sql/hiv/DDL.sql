@@ -882,6 +882,8 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     external_genitalia_examination VARCHAR(100),
     ovarian_examination VARCHAR(100),
     pelvic_lymph_node_exam VARCHAR(100),
+    hiv_test_type VARCHAR(50),
+    hiv_test_timing VARCHAR(50),
     test_1_kit_name VARCHAR(50),
     test_1_kit_lot_no VARCHAR(50) DEFAULT NULL,
     test_1_kit_expiry DATE DEFAULT NULL,

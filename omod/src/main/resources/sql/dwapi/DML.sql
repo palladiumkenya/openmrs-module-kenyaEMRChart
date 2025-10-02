@@ -1628,6 +1628,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 			external_genitalia_examination,
 			ovarian_examination,
 			pelvic_lymph_node_exam,
+            hiv_test_type,
+            hiv_test_timing,
 			test_1_kit_name,
 			test_1_kit_lot_no,
 			test_1_kit_expiry,
@@ -1720,6 +1722,8 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 				max(if(o.concept_id=160971,o.value_text,null)) as external_genitalia_examination,
 				max(if(o.concept_id=160975,o.value_text,null)) as ovarian_examination,
 				max(if(o.concept_id=160972,o.value_text,null)) as pelvic_lymph_node_exam,
+                max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" end),null)) as hiv_test_type,
+                max(if(o.concept_id=163783 and (o.value_coded = 162080 or o.value_coded = 162080 or o.value_coded = 1118),o.value_coded,null)) as hiv_test_timing,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -1739,7 +1743,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
                 max(if(o.concept_id=165218,o.value_coded,null)) as pnc_hiv_test_timing_mother,
-				max(if(o.concept_id=163783,o.value_coded,null)) as mother_haart_given,
+				max(if(o.concept_id=163783 and (o.value_coded = 1065 or o.value_coded = 1066 or o.value_coded = 164142),o.value_coded,null)) as mother_haart_given,
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
 				max(if(o.concept_id=166665,o.value_coded,null)) as infant_prophylaxis_timing,
 				max(if(o.concept_id=1282 and o.value_coded = 160123,o.value_coded,null)) as baby_azt_dispensed,
@@ -1776,7 +1780,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
 														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
-                                                                            1724,167017,163783,162642,166665,165218,160632,299,164359)
+                                                                            1724,167017,163783,162642,166665,165218,160632,299,164359,164181)
 				inner join
 				(
 					select form_id, uuid,name from form where
