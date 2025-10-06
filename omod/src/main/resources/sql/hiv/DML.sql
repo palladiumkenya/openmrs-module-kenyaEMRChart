@@ -1070,7 +1070,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			viral_load,
 			ldl,
 			arv_status,
-            hiv_test_type,
+            hiv_test_during_visit,
 			test_1_kit_name,
 			test_1_kit_lot_no,
 			test_1_kit_expiry,
@@ -1088,6 +1088,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 			partner_hiv_tested,
 			partner_hiv_status,
 			prophylaxis_given,
+            started_haart_at_anc,
             haart_given,
 			date_given_haart,
 			baby_azt_dispensed,
@@ -1148,11 +1149,12 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
           pnc_fp_counseling,
           referral_vmmc,
           referral_dreams,
-			referred_from,
-			referred_to,
-			clinical_notes,
-			date_created,
-      date_last_modified
+		  referred_from,
+		  referred_to,
+		  clinical_notes,
+		  form,
+		  date_created,
+          date_last_modified
 		)
 			select
 				e.patient_id,
@@ -1187,7 +1189,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=856,o.value_numeric,null)) as viral_load,
 				max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
 				max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
-                max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" else "" end),null)) as hiv_test_type,
+                max(if(o.concept_id=2031735,o.value_coded,null)) as hiv_test_during_visit,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
@@ -1205,6 +1207,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
 				max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
 				max(if(o.concept_id=1109,o.value_coded,null)) as prophylaxis_given,
+				max(if(o.concept_id=163783,o.value_coded,null)) as started_haart_at_anc,
 				max(if(o.concept_id=5576,o.value_coded,null)) as haart_given,
 				max(if(o.concept_id=163784,o.value_datetime,null)) as date_given_haart,
 				max(if(o.concept_id=1282 and o.value_coded = 160123,o.value_coded,null)) as baby_azt_dispensed,
@@ -1287,16 +1290,18 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
+				(case f.uuid when 'e8f98494-af35-4bb8-9fc7-c409c8fed843' then 'MCH Antenatal Initial Visit' when 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30' then 'Preventive Services' when '6fb1a39b-0a57-4239-afd7-a5490d281cb9' then 'MCH ANC Followup' END) as form,
+				max(if(o.concept_id=159395,o.value_text,null)) as form,
 				e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,299,164181)
+														and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,299,2031735,163783)
 				inner join
 				(
 					select form_id, uuid,name from form where
-						uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843','d3ea25c7-a3e8-4f57-a6a9-e802c3565a30')
+						uuid in('e8f98494-af35-4bb8-9fc7-c409c8fed843','d3ea25c7-a3e8-4f57-a6a9-e802c3565a30','6fb1a39b-0a57-4239-afd7-a5490d281cb9')
 				) f on f.form_id=e.form_id
 				left join (
 										 select
@@ -2090,7 +2095,7 @@ CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
-						uuid in('bcc6da85-72f2-4291-b206-789b8186a021','c6d09e05-1f25-4164-8860-9f32c5a02df0')
+						uuid  = 'bcc6da85-72f2-4291-b206-789b8186a021'
 				) et on et.encounter_type_id=e.encounter_type
 			where e.voided=0
 			group by e.patient_id,visit_date;
