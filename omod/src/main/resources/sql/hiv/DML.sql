@@ -1291,7 +1291,6 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
 				(case f.uuid when 'e8f98494-af35-4bb8-9fc7-c409c8fed843' then 'MCH Antenatal Initial Visit' when 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30' then 'Preventive Services' when '6fb1a39b-0a57-4239-afd7-a5490d281cb9' then 'MCH ANC Followup' END) as form,
-				max(if(o.concept_id=159395,o.value_text,null)) as form,
 				e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
 			from encounter e
@@ -1736,8 +1735,8 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 				max(if(o.concept_id=160971,o.value_text,null)) as external_genitalia_examination,
 				max(if(o.concept_id=160975,o.value_text,null)) as ovarian_examination,
 				max(if(o.concept_id=160972,o.value_text,null)) as pelvic_lymph_node_exam,
-				max(if(o.concept_id=164181,(case o.value_coded when 164180 then "Initial" when 160530 then "Retest" end),null)) as hiv_test_type,
-				max(if(o.concept_id=163783 and (o.value_coded = 162080 or o.value_coded = 162080 or o.value_coded = 1118),o.value_coded,null)) as hiv_test_timing,
+				max(if(o.concept_id=164181,(case o.value_coded when 164180 then 'Initial' when 160530 then 'Retest' when 169173 then 'Known Positive' when 1118 then 'Not Done' end),null)) as hiv_test_type,
+				max(if(o.concept_id=163783 and (o.value_coded = 162080 or o.value_coded = 162080),o.value_coded,null)) as hiv_test_timing,
 				max(if(t.test_1_result is not null, t.kit_name, null)) as test_1_kit_name,
 				max(if(t.test_1_result is not null, t.lot_no, null)) as test_1_kit_lot_no,
 				max(if(t.test_1_result is not null, t.expiry_date, null)) as test_1_kit_expiry,
