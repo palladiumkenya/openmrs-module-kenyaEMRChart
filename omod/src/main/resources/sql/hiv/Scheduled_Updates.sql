@@ -892,6 +892,12 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       encounter_id,
       provider,
       anc_visit_number,
+      anc_number,
+      parity,
+      gravidae,
+      lmp_date,
+      expected_delivery_date,
+      gestation_in_weeks,
       temperature,
       pulse_rate,
       systolic_bp,
@@ -902,6 +908,8 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       height,
       muac,
       hemoglobin,
+      blood_sugar_test,
+      blood_glucose,
       breast_exam_done,
       pallor,
       maturity,
@@ -985,6 +993,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       referral_dreams,
       referred_from,
       referred_to,
+      referral_reason,
       clinical_notes,
       form,
       date_created,
@@ -999,6 +1008,12 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         e.encounter_id,
         e.creator,
         max(if(o.concept_id=1425,o.value_numeric,null)) as anc_visit_number,
+        max(if(o.concept_id=163530,o.value_text,null)) as anc_number,
+        max(if(o.concept_id=160080,o.value_numeric,null)) as parity,
+        max(if(o.concept_id=5624,o.value_numeric,null)) as gravidae,
+        max(if(o.concept_id=1427,o.value_datetime,null)) as lmp_date,
+        max(if(o.concept_id=5596,o.value_datetime,null)) as expected_delivery_date,
+        max(if(o.concept_id=1438,o.value_numeric,null)) as gestation_in_weeks,
         max(if(o.concept_id=5088,o.value_numeric,null)) as temperature,
         max(if(o.concept_id=5087,o.value_numeric,null)) as pulse_rate,
         max(if(o.concept_id=5085,o.value_numeric,null)) as systolic_bp,
@@ -1009,6 +1024,8 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=5090,o.value_numeric,null)) as height,
         max(if(o.concept_id=1343,o.value_numeric,null)) as muac,
         max(if(o.concept_id=21,o.value_numeric,null)) as hemoglobin,
+        max(if(o.concept_id=167958,o.value_coded,null)) as blood_sugar_test,
+        max(if(o.concept_id=1000443,o.value_numeric,null)) as blood_glucose,
         max(if(o.concept_id=163590,o.value_coded,null)) as breast_exam_done,
         max(if(o.concept_id=5245,o.value_coded,null)) as pallor,
         max(if(o.concept_id=1438,o.value_numeric,null)) as maturity,
@@ -1035,7 +1052,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=1282 and o.value_coded = 160123,o.value_coded,null)) as baby_azt_dispensed,
         max(if(o.concept_id=1282 and o.value_coded = 80586,o.value_coded,null)) as baby_nvp_dispensed,
         max(if(o.concept_id=159922,(case o.value_coded when 1065 then "Yes" when 1066 then "No" when 1175 then "N/A" else "" end),null)) as deworming_done_anc,
-        max(if(concept_id=1418, value_numeric, null)) as IPT_dose_given_anc,
+        max(if(concept_id=2031577, value_coded, null)) as IPT_dose_given_anc,
         max(if(o.concept_id=984,(case o.value_coded when 84879 then "Yes" else "" end),null)) as TTT,
         max(if(o.concept_id=984,(case o.value_coded when 159610 then "Yes" else "" end),null)) as IPT_malaria,
         max(if(o.concept_id=984,(case o.value_coded when 104677 then "Yes" else "" end),null)) as iron_supplement,
@@ -1059,7 +1076,11 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=32,o.value_coded,null)) as bs_mps,
         max(if(o.concept_id=119481,o.value_coded,null)) as diabetes_test,
         max(if(o.concept_id=165099,o.value_coded,null)) as fgm_done,
-        max(if(o.concept_id=120198,o.value_coded,null)) as fgm_complications,
+        concat_ws(',',nullif(max(if(o.concept_id=120198 and o.value_coded =122949,'Scarring',NULL)),''),
+                  nullif(max(if(o.concept_id=120198 and o.value_coded =136308,'Keloids',NULL)),''),
+                  nullif(max(if(o.concept_id=120198 and o.value_coded =141615,'Dyspaneuria',NULL)),''),
+                  nullif(max(if(o.concept_id=120198 and o.value_coded =111633,'UTI',NULL)),'')
+        ) as fgm_complications,
         max(if(o.concept_id=374,o.value_coded,null)) as fp_method_postpartum,
         max(if(o.concept_id=161074,o.value_coded,null)) as anc_exercises,
         max(if(o.concept_id=1659,o.value_coded,null)) as tb_screening,
@@ -1111,6 +1132,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=1592 and o.value_coded=165368,o.value_coded,null)) referral_dreams,
         max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
         max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
+        max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
         max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
         (case f.uuid when 'e8f98494-af35-4bb8-9fc7-c409c8fed843' then 'MCH Antenatal Initial Visit' when 'd3ea25c7-a3e8-4f57-a6a9-e802c3565a30' then 'Preventive Services' when '6fb1a39b-0a57-4239-afd7-a5490d281cb9' then 'MCH ANC Followup' END) as form,
         e.date_created as date_created,
@@ -1118,7 +1140,9 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,165302,1592,1591,1418,1592,161595,2031735,163783)
+                            and o.concept_id in(1282,159922,984,1418,1425,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,163590,5245,1438,1439,160090,162089,1440,162107,5356,5497,856,1305,1147,159427,164848,161557,1436,1109,5576,128256,1875,159734,
+                                                161438,161439,161440,161441,161442,161444,161443,162106,162101,162096,299,159918,32,119481,165099,120198,374,161074,1659,164934,163589,165040,166665,162747,1912,160481,163145,5096,159395,163784,1271,159853,
+                                                165302,1592,1591,2031577,1592,161595,2031735,163783,163530,160080,5624,1427,5596,1438,167958,1000443,164359)
         inner join
         (
           select form_id, uuid,name from form where
@@ -1131,16 +1155,16 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
             or o.date_voided >= last_update_time
 
       group by e.patient_id,visit_date
-    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),anc_visit_number=VALUES(anc_visit_number),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),systolic_bp=VALUES(systolic_bp),diastolic_bp=VALUES(diastolic_bp),respiratory_rate=VALUES(respiratory_rate),
-      oxygen_saturation=VALUES(oxygen_saturation),
+    ON DUPLICATE KEY UPDATE visit_date=VALUES(visit_date),provider=VALUES(provider),anc_visit_number=VALUES(anc_visit_number),anc_number=VALUES(anc_number),temperature=VALUES(temperature),pulse_rate=VALUES(pulse_rate),systolic_bp=VALUES(systolic_bp),diastolic_bp=VALUES(diastolic_bp),respiratory_rate=VALUES(respiratory_rate),
+      oxygen_saturation=VALUES(oxygen_saturation),gestation_in_weeks=VALUES(gestation_in_weeks),blood_sugar_test=VALUES(blood_sugar_test),blood_glucose=VALUES(blood_glucose),
       weight=VALUES(weight),height=VALUES(height),muac=VALUES(muac),hemoglobin=VALUES(hemoglobin),breast_exam_done=VALUES(breast_exam_done),pallor=VALUES(pallor),maturity=VALUES(maturity),fundal_height=VALUES(fundal_height),fetal_presentation=VALUES(fetal_presentation),lie=VALUES(lie),
       fetal_heart_rate=VALUES(fetal_heart_rate),fetal_movement=VALUES(fetal_movement),
       who_stage=VALUES(who_stage),cd4=VALUES(cd4),vl_sample_taken=VALUES(vl_sample_taken),viral_load=VALUES(viral_load),ldl=VALUES(ldl),arv_status=VALUES(arv_status),hiv_test_during_visit=VALUES(hiv_test_during_visit),final_test_result=VALUES(final_test_result),
-      patient_given_result=VALUES(patient_given_result),
+      patient_given_result=VALUES(patient_given_result),   parity=VALUES(parity),gravidae=VALUES(gravidae),lmp_date=VALUES(lmp_date),expected_delivery_date=VALUES(expected_delivery_date),
       partner_hiv_tested=VALUES(partner_hiv_tested),partner_hiv_status=VALUES(partner_hiv_status),prophylaxis_given=VALUES(prophylaxis_given),started_haart_at_anc=VALUES(started_haart_at_anc),haart_given=VALUES(haart_given),date_given_haart=VALUES(date_given_haart),baby_azt_dispensed=VALUES(baby_azt_dispensed),baby_nvp_dispensed=VALUES(baby_nvp_dispensed),deworming_done_anc=VALUES(deworming_done_anc),
       TTT=VALUES(TTT),IPT_dose_given_anc=VALUES(IPT_dose_given_anc),IPT_malaria=VALUES(IPT_malaria),
       iron_supplement=VALUES(iron_supplement),deworming=VALUES(deworming),bed_nets=VALUES(bed_nets),urine_microscopy=VALUES(urine_microscopy),urinary_albumin=VALUES(urinary_albumin),glucose_measurement=VALUES(glucose_measurement),urine_ph=VALUES(urine_ph),urine_gravity=VALUES(urine_gravity),
-      urine_nitrite_test=VALUES(urine_nitrite_test),
+      urine_nitrite_test=VALUES(urine_nitrite_test),referral_reason=VALUES(referral_reason),
       urine_leukocyte_esterace_test=VALUES(urine_leukocyte_esterace_test),urinary_ketone=VALUES(urinary_ketone),urine_bile_salt_test=VALUES(urine_bile_salt_test),
       urine_bile_pigment_test=VALUES(urine_bile_pigment_test),urine_colour=VALUES(urine_colour),urine_turbidity=VALUES(urine_turbidity),urine_dipstick_for_blood=VALUES(urine_dipstick_for_blood),syphilis_test_status=VALUES(syphilis_test_status),syphilis_treated_status=VALUES(syphilis_treated_status),
       bs_mps=VALUES(bs_mps),diabetes_test=VALUES(diabetes_test),fgm_done=VALUES(fgm_done),fgm_complications=VALUES(fgm_complications),fp_method_postpartum=VALUES(fp_method_postpartum),anc_exercises=VALUES(anc_exercises),tb_screening=VALUES(tb_screening),
@@ -1149,8 +1173,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
       counselled_on_breast_care=VALUES(counselled_on_breast_care),counselled_on_infant_feeding=VALUES(counselled_on_infant_feeding),counselled_on_treated_nets=VALUES(counselled_on_treated_nets),referred_from=VALUES(referred_from),
       minimum_care_package=VALUES(minimum_care_package),risk_reduction=VALUES(risk_reduction),partner_testing=VALUES(partner_testing),sti_screening=VALUES(sti_screening),condom_provision=VALUES(condom_provision),prep_adherence=VALUES(prep_adherence),anc_visits_emphasis=VALUES(anc_visits_emphasis),pnc_fp_counseling=VALUES(pnc_fp_counseling),
       referral_vmmc=VALUES(referral_vmmc),referral_dreams=VALUES(referral_dreams),referred_to=VALUES(referred_to),next_appointment_date=VALUES(next_appointment_date),clinical_notes=VALUES(clinical_notes),intermittent_presumptive_treatment_given=VALUES(intermittent_presumptive_treatment_given),intermittent_presumptive_treatment_dose=VALUES(intermittent_presumptive_treatment_dose),
-      minimum_package_of_care_services=VALUES(minimum_package_of_care_services)
-    ;
+      minimum_package_of_care_services=VALUES(minimum_package_of_care_services);
 
     END $$
 
@@ -1533,7 +1556,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=160975,o.value_text,null)) as ovarian_examination,
         max(if(o.concept_id=160972,o.value_text,null)) as pelvic_lymph_node_exam,
         max(if(o.concept_id=164181,(case o.value_coded when 164180 then 'Initial' when 160530 then 'Retest' when 169173 then 'Known Positive' when 1118 then 'Not Done' end),null)) as hiv_test_type,
-        max(if(o.concept_id=163783 and (o.value_coded = 162080 or o.value_coded = 162080),o.value_coded,null)) as hiv_test_timing,
+        max(if(o.concept_id=163783 and (o.value_coded = 162080 or o.value_coded = 162081),o.value_coded,null)) as hiv_test_timing,
         max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
         max(if(o.concept_id=299,o.value_coded,null)) as syphilis_results,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
@@ -8686,6 +8709,7 @@ BEGIN
         tetanus_taxoid_2,
         tetanus_taxoid_3,
         tetanus_taxoid_4,
+        tetanus_taxoid_5,
         folate_iron_1,
         folate_iron_2,
         folate_iron_3,
@@ -8699,7 +8723,9 @@ BEGIN
         iron_3,
         iron_4,
         mebendazole,
+        albendazole,
         long_lasting_insecticidal_net,
+        calcium,
         comment,
         date_last_modified,
         date_created,
@@ -8719,6 +8745,7 @@ BEGIN
         max(if(vaccine='Tetanus Toxoid' and sequence=2, date_given, null)) as tetanus_taxoid_2,
         max(if(vaccine='Tetanus Toxoid' and sequence=3, date_given, null)) as tetanus_taxoid_3,
         max(if(vaccine='Tetanus Toxoid' and sequence=4, date_given, null)) as tetanus_taxoid_4,
+        max(if(vaccine='Tetanus Toxoid' and sequence=5, date_given, null)) as tetanus_taxoid_5,
         max(if(vaccine='Folate/Iron' and sequence=1, date_given, null)) as folate_iron_1,
         max(if(vaccine='Folate/Iron' and sequence=2, date_given, null)) as folate_iron_2,
         max(if(vaccine='Folate/Iron' and sequence=3, date_given, null)) as folate_iron_3,
@@ -8731,8 +8758,10 @@ BEGIN
         max(if(vaccine='Iron' and sequence=2, date_given, null)) as iron_2,
         max(if(vaccine='Iron' and sequence=3, date_given, null)) as iron_3,
         max(if(vaccine='Iron' and sequence=4, date_given, null)) as iron_4,
-        max(if(vaccine='Mebendazole', date_given, null)) as mebendazole,
+        max(if(vaccine='Deworming (Mebendazole 500mgs)', date_given, null)) as mebendazole,
+        max(if(vaccine='Deworming (Albendazole 400g)', date_given, null)) as albendazole,
         max(if(vaccine='Long-lasting insecticidal net', date_given, null)) as long_lasting_insecticidal_net,
+        max(if(vaccine='Calcium', date_given, null)) as calcium,
         y.comment,
         y.date_last_modified,
         y.date_created,
@@ -8747,7 +8776,7 @@ BEGIN
                  encounter_id,
                  max(if(concept_id=984 , (case when value_coded=84879 then 'Tetanus Toxoid' when value_coded=159610 then 'Malarial prophylaxis' when value_coded=104677 then 'Folate/Iron'
                                                when value_coded=79413 then 'Mebendazole' when value_coded=160428 then 'Long-lasting insecticidal net'
-                                               when value_coded=76609 then 'Folate' when value_coded=78218 then 'Iron' end), null)) as vaccine,
+                                               when value_coded=76609 then 'Folate' when value_coded=78218 then 'Iron' when 70439 then 'Deworming (Albendazole 400g)' when 72650 then 'Calcium' end), null)) as vaccine,
                  max(if(concept_id=1418, value_numeric, null)) as sequence,
                  max(if(concept_id=161011, value_text, null)) as comment,
                  max(if(concept_id=1410, date_given, null)) as date_given,
@@ -8775,7 +8804,7 @@ BEGIN
                             malaria_prophylaxis_3=VALUES(malaria_prophylaxis_3),tetanus_taxoid_1=VALUES(tetanus_taxoid_1),tetanus_taxoid_2=VALUES(tetanus_taxoid_2),tetanus_taxoid_3=VALUES(tetanus_taxoid_3),
                             tetanus_taxoid_4=VALUES(tetanus_taxoid_4),folate_iron_1=VALUES(folate_iron_1),folate_iron_2=VALUES(folate_iron_2),folate_iron_3=VALUES(folate_iron_3),
                             folate_iron_4=VALUES(folate_iron_4),folate_1=VALUES(folate_1),folate_2=VALUES(folate_2),folate_3=VALUES(folate_3),
-                            folate_4=VALUES(folate_4),iron_1=VALUES(iron_1),iron_2=VALUES(iron_2),
+                            folate_4=VALUES(folate_4),iron_1=VALUES(iron_1),iron_2=VALUES(iron_2),calcium=VALUES(calcium),albendazole=VALUES(albendazole),tetanus_taxoid_5=VALUES(tetanus_taxoid_5),
                             iron_3=VALUES(iron_3),iron_4=VALUES(iron_4),mebendazole=VALUES(mebendazole),
                             long_lasting_insecticidal_net=VALUES(long_lasting_insecticidal_net),comment=VALUES(comment),voided=VALUES(voided);
     SELECT "Completed processing Preventive services data", CONCAT("Time: ", NOW());
