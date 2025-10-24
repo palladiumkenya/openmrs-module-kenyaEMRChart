@@ -1076,11 +1076,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=32,o.value_coded,null)) as bs_mps,
         max(if(o.concept_id=119481,o.value_coded,null)) as diabetes_test,
         max(if(o.concept_id=165099,o.value_coded,null)) as fgm_done,
-        concat_ws(',',nullif(max(if(o.concept_id=120198 and o.value_coded =122949,'Scarring',NULL)),''),
-                  nullif(max(if(o.concept_id=120198 and o.value_coded =136308,'Keloids',NULL)),''),
-                  nullif(max(if(o.concept_id=120198 and o.value_coded =141615,'Dyspaneuria',NULL)),''),
-                  nullif(max(if(o.concept_id=120198 and o.value_coded =111633,'UTI',NULL)),'')
-        ) as fgm_complications,
+        GROUP_CONCAT(if(o.concept_id = 120198,(case o.value_coded when 122949 then 'Scarring' when 136308 then 'Keloids' when 141615 then 'Dyspaneuria' when 111633 then 'UTI' end),null) SEPARATOR ' , ') as fgm_complications,
         max(if(o.concept_id=374,o.value_coded,null)) as fp_method_postpartum,
         max(if(o.concept_id=161074,o.value_coded,null)) as anc_exercises,
         max(if(o.concept_id=1659,o.value_coded,null)) as tb_screening,

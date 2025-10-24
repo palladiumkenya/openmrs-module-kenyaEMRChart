@@ -663,7 +663,7 @@ SELECT "Successfully created etl_patient_program_discontinuation table";
     minimum_package_of_care_given INT(11),
     minimum_package_of_care_services VARCHAR(1000),
     fgm_done INT(11),
-    fgm_complications INT(11),
+    fgm_complications VARCHAR(255),
     fp_method_postpartum INT(11),
     anc_exercises INT(11),
     tb_screening INT(11),
