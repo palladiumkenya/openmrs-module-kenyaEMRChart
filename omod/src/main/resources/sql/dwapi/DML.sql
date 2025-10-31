@@ -2048,7 +2048,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
 				max(if(o.concept_id=5090,o.value_numeric,null)) as height,
 				max(if(o.concept_id=160908,o.value_coded,null)) as muac,
 				max(if(o.concept_id=160640,o.value_coded,null)) as primary_caregiver,
-				max(if(o.concept_id=164142,o.value_coded,null)) as revisit_this_year,
+				max(if(o.concept_id=164181,o.value_coded,null)) as revisit_this_year,
 				max(if(o.concept_id=164088,o.value_coded,null)) as height_length,
 				max(if(o.concept_id=1788,o.value_coded,null)) as referred,
 				max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
@@ -2106,7 +2106,7 @@ CREATE PROCEDURE sp_populate_dwapi_hei_follow_up()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159855,159402,164142,164088,1788,164359,159860)
+														and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,161534,162558,160481,163145,1379,5484,159855,159402,164181,164088,1788,164359,159860)
 				inner join
 				(
 					select encounter_type_id, uuid, name from encounter_type where
