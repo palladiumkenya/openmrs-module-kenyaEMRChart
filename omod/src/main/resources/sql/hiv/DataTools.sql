@@ -550,7 +550,7 @@ SELECT "Successfully created pharmacy extract table";
       (case minimum_care_package when 1065 then "Yes" when 1066 then "No" end) as minimum_care_package,
       minimum_package_of_care_services,
       (case fgm_done when 1065 then "Yes" when 1066 then "No" else "" end) as fgm_done,
-      (case fgm_complications when 122949 then "Scarring" when 136308 then "Keloids" when 141615 then "dyspaneuria" when 111633 then "UTI"  else "" end) as fgm_complications,
+      fgm_complications,
       (case fp_method_postpartum when 5275 then "IUD" when 159589 then "Implants" when 1472 then "BTL" else "" end) as fp_method_postpartum,
       (case anc_exercises when 1065 then "Yes" when 1066 then "No" when 1067 then "Unknown" else "" end) as anc_exercises,
       (case tb_screening when 1660 then "No TB signs" when 164128 then "No signs and started on INH" when 142177 then "Presumed TB" when 1662 then "TB Confirmed" when 160737 then "Not done" when 1111 then "On TB Treatment"  else "" end) as tb_screening,
