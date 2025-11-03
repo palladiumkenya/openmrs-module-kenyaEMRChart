@@ -1041,7 +1041,7 @@ CREATE PROCEDURE sp_update_etl_mch_antenatal_visit(IN last_update_time DATETIME)
         max(if(o.concept_id=1305,o.value_coded,null)) as ldl,
         max(if(o.concept_id=1147,o.value_coded,null)) as arv_status,
         max(if(o.concept_id=2031735,o.value_coded,null)) as hiv_test_during_visit,
-        max(if(o.concept_id=159427,(case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
+        max(if(o.concept_id=159427,(case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 1138 then "Inconclusive" else "" end),null)) as final_test_result,
         max(if(o.concept_id=164848,(case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end),null)) as patient_given_result,
         max(if(o.concept_id=161557,o.value_coded,null)) as partner_hiv_tested,
         max(if(o.concept_id=1436,o.value_coded,null)) as partner_hiv_status,
@@ -1839,7 +1839,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
         max(if(o.concept_id=5090,o.value_numeric,null)) as height,
         max(if(o.concept_id=160908,o.value_coded,null)) as muac,
         max(if(o.concept_id=160640,o.value_coded,null)) as primary_caregiver,
-        max(if(o.concept_id=164142,o.value_coded,null)) as revisit_this_year,
+        max(if(o.concept_id=164181,o.value_coded,null)) as revisit_this_year,
         max(if(o.concept_id=164088,o.value_coded,null)) as height_length,
         max(if(o.concept_id=1788,o.value_coded,null)) as referred,
         max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
@@ -1895,7 +1895,7 @@ CREATE PROCEDURE sp_update_etl_hei_follow_up(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,1193,161534,162558,160481,163145,1379,5484,159855,159402,164142,164088,1788,164359,159860)
+                            and o.concept_id in(844,5089,5090,160640,1151,1659,5096,162069,162069,162069,162069,162069,162069,162069,162069,1189,159951,966,1109,162084,1030,162086,160082,159951,1040,162086,160082,159951,1326,162086,160082,162077,162064,162067,162066,1282,1443,1621,159395,5096,160908,1854,164088,1193,161534,162558,160481,163145,1379,5484,159855,159402,164181,164088,1788,164359,159860)
         inner join
         (
           select encounter_type_id, uuid, name from encounter_type where
