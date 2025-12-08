@@ -13,6 +13,8 @@ import org.openmrs.ui.framework.SimpleObject;
 import org.openmrs.ui.framework.UiUtils;
 import org.openmrs.ui.framework.fragment.FragmentModel;
 
+import liquibase.pro.packaged.et;
+
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,20 +23,25 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * controller for etlManager fragment
  * Handles calls for refreshing and recreation of ETLs
+ *
+ * This refactor makes the controller tenant-aware. It derives tenant-specific schema names
+ * from the runtime DB name (e.g. openmrs_tenant -> etl_tenant, datatools_tenant, dwapi_tenant, facilitywide_tenant)
+ * and uses those where applicable. If a tenant-specific schema does not exist the controller
+ * will fall back to the original global schema names (kenyaemr_etl, kenyaemr_datatools, dwapi_etl).
  */
 public class EtlManagerFragmentController {
     private final Log log = LogFactory.getLog(getClass());
-    private int processCount;
 
     public void controller(FragmentModel model){
         DbSessionFactory sf = Context.getRegisteredComponents(DbSessionFactory.class).get(0);
 
-        final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
         final List<SimpleObject> ret = new ArrayList<SimpleObject>();
 
         try {
@@ -42,6 +49,13 @@ public class EtlManagerFragmentController {
 
                 @Override
                 public void execute(Connection connection) throws SQLException {
+                    Map<String, String> schemas = resolveTenantSchemas(connection);
+                    String etlSchema = schemas.get("etl");
+
+                    final String sqlSelectQuery = String.format(
+                            "SELECT script_name, start_time, stop_time, error FROM %s.etl_script_status order by start_time desc limit 10;",
+                            etlSchema);
+
                     PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
 
                     try {
@@ -98,8 +112,12 @@ public class EtlManagerFragmentController {
             @Override
             public void execute(Connection connection) throws SQLException {
                 try {
+                    Map<String, String> schemas = resolveTenantSchemas(connection);
+                    String etlSchema = schemas.get("etl");
+
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = 'kenyaemr_etl');");
+                    String lockQuery = String.format("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = '%s');", etlSchema);
+                    ResultSet rs = stmt.executeQuery(lockQuery);
                     ResultSetMetaData metaData = rs.getMetaData();
 
                     while (rs.next()) {
@@ -124,7 +142,6 @@ public class EtlManagerFragmentController {
         if(sampleTypeObject.isEmpty()) {
 
 
-            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
             Transaction tx = null;
             try {
                 Context.openSession();
@@ -134,6 +151,12 @@ public class EtlManagerFragmentController {
 
                     @Override
                     public void execute(Connection connection) throws SQLException {
+                        Map<String, String> schemas = resolveTenantSchemas(connection);
+                        String etlSchema = schemas.get("etl");
+
+                        final String sqlSelectQuery = String.format(
+                                "SELECT script_name, start_time, stop_time, error FROM %s.etl_script_status order by start_time desc limit 10;",
+                                etlSchema);
                         PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
 
                         ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
@@ -143,12 +166,13 @@ public class EtlManagerFragmentController {
                         List<String> addonIncrementalUpdates = procedureBuilder.getAddonIncrementalUpdatesProcedures();
 
                         StringBuilder sb = null;
+                        // execute core incremental updates in tenant ETL schema
                         // we want to end up with a string like "{call create_etl_tables}"
                         // we then iterate the various procedures and execute them
                         for (String spName : coreIncrementalUpdates) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(etlSchema).append('.').append(spName).append("}");
                             System.out.println("Core module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -157,7 +181,7 @@ public class EtlManagerFragmentController {
                         for (String spName : addonIncrementalUpdates) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(etlSchema).append('.').append(spName).append("}");
                             System.out.println("Addon module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -221,8 +245,12 @@ public class EtlManagerFragmentController {
             @Override
             public void execute(Connection connection) throws SQLException {
                 try {
+                    Map<String, String> schemas = resolveTenantSchemas(connection);
+                    String etlSchema = schemas.get("etl");
+
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = 'kenyaemr_etl');");
+                    String lockQuery = String.format("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = '%s');", etlSchema);
+                    ResultSet rs = stmt.executeQuery(lockQuery);
                     ResultSetMetaData metaData = rs.getMetaData();
 
 
@@ -249,8 +277,6 @@ public class EtlManagerFragmentController {
         });
         if (sampleTypeObject.isEmpty()) {
 
-            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
-
             Transaction tx = null;
             try {
                 Context.openSession();
@@ -260,6 +286,13 @@ public class EtlManagerFragmentController {
 
                     @Override
                     public void execute(Connection connection) throws SQLException {
+                        Map<String, String> schemas = resolveTenantSchemas(connection);
+                        String etlSchema = schemas.get("etl");
+
+                        final String sqlSelectQuery = String.format(
+                                "SELECT script_name, start_time, stop_time, error FROM %s.etl_script_status order by start_time desc limit 10;",
+                                etlSchema);
+
                         PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
 
                         ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
@@ -277,7 +310,7 @@ public class EtlManagerFragmentController {
                         for (String spName : coreDDL) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(etlSchema).append('.').append(spName).append("}");
                             System.out.println("Core module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -286,7 +319,7 @@ public class EtlManagerFragmentController {
                         for (String spName : addonDDL) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(etlSchema).append('.').append(spName).append("}");
                             System.out.println("Addon module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -295,7 +328,7 @@ public class EtlManagerFragmentController {
                         for (String spName : coreDML) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(etlSchema).append('.').append(spName).append("}");
                             System.out.println("Core module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -304,7 +337,7 @@ public class EtlManagerFragmentController {
                         for (String spName : addonDML) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(etlSchema).append('.').append(spName).append("}");
                             System.out.println("Addon module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -371,8 +404,16 @@ public class EtlManagerFragmentController {
             @Override
             public void execute(Connection connection) throws SQLException {
                 try {
+                    Map<String, String> schemas = resolveTenantSchemas(connection);
+                    String etlSchema = schemas.get("etl");
+                    String datatoolsSchema = schemas.get("datatools");
+
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools');");
+                    String lockQuery = String.format(
+                            "SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = '%s') OR (In_use > 0 AND `Database` = '%s');",
+                            etlSchema, datatoolsSchema);
+
+                    ResultSet rs = stmt.executeQuery(lockQuery);
                     ResultSetMetaData metaData = rs.getMetaData();
 
 
@@ -399,8 +440,6 @@ public class EtlManagerFragmentController {
         });
         if (sampleTypeObject.isEmpty()) {
 
-            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
-
             Transaction tx = null;
             try {
                 Context.openSession();
@@ -410,6 +449,13 @@ public class EtlManagerFragmentController {
 
                     @Override
                     public void execute(Connection connection) throws SQLException {
+                        Map<String, String> schemas = resolveTenantSchemas(connection);
+                        String etlSchema = schemas.get("etl");
+                        String datatoolsSchema = schemas.get("datatools");
+
+                        final String sqlSelectQuery = String.format(
+                                "SELECT script_name, start_time, stop_time, error FROM %s.etl_script_status order by start_time desc limit 10;",
+                                etlSchema);
                         PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
 
                         ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
@@ -419,12 +465,13 @@ public class EtlManagerFragmentController {
                         List<String> addonDatatools = procedureBuilder.getAddonDatatoolDatabaseProcedures();
 
                         StringBuilder sb = null;
-                        // we want to end up with something like "{call create_etl_tables}"
                         // iterate through the various procedures and execute them
+                        // we want to end up with a string like "{call create_etl_tables}"
+                        // we then iterate the various procedures and execute them
                         for (String spName : coreDatatools) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(datatoolsSchema).append('.').append(spName).append("}");
                             System.out.println("Core module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -433,7 +480,7 @@ public class EtlManagerFragmentController {
                         for (String spName : addonDatatools) {
                             sb = new StringBuilder();
                             sb.append("{call ");
-                            sb.append(spName).append("}");
+                            sb.append(datatoolsSchema).append('.').append(spName).append("}");
                             System.out.println("Addon module: currently executing: " + sb);
                             CallableStatement sp = connection.prepareCall(sb.toString());
                             sp.execute();
@@ -484,6 +531,7 @@ public class EtlManagerFragmentController {
             return sampleTypeObject;
 
         }
+
         return sampleTypeObject;
 
     }
@@ -505,8 +553,16 @@ public class EtlManagerFragmentController {
             @Override
             public void execute(Connection connection) throws SQLException {
                 try {
+                    Map<String, String> schemas = resolveTenantSchemas(connection);
+                    String etlSchema = schemas.get("etl");
+                    String datatoolsSchema = schemas.get("datatools");
+                    String dwapiSchema = schemas.get("dwapi");
+
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools') OR (In_use > 0 AND `Database` LIKE 'dwapi_etl');");
+                    String lockQuery = String.format(
+                            "SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = '%s') OR (In_use > 0 AND `Database` = '%s') OR (In_use > 0 AND `Database` = '%s');",
+                            etlSchema, datatoolsSchema, dwapiSchema);
+                    ResultSet rs = stmt.executeQuery(lockQuery);
                     ResultSetMetaData metaData = rs.getMetaData();
 
                     while (rs.next()) {
@@ -531,7 +587,6 @@ public class EtlManagerFragmentController {
         if(sampleTypeObject.isEmpty()) {
 
 
-            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
             Transaction tx = null;
             try {
                 Context.openSession();
@@ -541,7 +596,13 @@ public class EtlManagerFragmentController {
 
                     @Override
                     public void execute(Connection connection) throws SQLException {
-                        PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
+                        Map<String, String> schemas = resolveTenantSchemas(connection);
+                        String etlSchema = schemas.get("etl");
+                        String dwapiSchema = schemas.get("dwapi");
+
+                        PreparedStatement statement = connection.prepareStatement(String.format(
+                                "SELECT script_name, start_time, stop_time, error FROM %s.etl_script_status order by start_time desc limit 10;",
+                                etlSchema));
 
                         ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
                         procedureBuilder.buildProcedures();
@@ -549,19 +610,20 @@ public class EtlManagerFragmentController {
                         StringBuilder sb = null;
                         String spDwapiDDLName = "create_dwapi_tables()";
                         String spDwapiDMLName = "sp_dwapi_etl_refresh()";
+                        // execute DWAPI DDL and DML in the dwapi schema
                         // we want to end up with a string like "{call create_etl_tables}"
                         // we then iterate the various procedures and execute them
 
                         sb = new StringBuilder();
                         sb.append("{call ");
-                        sb.append(spDwapiDDLName).append("}");
+                        sb.append(dwapiSchema).append('.').append(spDwapiDDLName).append("}");
                         System.out.println("Core module: currently executing: " + spDwapiDDLName);
                         CallableStatement sp = connection.prepareCall(sb.toString());
                         sp.execute();
 
                         sb = new StringBuilder();
                         sb.append("{call ");
-                        sb.append(spDwapiDMLName).append("}");
+                        sb.append(dwapiSchema).append('.').append(spDwapiDMLName).append("}");
                         System.out.println("Core module: currently executing: " + spDwapiDMLName);
                         CallableStatement spDml = connection.prepareCall(sb.toString());
                         spDml.execute();
@@ -613,6 +675,7 @@ public class EtlManagerFragmentController {
 
         return sampleTypeObject;
     }
+
     public SimpleObject recreateFacilitywideTables(UiUtils ui) {
         final List<SimpleObject> ret = new ArrayList<SimpleObject>();
         final List<SimpleObject> status = new ArrayList<SimpleObject>();
@@ -624,8 +687,16 @@ public class EtlManagerFragmentController {
             @Override
             public void execute(Connection connection) throws SQLException {
                 try {
+                    Map<String, String> schemas = resolveTenantSchemas(connection);
+                    String etlSchema = schemas.get("etl");
+                    String datatoolsSchema = schemas.get("datatools");
+                    String dwapiSchema = schemas.get("dwapi");
+
                     Statement stmt = connection.createStatement();
-                    ResultSet rs = stmt.executeQuery("SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` LIKE 'kenyaemr_etl') OR (In_use > 0 AND `Database` LIKE 'kenyaemr_datatools') OR (In_use > 0 AND `Database` LIKE 'dwapi_etl');");
+                    String lockQuery = String.format(
+                            "SHOW OPEN TABLES WHERE (In_use > 0 AND `Database` = '%s') OR (In_use > 0 AND `Database` = '%s') OR (In_use > 0 AND `Database` = '%s');",
+                            etlSchema, datatoolsSchema, dwapiSchema);
+                    ResultSet rs = stmt.executeQuery(lockQuery);
                     ResultSetMetaData metaData = rs.getMetaData();
 
                     while (rs.next()) {
@@ -650,7 +721,6 @@ public class EtlManagerFragmentController {
         if(sampleTypeObject.isEmpty()) {
 
 
-            final String sqlSelectQuery = "SELECT script_name, start_time, stop_time, error FROM kenyaemr_etl.etl_script_status order by start_time desc limit 10;";
             Transaction tx = null;
             try {
                 Context.openSession();
@@ -660,7 +730,12 @@ public class EtlManagerFragmentController {
 
                     @Override
                     public void execute(Connection connection) throws SQLException {
-                        PreparedStatement statement = connection.prepareStatement(sqlSelectQuery);
+                        Map<String, String> schemas = resolveTenantSchemas(connection);
+                        String etlSchema = schemas.get("etl");
+
+                        PreparedStatement statement = connection.prepareStatement(String.format(
+                                "SELECT script_name, start_time, stop_time, error FROM %s.etl_script_status order by start_time desc limit 10;",
+                                etlSchema));
 
                         ETLProcedureBuilder procedureBuilder = new ETLProcedureBuilder();
                         procedureBuilder.buildProcedures();
@@ -668,19 +743,18 @@ public class EtlManagerFragmentController {
                         StringBuilder sb = null;
                         String spFacilitywideDDLName = "create_facility_wide_etl_tables()";
                         String spFacilitywideDMLName = "sp_facility_wide_refresh()";
-                        // we want to end up with a string like "{call create_etl_tables}"
-                        // we then iterate the various procedures and execute them
+                        // execute facilitywide procs in the facility schema
 
                         sb = new StringBuilder();
                         sb.append("{call ");
-                        sb.append(spFacilitywideDDLName).append("}");
+                        sb.append(etlSchema).append('.').append(spFacilitywideDDLName).append("}");
                         System.out.println("Core module: currently executing: " + spFacilitywideDDLName);
                         CallableStatement sp = connection.prepareCall(sb.toString());
                         sp.execute();
 
                         sb = new StringBuilder();
                         sb.append("{call ");
-                        sb.append(spFacilitywideDMLName).append("}");
+                        sb.append(etlSchema).append('.').append(spFacilitywideDMLName).append("}");
                         System.out.println("Core module: currently executing: " + spFacilitywideDMLName);
                         CallableStatement spDml = connection.prepareCall(sb.toString());
                         spDml.execute();
@@ -731,5 +805,70 @@ public class EtlManagerFragmentController {
         }
 
         return sampleTypeObject;
+    }
+
+    /**
+     * Helper to derive tenant base name from runtime DB
+     * e.g. openmrs_tenant -> tenant
+     */
+    private String getTenantBaseFromRuntime() {
+        String dbName = Context.getRuntimeProperties().getProperty("connection.database");
+        if (dbName != null) {
+            if (dbName.startsWith("openmrs_")) {
+                return dbName.substring("openmrs_".length());
+            }
+            // if someone configured directly as 'openmrs' or other, return as-is
+            if (dbName.startsWith("openmrs")) {
+                return dbName;
+            }
+        }
+        return "kenyaemr"; // fallback base
+    }
+
+    /**
+     * Resolve tenant-specific schemas to use. Checks if tenant-specific candidate schemas exist and
+     * falls back to global names if they don't.
+     */
+    private Map<String, String> resolveTenantSchemas(Connection connection) {
+        Map<String, String> map = new HashMap<String, String>();
+
+        String tenantBase = getTenantBaseFromRuntime();
+
+        // Candidate names (following the prefix style used earlier in examples)
+        String candidateEtl = "etl_" + tenantBase;          // etl_tenant
+        String candidateDatatools = "datatools_" + tenantBase; // datatools_tenant
+        String candidateDwapi = "dwapi_" + tenantBase;      // dwapi_tenant
+        
+        // Global fallbacks (original single-tenant names)
+        String fallbackEtl = "kenyaemr_etl";
+        String fallbackDatatools = "kenyaemr_datatools";
+        String fallbackDwapi = "dwapi_etl";
+
+        try {
+            map.put("etl", schemaExists(connection, candidateEtl) ? candidateEtl : fallbackEtl);
+            map.put("datatools", schemaExists(connection, candidateDatatools) ? candidateDatatools : fallbackDatatools);
+            map.put("dwapi", schemaExists(connection, candidateDwapi) ? candidateDwapi : fallbackDwapi);
+        } catch (SQLException e) {
+            // If something goes wrong checking information_schema, fall back to global names
+            map.put("etl", fallbackEtl);
+            map.put("datatools", fallbackDatatools);
+            map.put("dwapi", fallbackDwapi);
+        }
+
+        return map;
+    }
+
+    private boolean schemaExists(Connection connection, String schemaName) throws SQLException {
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = connection.prepareStatement("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?");
+            ps.setString(1, schemaName);
+            rs = ps.executeQuery();
+            return rs.next();
+        } finally {
+            try { if (rs != null) rs.close(); } catch (Exception ex) {}
+            try { if (ps != null) ps.close(); } catch (Exception ex) {}
+        }
     }
 }
