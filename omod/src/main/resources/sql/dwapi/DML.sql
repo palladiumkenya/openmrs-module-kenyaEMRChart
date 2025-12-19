@@ -612,126 +612,111 @@ CREATE PROCEDURE sp_populate_dwapi_laboratory_extract()
 BEGIN
 SELECT "Processing Laboratory data ", CONCAT("Time: ", NOW());
 insert into dwapi_etl.etl_laboratory_extract(
-uuid,
-encounter_id,
-patient_id,
-location_id,
-visit_date,
-visit_id,
-order_id,
-lab_test,
-urgency,
-order_reason,
-order_test_name,
-obs_id,
-result_test_name,
-result_name,
-set_member_conceptId,
-test_result,
-date_test_requested,
-date_test_result_received,
-date_created,
-date_last_modified,
-created_by,
-voided
+    uuid,
+    encounter_id,
+    patient_id,
+    location_id,
+    visit_date,
+    visit_id,
+    order_id,
+    lab_test,
+    urgency,
+    order_reason,
+    order_test_name,
+    obs_id,
+    result_test_name,
+    result_name,
+    set_member_conceptId,
+    test_result,
+    date_test_requested,
+    date_test_result_received,
+    date_created,
+    date_last_modified,
+    created_by,
+    voided
 )
 WITH RankedOrders AS (
     SELECT
-        *,
-        ROW_NUMBER() OVER (PARTITION BY patient_id, encounter_id, concept_id ORDER BY order_id DESC) as rn
-    FROM orders
-    WHERE order_type_id = 3
-      AND order_action IN ('NEW','REVISE')
-      AND voided = 0
+        o.*,
+        ROW_NUMBER() OVER (PARTITION BY o.patient_id, o.encounter_id, o.concept_id ORDER BY o.order_id DESC) as rn
+    FROM orders o
+    WHERE o.order_type_id = 3
+      AND o.order_action IN ('NEW','REVISE')
+      AND o.voided = 0
 ),
-     FilteredOrders AS (SELECT patient_id,
-                               encounter_id,
-                               order_id,
-                               concept_id,
-                               date_activated,
-                               urgency,
-                               order_reason,
-                               order_action,
-                               fulfiller_comment
-                        FROM RankedOrders
-                        WHERE rn = 1),
-	 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
-								 cs.concept_id     AS member_concept_id,
-								 c.datatype_id     AS member_datatype,
-								 c.class_id        AS member_class,
-								 n.name
-						  FROM concept_set cs
-								   INNER JOIN concept c ON cs.concept_id = c.concept_id
-								   INNER JOIN concept_name n ON c.concept_id = n.concept_id
-							  AND n.locale = 'en'
-							  AND n.concept_name_type = 'FULLY_SPECIFIED'
-						  WHERE cs.concept_set = 1000628),
-	 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
-							  from obs o
-									   inner join concept c on o.concept_id = c.concept_id
-									   inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
-									   left join concept_name n
-												 on o.value_coded = n.concept_id AND n.locale = 'en' AND
-													n.concept_name_type = 'FULLY_SPECIFIED'
-									   left join concept_name n1
-												 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													n1.concept_name_type = 'FULLY_SPECIFIED'
-							  where o.order_id is not null ),
-	 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name, o.obs_datetime
-								from obs o
-										 inner join concept c on o.concept_id = c.concept_id
-										 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
-										 inner join concept_name n
-													on o.concept_id = n.concept_id AND n.locale = 'en' AND
-													   n.concept_name_type = 'FULLY_SPECIFIED'
-										 left join concept_name n1
-												   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													  n1.concept_name_type = 'FULLY_SPECIFIED'
-								where o.order_id is not null ),
-	 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name, o.obs_datetime
-							 from obs o
-									  inner join concept c on o.concept_id = c.concept_id
-									  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
-									  inner join concept_name n
-												 on o.concept_id = n.concept_id AND n.locale = 'en' AND
-													n.concept_name_type = 'FULLY_SPECIFIED'
-									  left join concept_name n1
-												on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-												   n1.concept_name_type = 'FULLY_SPECIFIED'
-							 where o.order_id is not null )
+     FilteredOrders AS (
+         SELECT patient_id, encounter_id, order_id, concept_id, date_activated, urgency, order_reason, order_action, fulfiller_comment
+         FROM RankedOrders
+         WHERE rn = 1
+     ),
+     LabOrderConcepts AS (
+         SELECT
+             cs.concept_set_id AS set_id,
+             cs.concept_id     AS member_concept_id,
+             n.name
+         FROM concept_set cs
+                  JOIN concept_name n ON cs.concept_id = n.concept_id
+             AND n.locale = 'en'
+             AND n.concept_name_type = 'FULLY_SPECIFIED'
+         WHERE cs.concept_set = 1000628
+     ),
+     LabOrderResults AS (
+         SELECT
+             o.obs_id,
+             o.order_id,
+             o.concept_id,
+             o.obs_datetime,
+             o.date_created,
+             cd.name AS datatype,
+             o.value_coded,
+             o.value_numeric,
+             o.value_text,
+             tn.name AS result_test_name,
+             rn.name AS result_name,
+             CASE
+                 WHEN cd.name = 'Coded' THEN o.value_coded
+                 WHEN cd.name = 'Numeric' THEN o.value_numeric
+                 WHEN cd.name = 'Text' THEN o.value_text END AS test_result
+         FROM obs o
+                  JOIN concept c ON o.concept_id = c.concept_id
+                  JOIN concept_datatype cd ON c.datatype_id = cd.concept_datatype_id
+             AND cd.name IN ('Coded','Numeric','Text')
+                  LEFT JOIN concept_name tn ON o.concept_id = tn.concept_id
+             AND tn.locale = 'en'
+             AND tn.concept_name_type = 'FULLY_SPECIFIED'
+                  LEFT JOIN concept_name rn ON o.value_coded = rn.concept_id
+             AND rn.locale = 'en'
+             AND rn.concept_name_type = 'FULLY_SPECIFIED'
+         WHERE o.order_id IS NOT NULL
+     )
 SELECT
-	UUID(),
-	e.encounter_id,
-	e.patient_id,
-	e.location_id,
-    COALESCE(o.date_activated,COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime)) as visit_date,
-	e.visit_id,
-	o.order_id,
-	o.concept_id,
-	o.urgency,
-	o.order_reason,
-	lc.name as order_test_name,
-	COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
-	if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
-	COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
-	if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
-	COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
-	o.date_activated as date_test_requested,
-    COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime) as date_test_result_received,
--- test requested by
-	e.date_created,
-	e.date_changed as date_last_modified,
-	e.creator,
-	e.voided
+    UUID(),
+    e.encounter_id,
+    e.patient_id,
+    e.location_id,
+    COALESCE(o.date_activated, lor.obs_datetime) as visit_date,
+    e.visit_id,
+    o.order_id,
+    o.concept_id,
+    o.urgency,
+    o.order_reason,
+    lc.name as order_test_name,
+    lor.obs_id,
+    lor.result_test_name,
+    COALESCE(lor.result_name,lor.value_numeric,lor.value_text) as result_name,
+    lor.concept_id as set_member_conceptId,
+    lor.test_result as test_result,
+    o.date_activated as date_test_requested,
+    lor.obs_datetime as date_test_result_received,
+    e.date_created,
+    e.date_changed as date_last_modified,
+    e.creator,
+    e.voided
 FROM encounter e
-		 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
-         INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
-		 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
-		 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
-		 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
-		 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id
-group by order_id;
-
+         INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+         INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+         LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
+         LEFT JOIN LabOrderResults lor ON o.order_id = lor.order_id;
 
 SELECT "Completed processing Laboratory data ", CONCAT("Time: ", NOW());
 END $$
