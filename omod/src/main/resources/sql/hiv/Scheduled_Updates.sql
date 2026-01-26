@@ -717,6 +717,8 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
          when '162382b8-0464-11ea-9a9f-362b9e155667' then 'OTZ'
          when '5cf00d9e-09da-11ea-8d71-362b9e155667' then 'OVC'
          when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
+         when '72635673-0613-4259-916e-e0d5d5ef8f66' then 'Antenatal Care'
+         when '286598d5-1886-4f0d-9e5f-fa5473399cee' then 'Postnatal Care'
          end) as program_name,
         e.encounter_id,
         coalesce(max(if(o.concept_id=161555, o.value_coded, null)),max(if(o.concept_id=159786, o.value_coded, null))) as reason_discontinued,
@@ -739,7 +741,8 @@ CREATE PROCEDURE sp_update_etl_program_discontinuation(IN last_update_time DATET
         (
           select encounter_type_id, uuid, name from encounter_type where
             uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
-                    '7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93')
+                    '7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93',
+                    '72635673-0613-4259-916e-e0d5d5ef8f66','286598d5-1886-4f0d-9e5f-fa5473399cee')
         ) et on et.encounter_type_id=e.encounter_type
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
@@ -1583,9 +1586,10 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
 				  nullif(max(if(o.concept_id=374 and o.value_coded =1472,"Tubal Ligation",'')),''),
 				  nullif(max(if(o.concept_id=374 and o.value_coded =190,"Condoms",'')),''),
 				  nullif(max(if(o.concept_id=374 and o.value_coded =1489,"Vasectomy",'')),''),
+                  nullif(max(if(o.concept_id=374 and o.value_coded =5277,"Natural Method",'')),''),
 				  nullif(max(if(o.concept_id=374 and o.value_coded =162332,"Undecided",'')),'')
 		) as family_planning_method,
-        max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
+        max(if(o.concept_id=160338,o.value_coded,null)) as referred_from,
         max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 		max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
         max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
@@ -1594,7 +1598,7 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-                            and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
+                            and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160338,163145,159395,159949,5096,161651,165070,
                                                 1724,167017,163783,162642,166665,165218,160632,299,159395,164181)
         inner join
         (
@@ -2647,98 +2651,81 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
     )
     WITH RankedOrders AS (
         SELECT
-            *,
-            ROW_NUMBER() OVER (PARTITION BY patient_id, encounter_id, concept_id ORDER BY order_id DESC) as rn
-        FROM orders
-        WHERE order_type_id = 3
-          AND order_action IN ('NEW','REVISE')
-          AND voided = 0
+            o.*,
+            ROW_NUMBER() OVER (PARTITION BY o.patient_id, DATE(o.date_activated), o.concept_id ORDER BY o.date_activated ASC, o.order_id ASC) as rn
+        FROM orders o
+        WHERE o.order_type_id = 3
+          AND o.order_action IN ('NEW','REVISE')
+          AND o.voided = 0
     ),
-         FilteredOrders AS (SELECT patient_id,
-                                   encounter_id,
-                                   order_id,
-                                   concept_id,
-                                   date_activated,
-                                   urgency,
-                                   order_reason,
-                                   order_action,
-                                   fulfiller_comment
+         FilteredOrders AS (SELECT patient_id, encounter_id, order_id, concept_id, date_activated, urgency, order_reason, order_action, fulfiller_comment
                             FROM RankedOrders
                             WHERE rn = 1),
-		 LabOrderConcepts AS (SELECT cs.concept_set_id AS set_id,
-									 cs.concept_id     AS member_concept_id,
-									 c.datatype_id     AS member_datatype,
-									 c.class_id        AS member_class,
-									 n.name
-							  FROM concept_set cs
-									   INNER JOIN concept c ON cs.concept_id = c.concept_id
-									   INNER JOIN concept_name n ON c.concept_id = n.concept_id
-								  AND n.locale = 'en'
-								  AND n.concept_name_type = 'FULLY_SPECIFIED'
-							  WHERE cs.concept_set = 1000628),
-		 CodedLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.obs_datetime,o.date_created, o.value_coded, n.name, n1.name as test_name
-								  from obs o
-										   inner join concept c on o.concept_id = c.concept_id
-										   inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Coded'
-										   left join concept_name n
-													 on o.value_coded = n.concept_id AND n.locale = 'en' AND
-														n.concept_name_type = 'FULLY_SPECIFIED'
-										   left join concept_name n1
-													 on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-														n1.concept_name_type = 'FULLY_SPECIFIED'
-								  where o.order_id is not null ),
-		 NumericLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_numeric, n.name, n1.name as test_name, o.obs_datetime
-									from obs o
-											 inner join concept c on o.concept_id = c.concept_id
-											 inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Numeric'
-											 inner join concept_name n
-														on o.concept_id = n.concept_id AND n.locale = 'en' AND
-														   n.concept_name_type = 'FULLY_SPECIFIED'
-											 left join concept_name n1
-													   on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-														  n1.concept_name_type = 'FULLY_SPECIFIED'
-									where o.order_id is not null ),
-		 TextLabOrderResults AS (SELECT o.obs_id as obs_id, o.order_id, o.concept_id, o.value_text, c.class_id, n.name, n1.name as test_name, o.obs_datetime
-								 from obs o
-										  inner join concept c on o.concept_id = c.concept_id
-										  inner join concept_datatype cd on c.datatype_id = cd.concept_datatype_id and cd.name = 'Text'
-										  inner join concept_name n
-													 on o.concept_id = n.concept_id AND n.locale = 'en' AND
-														n.concept_name_type = 'FULLY_SPECIFIED'
-										  left join concept_name n1
-													on o.concept_id = n1.concept_id AND n1.locale = 'en' AND
-													   n1.concept_name_type = 'FULLY_SPECIFIED'
-								 where o.order_id is not null )
+		 LabOrderConcepts AS ( SELECT
+                                   cs.concept_set_id AS set_id,
+                                   cs.concept_id     AS member_concept_id,
+                                   n.name
+                               FROM concept_set cs
+                                        JOIN concept_name n ON cs.concept_id = n.concept_id
+                                   AND n.locale = 'en'
+                                   AND n.concept_name_type = 'FULLY_SPECIFIED'
+                               WHERE cs.concept_set = 1000628),
+         LabOrderResults AS (
+             SELECT
+                 o.obs_id,
+                 o.order_id,
+                 o.concept_id,
+                 o.obs_datetime,
+                 o.date_created,
+                 cd.name AS datatype,
+                 o.value_coded,
+                 o.value_numeric,
+                 o.value_text,
+                 tn.name AS result_test_name,
+                 rn.name AS result_name,
+                 CASE
+                     WHEN cd.name = 'Coded' THEN o.value_coded
+                     WHEN cd.name = 'Numeric' THEN o.value_numeric
+                     WHEN cd.name = 'Text' THEN o.value_text END AS test_result
+             FROM obs o
+                      JOIN concept c ON o.concept_id = c.concept_id
+                      JOIN concept_datatype cd ON c.datatype_id = cd.concept_datatype_id
+                 AND cd.name IN ('Coded','Numeric','Text')
+                      LEFT JOIN concept_name tn ON o.concept_id = tn.concept_id
+                 AND tn.locale = 'en'
+                 AND tn.concept_name_type = 'FULLY_SPECIFIED'
+                      LEFT JOIN concept_name rn ON o.value_coded = rn.concept_id
+                 AND rn.locale = 'en'
+                 AND rn.concept_name_type = 'FULLY_SPECIFIED'
+             WHERE o.order_id IS NOT NULL
+         )
 	SELECT
-		UUID(),
-		e.encounter_id,
-		e.patient_id,
-		e.location_id,
-        COALESCE(o.date_activated,COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime)) as visit_date,
-		e.visit_id,
-		o.order_id,
-		o.concept_id,
-		o.urgency,
-		o.order_reason,
-		lc.name as order_test_name,
-		COALESCE(cr.obs_id,nr.obs_id,tr.obs_id) as obs_id,
-		if(cr.test_name IS NOT NULL,cr.test_name,if(nr.test_name is not null, nr.test_name,if(tr.test_name is not null, tr.test_name,''))) as result_test_name,
-		COALESCE(cr.name,nr.value_numeric,tr.value_text) as result_name,
-		if(cr.concept_id IS NOT NULL,cr.concept_id,if(nr.concept_id is not null, nr.concept_id,if(tr.concept_id is not null, tr.concept_id,''))) set_member_conceptId,
-		COALESCE(cr.value_coded,nr.value_numeric,tr.value_text) as test_result,
-		o.date_activated as date_test_requested,
-        COALESCE(cr.obs_datetime, nr.obs_datetime, tr.obs_datetime) as date_test_result_received,
--- test requested by
-		e.date_created,
-		e.date_changed as date_last_modified,
-		e.creator
-	FROM encounter e
-			 INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
-             INNER JOIN person p ON p.person_id = e.patient_id and p.voided = 0
-			 LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
-			 LEFT JOIN CodedLabOrderResults cr on o.order_id = cr.order_id
-			 LEFT JOIN NumericLabOrderResults nr on o.order_id = nr.order_id
-			 LEFT JOIN TextLabOrderResults tr on o.order_id = tr.order_id	
+        UUID(),
+        e.encounter_id,
+        e.patient_id,
+        e.location_id,
+        COALESCE(o.date_activated, lor.obs_datetime) as visit_date,
+        e.visit_id,
+        o.order_id,
+        o.concept_id,
+        o.urgency,
+        o.order_reason,
+        lc.name as order_test_name,
+        lor.obs_id,
+        lor.result_test_name,
+        COALESCE(lor.result_name,lor.value_numeric,lor.value_text) as result_name,
+        lor.concept_id as set_member_conceptId,
+        lor.test_result as test_result,
+        o.date_activated as date_test_requested,
+        lor.date_created as date_test_result_received,
+        e.date_created,
+        e.date_changed as date_last_modified,
+        e.creator
+    FROM encounter e
+             INNER JOIN FilteredOrders o ON o.encounter_id = e.encounter_id
+             INNER JOIN person p ON p.person_id = e.patient_id AND p.voided = 0
+             LEFT JOIN LabOrderConcepts lc ON o.concept_id = lc.member_concept_id
+             LEFT JOIN LabOrderResults lor ON o.order_id = lor.order_id
       where e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -2901,7 +2888,7 @@ CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
                        max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else null end),null)) as test_1_result ,
                        max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else null end),null)) as test_2_result ,
                        max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else null end),null)) as test_3_result ,
-                       max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else null end),null)) as kit_name ,
+                       max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" end),null)) as kit_name ,
                        max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                        max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
                      from obs o inner join encounter e on e.encounter_id = o.encounter_id
@@ -9697,7 +9684,7 @@ INSERT INTO kenyaemr_etl.etl_sgbv_post_rape_care (
         e.location_id,
         e.creator,
         date(e.encounter_datetime) as visit_date,
-        max(if(o.concept_id = 159948, o.value_datetime, null )) as examination_date,
+        max(if(o.concept_id = 159948 or o.concept_id = 169466, o.value_datetime, null )) as examination_date,
         max(if(o.concept_id=162869,o.value_datetime,null)) as incident_date,
         max(if(o.concept_id=1639,o.value_numeric,null)) as number_of_perpetrators,
         max(if(o.concept_id=165229,o.value_coded,null)) as is_perpetrator_known,
@@ -9774,7 +9761,7 @@ INSERT INTO kenyaemr_etl.etl_sgbv_post_rape_care (
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
               (159948,162869,1639,165229,167214,167131,161564,159942,160945,166846,160303,123160,161011,1357,166484,162724,164093,165052,165152,165193,161550,
                165144,160221,163677,1391,160080,1823,163400,5272,160753,5085,5086,162056,165171,163104,161239,166363,165180,160258,162997,163048,165241,161031,
-               165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225)
+               165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225,169466)
         and o.voided=0
 where e.voided=0
         and e.date_created >= last_update_time
@@ -10218,6 +10205,7 @@ INSERT INTO kenyaemr_etl.etl_psychiatry (patient_id,
  priority_of_admission,
  admission_ward,
  duration_of_hospital_stay,
+ psycho_social_support,
  voided)
 select e.patient_id,
 e.visit_id,
@@ -10301,6 +10289,9 @@ max(if(o.concept_id = 162477, o.value_coded, null))                             
 max(if(o.concept_id = 1655, o.value_coded, null))                                       as priority_of_admission,
 max(if(o.concept_id = 1000075, o.value_coded, null))                                    as admission_ward,
 max(if(o.concept_id = 1896, o.value_coded, null))                                       as duration_of_hospital_stay,
+concat_ws(',',max(if(o.concept_id = 165302 and o.value_coded = 169400, 'Psycho-Social Assessments and Investigation',null)),
+          max(if(o.concept_id = 165302 and o.value_coded = 5490, 'Psycho-Social rehabilitation', null)),
+          max(if(o.concept_id = 165302 and o.value_coded = 160545, 'Outreach services/Health Talks', null))) psycho_social_support,
 e.voided
 from encounter e
 inner join person p on p.person_id = e.patient_id and p.voided = 0
@@ -10315,7 +10306,7 @@ left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                167106, 167112, 167181, 167084, 163104,
                                165104, 160433,
                                163145, 159495, 162724, 1640, 162879, 162477,
-                               1655, 1000075, 1896)
+                               1655, 1000075, 1896,165302)
 and o.voided = 0
 where e.voided = 0 and e.date_created >= last_update_time
 or e.date_changed >= last_update_time
@@ -10369,6 +10360,7 @@ type_of_admission=VALUES(type_of_admission),
 priority_of_admission=VALUES(priority_of_admission),
 admission_ward=VALUES(admission_ward),
 duration_of_hospital_stay=VALUES(duration_of_hospital_stay),
+psycho_social_support=VALUES(psycho_social_support),
 voided=VALUES(voided);
 
 SELECT "Completed processing psychiatry";
