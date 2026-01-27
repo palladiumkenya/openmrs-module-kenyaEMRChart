@@ -2652,7 +2652,13 @@ CREATE PROCEDURE sp_update_etl_laboratory_extract(IN last_update_time DATETIME)
     WITH RankedOrders AS (
         SELECT
             o.*,
-            ROW_NUMBER() OVER (PARTITION BY o.patient_id, DATE(o.date_activated), o.concept_id ORDER BY o.date_activated ASC, o.order_id ASC) as rn
+            ROW_NUMBER() OVER (
+                PARTITION BY o.patient_id, DATE(o.date_activated), o.concept_id
+                ORDER BY
+                    CASE WHEN EXISTS (SELECT 1 FROM obs x WHERE x.order_id = o.order_id AND x.voided = 0) THEN 0 ELSE 1 END,
+                    o.date_activated DESC,
+                    o.order_id DESC
+                ) AS rn
         FROM orders o
         WHERE o.order_type_id = 3
           AND o.order_action IN ('NEW','REVISE')
