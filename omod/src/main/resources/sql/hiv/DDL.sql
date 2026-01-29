@@ -4626,76 +4626,75 @@ SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_kvp_clinical_enrollm
 -- sql
 -- --------------------------------------
 -- TABLE: etl_special_clinics
--- Purpose: tenant-aware creation using `etl_schema`
--- --------------------------------------
-SET @drop_etl_special = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_special_clinics`;');
-PREPARE stmt FROM @drop_etl_special; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_special_clinics`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_special_clinics` (',
-  '  `patient_id` INT(11) NOT NULL,',
-  '  `visit_id` INT(11) DEFAULT NULL,',
-  '  `encounter_id` INT(11) NOT NULL,',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_special_clinics` (',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
   '  `uuid` CHAR(38) NOT NULL,',
-  '  `location_id` INT(11) NOT NULL,',
-  '  `provider` INT(11) NOT NULL,',
+  '  `location_id` INT NOT NULL,',
+  '  `provider` INT NOT NULL,',
   '  `visit_date` DATE,',
-  '  `visit_type` INT(11),',
-  '  `pregnantOrLactating` INT(11),',
-  '  `referred_from` INT(11),',
-  '  `eye_assessed` INT(11),',
-  '  `acuity_finding` INT(11),',
-  '  `referred_to` INT(11),',
+  '  `visit_type` INT,',
+  '  `pregnantOrLactating` INT,',
+  '  `referred_from` INT,',
+  '  `eye_assessed` INT,',
+  '  `acuity_finding` INT,',
+  '  `referred_to` INT,',
   '  `ot_intervention` VARCHAR(255),',
   '  `assistive_technology` VARCHAR(255),',
-  '  `enrolled_in_school` INT(11),',
-  '  `patient_with_disability` INT(11),',
-  '  `patient_has_edema` INT(11),',
-  '  `nutritional_status` INT(11),',
-  '  `patient_pregnant` INT(11),',
-  '  `sero_status` INT(11),',
-  '  `nutritional_intervention` INT(11),',
-  '  `postnatal` INT(11),',
-  '  `patient_on_arv` INT(11),',
-  '  `anaemia_level` INT(11),',
+  '  `enrolled_in_school` INT,',
+  '  `patient_with_disability` INT,',
+  '  `patient_has_edema` INT,',
+  '  `nutritional_status` INT,',
+  '  `patient_pregnant` INT,',
+  '  `sero_status` INT,',
+  '  `nutritional_intervention` INT,',
+  '  `postnatal` INT,',
+  '  `patient_on_arv` INT,',
+  '  `anaemia_level` INT,',
   '  `metabolic_disorders` VARCHAR(255),',
   '  `critical_nutrition_practices` VARCHAR(255),',
-  '  `maternal_nutrition` INT(11),',
+  '  `maternal_nutrition` INT,',
   '  `therapeutic_food` VARCHAR(255),',
   '  `supplemental_food` VARCHAR(255),',
   '  `micronutrients` VARCHAR(255),',
-  '  `referral_status` INT(11),',
-  '  `criteria_for_admission` INT(11),',
-  '  `type_of_admission` INT(11),',
-  '  `cadre` INT(11),',
+  '  `referral_status` INT,',
+  '  `criteria_for_admission` INT,',
+  '  `type_of_admission` INT,',
+  '  `cadre` INT,',
   '  `neuron_developmental_findings` VARCHAR(255),',
-  '  `neurodiversity_conditions` INT(11),',
+  '  `neurodiversity_conditions` INT,',
   '  `learning_findings` VARCHAR(255),',
-  '  `screening_site` INT(11),',
-  '  `communication_mode` INT(11),',
-  '  `neonatal_risk_factor` INT(11),',
+  '  `screening_site` INT,',
+  '  `communication_mode` INT,',
+  '  `neonatal_risk_factor` INT,',
   '  `presence_of_comobidities` VARCHAR(255),',
   '  `first_screening_date` DATE,',
-  '  `first_screening_outcome` INT(11),',
-  '  `second_screening_outcome` INT(11),',
+  '  `first_screening_outcome` INT,',
+  '  `second_screening_outcome` INT,',
   '  `symptoms_for_otc` VARCHAR(255),',
-  '  `nutritional_details` INT(11),',
-  '  `first_0_6_months` INT(11),',
-  '  `second_6_12_months` INT(11),',
+  '  `nutritional_details` INT,',
+  '  `first_0_6_months` INT,',
+  '  `second_6_12_months` INT,',
   '  `disability_classification` VARCHAR(255),',
   '  `treatment_intervention` VARCHAR(255),',
-  '  `area_of_service` INT(11),',
+  '  `area_of_service` INT,',
   '  `diagnosis_category` VARCHAR(100),',
   '  `next_appointment_date` DATE,',
-  '  `orthopaedic_patient_no` INT(11),',
-  '  `patient_outcome` INT(11),',
+  '  `orthopaedic_patient_no` INT,',
+  '  `patient_outcome` INT,',
   '  `special_clinic` VARCHAR(255),',
   '  `special_clinic_form_uuid` CHAR(38),',
   '  `date_created` DATETIME NOT NULL,',
   '  `date_last_modified` DATETIME,',
   '  PRIMARY KEY (`encounter_id`),',
-  '  CONSTRAINT `fk_special_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics` (`patient_id`),',
-  '  CONSTRAINT `unique_uuid_special` UNIQUE (`uuid`),',
+  '  CONSTRAINT `fk_special_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_special_clinics` UNIQUE (`uuid`),',
   '  INDEX (`patient_id`),',
   '  INDEX (`visit_type`),',
   '  INDEX (`visit_date`)',
@@ -4707,43 +4706,43 @@ SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_special_clinics`') A
 
 
 
--- sql
--- File: `src/main/resources/sql/hiv/DDL.sql`
+
 -- --------------------------------------
 -- TABLE: etl_high_iit_intervention
--- Purpose: tenant-aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
--- --------------------------------------
-SET @drop_etl_high_iit_intervention = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_high_iit_intervention`;');
-PREPARE stmt FROM @drop_etl_high_iit_intervention; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_high_iit_intervention`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_high_iit_intervention` (',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_high_iit_intervention` (',
   '  `uuid` CHAR(38),',
-  '  `provider` INT(11),',
-  '  `patient_id` INT(11) NOT NULL,',
-  '  `visit_id` INT(11),',
-  '  `visit_date` DATE,',
-  '  `location_id` INT(11) DEFAULT NULL,',
-  '  `encounter_id` INT(11) NOT NULL,',
-  '  `interventions_offered` VARCHAR(500),',
-  '  `appointment_mgt_interventions` VARCHAR(500),',
-  '  `reminder_methods` VARCHAR(255),',
-  '  `enrolled_in_ushauri` INT(11),',
-  '  `appointment_mngt_intervention_date` DATE,',
-  '  `date_assigned_case_manager` DATE,',
-  '  `eacs_recommended` INT(11),',
-  '  `enrolled_in_psychosocial_support_group` INT(11),',
-  '  `robust_literacy_interventions_date` DATE,',
-  '  `expanding_differentiated_service_delivery_interventions` INT(11),',
-  '  `enrolled_in_nishauri` INT(11),',
-  '  `expanded_differentiated_service_delivery_interventions_date` DATE,',
+  '  `provider` INT DEFAULT NULL,',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
+  '  `visit_date` DATE DEFAULT NULL,',
+  '  `location_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
+  '  `interventions_offered` VARCHAR(500) DEFAULT NULL,',
+  '  `appointment_mgt_interventions` VARCHAR(500) DEFAULT NULL,',
+  '  `reminder_methods` VARCHAR(255) DEFAULT NULL,',
+  '  `enrolled_in_ushauri` INT DEFAULT NULL,',
+  '  `appointment_mngt_intervention_date` DATE DEFAULT NULL,',
+  '  `date_assigned_case_manager` DATE DEFAULT NULL,',
+  '  `eacs_recommended` INT DEFAULT NULL,',
+  '  `enrolled_in_psychosocial_support_group` INT DEFAULT NULL,',
+  '  `robust_literacy_interventions_date` DATE DEFAULT NULL,',
+  '  `expanding_differentiated_service_delivery_interventions` INT DEFAULT NULL,',
+  '  `enrolled_in_nishauri` INT DEFAULT NULL,',
+  '  `expanded_differentiated_service_delivery_interventions_date` DATE DEFAULT NULL,',
   '  `date_created` DATETIME NOT NULL,',
-  '  `date_last_modified` DATETIME,',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
   '  PRIMARY KEY (`encounter_id`),',
-  '  CONSTRAINT `fk_high_iit_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics` (`patient_id`),',
-  '  CONSTRAINT `unique_uuid_high_iit` UNIQUE (`uuid`),',
-  '  INDEX (`visit_date`)',
+  '  CONSTRAINT `fk_high_iit_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_high_iit_intervention` UNIQUE (`uuid`),',
+  '  INDEX (`patient_id`),',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`enrolled_in_ushauri`),',
+  '  INDEX (`enrolled_in_nishauri`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
@@ -4751,51 +4750,51 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_high_iit_intervention`') AS message;
 
 
--- --------------------------------------
--- File: `src/main/resources/sql/hiv/DDL.sql`
+
 -- TABLE: etl_home_visit_checklist
--- Purpose: tenant aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
--- --------------------------------------
-SET @drop_etl_home_visit_checklist = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_home_visit_checklist`;');
-PREPARE stmt FROM @drop_etl_home_visit_checklist; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_home_visit_checklist`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_home_visit_checklist` (',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_home_visit_checklist` (',
   '  `uuid` CHAR(38),',
-  '  `provider` INT(11),',
-  '  `patient_id` INT(11) NOT NULL,',
-  '  `visit_id` INT(11),',
-  '  `visit_date` DATE,',
-  '  `location_id` INT(11) DEFAULT NULL,',
-  '  `encounter_id` INT(11) NOT NULL,',
-  '  `independence_in_daily_activities` VARCHAR(255),',
-  '  `other_independence_activities` VARCHAR(255),',
-  '  `meeting_basic_needs` VARCHAR(255),',
-  '  `other_basic_needs` VARCHAR(255),',
-  '  `disclosure_to_sexual_partner` INT(11),',
-  '  `disclosure_to_household_members` INT(11),',
-  '  `disclosure_to` VARCHAR(255),',
-  '  `mode_of_storing_arv_drugs` VARCHAR(255),',
-  '  `arv_drugs_taking_regime` VARCHAR(255),',
-  '  `receives_household_social_support` INT(11),',
-  '  `household_social_support_given` VARCHAR(255),',
-  '  `receives_community_social_support` INT(11),',
-  '  `community_social_support_given` VARCHAR(255),',
-  '  `linked_to_non_clinical_services` VARCHAR(255),',
-  '  `linked_to_other_services` VARCHAR(255),',
-  '  `has_mental_health_issues` INT(11),',
-  '  `suffering_stressful_situation` INT(11),',
-  '  `uses_drugs_alcohol` INT(11),',
-  '  `has_side_medications_effects` INT(11),',
-  '  `medication_side_effects` VARCHAR(255),',
-  '  `assessment_notes` VARCHAR(255),',
+  '  `provider` INT DEFAULT NULL,',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
+  '  `visit_date` DATE DEFAULT NULL,',
+  '  `location_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
+  '  `independence_in_daily_activities` VARCHAR(255) DEFAULT NULL,',
+  '  `other_independence_activities` VARCHAR(255) DEFAULT NULL,',
+  '  `meeting_basic_needs` VARCHAR(255) DEFAULT NULL,',
+  '  `other_basic_needs` VARCHAR(255) DEFAULT NULL,',
+  '  `disclosure_to_sexual_partner` INT DEFAULT NULL,',
+  '  `disclosure_to_household_members` INT DEFAULT NULL,',
+  '  `disclosure_to` VARCHAR(255) DEFAULT NULL,',
+  '  `mode_of_storing_arv_drugs` VARCHAR(255) DEFAULT NULL,',
+  '  `arv_drugs_taking_regime` VARCHAR(255) DEFAULT NULL,',
+  '  `receives_household_social_support` INT DEFAULT NULL,',
+  '  `household_social_support_given` VARCHAR(255) DEFAULT NULL,',
+  '  `receives_community_social_support` INT DEFAULT NULL,',
+  '  `community_social_support_given` VARCHAR(255) DEFAULT NULL,',
+  '  `linked_to_non_clinical_services` VARCHAR(255) DEFAULT NULL,',
+  '  `linked_to_other_services` VARCHAR(255) DEFAULT NULL,',
+  '  `has_mental_health_issues` INT DEFAULT NULL,',
+  '  `suffering_stressful_situation` INT DEFAULT NULL,',
+  '  `uses_drugs_alcohol` INT DEFAULT NULL,',
+  '  `has_side_medications_effects` INT DEFAULT NULL,',
+  '  `medication_side_effects` VARCHAR(255) DEFAULT NULL,',
+  '  `assessment_notes` VARCHAR(255) DEFAULT NULL,',
   '  `date_created` DATETIME NOT NULL,',
-  '  `date_last_modified` DATETIME,',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
   '  PRIMARY KEY (`encounter_id`),',
-  '  CONSTRAINT `fk_home_visit_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics` (`patient_id`),',
-  '  CONSTRAINT `unique_uuid_home_visit` UNIQUE (`uuid`),',
-  '  INDEX (`visit_date`)',
+  '  CONSTRAINT `fk_home_visit_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_home_visit_checklist` UNIQUE (`uuid`),',
+  '  INDEX (`patient_id`),',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`has_mental_health_issues`),',
+  '  INDEX (`disclosure_to_sexual_partner`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
@@ -4803,85 +4802,80 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_home_visit_checklist`') AS message;
 
 
--- sql
--- File: `src/main/resources/sql/hiv/DDL.sql`
--- --------------------------------------
 -- TABLE: etl_ncd_enrollment
--- Purpose: tenant-aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
--- --------------------------------------
-SET @drop_etl_ncd = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_ncd_enrollment`;');
-PREPARE stmt FROM @drop_etl_ncd; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+-- 1. Standardized DROP
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_ncd_enrollment`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- 2. CREATE statement with optimized indexing and foreign keys
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_ncd_enrollment` (',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_ncd_enrollment` (',
   '  `uuid` CHAR(38),',
-  '  `provider` INT(11),',
-  '  `patient_id` INT(11) NOT NULL,',
-  '  `visit_id` INT(11),',
+  '  `provider` INT DEFAULT NULL,',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
   '  `visit_date` DATE,',
-  '  `location_id` INT(11) DEFAULT NULL,',
-  '  `encounter_id` INT(11) NOT NULL,',
+  '  `location_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
   '  `visit_type` VARCHAR(255) DEFAULT NULL,',
-  '  `referred_from` INT(11),',
-  '  `referred_from_department` INT(11),',
+  '  `referred_from` INT DEFAULT NULL,',
+  '  `referred_from_department` INT DEFAULT NULL,',
   '  `referred_from_department_other` VARCHAR(100),',
-  '  `patient_complaint` INT(11),',
+  '  `patient_complaint` INT DEFAULT NULL,',
   '  `specific_complaint` VARCHAR(255),',
-  '  `disease_type` INT(11),',
-  '  `diabetes_condition` INT(11),',
-  '  `diabetes_type` INT(11),',
+  '  `disease_type` INT DEFAULT NULL,',
+  '  `diabetes_condition` INT DEFAULT NULL,',
+  '  `diabetes_type` INT DEFAULT NULL,',
   '  `diabetes_diagnosis_date` DATE,',
-  '  `hypertension_condition` INT(11),',
+  '  `hypertension_condition` INT DEFAULT NULL,',
   '  `hypertension_stage` VARCHAR(100),',
-  '  `hypertension_type` INT(11),',
-  '  `comorbid_condition` INT(11),',
+  '  `hypertension_type` INT DEFAULT NULL,',
+  '  `comorbid_condition` INT DEFAULT NULL,',
   '  `diagnosis_date` DATE,',
-  '  `hiv_status` INT(11),',
-  '  `hiv_positive_on_art` INT(11),',
-  '  `tb_screening` INT(11),',
-  '  `smoke_check` INT(11),',
+  '  `hiv_status` INT DEFAULT NULL,',
+  '  `hiv_positive_on_art` INT DEFAULT NULL,',
+  '  `tb_screening` INT DEFAULT NULL,',
+  '  `smoke_check` INT DEFAULT NULL,',
   '  `date_stopped_smoke` DATE,',
-  '  `drink_alcohol` INT(11),',
+  '  `drink_alcohol` INT DEFAULT NULL,',
   '  `date_stopped_alcohol` DATE,',
-  '  `cessation_counseling` INT(11),',
-  '  `physical_activity` INT(11),',
-  '  `diet_routine` INT(11),',
+  '  `cessation_counseling` INT DEFAULT NULL,',
+  '  `physical_activity` INT DEFAULT NULL,',
+  '  `diet_routine` INT DEFAULT NULL,',
   '  `existing_complications` VARCHAR(500),',
   '  `other_existing_complications` VARCHAR(500),',
   '  `new_complications` VARCHAR(500),',
   '  `other_new_complications` VARCHAR(500),',
   '  `examination_findings` VARCHAR(500),',
-  '  `cardiovascular` INT(11),',
-  '  `respiratory` INT(11),',
-  '  `abdominal_pelvic` INT(11),',
-  '  `neurological` INT(11),',
-  '  `oral_exam` INT(11),',
-  '  `foot_risk` INT(11),',
+  '  `cardiovascular` INT DEFAULT NULL,',
+  '  `respiratory` INT DEFAULT NULL,',
+  '  `abdominal_pelvic` INT DEFAULT NULL,',
+  '  `neurological` INT DEFAULT NULL,',
+  '  `oral_exam` INT DEFAULT NULL,',
+  '  `foot_risk` INT DEFAULT NULL,',
   '  `foot_low_risk` VARCHAR(500),',
   '  `foot_high_risk` VARCHAR(500),',
-  '  `diabetic_foot` INT(11),',
+  '  `diabetic_foot` INT DEFAULT NULL,',
   '  `describe_diabetic_foot_type` VARCHAR(255),',
   '  `treatment_given` VARCHAR(255),',
   '  `other_treatment_given` VARCHAR(255),',
   '  `lifestyle_advice` VARCHAR(255),',
   '  `nutrition_assessment` VARCHAR(255),',
-  '  `footcare_outcome` INT(11),',
+  '  `footcare_outcome` INT DEFAULT NULL,',
   '  `referred_to` VARCHAR(255),',
   '  `reasons_for_referral` VARCHAR(255),',
   '  `clinical_notes` VARCHAR(255),',
   '  `date_created` DATETIME NOT NULL,',
-  '  `date_last_modified` DATETIME,',
-  '  `voided` INT(11),',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
+  '  `voided` INT DEFAULT 0,',
   '  PRIMARY KEY (`encounter_id`),',
-  '  CONSTRAINT `fk_ncd_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics` (`patient_id`),',
-  '  CONSTRAINT `unique_uuid_ncd` UNIQUE (`uuid`),',
-  '  INDEX(`visit_date`),',
-  '  INDEX(`encounter_id`),',
-  '  INDEX(`patient_id`),',
-  '  INDEX(`disease_type`),',
-  '  INDEX(`diabetes_type`),',
-  '  INDEX(`hypertension_type`)',
+  '  CONSTRAINT `fk_ncd_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_ncd_enrollment` UNIQUE (`uuid`),',
+  '  INDEX (`patient_id`),',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`disease_type`),',
+  '  INDEX (`diabetes_type`),',
+  '  INDEX (`hypertension_type`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
@@ -4890,69 +4884,70 @@ SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_ncd_enrollment`') AS
 
 
 
--- sql
+
 -- TABLE: etl_adr_assessment_tool
--- Purpose: tenant-aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
-SET @drop_etl_adr = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_adr_assessment_tool`;');
-PREPARE stmt FROM @drop_etl_adr; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_adr_assessment_tool`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_adr_assessment_tool` (',
-  '  `patient_id` INT(11) NOT NULL,',
-  '  `visit_id` INT(11) DEFAULT NULL,',
-  '  `encounter_id` INT(11) NOT NULL,',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_adr_assessment_tool` (',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
   '  `uuid` CHAR(38) NOT NULL,',
-  '  `location_id` INT(11) NOT NULL,',
-  '  `provider` INT(11) NOT NULL,',
+  '  `location_id` INT NOT NULL,',
+  '  `provider` INT NOT NULL,',
   '  `visit_date` DATE,',
-  '  `weight_taken` INT(11),',
+  '  `weight_taken` INT,',
   '  `weight_not_taken_specify` VARCHAR(255),',
-  '  `taking_arvs_everyday` INT(11),',
+  '  `taking_arvs_everyday` INT,',
   '  `not_taking_arvs_everyday` VARCHAR(255),',
-  '  `correct_dosage_per_weight` INT(11),',
+  '  `correct_dosage_per_weight` INT,',
   '  `dosage_not_correct_specify` VARCHAR(255),',
-  '  `arv_dosage_frequency` INT(11),',
-  '  `other_medication_dosage_frequency` INT(11),',
-  '  `arv_medication_time` INT(11),',
-  '  `arv_timing_working` INT(11),',
+  '  `arv_dosage_frequency` INT,',
+  '  `other_medication_dosage_frequency` INT,',
+  '  `arv_medication_time` INT,',
+  '  `arv_timing_working` INT,',
   '  `arv_timing_not_working_specify` VARCHAR(255),',
-  '  `other_medication_time` INT(11),',
-  '  `other_medication_timing_working` INT(11),',
+  '  `other_medication_time` INT,',
+  '  `other_medication_timing_working` INT,',
   '  `other_medication_time_not_working_specify` VARCHAR(255),',
-  '  `arv_frequency_difficult_to_follow` INT(11),',
+  '  `arv_frequency_difficult_to_follow` INT,',
   '  `difficult_arv_to_follow_specify` VARCHAR(255),',
-  '  `difficulty_with_arv_tablets_or_liquids` INT(11),',
+  '  `difficulty_with_arv_tablets_or_liquids` INT,',
   '  `difficulty_with_arv_tablets_or_liquids_specify` VARCHAR(255),',
-  '  `othe_drugs_frequency_difficult_to_follow` INT(11),',
+  '  `othe_drugs_frequency_difficult_to_follow` INT,',
   '  `difficult_other_drugs_to_follow_specify` VARCHAR(255),',
-  '  `difficulty_other_drugs_tablets_or_liquids` INT(11),',
+  '  `difficulty_other_drugs_tablets_or_liquids` INT,',
   '  `difficulty_other_drugs_tablets_or_liquids_specify` VARCHAR(255),',
-  '  `arv_difficulty_due_to_taste_or_size` INT(11),',
+  '  `arv_difficulty_due_to_taste_or_size` INT,',
   '  `arv_difficulty_due_to_taste_or_size_specify` VARCHAR(255),',
   '  `arv_symptoms_on_intake` VARCHAR(500),',
-  '  `laboratory_abnormalities` INT(11),',
-  '  `laboratory_abnormalities_specify` INT(11),',
+  '  `laboratory_abnormalities` INT,',
+  '  `laboratory_abnormalities_specify` INT,',
   '  `summary_findings` VARCHAR(500),',
-  '  `severity_of_reaction` INT(11),',
-  '  `reaction_seriousness` INT(11),',
-  '  `reason_for_seriousness` INT(11),',
-  '  `action_taken_on_reaction` INT(11),',
-  '  `reaction_resolved_on_dose_change` INT(11),',
-  '  `reaction_reappeared_after_drug_introduced` INT(11),',
+  '  `severity_of_reaction` INT,',
+  '  `reaction_seriousness` INT,',
+  '  `reason_for_seriousness` INT,',
+  '  `action_taken_on_reaction` INT,',
+  '  `reaction_resolved_on_dose_change` INT,',
+  '  `reaction_reappeared_after_drug_introduced` INT,',
   '  `laboratory_investigations_done` VARCHAR(255),',
-  '  `outcome` INT(11),',
-  '  `reported_adr_to_pharmacy_board` INT(11),',
+  '  `outcome` INT,',
+  '  `reported_adr_to_pharmacy_board` INT,',
   '  `name_of_adr` VARCHAR(255),',
   '  `adr_report_number` VARCHAR(50),',
   '  `date_created` DATETIME NOT NULL,',
-  '  `date_last_modified` DATETIME,',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
   '  PRIMARY KEY (`encounter_id`),',
-  '  CONSTRAINT `fk_adr_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics` (`patient_id`),',
-  '  CONSTRAINT `unique_uuid_adr` UNIQUE (`uuid`),',
+  '  CONSTRAINT `fk_adr_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_adr_assessment` UNIQUE (`uuid`),',
   '  INDEX (`patient_id`),',
   '  INDEX (`visit_id`),',
-  '  INDEX (`visit_date`)',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`severity_of_reaction`),',
+  '  INDEX (`reported_adr_to_pharmacy_board`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
@@ -4960,57 +4955,54 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_adr_assessment_tool`') AS message;
 
 
--- sql
--- --------------------------------------
--- File: `src/main/resources/sql/hiv/DDL.sql`
+
 -- TABLE: etl_ncd_followup
--- Purpose: tenant-aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
--- --------------------------------------
-SET @drop_etl_ncd_followup = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_ncd_followup`;');
-PREPARE stmt FROM @drop_etl_ncd_followup; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_ncd_followup`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_ncd_followup` (',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_ncd_followup` (',
   '  `uuid` CHAR(38),',
-  '  `provider` INT(11),',
-  '  `patient_id` INT(11) NOT NULL,',
-  '  `visit_id` INT(11),',
+  '  `provider` INT DEFAULT NULL,',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
   '  `visit_date` DATE,',
-  '  `location_id` INT(11) DEFAULT NULL,',
-  '  `encounter_id` INT(11) NOT NULL,',
+  '  `location_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
   '  `visit_type` VARCHAR(255) DEFAULT NULL,',
-  '  `tobacco_use` INT(11),',
-  '  `drink_alcohol` INT(11),',
-  '  `physical_activity` INT(11),',
-  '  `healthy_diet` INT(11),',
-  '  `patient_complaint` INT(11),',
+  '  `tobacco_use` INT DEFAULT NULL,',
+  '  `drink_alcohol` INT DEFAULT NULL,',
+  '  `physical_activity` INT DEFAULT NULL,',
+  '  `healthy_diet` INT DEFAULT NULL,',
+  '  `patient_complaint` INT DEFAULT NULL,',
   '  `specific_complaint` VARCHAR(500),',
   '  `other_specific_complaint` VARCHAR(500),',
   '  `examination_findings` VARCHAR(500),',
-  '  `cardiovascular` INT(11),',
-  '  `respiratory` INT(11),',
-  '  `abdominal_pelvic` INT(11),',
-  '  `neurological` INT(11),',
-  '  `oral_exam` INT(11),',
+  '  `cardiovascular` INT DEFAULT NULL,',
+  '  `respiratory` INT DEFAULT NULL,',
+  '  `abdominal_pelvic` INT DEFAULT NULL,',
+  '  `neurological` INT DEFAULT NULL,',
+  '  `oral_exam` INT DEFAULT NULL,',
   '  `foot_exam` VARCHAR(255),',
-  '  `diabetic_foot` INT(11),',
+  '  `diabetic_foot` INT DEFAULT NULL,',
   '  `foot_risk_assessment` VARCHAR(100),',
-  '  `diabetic_foot_risk` INT(11),',
-  '  `adhering_medication` INT(11),',
+  '  `diabetic_foot_risk` INT DEFAULT NULL,',
+  '  `adhering_medication` INT DEFAULT NULL,',
   '  `referred_to` VARCHAR(255),',
   '  `reasons_for_referral` VARCHAR(255),',
   '  `clinical_notes` VARCHAR(255),',
   '  `date_created` DATETIME NOT NULL,',
-  '  `date_last_modified` DATETIME,',
-  '  `voided` INT(11),',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
+  '  `voided` INT DEFAULT 0,',
   '  PRIMARY KEY (`encounter_id`),',
-  '  CONSTRAINT `fk_ncd_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics`(`patient_id`),',
-  '  CONSTRAINT `unique_uuid_ncd` UNIQUE (`uuid`),',
-  '  INDEX (`visit_date`),',
-  '  INDEX (`encounter_id`),',
+  '  CONSTRAINT `fk_ncd_followup_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_ncd_followup` UNIQUE (`uuid`),',
   '  INDEX (`patient_id`),',
-  '  INDEX (`visit_id`)',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`visit_id`),',
+  '  INDEX (`adhering_medication`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
@@ -5021,74 +5013,69 @@ SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_ncd_followup`') AS m
 -- sql
 -- --------------------------------------
 -- TABLE: etl_inpatient_admission
--- Purpose: tenant-aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
--- --------------------------------------
-SET @drop_etl_inpatient_admission = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_inpatient_admission`;');
-PREPARE stmt FROM @drop_etl_inpatient_admission; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_inpatient_admission`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_inpatient_admission` (',
-  '`patient_id` INT(11) NOT NULL,',
-  '`visit_id` INT(11) DEFAULT NULL,',
-  '`encounter_id` INT(11) NOT NULL,',
-  '`uuid` CHAR(38) NOT NULL,',
-  '`location_id` INT(11) NOT NULL,',
-  '`provider` INT(11) NOT NULL,',
-  '`visit_date` DATE,',
-  '`admission_date` DATE,',
-  '`payment_mode` INT(11),',
-  '`admission_location_id` INT(11),',
-  '`admission_location_name` VARCHAR(255),',
-  '`date_created` DATETIME NOT NULL,',
-  '`date_last_modified` DATETIME,',
-  '`voided` INT(11),',
-  'PRIMARY KEY (`encounter_id`),',
-  'CONSTRAINT `fk_inpatient_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics`(`patient_id`),',
-  'CONSTRAINT `unique_uuid_inpatient` UNIQUE (`uuid`),',
-  'INDEX (`patient_id`),',
-  'INDEX (`visit_id`),',
-  'INDEX (`visit_date`),',
-  'INDEX (`admission_date`),',
-  'INDEX (`payment_mode`)',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_inpatient_admission` (',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
+  '  `uuid` CHAR(38) NOT NULL,',
+  '  `location_id` INT NOT NULL,',
+  '  `provider` INT NOT NULL,',
+  '  `visit_date` DATE,',
+  '  `admission_date` DATE,',
+  '  `payment_mode` INT,',
+  '  `admission_location_id` INT,',
+  '  `admission_location_name` VARCHAR(255),',
+  '  `date_created` DATETIME NOT NULL,',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
+  '  `voided` INT DEFAULT 0,',
+  '  PRIMARY KEY (`encounter_id`),',
+  '  CONSTRAINT `fk_inpatient_admission_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_inpatient_admission` UNIQUE (`uuid`),',
+  '  INDEX (`patient_id`),',
+  '  INDEX (`visit_id`),',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`admission_date`),',
+  '  INDEX (`payment_mode`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created `', etl_schema, '`.`etl_inpatient_admission`') AS message;
 
--- sql
--- --------------------------------------
--- TABLE: etl_inpatient_discharge
--- Purpose: tenant-aware creation using `etl_schema`
--- Tenant-aware: dynamic DROP/CREATE via CONCAT + PREPARE
--- --------------------------------------
-SET @drop_etl_inpatient_discharge = CONCAT('DROP TABLE IF EXISTS `', etl_schema, '`.`etl_inpatient_discharge`;');
-PREPARE stmt FROM @drop_etl_inpatient_discharge; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- TABLE: etl_inpatient_discharge
+
+SET @sql = CONCAT('DROP TABLE IF EXISTS ', etl_schema, '.`etl_inpatient_discharge`;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql = CONCAT(
-  'CREATE TABLE IF NOT EXISTS `', etl_schema, '`.`etl_inpatient_discharge` (',
-  '`patient_id` INT(11) NOT NULL,',
-  '`visit_id` INT(11) DEFAULT NULL,',
-  '`encounter_id` INT(11) NOT NULL,',
-  '`uuid` CHAR(38) NOT NULL,',
-  '`location_id` INT(11) NOT NULL,',
-  '`provider` INT(11) NOT NULL,',
-  '`visit_date` DATE,',
-  '`discharge_instructions` VARCHAR(255),',
-  '`discharge_status` INT(11),',
-  '`follow_up_date` DATE,',
-  '`followup_specialist` INT(11),',
-  '`date_created` DATETIME NOT NULL,',
-  '`date_last_modified` DATETIME,',
-  '`voided` INT(11),',
-  'PRIMARY KEY (`encounter_id`),',
-  'CONSTRAINT `fk_inpatient_discharge_patient` FOREIGN KEY (`patient_id`) REFERENCES `', etl_schema, '`.`etl_patient_demographics`(`patient_id`),',
-  'CONSTRAINT `unique_uuid_inpatient_discharge` UNIQUE (`uuid`),',
-  'INDEX (`patient_id`),',
-  'INDEX (`visit_id`),',
-  'INDEX (`visit_date`),',
-  'INDEX (`discharge_status`)',
+  'CREATE TABLE IF NOT EXISTS ', etl_schema, '.`etl_inpatient_discharge` (',
+  '  `patient_id` INT NOT NULL,',
+  '  `visit_id` INT DEFAULT NULL,',
+  '  `encounter_id` INT NOT NULL,',
+  '  `uuid` CHAR(38) NOT NULL,',
+  '  `location_id` INT NOT NULL,',
+  '  `provider` INT NOT NULL,',
+  '  `visit_date` DATE,',
+  '  `discharge_instructions` VARCHAR(255),',
+  '  `discharge_status` INT,',
+  '  `follow_up_date` DATE,',
+  '  `followup_specialist` INT,',
+  '  `date_created` DATETIME NOT NULL,',
+  '  `date_last_modified` DATETIME DEFAULT NULL,',
+  '  `voided` INT DEFAULT 0,',
+  '  PRIMARY KEY (`encounter_id`),',
+  '  CONSTRAINT `fk_inpatient_discharge_patient` FOREIGN KEY (`patient_id`) REFERENCES ', etl_schema, '.`etl_patient_demographics` (`patient_id`) ON DELETE RESTRICT ON UPDATE CASCADE,',
+  '  CONSTRAINT `unique_uuid_etl_inpatient_discharge` UNIQUE (`uuid`),',
+  '  INDEX (`patient_id`),',
+  '  INDEX (`visit_id`),',
+  '  INDEX (`visit_date`),',
+  '  INDEX (`discharge_status`)',
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;'
 );
 
