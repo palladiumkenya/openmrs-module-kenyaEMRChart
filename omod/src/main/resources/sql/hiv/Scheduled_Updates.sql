@@ -11203,6 +11203,315 @@ BEGIN
      date_last_modified=VALUES(date_last_modified);
     SELECT "Completed processing ADR assessment tool";
 END $$
+
+
+-- Procedure sp_update_ATP Disclosure Readiness Assessment
+DROP PROCEDURE IF EXISTS sp_update_etl_atp_disclosure_readiness_assessment $$
+CREATE PROCEDURE sp_update_etl_atp_disclosure_readiness_assessment(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing ATP Disclosure Readiness Assessment";
+    INSERT INTO kenyaemr_etl.etl_atp_disclosure_readiness_assessment (
+           uuid,
+           provider,
+           patient_id,
+           visit_id,
+           visit_date,
+           location_id,
+           encounter_id,
+           entry_point_at_enrolment,
+          other_entry_point_specify,                 
+          who_brought_child_clinic,
+          who_else_lives_child_household,
+          gives_child_medication,
+          knows_child_hiv_status,
+          other_house_member_has_hiv,
+          family_member_taking_arvs,
+          discussed_informing_child_hiv_status,
+          discussion_outcome,
+          child_told_why_come_clinic_or_medication,
+          questions_child_asking,
+          care_giver_answer,
+          child_ever_talk_about_hiv,
+          what_does_child_say,
+          child_doing_in_school,
+          child_school_performance,
+          child_like_school,
+          child_have_friends,
+          child_behaviour_home,
+          worries_learning_hiv_status,
+          disclosure_preference,
+          when_child_be_disclosed_to,
+          child_reactions_when_inform_status,
+          questions_caregiver_have_about_hiv,
+           date_created,
+           date_last_modified)
+   select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 2031464, o.value_coded, null))                   as entry_point_at_enrolment,
+           max(if(o.concept_id = 160632, o.value_text, null))                as other_entry_point_specify,
+           max(if(o.concept_id = 969, o.value_coded, null))     as who_brought_child_clinic,
+           max(if(o.concept_id = 159892, o.value_coded, null))   as who_else_lives_child_household,
+           max(if(o.concept_id = 166665, o.value_coded, null))   as gives_child_medication,
+           max(if(o.concept_id = 5303, o.value_coded, null)) as knows_child_hiv_status,
+           max(if(o.concept_id = 159424, o.value_coded, null))   as other_house_member_has_hiv,
+           max(if(o.concept_id = 160119, o.value_coded, null))     as family_member_taking_arvs,
+           max(if(o.concept_id = 1000606, o.value_coded, null))   as  discussed_informing_child_hiv_status,
+           max(if(o.concept_id = 160433, o.value_coded, null))     as  discussion_outcome ,
+           max(if(o.concept_id = 167681, o.value_coded, null))   as  child_told_why_come_clinic_or_medication,
+           max(if(o.concept_id = 2010482, o.value_coded, null))   as questions_child_asking,
+           max(if(o.concept_id = 168360, o.value_coded, null))   as care_giver_answer,
+           max(if(o.concept_id = 164991, o.value_coded, null))   as child_ever_talk_about_hiv,
+           max(if(o.concept_id = 166980, o.value_coded, null))   as what_does_child_say,
+           max(if(o.concept_id = 5606, o.value_coded, null))   as child_doing_in_school,
+           max(if(o.concept_id = 166439, o.value_coded, null))   as child_school_performance,
+           max(if(o.concept_id = 159928, o.value_coded, null))   as child_like_school,
+           max(if(o.concept_id = 165295, o.value_coded, null))   as child_have_friends,
+           max(if(o.concept_id = 160618, o.value_text, null))   as child_behaviour_home,
+           max(if(o.concept_id = 164995, o.value_coded, null))   as worries_learning_hiv_status,
+           max(if(o.concept_id = 159775, o.value_coded, null))   as disclosure_preference,
+           max(if(o.concept_id = 159642, o.value_coded, null))   as when_child_be_disclosed_to,
+           max(if(o.concept_id = 161011, o.value_text, null))   as child_reactions_when_inform_status,
+           max(if(o.concept_id = 162749, o.value_text, null))   as questions_caregiver_have_about_hiv,
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'd11c340d-defb-443f-b7de-e81dc87060a4'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in                                               
+                                (2031464,160632,969,159892,166665,5303,159424,160119,1000606,160433,
+                                167681,2010482,168360,164991,166980,5606,166439,159928,165295,160618, 164995,
+                                159775,159642,161011,162749)
+        and o.voided = 0
+    where e.voided = 0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id, date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+    visit_date=VALUES(visit_date),
+                            entry_point_at_enrolment=VALUES(entry_point_at_enrolment),
+                            other_entry_point_specify=VALUES(other_entry_point_specify),
+                            who_brought_child_clinic=VALUES(who_brought_child_clinic),
+                            who_else_lives_child_household=VALUES(who_else_lives_child_household),
+                            gives_child_medication=VALUES(gives_child_medication),
+                            knows_child_hiv_status=VALUES(knows_child_hiv_status),
+                            other_house_member_has_hiv=VALUES(other_house_member_has_hiv),
+                            family_member_taking_arvs=VALUES(family_member_taking_arvs),
+                            discussed_informing_child_hiv_status=VALUES(discussed_informing_child_hiv_status),
+                            discussion_outcome=VALUES(discussion_outcome),
+                            child_told_why_come_clinic_or_medication=VALUES(child_told_why_come_clinic_or_medication),
+                            questions_child_asking=VALUES(questions_child_asking),
+                            care_giver_answer=VALUES(care_giver_answer),
+                            child_ever_talk_about_hiv=VALUES(child_ever_talk_about_hiv),
+                            what_does_child_say=VALUES(what_does_child_say),
+                            child_doing_in_school=VALUES(child_doing_in_school),
+                            child_like_school=VALUES(child_like_school),
+                            child_have_friends=VALUES(child_have_friends),
+                            child_behaviour_home=VALUES(child_behaviour_home),
+                            worries_learning_hiv_status=VALUES(worries_learning_hiv_status),
+                            disclosure_preference=VALUES(disclosure_preference),
+                            when_child_be_disclosed_to=VALUES(when_child_be_disclosed_to),
+                            child_reactions_when_inform_status=VALUES(child_reactions_when_inform_status),
+                            questions_caregiver_have_about_hiv=VALUES(questions_caregiver_have_about_hiv),
+                            
+     date_created=VALUES(date_created),
+     date_last_modified=VALUES(date_last_modified);
+    SELECT "Completed processing ATP Disclosure Readiness Assessment";
+END $$
+
+
+
+
+-- Procedure sp_update_ATP taking charge tracking
+DROP PROCEDURE IF EXISTS sp_update_etl_atp_taking_charge_tracking $$
+CREATE PROCEDURE sp_update_etl_atp_taking_charge_tracking(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing ATP Taking charge tracking";
+    INSERT INTO kenyaemr_etl.etl_atp_taking_charge_tracking (
+           uuid,
+           provider,
+           patient_id,
+           visit_id,
+           visit_date,
+           location_id,
+           encounter_id,
+           date_of_full_disclosure, 
+           treatment_literacy,
+           self_management,
+           communication,
+           support,
+           adult_clinic_expectations,
+           date_created,
+           date_last_modified)
+   select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 160753, o.value_datetime, null))                   as date_of_full_disclosure,
+           max(if(o.concept_id = 165364, o.value_coded, null))                as treatment_literacy,
+           max(if(o.concept_id = 166937, o.value_coded, null))     as self_management,
+           max(if(o.concept_id = 165360, o.value_coded, null))   as communication,
+           max(if(o.concept_id = 163766, o.value_coded, null))   as support,
+           max(if(o.concept_id = 165363, o.value_coded, null)) as adult_clinic_expectations,  
+           
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'a4276b08-5bf1-402a-bb6a-0b2e54b41d67'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in                                               
+                                (160753,165364,166937,165360,163766,165363)
+        and o.voided = 0
+    where e.voided = 0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id, date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+    visit_date=VALUES(visit_date),
+                            date_of_full_disclosure=VALUES(date_of_full_disclosure),
+                            treatment_literacy=VALUES(treatment_literacy),
+                            self_management=VALUES(self_management),
+                            communication=VALUES(communication),
+                            support=VALUES(support),
+                            adult_clinic_expectations=VALUES(adult_clinic_expectations),
+                                                
+     date_created=VALUES(date_created),
+     date_last_modified=VALUES(date_last_modified);
+    SELECT "Completed processing ATP Taking charge tracking";
+END $$
+
+
+-- Procedure sp_update_ATP Transition readiness assessment
+DROP PROCEDURE IF EXISTS sp_update_etl_atp_transition_readiness_assessment $$
+CREATE PROCEDURE sp_update_etl_atp_transition_readiness_assessment(IN last_update_time DATETIME)
+BEGIN
+    SELECT "Processing ATP Transition readiness assessment";
+    INSERT INTO kenyaemr_etl.etl_atp_transition_readiness_assessment (
+           uuid,
+           provider,
+           patient_id,
+           visit_id,
+           visit_date,
+           location_id,
+           encounter_id,
+           can_explain_hiv_is,
+           explain_how_arv_work,
+           knows_name_of_arv,
+           explain_what_means_suppressed_vl,
+           state_what_thier_vl_is,
+           knows_they_virally_suppressed,
+           know_day_date_of_current_clinic_visit,
+           came_on_scheduled,
+           explain_what_to_do_missed_medication,
+           explain_where_to_seek_medical_care,
+           navigate_clinic_services_on_own,
+           comfortable_comming_to_clinic,
+           feels_not_conmfortable_coming_to_clinic_specify,
+           medical_problem_report_symptoms,
+           feel_free_ask_hcw_questions,
+           feel_free_ask_hcw_reproductive_health,
+           name_different_contraception,
+           identify_one_person_to_seek_help,
+           attends_peer_support_group,
+           disclose_hiv_status_someone_else,
+           identify_treatment_buddy,
+           varbalize_long_term_goals,
+           ready_to_transition_adult_care,
+           not_ready_for_transition_specify,
+           date_created,
+           date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 1436, o.value_coded, null))      as can_explain_hiv_is,
+           max(if(o.concept_id = 162695, o.value_coded, null))      as explain_how_arv_work,
+           max(if(o.concept_id = 1149, o.value_coded, null))     as knows_name_of_arv,
+           max(if(o.concept_id = 165244, o.value_coded, null))   as explain_what_means_suppressed_vl,
+           max(if(o.concept_id = 163310, o.value_coded, null))   as state_what_thier_vl_is,
+           max(if(o.concept_id = 165245, o.value_coded, null)) as knows_they_virally_suppressed, 
+           max(if(o.concept_id = 160288, o.value_coded, null)) as know_day_date_of_current_clinic_visit, 
+           max(if(o.concept_id = 166484, o.value_coded, null)) as came_on_scheduled, 
+           max(if(o.concept_id = 160582, o.value_coded, null)) as explain_what_to_do_missed_medication, 
+           max(if(o.concept_id = 162886, o.value_coded, null)) as explain_where_to_seek_medical_care, 
+           max(if(o.concept_id = 165315, o.value_coded, null)) as navigate_clinic_services_on_own, 
+           max(if(o.concept_id = 162062, o.value_coded, null)) as comfortable_comming_to_clinic, 
+           max(if(o.concept_id = 159395, o.value_text, null)) as feels_not_conmfortable_coming_to_clinic_specify, 
+           max(if(o.concept_id = 162871, o.value_coded, null)) as medical_problem_report_symptoms, 
+           max(if(o.concept_id = 5619, o.value_coded, null)) as feel_free_ask_hcw_questions, 
+           max(if(o.concept_id = 160575, o.value_coded, null)) as feel_free_ask_hcw_reproductive_health, 
+           max(if(o.concept_id = 1635, o.value_coded, null)) as name_different_contraception, 
+           max(if(o.concept_id = 2010457, o.value_coded, null)) as identify_one_person_to_seek_help, 
+           max(if(o.concept_id = 163000, o.value_coded, null)) as attends_peer_support_group, 
+           max(if(o.concept_id = 159425, o.value_coded, null)) as disclose_hiv_status_someone_else, 
+           max(if(o.concept_id = 166665, o.value_coded, null)) as identify_treatment_buddy, 
+           max(if(o.concept_id = 162060, o.value_coded, null)) as varbalize_long_term_goals, 
+           max(if(o.concept_id = 165363, o.value_coded, null)) as ready_to_transition_adult_care, 
+           max(if(o.concept_id = 160632, o.value_text, null)) as not_ready_for_transition_specify, 
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'f4237de5-355a-4437-a09b-3e164719ae9c'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in                                               
+                                (1436,162695,1149,165244,163310,165245,160288,166484,160582,
+                                162886,165315,162062,159395,162871,5619,160575,1635,2010457,163000,
+                                159425,166665,162060,165363,160632)
+        and o.voided = 0
+    where e.voided = 0
+    and e.date_created >= last_update_time
+       or e.date_changed >= last_update_time
+       or e.date_voided >= last_update_time
+       or o.date_created >= last_update_time
+       or o.date_voided >= last_update_time
+    group by e.patient_id, date(e.encounter_datetime)
+    ON DUPLICATE KEY UPDATE provider=VALUES(provider),
+    visit_date=VALUES(visit_date),
+                            can_explain_hiv_is=VALUES(can_explain_hiv_is),
+                            explain_how_arv_work=VALUES(explain_how_arv_work),
+                            knows_name_of_arv=VALUES(knows_name_of_arv),
+                            explain_what_means_suppressed_vl=VALUES(explain_what_means_suppressed_vl),
+                            state_what_thier_vl_is=VALUES(state_what_thier_vl_is),
+                            knows_they_virally_suppressed=VALUES(knows_they_virally_suppressed),
+                            know_day_date_of_current_clinic_visit=VALUES(know_day_date_of_current_clinic_visit),
+                            came_on_scheduled=VALUES(came_on_scheduled),
+                            explain_what_to_do_missed_medication=VALUES(explain_what_to_do_missed_medication),
+                            explain_where_to_seek_medical_care=VALUES(explain_where_to_seek_medical_care),
+                            navigate_clinic_services_on_own=VALUES(navigate_clinic_services_on_own),
+                            comfortable_comming_to_clinic=VALUES(comfortable_comming_to_clinic),
+                            feels_not_conmfortable_coming_to_clinic_specify=VALUES(feels_not_conmfortable_coming_to_clinic_specify),
+                            medical_problem_report_symptoms=VALUES(medical_problem_report_symptoms),
+                            feel_free_ask_hcw_questions=VALUES(feel_free_ask_hcw_questions),
+                            feel_free_ask_hcw_reproductive_health=VALUES(feel_free_ask_hcw_reproductive_health),
+                            name_different_contraception=VALUES(name_different_contraception),
+                            identify_one_person_to_seek_help=VALUES(identify_one_person_to_seek_help),
+                            attends_peer_support_group=VALUES(attends_peer_support_group),
+                            disclose_hiv_status_someone_else=VALUES(disclose_hiv_status_someone_else),
+                            identify_treatment_buddy=VALUES(identify_treatment_buddy),
+                            varbalize_long_term_goals=VALUES(varbalize_long_term_goals),
+                            ready_to_transition_adult_care=VALUES(ready_to_transition_adult_care),
+                            not_ready_for_transition_specify=VALUES(not_ready_for_transition_specify),                           
+     date_created=VALUES(date_created),
+     date_last_modified=VALUES(date_last_modified);
+    SELECT "Completed processing ATP Transition readiness assessment";
+END $$
+
 -- ------------- Procedure sp_update_etl_ncd_enrollment-------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_ncd_enrollment $$
@@ -11881,6 +12190,9 @@ CREATE PROCEDURE sp_scheduled_updates()
     CALL sp_update_etl_patient_appointments(last_update_time);
     CALL sp_update_next_appointment_dates(last_update_time);
     CALL sp_update_etl_adr_assessment_tool(last_update_time);
+    CALL sp_update_etl_atp_disclosure_readiness_assessment(last_update_time);
+    CALL sp_update_etl_atp_taking_charge_tracking(last_update_time);
+    CALL sp_update_etl_atp_transition_readiness_assessment(last_update_time);
     CALL sp_update_etl_ncd_enrollment(last_update_time);
     CALL sp_update_etl_ncd_followup(last_update_time);
     CALL sp_update_etl_inpatient_admission(last_update_time);
