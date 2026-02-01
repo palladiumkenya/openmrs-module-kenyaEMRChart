@@ -121,6 +121,9 @@ DROP TABLE IF EXISTS kenyaemr_etl.etl_special_clinics;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_inpatient_admission;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_inpatient_discharge;
 DROP TABLE IF EXISTS kenyaemr_etl.etl_doctor_progress_note;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_atp_transition_readiness_assessment;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_atp_taking_charge_tracking;
+DROP TABLE IF EXISTS kenyaemr_etl.etl_atp_disclosure_readiness_assessment;
 
 -- create table etl_patient_demographics
 create table kenyaemr_etl.etl_patient_demographics (
@@ -4412,6 +4415,127 @@ CREATE TABLE kenyaemr_etl.etl_adr_assessment_tool
     INDEX (visit_date)
 );
 SELECT "Successfully created etl_adr_assessment_tool table";
+
+
+-- Create ATP Disclosure Readiness Assessment table 
+CREATE TABLE kenyaemr_etl.etl_atp_disclosure_readiness_assessment
+(
+    patient_id                                INT(11)  NOT NULL,
+    visit_id                                  INT(11) DEFAULT NULL,
+    encounter_id                              INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                      CHAR(38) NOT NULL,
+    location_id                               INT(11)  NOT NULL,
+    provider                                  INT(11)  NOT NULL,
+    visit_date                                DATE,
+    entry_point_at_enrolment                  INT(11),
+    other_entry_point_specify                 VARCHAR(255),
+    who_brought_child_clinic                  INT(11),
+    who_else_lives_child_household            INT(11),
+    gives_child_medication                    INT(11),
+    knows_child_hiv_status                    INT(11),
+    other_house_member_has_hiv                INT(11),
+    family_member_taking_arvs                 INT(11),
+    discussed_informing_child_hiv_status      INT(11),
+    discussion_outcome                        INT(11),
+    child_told_why_come_clinic_or_medication  INT(11),
+    questions_child_asking                    INT(11),
+    care_giver_answer                         INT(11),
+    child_ever_talk_about_hiv                 INT(11),
+    what_does_child_say                       INT(11),
+    child_doing_in_school                     INT(11),
+    child_school_performance                  INT(11),
+    child_like_school                         INT(11),
+    child_have_friends                        INT(11),
+    child_behaviour_home                      INT(11),
+    worries_learning_hiv_status               INT(11),
+    disclosure_preference                     INT(11),
+    when_child_be_disclosed_to                INT(11),
+    child_reactions_when_inform_status        VARCHAR(255),
+    questions_caregiver_have_about_hiv        VARCHAR(500),
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_atp_disclosure_readiness_assessment table";
+
+
+-- Create ATP Taking Charge Tracking Form table 
+CREATE TABLE kenyaemr_etl.etl_atp_taking_charge_tracking
+(
+    patient_id                                INT(11)  NOT NULL,
+    visit_id                                  INT(11) DEFAULT NULL,
+    encounter_id                              INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                      CHAR(38) NOT NULL,
+    location_id                               INT(11)  NOT NULL,
+    provider                                  INT(11)  NOT NULL,
+    visit_date                                DATE,
+    date_of_full_disclosure                   DATE,
+    treatment_literacy                        INT(11),
+    self_management                           INT(11),
+    communication                             INT(11),
+    support                                   INT(11),
+    adult_clinic_expectations                 INT(11),
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_atp_taking_charge_tracking_form table";
+
+-- Create ATP Attach Scale Transition Readiness Assessment table 
+CREATE TABLE kenyaemr_etl.etl_atp_transition_readiness_assessment
+(
+    patient_id                                INT(11)  NOT NULL,
+    visit_id                                  INT(11) DEFAULT NULL,
+    encounter_id                              INT(11)  NOT NULL PRIMARY KEY,
+    uuid                                      CHAR(38) NOT NULL,
+    location_id                               INT(11)  NOT NULL,
+    provider                                  INT(11)  NOT NULL,
+    visit_date                                DATE,   
+    can_explain_hiv_is                        INT(11),
+    explain_how_arv_work                      INT(11),
+    knows_name_of_arv                         INT(11),
+    explain_what_means_suppressed_vl          INT(11),
+    state_what_thier_vl_is                    INT(11),
+    knows_they_virally_suppressed             INT(11),
+    know_day_date_of_current_clinic_visit     INT(11),
+    came_on_scheduled                         INT(11),
+    explain_what_to_do_missed_medication      INT(11),
+    explain_where_to_seek_medical_care        INT(11),
+    navigate_clinic_services_on_own           INT(11),
+    comfortable_comming_to_clinic             INT(11),
+    feels_not_conmfortable_coming_to_clinic_specify VARCHAR(255),
+    medical_problem_report_symptoms           INT(11),
+    feel_free_ask_hcw_questions               INT(11),
+    feel_free_ask_hcw_reproductive_health     INT(11),
+    name_different_contraception              INT(11),
+    identify_one_person_to_seek_help          INT(11),
+    attends_peer_support_group                INT(11),
+    disclose_hiv_status_someone_else          INT(11),
+    identify_treatment_buddy                  INT(11),
+    varbalize_long_term_goals                 INT(11),
+    ready_to_transition_adult_care            INT(11),
+    not_ready_for_transition_specify          VARCHAR(255),
+    date_created                      DATETIME NOT NULL,
+    date_last_modified                DATETIME,
+    CONSTRAINT FOREIGN KEY (patient_id)
+        REFERENCES kenyaemr_etl.etl_patient_demographics (patient_id),
+    CONSTRAINT unique_uuid UNIQUE (uuid),
+    INDEX (patient_id),
+    INDEX (visit_id),
+    INDEX (visit_date)
+);
+SELECT "Successfully created etl_atp_transition_readiness_assessment table";
+
 
 -- ------------ create table etl_ncd_followup-----------------------
 
