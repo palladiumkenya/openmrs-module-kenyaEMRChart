@@ -638,7 +638,13 @@ insert into dwapi_etl.etl_laboratory_extract(
 WITH RankedOrders AS (
     SELECT
         o.*,
-        ROW_NUMBER() OVER (PARTITION BY o.patient_id, o.encounter_id, o.concept_id ORDER BY o.order_id DESC) as rn
+        ROW_NUMBER() OVER (
+            PARTITION BY o.patient_id, DATE(o.date_activated), o.concept_id
+            ORDER BY
+                CASE WHEN EXISTS (SELECT 1 FROM obs x WHERE x.order_id = o.order_id AND x.voided = 0) THEN 0 ELSE 1 END,
+                o.date_activated DESC,
+                o.order_id DESC
+            ) AS rn
     FROM orders o
     WHERE o.order_type_id = 3
       AND o.order_action IN ('NEW','REVISE')
@@ -707,7 +713,7 @@ SELECT
     lor.concept_id as set_member_conceptId,
     lor.test_result as test_result,
     o.date_activated as date_test_requested,
-    lor.obs_datetime as date_test_result_received,
+    lor.date_created as date_test_result_received,
     e.date_created,
     e.date_changed as date_last_modified,
     e.creator,
@@ -860,6 +866,8 @@ et.uuid as program_uuid,
 	when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
 	when '4f02dfed-a2ec-40c2-b546-85dab5831871' then 'VMMC'
 	when 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97' then 'NCD'
+    when '72635673-0613-4259-916e-e0d5d5ef8f66' then 'Antenatal Care'
+    when '286598d5-1886-4f0d-9e5f-fa5473399cee' then 'Postnatal Care'
 end) as program_name,
 e.encounter_id,
 coalesce(max(if(o.concept_id=161555, o.value_coded, null)),max(if(o.concept_id=159786, o.value_coded, null))) as reason_discontinued,
@@ -884,7 +892,8 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
-	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871','c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97')
+	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871','c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97',
+            '72635673-0613-4259-916e-e0d5d5ef8f66','286598d5-1886-4f0d-9e5f-fa5473399cee')
 ) et on et.encounter_type_id=e.encounter_type
 group by e.encounter_id) q
 LEFT JOIN location l ON l.uuid = q.to_facility_raw;
@@ -1304,7 +1313,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_antenatal_visit()
                                              max(if(o.concept_id=1040, (case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
                                              max(if(o.concept_id=1326, (case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 163611 then "Invalid"  else "" end),null)) as test_2_result ,
                                              max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 163611 then "Invalid" else "" end),null)) as test_3_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit"  when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit"  when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
@@ -1506,7 +1515,7 @@ insert into dwapi_etl.etl_mchs_delivery(patient_id,
 											max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 											max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
-											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
 											max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										from obs o
@@ -1775,9 +1784,10 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 						  nullif(max(if(o.concept_id=374 and o.value_coded =1472,"Tubal Ligation",'')),''),
 						  nullif(max(if(o.concept_id=374 and o.value_coded =190,"Condoms",'')),''),
 						  nullif(max(if(o.concept_id=374 and o.value_coded =1489,"Vasectomy",'')),''),
+                          nullif(max(if(o.concept_id=374 and o.value_coded =5277,"Natural Method",'')),''),
 						  nullif(max(if(o.concept_id=374 and o.value_coded =162332,"Undecided",'')),'')
 				) as family_planning_method,
-				max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
+				max(if(o.concept_id=160338,o.value_coded,null)) as referred_from,
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
@@ -1788,7 +1798,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
+														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160338,163145,159395,159949,5096,161651,165070,
                                                                             1724,167017,163783,162642,166665,165218,160632,299,164359,164181)
 				inner join
 				(
@@ -1803,7 +1813,7 @@ CREATE PROCEDURE sp_populate_dwapi_mch_postnatal_visit()
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 											 max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
@@ -2856,7 +2866,7 @@ left join (
                max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
                max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 			         max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
-               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
                max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
              from obs o
@@ -8344,7 +8354,7 @@ BEGIN
         e.location_id,
         e.creator,
         date(e.encounter_datetime) as visit_date,
-        max(if(o.concept_id = 159948, o.value_datetime, null )) as examination_date,
+        max(if(o.concept_id = 159948 or o.concept_id = 169466, o.value_datetime, null )) as examination_date,
         max(if(o.concept_id=162869,o.value_datetime,null)) as incident_date,
         max(if(o.concept_id=1639,o.value_numeric,null)) as number_of_perpetrators,
         max(if(o.concept_id=165229,o.value_coded,null)) as is_perpetrator_known,
@@ -8423,7 +8433,7 @@ BEGIN
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (159948,162869,1639,165229,167214,167131,161564,159942,160945,166846,160303,123160,161011,1357,166484,162724,164093,165052,165152,165193,161550,
                                                                            165144,160221,163677,1391,160080,1823,163400,5272,160753,5085,5086,162056,165171,163104,161239,166363,165180,160258,162997,163048,165241,161031,
-                                                                           165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225)
+                                                                           165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225,169466)
         and o.voided=0
     group by e.patient_id,date(e.encounter_datetime);
     SELECT "Completed processing SGBV post rape care";
@@ -8722,6 +8732,7 @@ INSERT INTO dwapi_etl.etl_psychiatry (patient_id,
   priority_of_admission,
   admission_ward,
   duration_of_hospital_stay,
+  psycho_social_support,
   date_created,
   date_last_modified,
   voided)
@@ -8807,6 +8818,9 @@ max(if(o.concept_id = 162477, o.value_coded, null))                             
 max(if(o.concept_id = 1655, o.value_coded, null))                                       as priority_of_admission,
 max(if(o.concept_id = 1000075, o.value_coded, null))                                    as admission_ward,
 max(if(o.concept_id = 1896, o.value_coded, null))                                       as duration_of_hospital_stay,
+concat_ws(',',max(if(o.concept_id = 165302 and o.value_coded = 169400, 'Psycho-Social Assessments and Investigation',null)),
+         max(if(o.concept_id = 165302 and o.value_coded = 5490, 'Psycho-Social rehabilitation', null)),
+         max(if(o.concept_id = 165302 and o.value_coded = 160545, 'Outreach services/Health Talks', null))) psycho_social_support,
 e.date_created,
 e.date_changed,
 e.voided
@@ -8823,7 +8837,7 @@ left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                    167106, 167112, 167181, 167084, 163104,
                                    165104, 160433,
                                    163145, 159495, 162724, 1640, 162879, 162477,
-                                   1655, 1000075, 1896)
+                                   1655, 1000075, 1896, 165302)
 and o.voided = 0
 group by e.patient_id, date(e.encounter_datetime);
 SELECT "Completed processing psychiatry";

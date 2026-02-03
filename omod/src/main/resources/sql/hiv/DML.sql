@@ -604,7 +604,6 @@ group by e.patient_id,visit_date;
 SELECT "Completed processing HIV Followup data ", CONCAT("Time: ", NOW());
 END $$
 
-
 -- ------------- populate etl_laboratory_extract  uuid:  --------------------------------
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_laboratory_extract $$
@@ -637,7 +636,13 @@ insert into kenyaemr_etl.etl_laboratory_extract(
 WITH RankedOrders AS (
     SELECT
         o.*,
-        ROW_NUMBER() OVER (PARTITION BY o.patient_id, o.encounter_id, o.concept_id ORDER BY o.order_id DESC) as rn
+        ROW_NUMBER() OVER (
+            PARTITION BY o.patient_id, DATE(o.date_activated), o.concept_id
+            ORDER BY
+                CASE WHEN EXISTS (SELECT 1 FROM obs x WHERE x.order_id = o.order_id AND x.voided = 0) THEN 0 ELSE 1 END,
+                o.date_activated DESC,
+                o.order_id DESC
+            ) AS rn
     FROM orders o
     WHERE o.order_type_id = 3
       AND o.order_action IN ('NEW','REVISE')
@@ -706,7 +711,7 @@ SELECT
     lor.concept_id as set_member_conceptId,
     lor.test_result as test_result,
     o.date_activated as date_test_requested,
-    lor.obs_datetime as date_test_result_received,
+    lor.date_created as date_test_result_received,
     e.date_created,
     e.date_changed as date_last_modified,
     e.creator
@@ -892,6 +897,8 @@ et.uuid as program_uuid,
 	when 'd7142400-2495-11e9-ab14-d663bd873d93' then 'KP'
 	when '4f02dfed-a2ec-40c2-b546-85dab5831871' then 'VMMC'
 	when 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97' then 'NCD'
+	when '72635673-0613-4259-916e-e0d5d5ef8f66' then 'Antenatal Care'
+	when '286598d5-1886-4f0d-9e5f-fa5473399cee' then 'Postnatal Care'
 end) as program_name,
 e.encounter_id,
 coalesce(max(if(o.concept_id=161555, o.value_coded, null)),max(if(o.concept_id=159786, o.value_coded, null))) as reason_discontinued,
@@ -915,7 +922,8 @@ inner join
 	select encounter_type_id, uuid, name from encounter_type where
 	uuid in('2bdada65-4c72-4a48-8730-859890e25cee','d3e3d723-7458-4b4e-8998-408e8a551a84','5feee3f1-aa16-4513-8bd0-5d9b27ef1208',
 	'7c426cfc-3b47-4481-b55f-89860c21c7de','01894f88-dc73-42d4-97a3-0929118403fb','bb77c683-2144-48a5-a011-66d904d776c9',
-	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871', 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97')
+	        '162382b8-0464-11ea-9a9f-362b9e155667','5cf00d9e-09da-11ea-8d71-362b9e155667','d7142400-2495-11e9-ab14-d663bd873d93','4f02dfed-a2ec-40c2-b546-85dab5831871', 'c4994dd7-f2b6-4c28-bdc7-8b1d9d2a6a97',
+	       '72635673-0613-4259-916e-e0d5d5ef8f66','286598d5-1886-4f0d-9e5f-fa5473399cee')
 ) et on et.encounter_type_id=e.encounter_type
 group by e.encounter_id) q
 LEFT JOIN location l ON l.uuid = q.to_facility_raw;
@@ -1330,7 +1338,7 @@ CREATE PROCEDURE sp_populate_etl_mch_antenatal_visit()
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 163611 then "Invalid"  else "" end),null)) as test_2_result ,
 											 max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Reactive" when 664 then "Non-Reactive" when 163611 then "Invalid" else "" end),null)) as test_3_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
@@ -1532,7 +1540,7 @@ CREATE PROCEDURE sp_populate_etl_mch_delivery()
 											max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 											max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
-											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+											max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
 											max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										from obs o
@@ -1799,19 +1807,19 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 						  nullif(max(if(o.concept_id=374 and o.value_coded =1472,"Tubal Ligation",'')),''),
 						  nullif(max(if(o.concept_id=374 and o.value_coded =190,"Condoms",'')),''),
 						  nullif(max(if(o.concept_id=374 and o.value_coded =1489,"Vasectomy",'')),''),
+						  nullif(max(if(o.concept_id=374 and o.value_coded =5277,"Natural Method",'')),''),
 						  nullif(max(if(o.concept_id=374 and o.value_coded =162332,"Undecided",'')),'')
 				) as family_planning_method,
-				max(if(o.concept_id=160481,o.value_coded,null)) as referred_from,
+				max(if(o.concept_id=160338,o.value_coded,null)) as referred_from,
 				max(if(o.concept_id=163145,o.value_coded,null)) as referred_to,
 				max(if(o.concept_id=164359,o.value_text,null)) as referral_reason,
 				max(if(o.concept_id=159395,o.value_text,null)) as clinical_notes,
 				e.date_created as date_created,
         if(max(o.date_created) > min(e.date_created),max(o.date_created),NULL) as date_last_modified
-
 			from encounter e
 				inner join person p on p.person_id=e.patient_id and p.voided=0
 				inner join obs o on e.encounter_id = o.encounter_id and o.voided =0
-														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160481,163145,159395,159949,5096,161651,165070,
+														and o.concept_id in(1646,159893,5599,5630,1572,5088,5087,5085,5086,5242,5092,5089,5090,1343,21,1147,1856,159780,162128,162110,159840,159844,5245,230,1396,162134,1151,162121,162127,1382,163742,160968,160969,160970,160971,160975,160972,159427,164848,161557,1436,1109,5576,159595,163784,1282,161074,160085,161004,159921,164934,163589,160653,374,160338,163145,159395,159949,5096,161651,165070,
                                                                             1724,167017,163783,162642,166665,165218,160632,299,164359,164181)
 				inner join
 				(
@@ -1826,7 +1834,7 @@ CREATE PROCEDURE sp_populate_etl_mch_postnatal_visit()
 											 max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
 											 max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 											 max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
-											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+											 max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
 											 max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
 											 max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
 										 from obs o
@@ -2857,7 +2865,7 @@ left join (
                max(if(o.concept_id=1040, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 163611 then "Invalid"  else "" end),null)) as test_1_result ,
                max(if(o.concept_id=1326, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_2_result ,
 			         max(if(o.concept_id=1000630, (case o.value_coded when 703 then "Positive" when 664 then "Negative" when 1175 then "N/A"  else "" end),null)) as test_3_result ,
-               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" else "" end),null)) as kit_name ,
+               max(if(o.concept_id=164962, (case o.value_coded when 164960 then "Determine" when 164961 then "First Response" when 165351 then "Dual Kit" when 169126 then "One step" when 169127 then "Trinscreen" when 2008824 then "Standard Q" else "" end),null)) as kit_name ,
                max(if(o.concept_id=164964,trim(o.value_text),null)) as lot_no,
                max(if(o.concept_id=162502,date(o.value_datetime),null)) as expiry_date
              from obs o
@@ -3232,19 +3240,30 @@ WITH enrolled AS (
     FROM kenyaemr_etl.etl_hiv_enrollment e
     GROUP BY e.patient_id
 ),
-     lab_ranks AS (
+     -- Rank ALL lab orders to find the absolute latest (even if no result yet)
+     lab_ranks_all AS (
          SELECT
              l.*,
-             ROW_NUMBER() OVER (PARTITION BY l.patient_id ORDER BY l.date_test_requested DESC, l.date_created DESC) AS rn,
-             COUNT(*) OVER (PARTITION BY l.patient_id) AS n_vl
+             ROW_NUMBER() OVER (PARTITION BY l.patient_id ORDER BY l.date_test_requested DESC, l.date_created DESC) AS rn
          FROM kenyaemr_etl.etl_laboratory_extract l
          WHERE l.lab_test IN (1305, 856)
      ),
+     -- Rank only lab orders WITH RESULTS to find the previous successful test
+     lab_ranks_with_results AS (
+         SELECT
+             l.*,
+             ROW_NUMBER() OVER (PARTITION BY l.patient_id ORDER BY l.date_test_requested DESC, l.date_created DESC) AS rn
+         FROM kenyaemr_etl.etl_laboratory_extract l
+         WHERE l.lab_test IN (1305, 856) AND l.test_result IS NOT NULL
+     ),
      lab_latest AS (
-         SELECT * FROM lab_ranks WHERE rn = 1
+         SELECT * FROM lab_ranks_all WHERE rn = 1
      ),
      lab_previous AS (
-         SELECT * FROM lab_ranks WHERE rn = 2
+         -- If the latest (rn=1) has a result, the previous with result is rn=2.
+         -- If the latest (rn=1) does NOT have a result, the "latest with result" is rn=1 in this CTE,
+         -- so we logic check in the final SELECT to ensure we don't pick the same record twice.
+         SELECT * FROM lab_ranks_with_results WHERE rn <= 2
      ),
      base_vl AS (
          SELECT
@@ -3255,7 +3274,7 @@ WITH enrolled AS (
                   JOIN (
              SELECT patient_id, MIN(date_test_requested) AS base_date
              FROM kenyaemr_etl.etl_laboratory_extract
-             WHERE lab_test IN (1305,856)
+             WHERE lab_test IN (1305,856) AND test_result IS NOT NULL
              GROUP BY patient_id
          ) lb ON lb.patient_id = l.patient_id AND lb.base_date = l.date_test_requested
          WHERE l.lab_test IN (1305, 856)
@@ -3304,11 +3323,29 @@ WITH enrolled AS (
              ll.date_test_result_received AS lab_latest_date_test_result_received,
              ll.urgency AS lab_latest_urgency,
              ll.order_reason AS lab_latest_order_reason,
-             lp.test_result AS lab_previous_test_result,
-             lp.date_test_requested AS lab_previous_date_test_requested,
-             lp.date_test_result_received AS lab_previous_date_test_result_received,
-             lp.urgency AS lab_previous_urgency,
-             lp.order_reason AS lab_previous_order_reason,
+             -- Pick the correct previous:
+             -- If latest has no result, rn=1 from lab_ranks_with_results is the previous.
+             -- If latest has a result, rn=2 from lab_ranks_with_results is the previous.
+             CASE
+                 WHEN ll.test_result IS NULL THEN lp1.test_result
+                 ELSE lp2.test_result
+                 END AS lab_previous_test_result,
+             CASE
+                 WHEN ll.test_result IS NULL THEN lp1.date_test_requested
+                 ELSE lp2.date_test_requested
+                 END AS lab_previous_date_test_requested,
+             CASE
+                 WHEN ll.test_result IS NULL THEN lp1.date_test_result_received
+                 ELSE lp2.date_test_result_received
+                 END AS lab_previous_date_test_result_received,
+             CASE
+                 WHEN ll.test_result IS NULL THEN lp1.urgency
+                 ELSE lp2.urgency
+                 END AS lab_previous_urgency,
+             CASE
+                 WHEN ll.test_result IS NULL THEN lp1.order_reason
+                 ELSE lp2.order_reason
+                 END AS lab_previous_order_reason,
              bv.base_viral_load_test_result,
              bv.base_viral_load_test_date,
              bvt.base_viral_load_test_result AS base_viral_load_test_result_ti,
@@ -3321,7 +3358,8 @@ WITH enrolled AS (
              fup.pg_outcome
          FROM enrolled e
                   LEFT JOIN lab_latest ll ON ll.patient_id = e.patient_id
-                  LEFT JOIN lab_previous lp ON lp.patient_id = e.patient_id
+                  LEFT JOIN lab_previous lp1 ON lp1.patient_id = e.patient_id AND lp1.rn = 1
+                  LEFT JOIN lab_previous lp2 ON lp2.patient_id = e.patient_id AND lp2.rn = 2
                   LEFT JOIN base_vl bv ON bv.patient_id = e.patient_id
                   LEFT JOIN base_vl_for_transferin bvt ON bvt.patient_id = e.patient_id
                   LEFT JOIN art_start art ON e.patient_id = art.patient_id
@@ -8863,7 +8901,7 @@ BEGIN
         e.location_id,
         e.creator,
         date(e.encounter_datetime) as visit_date,
-        max(if(o.concept_id = 159948, o.value_datetime, null )) as examination_date,
+        max(if(o.concept_id = 159948 or o.concept_id = 169466, o.value_datetime, null )) as examination_date,
         max(if(o.concept_id=162869,o.value_datetime,null)) as incident_date,
         max(if(o.concept_id=1639,o.value_numeric,null)) as number_of_perpetrators,
         max(if(o.concept_id=165229,o.value_coded,null)) as is_perpetrator_known,
@@ -8940,7 +8978,7 @@ BEGIN
              left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                                                           (159948,162869,1639,165229,167214,167131,161564,159942,160945,166846,160303,123160,161011,1357,166484,162724,164093,165052,165152,165193,161550,
                                                                            165144,160221,163677,1391,160080,1823,163400,5272,160753,5085,5086,162056,165171,163104,161239,166363,165180,160258,162997,163048,165241,161031,
-                                                                           165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225)
+                                                                           165035,160971,160969,160981,160962,160943,165060,374,1670,165440,165200,167214,160632,1272,164217,165435,165225,169466)
         and o.voided=0
     where e.voided=0
     group by e.patient_id,date(e.encounter_datetime);
@@ -9232,6 +9270,7 @@ INSERT INTO kenyaemr_etl.etl_psychiatry (patient_id,
      priority_of_admission,
      admission_ward,
      duration_of_hospital_stay,
+     psycho_social_support,
      voided)
 select e.patient_id,
 e.visit_id,
@@ -9315,6 +9354,9 @@ max(if(o.concept_id = 162477, o.value_coded, null))                             
 max(if(o.concept_id = 1655, o.value_coded, null))                                          as priority_of_admission,
 max(if(o.concept_id = 1000075, o.value_coded, null))                                       as admission_ward,
 max(if(o.concept_id = 1896, o.value_coded, null))                                          as duration_of_hospital_stay,
+concat_ws(',',max(if(o.concept_id = 165302 and o.value_coded = 169400, 'Psycho-Social Assessments and Investigation',null)),
+            max(if(o.concept_id = 165302 and o.value_coded = 5490, 'Psycho-Social rehabilitation', null)),
+            max(if(o.concept_id = 165302 and o.value_coded = 160545, 'Outreach services/Health Talks', null))) psycho_social_support,
 e.voided
 from encounter e
 inner join person p on p.person_id = e.patient_id and p.voided = 0
@@ -9329,7 +9371,7 @@ left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                    167106, 167112, 167181, 167084, 163104,
                                    165104, 160433,
                                    163145, 159495, 162724, 1640, 162879, 162477,
-                                   1655, 1000075, 1896)
+                                   1655, 1000075, 1896, 165302)
 and o.voided = 0
 where e.voided = 0
 group by e.patient_id, date(e.encounter_datetime);
@@ -10204,7 +10246,7 @@ group by e.encounter_id;
 SELECT "Completed processing NCD FollowUp data ";
 END $$
 
--- Procedure sp_populate_etl_adr_assessment_tool
+-- Procedure sp_populate_etl__aadrssessment_tool
 DROP PROCEDURE IF EXISTS sp_populate_etl_adr_assessment_tool $$
 CREATE PROCEDURE sp_populate_etl_adr_assessment_tool()
 BEGIN
@@ -10330,6 +10372,230 @@ BEGIN
     where e.voided = 0
     group by e.patient_id, date(e.encounter_datetime);
     SELECT "Completed processing ADR assessment tool";
+END $$
+
+-- Procedure sp_populate_etl__atp_disclosure_readiness_assessment
+DROP PROCEDURE IF EXISTS sp_populate_etl_atp_disclosure_readiness_assessment $$
+CREATE PROCEDURE sp_populate_etl_atp_disclosure_readiness_assessment()
+BEGIN
+    SELECT "Processing ATP Disclosure Readiness Assessment";
+    INSERT INTO kenyaemr_etl.etl_atp_disclosure_readiness_assessment (
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        entry_point_at_enrolment,
+        other_entry_point_specify,
+        who_brought_child_clinic,
+        who_else_lives_child_household,
+        gives_child_medication,
+        knows_child_hiv_status,
+        other_house_member_has_hiv,
+        family_member_taking_arvs,
+        discussed_informing_child_hiv_status,
+        discussion_outcome,
+        child_told_why_come_clinic_or_medication,
+        questions_child_asking,
+        care_giver_answer,
+        child_ever_talk_about_hiv,
+        what_does_child_say,
+        child_doing_in_school,
+        child_school_performance,
+        child_like_school,
+        child_have_friends,
+        child_behaviour_home,
+        worries_learning_hiv_status,
+        disclosure_preference,
+        when_child_be_disclosed_to,
+        child_reactions_when_inform_status,
+        questions_caregiver_have_about_hiv,
+        date_created,
+        date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 2031464, o.value_coded, null))                   as entry_point_at_enrolment,
+           max(if(o.concept_id = 160632, o.value_text, null))                as other_entry_point_specify,
+           max(if(o.concept_id = 969, o.value_coded, null))     as who_brought_child_clinic,
+           max(if(o.concept_id = 159892, o.value_coded, null))   as who_else_lives_child_household,
+           max(if(o.concept_id = 166665, o.value_coded, null))   as gives_child_medication,
+           max(if(o.concept_id = 5303, o.value_coded, null)) as knows_child_hiv_status,
+           max(if(o.concept_id = 159424, o.value_coded, null))   as other_house_member_has_hiv,
+           max(if(o.concept_id = 160119, o.value_coded, null))     as family_member_taking_arvs,
+           max(if(o.concept_id = 1000606, o.value_coded, null))   as  discussed_informing_child_hiv_status,
+           max(if(o.concept_id = 160433, o.value_coded, null))     as  discussion_outcome ,
+           max(if(o.concept_id = 167681, o.value_coded, null))   as  child_told_why_come_clinic_or_medication,
+           max(if(o.concept_id = 2010482, o.value_coded, null))   as questions_child_asking,
+           max(if(o.concept_id = 168360, o.value_coded, null))   as care_giver_answer,
+           max(if(o.concept_id = 164991, o.value_coded, null))   as child_ever_talk_about_hiv,
+           max(if(o.concept_id = 166980, o.value_coded, null))   as what_does_child_say,
+           max(if(o.concept_id = 5606, o.value_coded, null))   as child_doing_in_school,
+           max(if(o.concept_id = 166439, o.value_coded, null))   as child_school_performance,
+           max(if(o.concept_id = 159928, o.value_coded, null))   as child_like_school,
+           max(if(o.concept_id = 165295, o.value_coded, null))   as child_have_friends,
+           max(if(o.concept_id = 160618, o.value_text, null))   as child_behaviour_home,
+           max(if(o.concept_id = 164995, o.value_coded, null))   as worries_learning_hiv_status,
+           max(if(o.concept_id = 159775, o.value_coded, null))   as disclosure_preference,
+           max(if(o.concept_id = 159642, o.value_coded, null))   as when_child_be_disclosed_to,
+           max(if(o.concept_id = 161011, o.value_text, null))   as child_reactions_when_inform_status,
+           max(if(o.concept_id = 162749, o.value_text, null))   as questions_caregiver_have_about_hiv,
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'd11c340d-defb-443f-b7de-e81dc87060a4'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                (2031464,160632,969,159892,166665,5303,159424,160119,1000606,160433,
+                                167681,2010482,168360,164991,166980,5606,166439,159928,165295,160618, 164995,
+                                159775,159642,161011,162749)
+        and o.voided = 0
+    where e.voided = 0
+    group by e.patient_id, date(e.encounter_datetime);
+    SELECT "Completed processing atp disclosure readiness assessment tool";
+END $$
+
+
+-- Procedure sp_populate_etl__atp_taking_charge_tracking
+DROP PROCEDURE IF EXISTS sp_populate_etl_atp_taking_charge_tracking $$
+CREATE PROCEDURE sp_populate_etl_atp_taking_charge_tracking()
+BEGIN
+    SELECT "Processing ATP Taking charge tracking";
+    INSERT INTO kenyaemr_etl.etl_atp_taking_charge_tracking (
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        date_of_full_disclosure,
+        treatment_literacy,
+        self_management,
+        communication,
+        support,
+        adult_clinic_expectations,
+        date_created,
+        date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 160753, o.value_datetime, null))                   as date_of_full_disclosure,
+           max(if(o.concept_id = 165364, o.value_coded, null))                as treatment_literacy,
+           max(if(o.concept_id = 166937, o.value_coded, null))     as self_management,
+           max(if(o.concept_id = 165360, o.value_coded, null))   as communication,
+           max(if(o.concept_id = 163766, o.value_coded, null))   as support,
+           max(if(o.concept_id = 165363, o.value_coded, null)) as adult_clinic_expectations,
+
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'a4276b08-5bf1-402a-bb6a-0b2e54b41d67'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                (160753,165364,166937,165360,163766,165363)
+
+        and o.voided = 0
+    where e.voided = 0
+    group by e.patient_id, date(e.encounter_datetime);
+    SELECT "Completed processing ATP Taking charge tracking";
+END $$
+
+
+
+-- Procedure sp_populate_etl__atp_attach_scale_transition_readiness_assessment
+DROP PROCEDURE IF EXISTS sp_populate_etl_atp_transition_readiness_assessment $$
+CREATE PROCEDURE sp_populate_etl_atp_transition_readiness_assessment()
+BEGIN
+    SELECT "Processing ATP Attach Scale Transition Readiness Assessment ";
+    INSERT INTO kenyaemr_etl.etl_atp_transition_readiness_assessment (
+        uuid,
+        provider,
+        patient_id,
+        visit_id,
+        visit_date,
+        location_id,
+        encounter_id,
+        can_explain_hiv_is,
+        explain_how_arv_work,
+        knows_name_of_arv,
+        explain_what_means_suppressed_vl,
+        state_what_thier_vl_is,
+        knows_they_virally_suppressed,
+        know_day_date_of_current_clinic_visit,
+        came_on_scheduled,
+        explain_what_to_do_missed_medication,
+        explain_where_to_seek_medical_care,
+        navigate_clinic_services_on_own,
+        comfortable_comming_to_clinic,
+        feels_not_conmfortable_coming_to_clinic_specify,
+        medical_problem_report_symptoms,
+        feel_free_ask_hcw_questions,
+        feel_free_ask_hcw_reproductive_health,
+        name_different_contraception,
+        identify_one_person_to_seek_help,
+        attends_peer_support_group,
+        disclose_hiv_status_someone_else,
+        identify_treatment_buddy,
+        varbalize_long_term_goals,
+        ready_to_transition_adult_care,
+        not_ready_for_transition_specify,
+        date_created,
+        date_last_modified)
+    select e.uuid,
+           e.creator,
+           e.patient_id,
+           e.visit_id,
+           date(e.encounter_datetime)                                            as visit_date,
+           e.location_id,
+           e.encounter_id,
+           max(if(o.concept_id = 1436, o.value_coded, null))      as can_explain_hiv_is,
+           max(if(o.concept_id = 162695, o.value_coded, null))      as explain_how_arv_work,
+           max(if(o.concept_id = 1149, o.value_coded, null))     as knows_name_of_arv,
+           max(if(o.concept_id = 165244, o.value_coded, null))   as explain_what_means_suppressed_vl,
+           max(if(o.concept_id = 163310, o.value_coded, null))   as state_what_thier_vl_is,
+           max(if(o.concept_id = 165245, o.value_coded, null)) as knows_they_virally_suppressed,
+           max(if(o.concept_id = 160288, o.value_coded, null)) as know_day_date_of_current_clinic_visit,
+           max(if(o.concept_id = 166484, o.value_coded, null)) as came_on_scheduled,
+           max(if(o.concept_id = 160582, o.value_coded, null)) as explain_what_to_do_missed_medication,
+           max(if(o.concept_id = 162886, o.value_coded, null)) as explain_where_to_seek_medical_care,
+           max(if(o.concept_id = 165315, o.value_coded, null)) as navigate_clinic_services_on_own,
+           max(if(o.concept_id = 162062, o.value_coded, null)) as comfortable_comming_to_clinic,
+           max(if(o.concept_id = 159395, o.value_text, null)) as feels_not_conmfortable_coming_to_clinic_specify,
+           max(if(o.concept_id = 162871, o.value_coded, null)) as medical_problem_report_symptoms,
+           max(if(o.concept_id = 5619, o.value_coded, null)) as feel_free_ask_hcw_questions,
+           max(if(o.concept_id = 160575, o.value_coded, null)) as feel_free_ask_hcw_reproductive_health,
+           max(if(o.concept_id = 1635, o.value_coded, null)) as name_different_contraception,
+           max(if(o.concept_id = 2010457, o.value_coded, null)) as identify_one_person_to_seek_help,
+           max(if(o.concept_id = 163000, o.value_coded, null)) as attends_peer_support_group,
+           max(if(o.concept_id = 159425, o.value_coded, null)) as disclose_hiv_status_someone_else,
+           max(if(o.concept_id = 166665, o.value_coded, null)) as identify_treatment_buddy,
+           max(if(o.concept_id = 162060, o.value_coded, null)) as varbalize_long_term_goals,
+           max(if(o.concept_id = 165363, o.value_coded, null)) as ready_to_transition_adult_care,
+           max(if(o.concept_id = 160632, o.value_text, null)) as not_ready_for_transition_specify,
+           e.date_created,
+           e.date_changed
+    from encounter e
+             inner join person p on p.person_id = e.patient_id and p.voided = 0
+             inner join form f on f.form_id = e.form_id and f.uuid = 'f4237de5-355a-4437-a09b-3e164719ae9c'
+             left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
+                                (1436,162695,1149,165244,163310,165245,160288,166484,160582,
+                                162886,165315,162062,159395,162871,5619,160575,1635,2010457,163000,
+                                159425,166665,162060,165363,160632)
+        and o.voided = 0
+    where e.voided = 0
+    group by e.patient_id, date(e.encounter_datetime);
+    SELECT "Completed processing ATP Attach Scale Transition Readiness Assessment";
 END $$
 
 DROP PROCEDURE IF EXISTS sp_populate_etl_inpatient_admission $$
@@ -10571,6 +10837,9 @@ CALL sp_populate_etl_adr_assessment_tool();
 CALL sp_populate_etl_ncd_enrollment();
 CALL sp_populate_etl_inpatient_admission();
 CALL sp_populate_etl_inpatient_discharge();
+CALL sp_populate_etl_atp_disclosure_readiness_assessment();
+CALL sp_populate_etl_atp_taking_charge_tracking();
+Call sp_populate_etl_atp_transition_readiness_assessment();
 CALL sp_populate_etl_doctor_progress_note();
 CALL sp_update_next_appointment_date();
 CALL sp_update_dashboard_table();
