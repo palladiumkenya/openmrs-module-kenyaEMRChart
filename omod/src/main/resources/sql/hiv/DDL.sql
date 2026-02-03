@@ -52,6 +52,7 @@ SET @create_status = CONCAT(
 'id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,',
 ' script_name VARCHAR(50) DEFAULT NULL,',
 ' start_time DATETIME DEFAULT NULL,',
+'  status VARCHAR(50) DEFAULT NULL,',
 ' stop_time DATETIME DEFAULT NULL,',
 ' error VARCHAR(255) DEFAULT NULL',
 ');'
