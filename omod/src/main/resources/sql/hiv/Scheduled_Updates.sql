@@ -4259,6 +4259,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
       prep_contraindications=VALUES(prep_contraindications),
       treatment_plan=VALUES(treatment_plan),
       reason_for_starting_prep=VALUES(reason_for_starting_prep),
+      other_reason_for_prep=VALUES(other_reason_for_prep),
       switching_option=VALUES(switching_option),
       switching_date=VALUES(switching_date),
       dosing_strategy=VALUES(dosing_strategy),
