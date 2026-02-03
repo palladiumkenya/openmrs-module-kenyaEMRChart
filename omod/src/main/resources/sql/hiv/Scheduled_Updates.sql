@@ -3684,6 +3684,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
       other_reason_specify,
       risk_education_offered,
       risk_reduction,
+      on_contraception,
       willing_to_take_prep,
       reason_not_willing,
       risk_edu_offered,
@@ -3824,6 +3825,7 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
       prep_status,
       switching_option,
       switching_date,
+      dosing_strategy,
       prep_type,
       prescribed_prep_today,
       prescribed_regimen,
@@ -3988,6 +3990,7 @@ CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
       initial_enrolment_date,
       date_started_prep_trf_facility,
       previously_on_prep,
+      dosing_strategy,
       prep_type,
       regimen,
       prep_last_date,
@@ -4117,8 +4120,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         prep_contraindications,
         treatment_plan,
         reason_for_starting_prep,
+        other_reason_for_prep,
         switching_option,
         switching_date,
+        dosing_strategy,
         prep_type,
         prescribed_PrEP,
         regimen_prescribed,
@@ -4189,8 +4194,10 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
         max(if(o.concept_id = 165109, (case o.value_coded when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 1257 then "Continue" else "" end), "" )) as treatment_plan,
         max(if(o.concept_id = 159623, o.value_coded, null)) as reason_for_starting_prep,
+        max(if(o.concept_id = 165241, o.value_coded, null)) as other_reason_for_prep,
         max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
         max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
+        max(if(o.concept_id = 166866, (case o.value_coded when 5424 then "Event Driven" when 165269 then "Daily Oral PrEP" when 168050 then "Long acting PrEP" else "" end), "" )) as dosing_strategy,
         max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
         max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end), "" )) as prescribed_PrEP,
         max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" else "" end), "" )) as regimen_prescribed,
@@ -4206,7 +4213,7 @@ CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
         inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
         inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,159623,
                                                                                                                                                     165103,167788,165144,166866,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
-                                                                                                                                                                                                                                                             165109,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165354,165310) and o.voided=0
+                                                                                                                                                                                                                                                             165109,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165354,165310,165241) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
