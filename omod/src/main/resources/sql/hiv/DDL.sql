@@ -1749,7 +1749,7 @@ SELECT "Successfully created etl_ART_preparation table";
     assessment_outcome varchar(255),
     risk_education_offered varchar(10),
     risk_reduction varchar(10),
-    on_contraception varchar(10),
+    on_contraceptives varchar(10),
     willing_to_take_prep varchar(10),
     reason_not_willing varchar(255),
     risk_edu_offered varchar(10),

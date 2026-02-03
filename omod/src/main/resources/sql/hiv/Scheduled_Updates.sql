@@ -3677,7 +3677,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
       other_reason_specify,
       risk_education_offered,
       risk_reduction,
-      on_contraception,
+      on_contraceptives,
       willing_to_take_prep,
       reason_not_willing,
       risk_edu_offered,
@@ -3716,6 +3716,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
                 max(if(o.concept_id = 160632, o.value_text, null )) as other_reason_specify,
                 max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
                 max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
+                max(if(o.concept_id = 374, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as on_contraceptives,
                 max(if(o.concept_id = 165094, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as willing_to_take_prep,
                 CONCAT_WS(',',max(if(o.concept_id = 1743 and o.value_coded = 1107,  "None",NULL)),
                   max(if(o.concept_id = 1743 and o.value_coded = 159935,  "Side effects(ADR)",NULL)),
@@ -3750,7 +3751,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
       from encounter e
         inner join person p on p.person_id=e.patient_id and p.voided=0
         inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,1825,164393,165356) and o.voided=0
+        inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,1825,164393,165356,374) and o.voided=0
       where e.voided=0 and e.date_created >= last_update_time
             or e.date_changed >= last_update_time
             or e.date_voided >= last_update_time
@@ -3775,6 +3776,7 @@ CREATE PROCEDURE sp_update_etl_prep_behaviour_risk_assessment(IN last_update_tim
       other_reason_specify=VALUES(other_reason_specify),
       risk_education_offered=VALUES(risk_education_offered),
       risk_reduction=VALUES(risk_reduction),
+      on_contraceptives=VALUES(on_contraceptives),
       willing_to_take_prep=VALUES(willing_to_take_prep),
       reason_not_willing=VALUES(reason_not_willing),
       risk_edu_offered=VALUES(risk_edu_offered),
