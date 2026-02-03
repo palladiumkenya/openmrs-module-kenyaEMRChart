@@ -3564,7 +3564,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
         other_reason_specify,
         risk_education_offered,
         risk_reduction,
-        on_contraception,
+        on_contraceptives,
         assessment_outcome,
         willing_to_take_prep,
         reason_not_willing,
