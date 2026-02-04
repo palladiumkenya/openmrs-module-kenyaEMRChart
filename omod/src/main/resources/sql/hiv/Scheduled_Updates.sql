@@ -1,4 +1,4 @@
-DELIMITER $$
+
 
 SET @OLD_SQL_MODE=@@SQL_MODE $$
 SET SQL_MODE='' $$
@@ -918,7 +918,7 @@ END $$
 -- ------------- update etl_mchs_delivery-------------------------
 
 -- sql
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_mch_delivery $$
 CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
@@ -1035,10 +1035,10 @@ PREPARE stmt FROM @sql_stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_mchs_discharge-------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_mch_discharge $$
 CREATE PROCEDURE sp_update_etl_mch_discharge(IN last_update_time DATETIME)
 BEGIN
@@ -1251,7 +1251,7 @@ SELECT "Completed processing MCH postnatal visits ", CONCAT("Time: ", NOW());
 END $$
 
 -- ------------- update etl_hei_enrollment-------------------------
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_hei_enrolment $$
 CREATE PROCEDURE sp_update_etl_hei_enrolment(IN last_update_time DATETIME)
@@ -1348,11 +1348,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT "Completed processing HEI Enrollments", CONCAT("Time: ", NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- update etl_hei_follow_up_visit-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_populate_etl_hei_follow_up $$
 CREATE PROCEDURE sp_populate_etl_hei_follow_up()
 BEGIN
@@ -1441,12 +1441,12 @@ DEALLOCATE PREPARE stmt;
 
 SELECT "Completed processing HEI Followup visits", CONCAT("Time: ", NOW());
 END $$
-DELIMITER ;
+
 
 
 -- ------------- update etl_hei_immunization-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_populate_etl_hei_immunization $$
 CREATE PROCEDURE sp_populate_etl_hei_immunization()
 BEGIN
@@ -1582,12 +1582,12 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT "Completed processing hei_immunization data ", CONCAT("Time: ", NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- update etl_tb_enrollment-------------------------
 
 -- sql
-DELIMITER $$;
+;
 DROP PROCEDURE IF EXISTS sp_update_etl_tb_enrollment $$
 CREATE PROCEDURE sp_update_etl_tb_enrollment(IN last_update_time DATETIME)
 BEGIN
@@ -1669,11 +1669,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT "Completed processing TB Enrollments ", CONCAT("Time: ", NOW());
 END $$
-DELIMITER ;
+
 -- ------------- update etl_tb_follow_up_visit-------------------------
 
 -- sql
-DELIMITER $$;
+;
 DROP PROCEDURE IF EXISTS sp_update_etl_tb_follow_up_visit $$
 CREATE PROCEDURE sp_update_etl_tb_follow_up_visit(IN last_update_time DATETIME)
 BEGIN
@@ -1994,7 +1994,7 @@ END $$
 
 -- ---------------------------- Update HTS encounters ---------------------
 
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_hts_test $$
 CREATE PROCEDURE sp_update_hts_test(IN last_update_time DATETIME)
@@ -2132,10 +2132,10 @@ DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Completed processing HTS tests. Target: ', target_table, ' Time: ', NOW()) AS message;
 END $$
 
-DELIMITER ;
+
 -- ------------------------------------ POPULATE HTS LINKAGES AND REFERRALS -------------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_hts_linkage_and_referral $$
 CREATE PROCEDURE sp_update_hts_linkage_and_referral(IN last_update_time DATETIME)
 BEGIN
@@ -2193,13 +2193,13 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing hts linkages', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------------------ update hts referrals ------------------------------------
 
 
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_hts_referral $$
 CREATE PROCEDURE sp_update_hts_referral(IN last_update_time DATETIME)
 BEGIN
@@ -2259,11 +2259,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing hts referrals', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_ipt_screening-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_screening $$
 CREATE PROCEDURE sp_update_etl_ipt_screening(IN last_update_time DATETIME)
 BEGIN
@@ -2311,11 +2311,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT "Completed processing TPT screening forms", CONCAT("Time: ", NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_ipt_followup-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_follow_up $$
 CREATE PROCEDURE sp_update_etl_ipt_follow_up(IN last_update_time DATETIME)
 BEGIN
@@ -2377,9 +2377,9 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing TPT followup forms', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
 
-DELIMITER $$
+
+
 DROP PROCEDURE IF EXISTS sp_update_etl_ccc_defaulter_tracing $$
 CREATE PROCEDURE sp_update_etl_ccc_defaulter_tracing(IN last_update_time DATETIME)
 BEGIN
@@ -2439,10 +2439,10 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing CCC defaulter tracing forms', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- Update etl_ART_preparation-------------------------
-DELIMITER $$;
+;
 DROP PROCEDURE IF EXISTS sp_update_etl_ART_preparation $$
 CREATE PROCEDURE sp_update_etl_ART_preparation(IN last_update_time DATETIME)
 BEGIN
@@ -2507,9 +2507,9 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing ART Preparation', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 -- ------------- update etl_enhanced_adherence-------------------------
-DELIMITER $$ ;
+ ;
 DROP PROCEDURE IF EXISTS sp_update_etl_enhanced_adherence $$
 CREATE PROCEDURE sp_update_etl_enhanced_adherence(IN last_update_time DATETIME)
 BEGIN
@@ -2933,7 +2933,7 @@ END $$
 
 -- ------------- populate etl_prep_discontinuation-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_prep_discontinuation $$
 CREATE PROCEDURE sp_update_etl_prep_discontinuation(IN last_update_time DATETIME)
 BEGIN
@@ -2999,11 +2999,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing PrEP discontinuation', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_prep_enrollment-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_prep_enrolment $$
 CREATE PROCEDURE sp_update_etl_prep_enrolment(IN last_update_time DATETIME)
 BEGIN
@@ -3068,11 +3068,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing PrEP enrolment', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_prep_followup-------------------------
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_prep_followup $$
 CREATE PROCEDURE sp_update_etl_prep_followup(IN last_update_time DATETIME)
 BEGIN
@@ -3206,14 +3206,14 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing PrEP follow-up', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 
 
 -- ------------- populate etl_progress_note-------------------------
 
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_progress_note $$
 CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
 BEGIN
@@ -3253,12 +3253,12 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing progress', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------------------------------- populate tpt initiation -----------------------------
 
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_initiation $$
 CREATE PROCEDURE sp_update_etl_ipt_initiation(IN last_update_time DATETIME)
 BEGIN
@@ -3297,10 +3297,10 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed Processing TPT Initiation ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ----------------------------------- process tpt outcome ---------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_ipt_outcome $$
 CREATE PROCEDURE sp_update_etl_ipt_outcome(IN last_update_time DATETIME)
 BEGIN
@@ -3333,10 +3333,10 @@ SET sql_stmt = CONCAT(
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing TPT outcome ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 -- --------------------------------------- process HTS linkage tracing ------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_hts_linkage_tracing $$
 CREATE PROCEDURE sp_update_etl_hts_linkage_tracing(IN last_update_time DATETIME)
 BEGIN
@@ -3376,10 +3376,10 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing HTS linkage tracing data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------------------- process patient program ------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_program $$
 CREATE PROCEDURE sp_update_etl_patient_program(IN last_update_time DATETIME)
 BEGIN
@@ -3433,11 +3433,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed updating patient program data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------------------ create person address table ---------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_person_address $$
 CREATE PROCEDURE sp_update_etl_person_address(IN last_update_time DATETIME)
 BEGIN
@@ -3465,10 +3465,10 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing person_address data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- --------------------------------------- process OTZ Activity ------------------------
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_otz_activity $$
 CREATE PROCEDURE sp_update_etl_otz_activity(IN last_update_time DATETIME)
@@ -3515,12 +3515,12 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing OTZ activity data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 
 -- --------------------------------------- process OTZ Enrollment ------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_otz_enrollment $$
 CREATE PROCEDURE sp_update_etl_otz_enrollment(IN last_update_time DATETIME)
 BEGIN
@@ -3565,12 +3565,12 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing OTZ enrollment data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- --------------------------------------- process OTZ Enrollment ------------------------
 
 sql
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_ovc_enrolment $$
 CREATE PROCEDURE sp_update_etl_ovc_enrolment(IN last_update_time DATETIME)
@@ -3618,11 +3618,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing OVC enrolment data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 
 -- -------------Update etl_cervical_cancer_screening-------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_cervical_cancer_screening $$
 CREATE PROCEDURE sp_update_etl_cervical_cancer_screening(
     IN last_update_time DATETIME
@@ -3892,10 +3892,10 @@ DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing Cervical Cancer Screening', CONCAT('Time: ', NOW());
 SELECT 'Completed processing CAXC screening', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 		--------------------------- process patient contact ------------------------
-DELIMITER $$;
+;
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_contact $$
 CREATE PROCEDURE sp_update_etl_patient_contact(IN last_update_time DATETIME)
 BEGIN
@@ -4337,13 +4337,13 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing KP clinical visit', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_kp_peer_calendar--------------------------------
 
 
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_kp_peer_calendar $$
 CREATE PROCEDURE sp_update_etl_kp_peer_calendar(IN last_update_time DATETIME)
 BEGIN
@@ -4395,11 +4395,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing Peer calendar data ', CONCAT('Time: ', NOW()));
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_kp_sti_treatment--------------------------------
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_kp_sti_treatment $$
 CREATE PROCEDURE sp_update_etl_kp_sti_treatment(IN last_update_time DATETIME)
 BEGIN
@@ -4463,12 +4463,12 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Completed processing STI Treatment data ', CONCAT('Time: ', NOW()));
 END $$
-DELIMITER ;
+
 
 
 - ------------- populate kp peer tracking-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_kp_peer_tracking $$
 CREATE PROCEDURE sp_update_etl_kp_peer_tracking(IN last_update_time DATETIME)
 BEGIN
@@ -4515,11 +4515,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Completed processing kp peer tracking form ', CONCAT('Time: ', NOW()));
 END $$
-DELIMITER ;
+
 
 
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_kp_treatment_verification $$
 CREATE PROCEDURE sp_update_etl_kp_treatment_verification(IN last_update_time DATETIME)
 BEGIN
@@ -4606,10 +4606,10 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Completed processing kp treatment verification form ', CONCAT('Time: ', NOW()));
 END $$
-DELIMITER ;
+
 
 -- ------------- Update kp PrEP verification-------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_PrEP_verification $$
 CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
 BEGIN
@@ -4656,11 +4656,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Completed processing PrEP verification form ', CONCAT('Time: ', NOW()));
 END $$
-DELIMITER ;
+
 
 -- ------------- populate etl_alcohol_drug_abuse_screening-------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_alcohol_drug_abuse_screening $$
 CREATE PROCEDURE sp_update_etl_alcohol_drug_abuse_screening(IN last_update_time DATETIME)
 BEGIN
@@ -4695,10 +4695,10 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT) data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
   --------- update table etl_gbv_screening -----------
-DELIMITER $$ ;
+ ;
 DROP PROCEDURE IF EXISTS sp_update_etl_gbv_screening $$
 CREATE PROCEDURE sp_update_etl_gbv_screening(IN last_update_time DATETIME)
 BEGIN
@@ -4749,7 +4749,7 @@ END $$
 
 ------updating etl_gbv_screening_action table-------
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_gbv_screening_action $$
 CREATE PROCEDURE sp_update_etl_gbv_screening_action(IN last_update_time DATETIME)
 BEGIN
@@ -4810,11 +4810,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing GBV screening action data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- Update Violence Reporting
 -- sql
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_violence_reporting $$
 CREATE PROCEDURE sp_update_etl_violence_reporting(IN last_update_time DATETIME)
 BEGIN
@@ -4912,11 +4912,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing violence reporting data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- Update Link facility tracking form-----------
 -- sql
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_link_facility_tracking $$
 CREATE PROCEDURE sp_update_etl_link_facility_tracking(IN last_update_time DATETIME)
@@ -5004,11 +5004,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing link facility tracking form', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- Update Depression Screening
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_depression_screening $$
 CREATE PROCEDURE sp_update_etl_depression_screening(IN last_update_time DATETIME)
 BEGIN
@@ -5061,11 +5061,11 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing depression screening data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- Update Adverse events ---------------------------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_adverse_events $$
 CREATE PROCEDURE sp_update_etl_adverse_events(IN last_update_time DATETIME)
 BEGIN
@@ -5114,10 +5114,10 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing adverse events data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
 
 
-DELIMITER $$
+
+
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_pre_hiv_enrollment_art
 -- Purpose: populate tenant-aware `etl_pre_hiv_enrollment_art`
@@ -5180,10 +5180,10 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing pre_hiv enrollment ART data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
 
 
-DELIMITER $$
+
+
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_covid_19_assessment
@@ -5261,7 +5261,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing etl_covid19_assessment', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- sql
 -- --------------------------------------
@@ -5269,7 +5269,7 @@ DELIMITER ;
 -- Purpose: update tenant-aware `etl_vmmc_enrolment`
 -- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_enrolment $$
 CREATE PROCEDURE sp_update_etl_vmmc_enrolment(IN last_update_time DATETIME)
@@ -5314,10 +5314,10 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing VMMC enrolment data for ', @etl_schema, '.etl_vmmc_enrolment Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_vmmc_circumcision_procedure
 -- Purpose: update tenant-aware `etl_vmmc_circumcision_procedure`
@@ -5394,7 +5394,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing VMMC circumcision procedure data for ', @etl_schema, '.etl_vmmc_circumcision_procedure Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 
 -- sql
@@ -5404,7 +5404,7 @@ DELIMITER ;
 -- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- --------------------------------------
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_medical_history $$
 CREATE PROCEDURE sp_update_etl_vmmc_medical_history(IN last_update_time DATETIME)
@@ -5554,9 +5554,9 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing VMMC medical history examination data for ', @etl_schema, '.etl_vmmc_medical_history Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
 
-DELIMITER $$
+
+
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_vmmc_client_followup
@@ -5636,12 +5636,12 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing VMMC client followup data ', target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 
 -- Update VMMC post operation assessment ----
 
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_post_operation_assessment $$
 CREATE PROCEDURE sp_update_etl_vmmc_post_operation_assessment(IN last_update_time DATETIME)
@@ -5700,7 +5700,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT "Completed processing VMMC post operation assessment data ", CONCAT("Time: ", NOW());
 END $$
-DELIMITER ;
+
 
 
 -- --------------------------------------
@@ -5708,7 +5708,7 @@ DELIMITER ;
 -- Purpose: populate tenant-aware `etl_hts_eligibility_screening`
 -- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_hts_eligibility_screening $$
 CREATE PROCEDURE sp_update_etl_hts_eligibility_screening(IN last_update_time DATETIME)
 BEGIN
@@ -5938,12 +5938,12 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing hts eligibility screening data ', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_patient_appointments
 -- Purpose: populate tenant-aware `etl_patient_appointment`
@@ -5975,7 +5975,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing Patient appointment', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 -- sql
 -- --------------------------------------
@@ -5984,7 +5984,7 @@ DELIMITER ;
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- --------------------------------------
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_drug_order $$
 CREATE PROCEDURE sp_update_etl_drug_order(IN last_update_time DATETIME)
@@ -6015,12 +6015,12 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing drug orders data', CONCAT('Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_preventive_services
 -- Purpose: populate tenant-aware `etl_preventive_services`
@@ -6110,11 +6110,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT 'Completed processing Preventive services data', CONCAT('Target: ', target_table, ' Time: ', NOW());
 END $$
-DELIMITER ;
+
 
 
 -- sql
-DELIMITER $$
+
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_overdose_reporting
@@ -6122,7 +6122,7 @@ DELIMITER $$
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- --------------------------------------
-DELIMITER $$
+
 
 DROP PROCEDURE IF EXISTS sp_update_etl_overdose_reporting $$
 CREATE PROCEDURE sp_update_etl_overdose_reporting(IN last_update_time DATETIME)
@@ -6208,7 +6208,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing overdose reporting. Target: ', target_table, ' Time: ', NOW()) AS message;
 END $$
-DELIMITER ;
+
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_art_fast_track
@@ -6216,7 +6216,7 @@ DELIMITER ;
 -- Notes: calls sp_set_tenant_session_vars() to resolve `etl_schema` then
 --        builds and executes a dynamic INSERT ... ON DUPLICATE KEY UPDATE
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_art_fast_track $$
 CREATE PROCEDURE sp_update_etl_art_fast_track(IN last_update_time DATETIME)
 BEGIN
@@ -6306,12 +6306,12 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ART fast track. Target: ', @target_table, ' Time: ', NOW()) AS message;
 END $$
-DELIMITER ;
+
 
 
 --------------- create etl_clinical_encounter -------------------
 
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_clinical_encounter $$
 CREATE PROCEDURE sp_update_etl_clinical_encounter(IN last_update_time DATETIME)
 BEGIN
@@ -6460,11 +6460,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing Clinical Encounter. Target: ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_pep_management_survivor
@@ -6545,7 +6545,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed updating PEP management survivor. Target: ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 
 
@@ -6556,7 +6556,7 @@ sql
 -- Purpose: populate tenant-aware `etl_sgbv_pep_followup`
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_sgbv_pep_followup $$
 CREATE PROCEDURE sp_update_etl_sgbv_pep_followup(IN last_update_time DATETIME)
 BEGIN
@@ -6627,10 +6627,10 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed updating SGBV PEP followup -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
 
 
-DELIMITER $$
+
+
 
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_sgbv_post_rape_care
@@ -6768,9 +6768,9 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed updating SGBV post rape care -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
 
-DELIMITER $$
+
+
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_gbv_physical_emotional_abuse
 -- Purpose: populate tenant-aware `etl_gbv_physical_emotional_abuse`
@@ -6827,7 +6827,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed updating GBV physical and emotional abuse -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- sql
 -- --------------------------------------
@@ -6836,7 +6836,7 @@ DELIMITER ;
 -- Purpose: populate tenant-aware `etl_family_planning`
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and builds dynamic INSERT target
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_family_planning $$
 CREATE PROCEDURE sp_update_etl_family_planning(IN last_update_time DATETIME)
 BEGIN
@@ -6913,7 +6913,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing Family planning -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
@@ -6921,7 +6921,7 @@ DELIMITER ;
 -- Purpose: populate tenant-aware `etl_physiotherapy`
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and builds dynamic INSERT target
 
-DELIMITER $$
+
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_physiotherapy $$
 CREATE PROCEDURE sp_update_etl_physiotherapy(IN last_update_time DATETIME)
@@ -7022,7 +7022,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing Physiotherapy -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
@@ -7030,7 +7030,7 @@ DELIMITER ;
 -- Purpose: populate tenant-aware `etl_psychiatry`
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_psychiatry $$
 CREATE PROCEDURE sp_update_etl_psychiatry(IN last_update_time DATETIME)
 BEGIN
@@ -7143,10 +7143,10 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing Psychiatry -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
 
 
-DELIMITER $$
+
+
 
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
@@ -7202,13 +7202,13 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing KVP Clinical enrollment -> ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_special_clinics
 -- Purpose: update tenant-aware `etl_special_clinics`
 -- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_special_clinics $$
 CREATE PROCEDURE sp_update_etl_special_clinics(IN last_update_time DATETIME)
 BEGIN
@@ -7455,9 +7455,9 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
 
-DELIMITER $$
+
+
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_high_iit_intervention
@@ -7540,11 +7540,11 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_home_visit_checklist
@@ -7625,7 +7625,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 
 -- sql
@@ -7635,7 +7635,7 @@ DELIMITER ;
 -- Purpose: update tenant-aware `etl_ncd_enrollment`
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_ncd_enrollment $$
 CREATE PROCEDURE sp_update_etl_ncd_enrollment(IN last_update_time DATETIME)
 BEGIN
@@ -7824,10 +7824,10 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_adr_assessment_tool
@@ -7957,10 +7957,10 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- sql
-DELIMITER $$
+
 -- --------------------------------------
 -- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
 -- PROCEDURE: sp_update_etl_ncd_followup
@@ -8065,7 +8065,7 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing ', @target_table, ' Time: ', NOW()) AS status;
 END $$
-DELIMITER ;
+
 
 -- sql
 -- --------------------------------------
@@ -8074,7 +8074,7 @@ DELIMITER ;
 -- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
 -- File: `src/main/resources/sql/hiv/DML.sql`
 -- --------------------------------------
-DELIMITER $$
+
 DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_admission $$
 CREATE PROCEDURE sp_update_etl_inpatient_admission(IN last_update_time DATETIME)
 BEGIN
@@ -8114,9 +8114,9 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Successfully updated ', @target_table) AS message;
 END $$
-DELIMITER ;
 
-DELIMITER $$
+
+
 DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_discharge $$
 CREATE PROCEDURE sp_update_etl_inpatient_discharge(IN last_update_time DATETIME)
 BEGIN
@@ -8158,14 +8158,14 @@ DEALLOCATE PREPARE stmt;
 
 SELECT CONCAT('Completed processing inpatient discharge data into ', @target_table) AS message;
 END $$
-DELIMITER ;
+
 
 
 
 -- ---------------------------------------------------------
 -- 3. Master: Scheduled Updates Master Procedure
 -- ---------------------------------------------------------
-DELIMITER $$;
+;
 DROP PROCEDURE IF EXISTS sp_scheduled_updates $$
 CREATE PROCEDURE sp_scheduled_updates()
 BEGIN
@@ -8288,4 +8288,3 @@ SELECT update_script_id AS 'Update_ID', last_update_time AS 'Incremental_From';
 END $$
 
 SET SQL_MODE=@OLD_SQL_MODE $$
-DELIMITER ;

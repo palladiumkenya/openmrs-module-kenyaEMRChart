@@ -1,5 +1,3 @@
-DELIMITER $$
-
 DROP PROCEDURE IF EXISTS create_datatools_tables $$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
@@ -3573,4 +3571,3 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
 END $$
-DELIMITER ;
