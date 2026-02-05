@@ -1,4 +1,4 @@
-SET @OLD_SQL_MODE = @@SQL_MODE $$
+SET @OLD_SQL_MODE = @SQL_MODE $$
 SET SQL_MODE = '' $$
 DROP PROCEDURE IF EXISTS sp_set_tenant_session_vars $$
 CREATE PROCEDURE sp_set_tenant_session_vars()
@@ -173,16 +173,12 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 END $$
 
-
-
 DROP PROCEDURE IF EXISTS sp_populate_etl_hiv_enrollment $$
 CREATE PROCEDURE sp_populate_etl_hiv_enrollment()
 BEGIN
 CALL sp_set_tenant_session_vars();
 SET @target_table = CONCAT(@etl_schema, '.etl_hiv_enrollment');
-
 SELECT 'Processing HIV Enrollment data', NOW();
-
 SET @sql_stmt = CONCAT(
       'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, encounter_provider, ',

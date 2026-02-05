@@ -1,87 +1,126 @@
 DROP PROCEDURE IF EXISTS create_datatools_tables $$
 CREATE PROCEDURE create_datatools_tables()
 BEGIN
-    DECLARE script_id INT DEFAULT NULL;
-    DECLARE target_table VARCHAR(300);
-    DECLARE src_table VARCHAR(300);
-CALL sp_set_tenant_session_vars();
-SET @dynamic_sql = CONCAT('CREATE DATABASE IF NOT EXISTS ', @datatools_schema, ' DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci');
-PREPARE stmt FROM @dynamic_sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+    DECLARE v_etl_schema VARCHAR(200);
+    DECLARE v_datatools_schema VARCHAR(200);
+    DECLARE v_script_status_table VARCHAR(300);
+    DECLARE v_script_id INT(11);
+    DECLARE v_tenant_suffix VARCHAR(100);
 
-SET @dynamic_sql = CONCAT('INSERT INTO ', @script_status_table, ' (script_name, start_time) VALUES (''KenyaEMR_Data_Tool'', NOW())');
-PREPARE stmt FROM @dynamic_sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET script_id = LAST_INSERT_ID();
+    -- 1. IDENTIFY THE TENANT (The "Criterion")
+    -- This extracts 'lumumba' from 'openmrs_lumumba'
+    SET v_tenant_suffix = SUBSTRING_INDEX(DATABASE(), 'openmrs_', -1);
 
-    SET target_table = CONCAT(@datatools_schema, '.`patient_demographics`');
-    SET src_table = CONCAT(@etl_schema, '.`etl_patient_demographics`');
+    -- 2. BUILD DYNAMIC NAMES (Crucial to avoid Error 1049)
+    SET v_etl_schema = CONCAT('kenyaemr_etl_', v_tenant_suffix);
+    SET v_datatools_schema = CONCAT('kenyaemr_datatools_', v_tenant_suffix);
+    SET v_script_status_table = CONCAT(v_etl_schema, '.etl_script_status');
 
-    SET @dynamic_sql = CONCAT('DROP TABLE IF EXISTS ', target_table);
-PREPARE stmt FROM @dynamic_sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+    -- 3. LOG START TIME (Using the dynamic path)
+    SET @log_sql = CONCAT('INSERT INTO ', v_script_status_table, ' (script_name, start_time) VALUES (''KenyaEMR_Data_Tool'', NOW())');
+PREPARE stmt FROM @log_sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET v_script_id = LAST_INSERT_ID();
 
-SET @dynamic_sql = CONCAT(
-        'CREATE TABLE ', target_table, ' ENGINE=InnoDB AS ',
-        'SELECT patient_id, uuid, given_name, middle_name, family_name, Gender, DOB, national_id_no, huduma_no, ',
-        'unique_patient_no, national_unique_patient_identifier, nhif_number, sha_number, shif_number, ',
-        'phone_number, birth_place, citizenship, email_address, occupation, next_of_kin, ',
-        'next_of_kin_relationship, marital_status, education_level, ',
-        'IF(dead=1, ''Yes'', ''No'') AS dead, death_date, voided ',
-        'FROM ', src_table
+    -- 4. RECREATE DATATOOLS DATABASE
+    SET @drop_db = CONCAT('DROP DATABASE IF EXISTS ', v_datatools_schema);
+PREPARE stmt FROM @drop_db; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @create_db = CONCAT('CREATE DATABASE ', v_datatools_schema, ' DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci');
+PREPARE stmt FROM @create_db; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 5. POPULATE PATIENT DEMOGRAPHICS
+SET @target_table = CONCAT(v_datatools_schema, '.patient_demographics');
+    SET @source_table = CONCAT(v_etl_schema, '.etl_patient_demographics');
+
+    SET @sql = CONCAT(
+        'CREATE TABLE ', @target_table, ' AS ',
+        'SELECT
+            patient_id, uuid, given_name, middle_name, family_name, Gender, DOB,
+            national_id_no, huduma_no, passport_no, birth_certificate_no,
+            unique_patient_no, alien_no, driving_license_no,
+            national_unique_patient_identifier, hts_recency_id, nhif_number,
+            patient_clinic_number, Tb_no, CPIMS_unique_identifier, openmrs_id,
+            district_reg_no, hei_no, cwc_number, phone_number, birth_place,
+            citizenship, email_address, occupation, next_of_kin,
+            next_of_kin_relationship, marital_status, education_level,
+            IF(dead=1, "Yes", "No") AS dead, death_date, voided
+        FROM ', @source_table
     );
-PREPARE stmt FROM @dynamic_sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @dynamic_sql = CONCAT('ALTER TABLE ', target_table, ' ADD PRIMARY KEY(patient_id)');
-PREPARE stmt FROM @dynamic_sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+-- 6. ADD PRIMARY KEY
+SET @idx = CONCAT('ALTER TABLE ', @target_table, ' ADD PRIMARY KEY(patient_id)');
+PREPARE stmt FROM @idx; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- ---------------------------------------------------------
--- 5. TABLE: HIV Enrollment
--- ---------------------------------------------------------
-SET target_table = CONCAT(@datatools_schema, '.`hiv_enrollment`');
-    SET src_table = CONCAT(@etl_schema, '.`etl_hiv_enrollment`');
-    SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', target_table);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+-- 7. UPDATE LOG COMPLETION
+SET @update_log = CONCAT('UPDATE ', v_script_status_table, ' SET stop_time=NOW() WHERE id=', v_script_id);
+PREPARE stmt FROM @update_log; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT(
-        'CREATE TABLE ', target_table, ' ENGINE=InnoDB AS ',
-        'SELECT patient_id, uuid, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, patient_type, ',
-        'date_first_enrolled_in_care, entry_point, transfer_in_date, facility_transferred_from, district_transferred_from, ',
-        'CASE previous_regimen ',
-          'WHEN 164968 THEN ''AZT/3TC/DTG'' WHEN 164969 THEN ''TDF/3TC/DTG'' WHEN 164970 THEN ''ABC/3TC/DTG'' WHEN 164505 THEN ''TDF-3TC-EFV'' ',
-          'WHEN 792 THEN ''D4T/3TC/NVP'' WHEN 160124 THEN ''AZT/3TC/EFV'' WHEN 160104 THEN ''D4T/3TC/EFV'' WHEN 1652 THEN ''3TC/NVP/AZT'' ',
-          'WHEN 161361 THEN ''EDF/3TC/EFV'' WHEN 104565 THEN ''EFV/FTC/TDF'' WHEN 162201 THEN ''3TC/LPV/TDF/r'' WHEN 817 THEN ''ABC/3TC/AZT'' ',
-          'WHEN 162199 THEN ''ABC/NVP/3TC'' WHEN 162200 THEN ''3TC/ABC/LPV/r'' WHEN 162565 THEN ''3TC/NVP/TDF'' WHEN 162561 THEN ''3TC/AZT/LPV/r'' ',
-          'WHEN 164511 THEN ''AZT-3TC-ATV/r'' WHEN 164512 THEN ''TDF-3TC-ATV/r'' WHEN 162560 THEN ''3TC/D4T/LPV/r'' WHEN 162563 THEN ''3TC/ABC/EFV'' ',
-          'WHEN 162562 THEN ''ABC/LPV/R/TDF'' WHEN 162559 THEN ''ABC/DDI/LPV/r'' ELSE NULL END AS previous_regimen, ',
-        'date_started_art_at_transferring_facility, date_confirmed_hiv_positive, facility_confirmed_hiv_positive, ',
-        'CASE arv_status WHEN 1 THEN ''Yes'' WHEN 0 THEN ''No'' ELSE '''' END AS arv_status, ',
-        'CASE ever_on_pmtct WHEN 1065 THEN ''Yes'' ELSE '''' END AS ever_on_pmtct, ',
-        'CASE ever_on_pep WHEN 1 THEN ''Yes'' ELSE '''' END AS ever_on_pep, ',
-        'CASE ever_on_prep WHEN 1065 THEN ''Yes'' ELSE '''' END AS ever_on_prep, ',
-        'CASE ever_on_haart WHEN 1185 THEN ''Yes'' ELSE '''' END AS ever_on_haart, ',
-        'IF(who_stage IN (1204,1220), ''WHO Stage1'', IF(who_stage IN (1205,1221), ''WHO Stage2'', IF(who_stage IN (1206,1222), ''WHO Stage3'', IF(who_stage IN (1207,1223), ''WHO Stage4'', '''')))) AS who_stage, ',
-        'name_of_treatment_supporter, ',
-        'CASE relationship_of_treatment_supporter WHEN 973 THEN ''Grandparent'' WHEN 972 THEN ''Sibling'' WHEN 160639 THEN ''Guardian'' WHEN 1527 THEN ''Parent'' ',
-          'WHEN 5617 THEN ''Spouse'' WHEN 163565 THEN ''Partner'' WHEN 5622 THEN ''Other'' ELSE '''' END AS relationship_of_treatment_supporter, ',
-        'treatment_supporter_telephone, treatment_supporter_address, CASE in_school WHEN 1 THEN ''Yes'' WHEN 2 THEN ''No'' END AS in_school, ',
-        'CASE orphan WHEN 1 THEN ''Yes'' WHEN 2 THEN ''No'' END AS orphan, date_of_discontinuation, ',
-        'CASE discontinuation_reason WHEN 159492 THEN ''Transferred Out'' WHEN 160034 THEN ''Died'' WHEN 5240 THEN ''Lost to Follow'' WHEN 819 THEN ''Cannot afford Treatment'' ',
-          'WHEN 5622 THEN ''Other'' WHEN 1067 THEN ''Unknown'' ELSE '''' END AS discontinuation_reason, voided ',
-        'FROM ', src_table
+SELECT CONCAT('Successfully created datatools for: ', v_tenant_suffix) AS Status;
+
+END $$
+
+/* ----------------------------
+   HIV enrollment group (hiv_enrollment)
+   keep SETs and DDL for this table here
+   ---------------------------- */
+SET @target_hiv_quoted = CONCAT(datatools_schema, '.hiv_enrollment');
+    SET @src_hiv_quoted = CONCAT(@etl_schema, '.etl_hiv_enrollment');
+
+    SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hiv_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET sql_stmt = CONCAT(
+      'CREATE TABLE ', @target_hiv_quoted, ' ENGINE=InnoDB AS ',
+      'SELECT patient_id, uuid, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, patient_type, ',
+      'date_first_enrolled_in_care, entry_point, transfer_in_date, facility_transferred_from, district_transferred_from, ',
+      'CASE previous_regimen ',
+        'WHEN 164968 THEN ''AZT/3TC/DTG'' WHEN 164969 THEN ''TDF/3TC/DTG'' WHEN 164970 THEN ''ABC/3TC/DTG'' WHEN 164505 THEN ''TDF-3TC-EFV'' ',
+        'WHEN 792 THEN ''D4T/3TC/NVP'' WHEN 160124 THEN ''AZT/3TC/EFV'' WHEN 160104 THEN ''D4T/3TC/EFV'' WHEN 1652 THEN ''3TC/NVP/AZT'' ',
+        'WHEN 161361 THEN ''EDF/3TC/EFV'' WHEN 104565 THEN ''EFV/FTC/TDF'' WHEN 162201 THEN ''3TC/LPV/TDF/r'' WHEN 817 THEN ''ABC/3TC/AZT'' ',
+        'WHEN 162199 THEN ''ABC/NVP/3TC'' WHEN 162200 THEN ''3TC/ABC/LPV/r'' WHEN 162565 THEN ''3TC/NVP/TDF'' WHEN 162561 THEN ''3TC/AZT/LPV/r'' ',
+        'WHEN 164511 THEN ''AZT-3TC-ATV/r'' WHEN 164512 THEN ''TDF-3TC-ATV/r'' WHEN 162560 THEN ''3TC/D4T/LPV/r'' WHEN 162563 THEN ''3TC/ABC/EFV'' ',
+        'WHEN 162562 THEN ''ABC/LPV/R/TDF'' WHEN 162559 THEN ''ABC/DDI/LPV/r'' ELSE NULL END AS previous_regimen, ',
+      'date_started_art_at_transferring_facility, date_confirmed_hiv_positive, facility_confirmed_hiv_positive, ',
+      'CASE arv_status WHEN 1 THEN ''Yes'' WHEN 0 THEN ''No'' ELSE '''' END AS arv_status, ',
+      'CASE ever_on_pmtct WHEN 1065 THEN ''Yes'' ELSE '''' END AS ever_on_pmtct, ',
+      'CASE ever_on_pep WHEN 1 THEN ''Yes'' ELSE '''' END AS ever_on_pep, ',
+      'CASE ever_on_prep WHEN 1065 THEN ''Yes'' ELSE '''' END AS ever_on_prep, ',
+      'CASE ever_on_haart WHEN 1185 THEN ''Yes'' ELSE '''' END AS ever_on_haart, ',
+      'IF(who_stage IN (1204,1220), ''WHO Stage1'', IF(who_stage IN (1205,1221), ''WHO Stage2'', IF(who_stage IN (1206,1222), ''WHO Stage3'', IF(who_stage IN (1207,1223), ''WHO Stage4'', '''')))) AS who_stage, ',
+      'name_of_treatment_supporter, ',
+      'CASE relationship_of_treatment_supporter WHEN 973 THEN ''Grandparent'' WHEN 972 THEN ''Sibling'' WHEN 160639 THEN ''Guardian'' WHEN 1527 THEN ''Parent'' ',
+        'WHEN 5617 THEN ''Spouse'' WHEN 163565 THEN ''Partner'' WHEN 5622 THEN ''Other'' ELSE '''' END AS relationship_of_treatment_supporter, ',
+      'treatment_supporter_telephone, treatment_supporter_address, CASE in_school WHEN 1 THEN ''Yes'' WHEN 2 THEN ''No'' END AS in_school, ',
+      'CASE orphan WHEN 1 THEN ''Yes'' WHEN 2 THEN ''No'' END AS orphan, date_of_discontinuation, ',
+      'CASE discontinuation_reason WHEN 159492 THEN ''Transferred Out'' WHEN 160034 THEN ''Died'' WHEN 5240 THEN ''Lost to Follow'' WHEN 819 THEN ''Cannot afford Treatment'' ',
+        'WHEN 5622 THEN ''Other'' WHEN 1067 THEN ''Unknown'' ELSE '''' END AS discontinuation_reason, voided ',
+      'FROM ', @src_hiv_quoted
     );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_table, ' ADD PRIMARY KEY (encounter_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('UPDATE ', @script_status_table, ' SET stop_time = NOW() WHERE id = ', script_id);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SELECT CONCAT("Successfully created DataTools in ", @datatools_schema_raw) AS Result;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(arv_status)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(date_confirmed_hiv_positive)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(entry_point)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('UPDATE ', @script_status_table, ' SET stop_time = NOW() WHERE id = ', script_id);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT CONCAT('Successfully created ', target_pd_quoted, ' and ', @target_hiv_quoted) AS message;
 
 
 -- ----------------------------------- create table hiv_followup ----------------------------------------------
 -- sql
-SET @target_hiv_quoted = CONCAT('`', @datatools_schema, '`.`hiv_followup`');
-SET @src_hiv_quoted = CONCAT('`', @etl_schema, '`.`etl_patient_hiv_followup`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hiv_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_hiv_quoted = CONCAT(datatools_schema, '.hiv_followup');
+SET @src_hiv_quoted = CONCAT(@etl_schema, '.etl_patient_hiv_followup');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hiv_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_hiv_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, patient_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, ',
@@ -173,68 +212,68 @@ SET @sql_stmt = CONCAT(
     '(CASE insurance_type WHEN 1917 THEN "NHIF" WHEN 1107 THEN "None" WHEN 5622 THEN "Other" ELSE "" END) AS insurance_type, ',
     'other_insurance_specify, ',
     '(CASE insurance_status WHEN 161636 THEN "Active" WHEN 1118 THEN "Inactive" ELSE "" END) AS insurance_status ',
-  'FROM ', src_hiv_quoted
+  'FROM ', @src_hiv_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(pregnancy_status)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(breastfeeding)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(family_planning_status)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(tb_status)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(ctx_dispensed)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(population_type)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(on_anti_tb_drugs)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(stability)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(differentiated_care)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(pregnancy_status)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(breastfeeding)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(family_planning_status)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(tb_status)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(ctx_dispensed)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(population_type)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(on_anti_tb_drugs)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(stability)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(differentiated_care)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_hiv_quoted) AS message;
 
 
 -- -------------------------------- create table laboratory_extract ------------------------------------------
 
-SET @target_lab_quoted = CONCAT('`', @datatools_schema, '`.`laboratory_extract`');
-SET @src_lab_quoted = CONCAT('`', @etl_schema, '`.`etl_laboratory_extract`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_lab_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
-  'CREATE TABLE ', @target_lab_quoted, ' ENGINE=InnoDB AS ',
+SET @target_hiv_quoted = CONCAT(datatools_schema, '.laboratory_extract');
+SET @src_lab_quoted = CONCAT(@etl_schema, '.etl_laboratory_extract');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hiv_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
+  'CREATE TABLE ', @target_hiv_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, encounter_id, patient_id, location_id, visit_date, visit_id, order_id, lab_test, urgency, order_reason, ',
     'order_test_name, obs_id, result_test_name, result_name, set_member_conceptId, test_result, ',
     'date_test_requested, date_test_result_received, test_requested_by, date_created, date_last_modified, created_by ',
-  'FROM ', src_lab_quoted
+  'FROM ', @src_lab_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_lab_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_lab_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_lab_quoted, ' ADD INDEX(lab_test)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_lab_quoted, ' ADD INDEX(test_result)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SELECT CONCAT('Successfully created ', @target_lab_quoted) AS message;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(lab_test)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_hiv_quoted, ' ADD INDEX(test_result)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SELECT CONCAT('Successfully created ', @target_hiv_quoted) AS message;
 
 
 -- create table pharmacy_extract
 
-SET @target_pharm_quoted = CONCAT('`', @datatools_schema, '`.`pharmacy_extract`');
-SET @src_pharm_quoted = CONCAT('`', @etl_schema, '`.`etl_pharmacy_extract`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_pharm_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @target_pharm_quoted = CONCAT(datatools_schema, '.pharmacy_extract');
+SET @src_pharm_quoted = CONCAT(@etl_schema, '.etl_pharmacy_extract');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_pharm_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT(
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_pharm_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, uuid, visit_date, visit_id, encounter_id, date_created, encounter_name, drug, drug_name, ',
@@ -242,27 +281,27 @@ SET @sql_stmt = CONCAT(
     '(CASE is_ctx WHEN 105281 THEN ''SULFAMETHOXAZOLE / TRIMETHOPRIM (CTX)'' ELSE '''' END) AS is_ctx, ',
     '(CASE is_dapsone WHEN 74250 THEN ''DAPSONE'' ELSE '''' END) AS is_dapsone, ',
     'frequency, duration, duration_units, voided, date_voided, dispensing_provider ',
-  'FROM ', src_pharm_quoted
+  'FROM ', @src_pharm_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD INDEX(drug)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD INDEX(is_arv)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD INDEX(drug)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_pharm_quoted, ' ADD INDEX(is_arv)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_pharm_quoted) AS message;
 
 -- create table patient_program_discontinuation
 
-SET @target_ppd_quoted = CONCAT('`', @datatools_schema, '`.`patient_program_discontinuation`');
-SET @src_ppd_quoted = CONCAT('`', @etl_schema, '`.`etl_patient_program_discontinuation`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ppd_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @target_ppd_quoted = CONCAT(datatools_schema, '.patient_program_discontinuation');
+SET @src_ppd_quoted = CONCAT(@etl_schema, '.etl_patient_program_discontinuation');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ppd_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT(
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_ppd_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, uuid, visit_id, visit_date, program_uuid, program_name, encounter_id, ',
@@ -293,25 +332,25 @@ SET @sql_stmt = CONCAT(
       'WHEN 160160 THEN ''HIV disease resulting in other conditions including acute HIV infection syndrome or persistent generalized lymphadenopathy or hematological and immunological abnormalities and others'' ',
       'WHEN 161548 THEN ''HIV disease resulting in Unspecified HIV disease'' ELSE '''' END) AS specific_death_cause, ',
     'natural_causes, non_natural_cause ',
-  'FROM ', src_ppd_quoted
+  'FROM ', @src_ppd_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ppd_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ppd_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ppd_quoted, ' ADD INDEX(discontinuation_reason)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ppd_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ppd_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ppd_quoted, ' ADD INDEX(discontinuation_reason)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_ppd_quoted) AS message;
 
 
 -- create table mch_enrollment
 
-SET @target_mch_quoted = CONCAT('`', @datatools_schema, '`.`mch_enrollment`');
-SET @src_mch_quoted = CONCAT('`', @etl_schema, '`.`etl_mch_enrollment`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_mch_quoted = CONCAT(datatools_schema, '.mch_enrollment');
+SET @src_mch_quoted = CONCAT(@etl_schema, '.etl_mch_enrollment');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_mch_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, ',
@@ -347,23 +386,22 @@ SET @sql_stmt = CONCAT(
     '(CASE urine_turbidity WHEN 162102 THEN ''Urine appears clear'' WHEN 162103 THEN ''Cloudy urine'' WHEN 162104 THEN ''Urine appears turbid'' ELSE '''' END) AS urine_turbidity, ',
     '(CASE urine_dipstick_for_blood WHEN 664 THEN ''NEGATIVE'' WHEN 1874 THEN ''Trace'' WHEN 1362 THEN ''One Plus(+)'' WHEN 1363 THEN ''Two Plus(++)'' WHEN 1364 THEN ''Three Plus(+++)'' ELSE '''' END) AS urine_dipstick_for_blood, ',
     '(CASE discontinuation_reason WHEN 159492 THEN ''Transferred out'' WHEN 1067 THEN ''Unknown'' WHEN 160034 THEN ''Died'' WHEN 5622 THEN ''Other'' WHEN 819 THEN ''819'' ELSE '''' END) AS discontinuation_reason ',
-  'FROM ', src_mch_quoted
+  'FROM ', @src_mch_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_mch_quoted) AS message;
 
 
-
 -- create table mch_enrollment
-SET @target_mch_ant_quoted = CONCAT('`', @datatools_schema, '`.`mch_antenatal_visit`');
-SET @src_mch_ant_quoted = CONCAT('`', @etl_schema, '`.`etl_mch_antenatal_visit`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_ant_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_mch_ant_quoted = CONCAT(datatools_schema, '.mch_antenatal_visit');
+SET @src_mch_ant_quoted = CONCAT(@etl_schema, '.etl_mch_antenatal_visit');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_ant_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_mch_ant_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, provider, ',
@@ -441,21 +479,21 @@ SET @sql_stmt = CONCAT(
     '(CASE referred_from WHEN 1537 THEN ''Another Health Facility'' WHEN 163488 THEN ''Community Unit'' WHEN 1175 THEN ''N/A'' ELSE '''' END) AS referred_from, ',
     '(CASE referred_to WHEN 1537 THEN ''Another Health Facility'' WHEN 163488 THEN ''Community Unit'' WHEN 165093 THEN ''HIV Preventive services'' WHEN 1175 THEN ''N/A'' ELSE '''' END) AS referred_to, ',
     'next_appointment_date, clinical_notes ',
-  'FROM ', src_mch_ant_quoted
+  'FROM ', @src_mch_ant_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_ant_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_ant_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_ant_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_ant_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_mch_ant_quoted) AS message;
 
 -- create table mch_delivery table
-SET @target_mch_delivery_quoted = CONCAT('`', @datatools_schema, '`.`mch_delivery`');
-SET @src_mch_delivery_quoted = CONCAT('`', @etl_schema, '`.`etl_mchs_delivery`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_delivery_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_mch_delivery_quoted = CONCAT(datatools_schema, '.mch_delivery');
+SET @src_mch_delivery_quoted = CONCAT(@etl_schema, '.etl_mchs_delivery');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_delivery_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_mch_delivery_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, date_created, admission_number, number_of_anc_visits, ',
@@ -510,22 +548,22 @@ SET @sql_stmt = CONCAT(
     '(CASE artificial_rapture_done WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS artificial_rapture_done ',
   'FROM ', @src_mch_delivery_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_mch_delivery_quoted) AS message;
 
 -- create table mch_delivery table
 
-SET @target_mch_delivery_quoted = CONCAT('`', @datatools_schema, '`.`mch_delivery`');
-SET @src_mch_delivery_quoted = CONCAT('`', @etl_schema, '`.`etl_mchs_delivery`');
+SET @target_mch_delivery_quoted = CONCAT(datatools_schema, '.mch_delivery');
+SET @src_mch_delivery_quoted = CONCAT(@etl_schema, '.etl_mchs_delivery');
 
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_delivery_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_delivery_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT(
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_mch_delivery_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, date_created, admission_number, number_of_anc_visits, ',
@@ -578,25 +616,23 @@ SET @sql_stmt = CONCAT(
     '(CASE bag_mask_ventilation_provided WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS bag_mask_ventilation_provided, ',
     '(CASE induction_done WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS induction_done, ',
     '(CASE artificial_rapture_done WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS artificial_rapture_done ',
-  'FROM ', src_mch_delivery_quoted
+  'FROM ', @src_mch_delivery_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_mch_delivery_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_delivery_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_mch_delivery_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- create table mch_postnatal_visit-----
 
-SET @target_mch_post_quoted = CONCAT('`', @datatools_schema, '`.`mch_postnatal_visit`');
-SET @src_mch_post_quoted = CONCAT('`', @etl_schema, '`.`etl_mch_postnatal_visit`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_post_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_mch_post_quoted = CONCAT(datatools_schema, '.mch_postnatal_visit');
+SET @src_mch_post_quoted = CONCAT(@etl_schema, '.etl_mch_postnatal_visit');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_mch_post_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_mch_post_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'patient_id, ',
@@ -674,20 +710,21 @@ SET @sql_stmt = CONCAT(
     'referral_reason, ',
     'clinical_notes, ',
     'appointment_date ',
-  'FROM ', src_mch_post_quoted
+  'FROM ', @src_mch_post_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_post_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_mch_post_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_mch_post_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_post_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_mch_post_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_mch_post_quoted);
+
 
   -- ------------ create table etl_hei_enrollment-----------------------
 
-SET @target_hei_quoted = CONCAT('`', @datatools_schema, '`.`hei_enrollment`');
-SET @src_hei_quoted = CONCAT('`', @etl_schema, '`.`etl_hei_enrollment`');
+SET @target_hei_quoted = CONCAT(datatools_schema, '.hei_enrollment');
+SET @src_hei_quoted = CONCAT(@etl_schema, '.etl_hei_enrollment');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hei_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -739,10 +776,10 @@ SET @sql_stmt = CONCAT(
     'exit_date, ',
     '(CASE exit_reason WHEN 1403 THEN ''HIV Neg age greater 18 months'' WHEN 138571 THEN ''Confirmed HIV Positive'' WHEN 5240 THEN ''Lost'' WHEN 160432 THEN ''Dead'' WHEN 159492 THEN ''Transfer Out'' ELSE '''' END) AS exit_reason, ',
     'hiv_status_at_exit ',
-  'FROM ', src_hei_quoted
+  'FROM ', @src_hei_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -750,8 +787,8 @@ SELECT CONCAT('Successfully created ', @target_hei_quoted) AS message;
 
 -- create table hei_follow_up_visit
 
-SET @target_hei_follow_quoted = CONCAT('`', @datatools_schema, '`.`hei_follow_up_visit`');
-SET @src_hei_follow_quoted = CONCAT('`', @etl_schema, '`.`etl_hei_follow_up_visit`');
+SET @target_hei_follow_quoted = CONCAT(datatools_schema, '.hei_follow_up_visit');
+SET @src_hei_follow_quoted = CONCAT(@etl_schema, '.etl_hei_follow_up_visit');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hei_follow_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -802,23 +839,22 @@ SET @sql_stmt = CONCAT(
     '(CASE mnps_supplementation WHEN 161649 THEN ''Yes'' WHEN 1107 THEN ''No'' ELSE '''' END) AS MNPS_Supplementation, ',
     '(CASE LLIN WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS LLIN, ',
     'comments, next_appointment_date ',
-  'FROM ', src_hei_follow_quoted
+  'FROM ', @src_hei_follow_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_follow_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_follow_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_follow_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hei_follow_quoted, ' ADD INDEX(infant_feeding)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 SELECT CONCAT('Successfully created ', @target_hei_follow_quoted) AS message;
 
 -- create table immunization
 
-SET @target_immunization_quoted = CONCAT('`', @datatools_schema, '`.`immunization`');
-SET @src_immunization_quoted = CONCAT('`', @etl_schema, '`.`etl_immunization`');
+SET @target_immunization_quoted = CONCAT(datatools_schema, '.immunization');
+SET @src_immunization_quoted = CONCAT(@etl_schema, '.etl_immunization');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_immunization_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -859,10 +895,10 @@ SET @sql_stmt = CONCAT(
     'influenza, ',
     'sequence, ',
     'CASE fully_immunized WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END AS fully_immunized ',
-  'FROM ', src_immunization_quoted
+  'FROM ', @src_immunization_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_immunization_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_immunization_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_immunization_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -873,8 +909,8 @@ SELECT CONCAT('Successfully created ', @target_immunization_quoted) AS message;
 -- create table tb_enrollment
 
 -- sql
-SET @target_tb_quoted = CONCAT('`', @datatools_schema, '`.`tb_enrollment`');
-SET @src_tb_quoted = CONCAT('`', @etl_schema, '`.`etl_tb_enrollment`');
+SET @target_tb_quoted = CONCAT(datatools_schema, '.tb_enrollment');
+SET @src_tb_quoted = CONCAT(@etl_schema, '.etl_tb_enrollment');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_tb_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -898,10 +934,10 @@ SET @sql_stmt = CONCAT(
     '(CASE has_extra_pulmonary_menengitis WHEN 111967 THEN ''Meningitis'' ELSE '''' END) AS has_extra_pulmonary_menengitis, ',
     '(CASE has_extra_pulmonary_skeleton WHEN 112116 THEN ''Skeleton'' ELSE '''' END) AS has_extra_pulmonary_skeleton, ',
     '(CASE has_extra_pulmonary_abdominal WHEN 1350 THEN ''Abdominal'' ELSE '''' END) AS has_extra_pulmonary_abdominal ',
-  'FROM ', src_tb_quoted
+  'FROM ', @src_tb_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -912,8 +948,8 @@ SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_tb_quoted)
 
 -- sql
 SET @target_tb_follow_follow_quoted = NULL; -- ensure variable not reused
-SET @target_tb_follow_quoted = CONCAT('`', @datatools_schema, '`.`tb_follow_up_visit`');
-SET @src_tb_follow_quoted = CONCAT('`', @etl_schema, '`.`etl_tb_follow_up_visit`');
+SET @target_tb_follow_quoted = CONCAT(datatools_schema, '.tb_follow_up_visit');
+SET @src_tb_follow_quoted = CONCAT(@etl_schema, '.etl_tb_follow_up_visit');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_tb_follow_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -948,7 +984,7 @@ SET @sql_stmt = CONCAT(
   'FROM ', @src_tb_follow_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_follow_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_follow_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_follow_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -960,8 +996,8 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- create table tb_screening
 
 -- sql
-SET @target_tb_screen_quoted = CONCAT('`', @datatools_schema, '`.`tb_screening`');
-SET @src_tb_screen_quoted = CONCAT('`', @etl_schema, '`.`etl_tb_screening`');
+SET @target_tb_screen_quoted = CONCAT(datatools_schema, '.tb_screening');
+SET @src_tb_screen_quoted = CONCAT(@etl_schema, '.etl_tb_screening');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_tb_screen_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -981,7 +1017,7 @@ SET @sql_stmt = CONCAT(
     '(CASE fever_for_2wks_or_more WHEN 1494 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS fever_for_2wks_or_more, ',
     '(CASE noticeable_weight_loss WHEN 832 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS noticeable_weight_loss, ',
     '(CASE night_sweat_for_2wks_or_more WHEN 133027 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS night_sweat_for_2wks_or_more, ',
-    '(CASE lethargy WHEN 116334 THEN ''Yes'' ELSE '''' END) AS lethargy, ',
+   ' (CASE lethargy WHEN 116334 THEN ''Yes'' ELSE '''' END) AS lethargy, ',
     '(CASE spatum_smear_ordered WHEN 307 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS spatum_smear_ordered, ',
     '(CASE chest_xray_ordered WHEN 12 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS chest_xray_ordered, ',
     '(CASE genexpert_ordered WHEN 162202 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS genexpert_ordered, ',
@@ -1002,7 +1038,7 @@ SET @sql_stmt = CONCAT(
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_screen_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_screen_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_tb_screen_quoted, ' ADD INDEX(visit_date)');
@@ -1011,11 +1047,10 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_tb_screen_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-
 -- -------- Table Datatools drug event ---
 
-SET @target_drug_quoted = CONCAT('`', @datatools_schema, '`.`drug_event`');
-SET @src_drug_quoted = CONCAT('`', @etl_schema, '`.`etl_drug_event`');
+SET @target_drug_quoted = CONCAT(datatools_schema, '.drug_event');
+SET @src_drug_quoted = CONCAT(@etl_schema, '.etl_drug_event');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_drug_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -1049,19 +1084,19 @@ SET @sql_stmt = CONCAT(
       'WHEN 160561 THEN ''New drug available'' ',
       'ELSE '''' END) AS reason_discontinued, ',
     'reason_discontinued_other ',
-  'FROM ', src_drug_quoted
+  'FROM ', @src_drug_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_drug_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- --- HTS Table ------------------------
+--- HTS Table ------------------------
 
-SET @target_hts_quoted = CONCAT('`', @datatools_schema, '`.`hts_test`');
-SET @src_hts_quoted = CONCAT('`', @etl_schema, '`.`etl_hts_test`');
-SET @src_pd_quoted  = CONCAT('`', @etl_schema, '`.`etl_patient_demographics`');
+SET @target_hts_quoted = CONCAT(datatools_schema, '.hts_test');
+SET @src_hts_quoted = CONCAT(@etl_schema, '.etl_hts_test');
+SET @src_pd_quoted  = CONCAT(@etl_schema, '.etl_patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hts_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -1127,10 +1162,10 @@ SET @sql_stmt = CONCAT(
     't.referral_for, t.referral_facility, t.other_referral_facility, t.neg_referral_for, t.neg_referral_specify, ',
     't.tb_screening, t.patient_had_hiv_self_test, t.remarks, t.voided ',
   'FROM ', @src_hts_quoted, ' t ',
-  'INNER JOIN ', src_pd_quoted, ' d ON d.patient_id = t.patient_id AND d.voided = 0'
+  'INNER JOIN ', @src_pd_quoted, ' d ON d.patient_id = t.patient_id AND d.voided = 0'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_quoted, ' ADD FOREIGN KEY(patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_quoted, ' ADD FOREIGN KEY(patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -1143,18 +1178,18 @@ SELECT CONCAT('Successfully created ', @target_hts_quoted) AS message;
 
 -- ------------------------------------ POPULATE HTS LINKAGES AND REFERRALS -------------------------------
 
-SET @target_hts_referral_quoted = CONCAT('`', @datatools_schema, '`.`hts_referral_and_linkage`');
-SET @src_hts_referral_quoted    = CONCAT('`', @etl_schema, '`.`etl_hts_referral_and_linkage`');
-SET @src_pd_quoted              = CONCAT('`', @etl_schema, '`.`etl_patient_demographics`');
+SET @target_hts_referral_quoted = CONCAT(datatools_schema, '.hts_referral_and_linkage');
+SET @src_hts_referral_quoted    = CONCAT(@etl_schema, '.etl_hts_referral_and_linkage');
+SET @src_pd_quoted              = CONCAT(@etl_schema, '.etl_patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hts_referral_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
   'CREATE TABLE ', @target_hts_referral_quoted, ' AS ',
   'SELECT l.* FROM ', @src_hts_referral_quoted, ' l ',
-  'INNER JOIN ', src_pd_quoted, ' d ON d.patient_id = l.patient_id AND d.voided = 0'
+  'INNER JOIN ', @src_pd_quoted, ' d ON d.patient_id = l.patient_id AND d.voided = 0'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_referral_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_referral_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_referral_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -1162,74 +1197,72 @@ SELECT CONCAT('Successfully created ', @target_hts_referral_quoted) AS message;
 
 
 -- hts_referral
-SET @target_hts_referral_quoted = CONCAT('`', @datatools_schema, '`.`hts_referral`');
-SET @src_hts_referral_quoted    = CONCAT('`', @etl_schema, '`.`etl_hts_referral`');
-SET @src_pd_quoted              = CONCAT('`', @etl_schema, '`.`etl_patient_demographics`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', target_hts_referral_quoted);
+SET @target_hts_referral_quoted = CONCAT(datatools_schema, '.hts_referral');
+SET @src_hts_referral_quoted    = CONCAT(@etl_schema, '.etl_hts_referral');
+SET @src_pd_quoted              = CONCAT(@etl_schema, '.etl_patient_demographics');
+SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hts_referral_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 SET @sql_stmt = CONCAT(
   'CREATE TABLE ', @target_hts_referral_quoted, ' AS ',
   'SELECT r.* FROM ', @src_hts_referral_quoted, ' r ',
   'INNER JOIN ', @src_pd_quoted, ' d ON d.patient_id = r.patient_id AND d.voided = 0'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_referral_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_referral_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_hts_referral_quoted) AS message;
 
-
 -- current_in_care
-SET @target_current_quoted = CONCAT('`', @datatools_schema, '`.`current_in_care`');
-SET @src_current_quoted   = CONCAT('`', @etl_schema, '`.`etl_current_in_care`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_current_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('CREATE TABLE ', @target_current_quoted, ' AS SELECT * FROM ', src_current_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_current_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @target_current_quoted = CONCAT(datatools_schema, '.current_in_care');
+SET src_current_quoted   = CONCAT(@etl_schema, '.etl_current_in_care');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_current_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('CREATE TABLE ', @target_current_quoted, ' AS SELECT * FROM ', src_current_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_current_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_current_quoted) AS message;
 
 
 -- ipt_followup
-SET @target_ipt_quoted = CONCAT('`', @datatools_schema, '`.`ipt_followup`');
-SET @src_ipt_quoted   = CONCAT('`', @etl_schema, '`.`etl_ipt_follow_up`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ipt_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('CREATE TABLE ', @target_ipt_quoted, ' AS SELECT * FROM ', src_ipt_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ipt_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @target_ipt_quoted = CONCAT(datatools_schema, '.ipt_followup');
+SET @src_ipt_quoted   = CONCAT(@etl_schema, '.etl_ipt_follow_up');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ipt_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('CREATE TABLE ', @target_ipt_quoted, ' AS SELECT * FROM ', @src_ipt_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ipt_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_ipt_quoted) AS message;
 
 
 -- default_facility_info
-SET @target_def_fac_quoted = CONCAT('`', @datatools_schema, '`.`default_facility_info`');
-SET @src_def_fac_quoted    = CONCAT('`', @etl_schema, '`.`etl_default_facility_info`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_def_fac_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('CREATE TABLE ', target_def_fac_quoted, ' AS SELECT * FROM ', src_def_fac_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SELECT CONCAT('Successfully created ', target_def_fac_quoted) AS message;
+SET @target_def_fac_quoted = CONCAT(datatools_schema, '.default_facility_info');
+SET @src_def_fac_quoted    = CONCAT(@etl_schema, '.etl_default_facility_info');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_def_fac_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('CREATE TABLE ', @target_def_fac_quoted, ' AS SELECT * FROM ', @src_def_fac_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SELECT CONCAT('Successfully created ', @target_def_fac_quoted) AS message;
 
 
 -- person_address
-SET @target_addr_quoted = CONCAT('`', @datatools_schema, '`.`person_address`');
-SET @src_addr_quoted    = CONCAT('`', @etl_schema, '`.`etl_person_address`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', target_addr_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('CREATE TABLE ', target_addr_quoted, ' AS SELECT * FROM ', src_addr_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SELECT CONCAT('Successfully created ', target_addr_quoted) AS message;
+SET @target_addr_quoted = CONCAT(datatools_schema, '.person_address');
+SET @src_addr_quoted    = CONCAT(@etl_schema, '.etl_person_address');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_addr_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('CREATE TABLE ', @target_addr_quoted, ' AS SELECT * FROM ', @src_addr_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SELECT CONCAT('Successfully created ', @target_addr_quoted) AS message;
 
 
 -- create table ipt_screening
 
-SET @target_ipt_quoted = CONCAT('`', @datatools_schema, '`.`ipt_screening`');
-SET @src_ipt_quoted    = CONCAT('`', @etl_schema, '`.`etl_ipt_screening`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ipt_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_ipt_quoted = CONCAT(datatools_schema, '.ipt_screening');
+SET @src_ipt_quoted    = CONCAT(@etl_schema, '.etl_ipt_screening');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ipt_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_ipt_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, ',
@@ -1255,22 +1288,22 @@ SET @sql_stmt = CONCAT(
     'voided ',
   'FROM ', @src_ipt_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ipt_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ipt_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_ipt_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ipt_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ipt_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_ipt_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Create table ccc_defaulter_tracing
 
 -- sql
-SET @target_ccc_quoted = CONCAT('`', @datatools_schema, '`.`ccc_defaulter_tracing`');
-SET @src_ccc_quoted    = CONCAT('`', @etl_schema, '`.`etl_ccc_defaulter_tracing`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ccc_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_ccc_quoted = CONCAT(datatools_schema, '.ccc_defaulter_tracing');
+SET @src_ccc_quoted    = CONCAT(@etl_schema, '.etl_ccc_defaulter_tracing');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ccc_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_ccc_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'f.uuid, ',
@@ -1293,34 +1326,34 @@ SET @sql_stmt = CONCAT(
     'NULLIF(TRIM(f.comments), '''') AS comments, ',
     'DATE(f.booking_date) AS booking_date, ',
     'f.date_created, f.date_last_modified ',
-  'FROM ', src_ccc_quoted, ' f'
+  'FROM ', @src_ccc_quoted, ' f'
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (missed_appointment_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (true_status)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (cause_of_death)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (tracing_type)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_ccc_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_ccc_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (missed_appointment_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (true_status)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (cause_of_death)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_ccc_quoted, ' ADD INDEX (tracing_type)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_ccc_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
 -- create table art_preparation
 
-SET @target_art_quoted = CONCAT('`', @datatools_schema, '`.`art_preparation`');
-SET @src_art_quoted = CONCAT('`', @etl_schema, '`.`etl_ART_preparation`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_art_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_art_quoted = CONCAT(datatools_schema, '.art_preparation');
+SET @src_art_quoted = CONCAT(@etl_schema, '.etl_ART_preparation');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_art_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_art_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, ',
@@ -1345,26 +1378,26 @@ SET @sql_stmt = CONCAT(
     'enrolled_in_reminder_system, ',
     'date_created, ',
     'date_last_modified ',
-  'FROM ', src_art_quoted
+  'FROM ', @src_art_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD INDEX(ready_to_start_art)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_art_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD INDEX(ready_to_start_art)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_art_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- create table enhanced_adherence ----
 
 -- sql
-SET @target_enhanced_quoted = CONCAT('`', @datatools_schema, '`.`enhanced_adherence`');
-SET @src_enhanced_quoted = CONCAT('`', @etl_schema, '`.`etl_enhanced_adherence`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_enhanced_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_enhanced_quoted = CONCAT(datatools_schema, '.enhanced_adherence');
+SET @src_enhanced_quoted = CONCAT(@etl_schema, '.etl_enhanced_adherence');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_enhanced_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_enhanced_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, ',
@@ -1416,23 +1449,23 @@ SET @sql_stmt = CONCAT(
     'home_visit_benefit, ',
     'adherence_plan, ',
     'DATE(next_appointment_date) AS next_appointment_date ',
-  'FROM ', src_enhanced_quoted
+  'FROM ', @src_enhanced_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_enhanced_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_enhanced_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_enhanced_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_enhanced_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_enhanced_quoted) AS message;
 
--- --------- Create triage table ---------------------------
+--------- Create triage table ---------------------------
 
 
-SET @target_triage_quoted = CONCAT('`', @datatools_schema, '`.`triage`');
-SET @src_triage_quoted = CONCAT('`', @etl_schema, '`.`etl_patient_triage`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_triage_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_triage_quoted = CONCAT(datatools_schema, '.triage');
+SET @src_triage_quoted = CONCAT(@etl_schema, '.etl_patient_triage');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_triage_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_triage_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, ',
@@ -1494,24 +1527,24 @@ SET @sql_stmt = CONCAT(
     'last_menstrual_period, ',
     'CASE hpv_vaccinated WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE NULL END AS hpv_vaccinated, ',
     'voided ',
-  'FROM ', src_triage_quoted
+  'FROM ', @src_triage_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_triage_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT('`', @datatools_schema, '`.`patient_demographics`'), '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_triage_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_triage_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT(datatools_schema, '.patient_demographics'), '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_triage_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_triage_quoted) AS message;
 
 
 -- create table generalized_anxiety_disorder
 
 -- sql
-SET @target_gad_quoted = CONCAT('`', @datatools_schema, '`.`generalized_anxiety_disorder`');
-SET @src_gad_quoted = CONCAT('`', @etl_schema, '`.`etl_generalized_anxiety_disorder`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_gad_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_gad_quoted = CONCAT(datatools_schema, '.generalized_anxiety_disorder');
+SET @src_gad_quoted = CONCAT(@etl_schema, '.etl_generalized_anxiety_disorder');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_gad_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_gad_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, ',
@@ -1531,22 +1564,23 @@ SET @sql_stmt = CONCAT(
     '(CASE feeling_afraid WHEN 160215 THEN ''Not at all'' WHEN 167000 THEN ''Several days'' WHEN 167001 THEN ''More than half the days'' WHEN 167002 THEN ''Nearly every day'' ELSE NULL END) AS feeling_afraid, ',
     '(CASE assessment_outcome WHEN 159410 THEN ''Minimal Anxiety'' WHEN 1498 THEN ''Mild Anxiety'' WHEN 1499 THEN ''Moderate Anxiety'' WHEN 1500 THEN ''Severe Anxiety'' ELSE NULL END) AS assessment_outcome, ',
     'voided ',
-  'FROM ', src_gad_quoted
+  'FROM ', @src_gad_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gad_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gad_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_gad_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_gad_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_gad_quoted) AS message;
 
 -- Create table prep_monthly_refill
 
-SET @target_prep_quoted = CONCAT('`', @datatools_schema, '`.`prep_monthly_refill`');
-SET @src_prep_quoted    = CONCAT('`', @etl_schema, '`.`etl_prep_monthly_refill`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_prep_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+sql
+SET @target_prep_quoted = CONCAT(datatools_schema, '.prep_monthly_refill');
+SET @src_prep_quoted    = CONCAT(@etl_schema, '.etl_prep_monthly_refill');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_prep_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_prep_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, provider, patient_id, visit_id, DATE(visit_date) AS visit_date, location_id, encounter_id, ',
@@ -1555,26 +1589,26 @@ SET @sql_stmt = CONCAT(
     'adherence_counselling_done, prep_status, switching_option, switching_date, prep_type, ',
     'prescribed_prep_today, prescribed_regimen, prescribed_regimen_months, number_of_condoms_issued, ',
     'prep_discontinue_reasons, prep_discontinue_other_reasons, appointment_given, next_appointment, remarks, voided ',
-  'FROM ', src_prep_quoted
+  'FROM ', @src_prep_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(encounter_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(encounter_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_prep_quoted) AS message;
 
 -- Create table prep_enrolment
 -- sql
-SET @target_prep_quoted = CONCAT('`', @datatools_schema, '`.`prep_enrolment`');
-SET @src_prep_quoted    = CONCAT('`', @etl_schema, '`.`etl_prep_enrolment`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_prep_quoted);
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT(
+SET @target_prep_quoted = CONCAT(datatools_schema, '.prep_enrolment');
+SET @src_prep_quoted    = CONCAT(@etl_schema, '.etl_prep_enrolment');
+SET sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_prep_quoted);
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT(
   'CREATE TABLE ', @target_prep_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'uuid, ',
@@ -1607,24 +1641,23 @@ SET @sql_stmt = CONCAT(
     'buddy_phone, ',
     'buddy_alt_phone, ',
     'voided ',
-  'FROM ', src_prep_quoted
+  'FROM ', @src_prep_quoted
 );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(visit_date)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(encounter_id)');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(visit_date)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET sql_stmt = CONCAT('ALTER TABLE ', @target_prep_quoted, ' ADD INDEX(encounter_id)');
+PREPARE stmt FROM sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_prep_quoted) AS message;
-
 
 -- Create table cervical_cancer_screening
 
 -- sql
-SET @target_cervical_quoted = CONCAT('`', @datatools_schema, '`.`cervical_cancer_screening`');
-SET @src_cervical_quoted    = CONCAT('`', @etl_schema, '`.`etl_cervical_cancer_screening`');
-SET @target_pd_quoted       = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_cervical_quoted = CONCAT(datatools_schema, '.cervical_cancer_screening');
+SET @src_cervical_quoted    = CONCAT(@etl_schema, '.etl_cervical_cancer_screening');
+SET @target_pd_quoted       = CONCAT(datatools_schema, '.patient_demographics');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_cervical_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -1665,7 +1698,7 @@ SET @sql_stmt = CONCAT(
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_cervical_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_cervical_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_cervical_quoted, ' ADD INDEX(visit_date)');
@@ -1677,9 +1710,9 @@ SELECT CONCAT("Successfully created ", @target_cervical_quoted) AS message;
 -- create table datatools_patient_contact
 
 -- sql
-SET @target_pc_quoted = CONCAT('`', @datatools_schema, '`.`patient_contact`');
-SET @src_pc_quoted    = CONCAT('`', @etl_schema, '`.`etl_patient_contact`');
-SET @target_pd_quoted = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_pc_quoted = CONCAT(datatools_schema, '.patient_contact');
+SET @src_pc_quoted    = CONCAT(@etl_schema, '.etl_patient_contact');
+SET @target_pd_quoted = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_pc_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -1710,43 +1743,42 @@ SET @sql_stmt = CONCAT(
     'appointment_date, ipv_outcome, contact_listing_decline_reason, ',
     'CASE consented_contact_listing WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' WHEN 1067 THEN ''Unknown'' ELSE '''' END AS consented_contact_listing, ',
     'encounter_provider, date_last_modified, location_id, uuid, voided ',
-  'FROM ', src_pc_quoted
+  'FROM ', @src_pc_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pc_quoted, ' ADD PRIMARY KEY(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pc_quoted, ' ADD FOREIGN KEY (patient_related_to) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pc_quoted, ' ADD FOREIGN KEY (patient_related_to) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pc_quoted, ' ADD INDEX(date_created)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_pc_quoted) AS message;
-
 -- create table datatools_client_tracesql
 
-SET @target_client_quoted = CONCAT('`', @datatools_schema, '`.`client_trace`');
-SET @src_client_quoted    = CONCAT('`', @etl_schema, '`.`etl_client_trace`');
-SET @target_pc_quoted     = CONCAT('`', @datatools_schema, '`.`patient_contact`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', target_client_quoted);
+SET @target_client_quoted = CONCAT(datatools_schema, '.client_trace');
+SET @src_client_quoted    = CONCAT(@etl_schema, '.etl_client_trace');
+SET @target_pc_quoted     = CONCAT(datatools_schema, '.patient_contact');
+SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_client_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
   'CREATE TABLE ', @target_client_quoted, ' ENGINE=InnoDB AS ',
   'SELECT ',
     'id, uuid, date_created, date_last_modified, encounter_date, client_id, contact_type, status, unique_patient_no, ',
     'facility_linked_to, health_worker_handed_to, remarks, appointment_date, voided ',
-  'FROM ', src_client_quoted
+  'FROM ', @src_client_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_client_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pc_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_client_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pc_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_client_quoted, ' ADD INDEX(date_created)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_client_quoted, ' ADD INDEX(date_created)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SELECT CONCAT('Successfully created ', target_client_quoted) AS message;
+SELECT CONCAT('Successfully created ', @target_client_quoted) AS message;
 
---  --- ---- Create  table kp contact ----------------------------------------
+--- ---- Create  table kp contact ----------------------------------------
 
-SET @target_kp_contact_quoted = CONCAT('`', @datatools_schema, '`.`kp_contact`');
-SET @src_kp_contact_quoted    = CONCAT('`', @etl_schema, '`.`etl_contact`');
-SET @target_pd_quoted        = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_kp_contact_quoted = CONCAT(datatools_schema, '.kp_contact');
+SET @src_kp_contact_quoted    = CONCAT(@etl_schema, '.etl_contact');
+SET @target_pd_quoted        = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_contact_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -1787,18 +1819,18 @@ SET @sql_stmt = CONCAT(
   'FROM ', @src_kp_contact_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_contact_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_contact_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_contact_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_kp_contact_quoted) AS message;
 
--- ----------------------- kp_client_enrollment ------------
+----------------------- kp_client_enrollment ------------
 
 
 
-SET @target_kp_client_quoted = CONCAT('`', @datatools_schema, '`.`kp_client_enrollment`');
-SET @src_kp_client_quoted    = CONCAT('`', @etl_schema, '`.`etl_client_enrollment`');
+SET @target_kp_client_quoted = CONCAT(datatools_schema, '.kp_client_enrollment');
+SET @src_kp_client_quoted    = CONCAT(@etl_schema, '.etl_client_enrollment');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_client_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -1815,22 +1847,21 @@ SET @sql_stmt = CONCAT(
   'FROM ', @src_kp_client_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_client_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_client_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_client_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_kp_client_quoted) AS message;
 
 
--- ------ Create table kp_clinical_visit
+------ Create table kp_clinical_visit
 
 -- sql
-SET @target_kp_clinical_quoted = CONCAT('`', @datatools_schema, '`.`kp_clinical_visit`');
-SET @src_kp_clinical_quoted = CONCAT('`', @etl_schema, '`.`etl_clinical_visit`');
-SET @target_pd_quoted = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_kp_clinical_quoted = CONCAT(datatools_schema, '.kp_clinical_visit');
+SET @src_kp_clinical_quoted = CONCAT(@etl_schema, '.etl_clinical_visit');
+SET @target_pd_quoted = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_clinical_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 SET @sql_stmt = CONCAT(
   'CREATE TABLE ', @target_kp_clinical_quoted, ' AS SELECT ',
     'uuid,',
@@ -1973,10 +2004,10 @@ SET @sql_stmt = CONCAT(
     'clinical_notes,',
     'appointment_date,',
     'voided ',
-  'FROM ', src_kp_clinical_quoted
+  'FROM ', @src_kp_clinical_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_clinical_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_clinical_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_clinical_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -1984,9 +2015,9 @@ SELECT CONCAT('Successfully created ', @target_kp_clinical_quoted) AS message;
 
 -- Create table kp_peer_calendar
 -- sql
-SET @target_kp_peer_quoted = CONCAT('`', @datatools_schema, '`.`kp_peer_calendar`');
-SET @src_kp_peer_quoted    = CONCAT('`', @etl_schema, '`.`etl_peer_calendar`');
-SET @target_pd_quoted      = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_kp_peer_quoted = CONCAT(datatools_schema, '.kp_peer_calendar');
+SET @src_kp_peer_quoted    = CONCAT(@etl_schema, '.etl_peer_calendar');
+SET @target_pd_quoted      = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_peer_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2023,10 +2054,10 @@ SET @sql_stmt = CONCAT(
     'health_edu,',
     'remarks,',
     'voided ',
-  'FROM ', src_kp_peer_quoted
+  'FROM ', @src_kp_peer_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_peer_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_peer_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_peer_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2035,8 +2066,8 @@ SELECT CONCAT('Successfully created ', @target_kp_peer_quoted) AS message;
 -- Create table kp_sti_treatment
 
 -- sql
-SET @target_kp_sti_quoted = CONCAT('`', @datatools_schema, '`.`kp_sti_treatment`');
-SET @src_kp_sti_quoted    = CONCAT('`', @etl_schema, '`.`etl_sti_treatment`');
+SET @target_kp_sti_quoted = CONCAT(datatools_schema, '.kp_sti_treatment');
+SET @src_kp_sti_quoted    = CONCAT(@etl_schema, '.etl_sti_treatment');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_sti_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2070,13 +2101,13 @@ SET @sql_stmt = CONCAT(
     'provider_name,',
     'appointment_date,',
     'voided ',
-  'FROM ', src_kp_sti_quoted
+  'FROM ', @src_kp_sti_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
   'ALTER TABLE ', @target_kp_sti_quoted,
   ' ADD FOREIGN KEY (client_id) REFERENCES ',
-  CONCAT('`', @datatools_schema, '`.`patient_demographics`'),
+  CONCAT(datatools_schema, '.patient_demographics'),
   '(patient_id)'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2086,8 +2117,8 @@ SELECT CONCAT('Successfully created ', @target_kp_sti_quoted) AS message;
 
 
 -- Create table kp_peer_tracking
-SET @target_kp_peer_quoted = CONCAT('`', @datatools_schema, '`.`kp_peer_tracking`');
-SET @src_kp_peer_quoted = CONCAT('`', @etl_schema, '`.`etl_peer_tracking`');
+SET @target_kp_peer_quoted = CONCAT(datatools_schema, '.kp_peer_tracking');
+SET @src_kp_peer_quoted = CONCAT(@etl_schema, '.etl_peer_tracking');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_peer_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2097,14 +2128,13 @@ SET @sql_stmt = CONCAT(
     'tracing_attempted, tracing_not_attempted_reason, attempt_number, tracing_date, tracing_type, ',
     'tracing_outcome, is_final_trace, tracing_outcome_status, voluntary_exit_comment, status_in_program, ',
     'source_of_information, other_informant, date_created, date_last_modified, voided ',
-  'FROM ', src_kp_peer_quoted
+  'FROM ', @src_kp_peer_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 SET @sql_stmt = CONCAT(
   'ALTER TABLE ', @target_kp_peer_quoted,
   ' ADD FOREIGN KEY (client_id) REFERENCES ',
-  CONCAT('`', @datatools_schema, '`.`patient_demographics`'),
+  CONCAT(datatools_schema, '.patient_demographics'),
   '(patient_id)'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2114,9 +2144,9 @@ SELECT CONCAT('Successfully created ', @target_kp_peer_quoted) AS message;
 
 -- Create table kp_treatment_verification
 
-SET @target_kp_treatment_quoted = CONCAT('`', @datatools_schema, '`.`kp_treatment_verification`');
-SET @src_kp_treatment_quoted    = CONCAT('`', @etl_schema, '`.`etl_treatment_verification`');
-SET @target_pd_quoted           = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_kp_treatment_quoted = CONCAT(datatools_schema, '.kp_treatment_verification');
+SET @src_kp_treatment_quoted    = CONCAT(@etl_schema, '.etl_treatment_verification');
+SET @target_pd_quoted           = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kp_treatment_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2128,10 +2158,10 @@ SET @sql_stmt = CONCAT(
     'IPT_start_date, IPT_completion_date, on_diff_care, in_support_group, support_group_name, ',
     'opportunistic_infection, oi_diagnosis_date, oi_treatment_start_date, oi_treatment_end_date, comment, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_kp_treatment_quoted
+  'FROM ', @src_kp_treatment_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_treatment_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_treatment_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kp_treatment_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2140,8 +2170,8 @@ SELECT CONCAT('Successfully created ', @target_kp_treatment_quoted) AS message;
 
 -- create table alcohol_drug_abuse_screening
 
-SET @target_adq_quoted = CONCAT('`', @datatools_schema, '`.`alcohol_drug_abuse_screening`');
-SET @src_adq_quoted    = CONCAT('`', @etl_schema, '`.`etl_alcohol_drug_abuse_screening`');
+SET @target_adq_quoted = CONCAT(datatools_schema, '.alcohol_drug_abuse_screening');
+SET @src_adq_quoted    = CONCAT(@etl_schema, '.etl_alcohol_drug_abuse_screening');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_adq_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2152,11 +2182,11 @@ SET @sql_stmt = CONCAT(
     'CASE smoking_frequency WHEN 1090 THEN ''Never smoked'' WHEN 156358 THEN ''Former cigarette smoker'' WHEN 163197 THEN ''Current some day smoker'' WHEN 163196 THEN ''Current light tobacco smoker'' WHEN 163195 THEN ''Current heavy tobacco smoker'' WHEN 163200 THEN ''Unknown if ever smoked'' END AS smoking_frequency, ',
     'CASE drugs_use_frequency WHEN 1090 THEN ''Never'' WHEN 1091 THEN ''Monthly or less'' WHEN 1092 THEN ''2 to 4 times a month'' WHEN 1093 THEN ''2 to 3 times a week'' WHEN 1094 THEN ''4 or More Times a Week'' END AS drugs_use_frequency, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_adq_quoted
+  'FROM ', @src_adq_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @target_pd_quoted = IFNULL(target_pd_quoted, CONCAT('`', @datatools_schema, '`.`patient_demographics`'));
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_adq_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @target_pd_quoted = IFNULL(@target_pd_quoted, CONCAT(datatools_schema, '.patient_demographics'));
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_adq_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_adq_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2165,8 +2195,8 @@ SELECT CONCAT('Successfully created ', @target_adq_quoted) AS message;
 -- create table gbv_screening
 
 -- sql
-SET @target_gbv_quoted = CONCAT('`', @datatools_schema, '`.`gbv_screening`');
-SET @src_gbv_quoted    = CONCAT('`', @etl_schema, '`.`etl_gbv_screening`');
+SET @target_gbv_quoted = CONCAT(datatools_schema, '.gbv_screening');
+SET @src_gbv_quoted    = CONCAT(@etl_schema, '.etl_gbv_screening');
 SET @sql_stmt = CONCAT(
   'DROP TABLE IF EXISTS ', @target_gbv_quoted, '; ',
   'CREATE TABLE ', @target_gbv_quoted, ' ENGINE=InnoDB AS ',
@@ -2178,21 +2208,20 @@ SET @sql_stmt = CONCAT(
     '(CASE sexual_ipv WHEN 152370 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS sexual_ipv, ',
     '(CASE ipv_relationship WHEN 1582 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS ipv_relationship, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_gbv_quoted, ';'
+  'FROM ', @src_gbv_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @target_pd_quoted = IFNULL(target_pd_quoted, CONCAT('`', @datatools_schema, '`.`patient_demographics`'));
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gbv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @target_pd_quoted = IFNULL(@target_pd_quoted, CONCAT(datatools_schema, '.patient_demographics'));
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gbv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gbv_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('SELECT ''Successfully created '' , ', @target_gbv_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 -- -------------- create table gbv_screening
 
-SET @target_gbv_action_quoted = CONCAT('`', @datatools_schema, '`.`gbv_screening_action`');
-SET @src_gbv_action_quoted = CONCAT('`', @etl_schema, '`.`etl_gbv_screening_action`');
+SET @target_gbv_action_quoted = CONCAT(datatools_schema, '.gbv_screening_action');
+SET @src_gbv_action_quoted = CONCAT(@etl_schema, '.etl_gbv_screening_action');
 SET @sql_stmt = CONCAT(
   'DROP TABLE IF EXISTS ', @target_gbv_action_quoted, '; ',
   'CREATE TABLE ', @target_gbv_action_quoted, ' ENGINE=InnoDB AS ',
@@ -2203,23 +2232,22 @@ SET @sql_stmt = CONCAT(
     'action_date AS action_date, ',
     '(CASE reason_for_not_reporting WHEN 1067 THEN ''Did not know where to report'' WHEN 1811 THEN ''Distance'' WHEN 140923 THEN ''Exhaustion/Lack of energy'' WHEN 163473 THEN ''Fear shame'' WHEN 159418 THEN ''Lack of faith in system'' WHEN 162951 THEN ''Lack of knowledge'' WHEN 664 THEN ''Negative attitude of the person reported to'' WHEN 143100 THEN ''Not allowed culturally'' WHEN 165161 THEN ''Perpetrator above the law'' WHEN 163475 THEN ''Self blame'' ELSE '''' END) AS reason_for_not_reporting, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_gbv_action_quoted, ';'
+  'FROM ', @src_gbv_action_quoted, ';'
 );
 
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @target_pd_quoted = IFNULL(target_pd_quoted, CONCAT('`', @datatools_schema, '`.`patient_demographics`'));
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gbv_action_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @target_pd_quoted = IFNULL(@target_pd_quoted, CONCAT(datatools_schema, '.patient_demographics'));
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gbv_action_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_gbv_action_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_gbv_action_quoted) AS message;
 
-
 -- --------------- create table etl_violence_reporting ------------
 
-SET @target_violence_quoted = CONCAT('`', @datatools_schema, '`.`violence_reporting`');
-SET @src_violence_quoted    = CONCAT('`', @etl_schema, '`.`etl_violence_reporting`');
-SET @target_pd_quoted       = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_violence_quoted = CONCAT(datatools_schema, '.violence_reporting');
+SET @src_violence_quoted    = CONCAT(@etl_schema, '.etl_violence_reporting');
+SET @target_pd_quoted       = CONCAT(datatools_schema, '.patient_demographics');
 
 SET @sql_stmt = CONCAT(
   'DROP TABLE IF EXISTS ', @target_violence_quoted, '; ',
@@ -2253,10 +2281,10 @@ SET @sql_stmt = CONCAT(
     '(CASE duration_of_none_sexual_legal_support_within_5_days WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END) AS duration_of_none_sexual_legal_support_within_5_days, ',
     '(CASE current_Location_of_person WHEN 1536 THEN ''Home'' WHEN 160432 THEN ''Dead'' WHEN 162277 THEN ''Imprisoned'' WHEN 1896 THEN ''Hospitalized'' WHEN 165227 THEN ''Safe place'' ELSE '''' END) AS current_Location_of_person, ',
     'follow_up_plan, resolution_date, date_created, date_last_modified, voided ',
-  'FROM ', src_violence_quoted, ';'
+  'FROM ', @src_violence_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_violence_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_violence_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_violence_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2266,8 +2294,8 @@ SELECT CONCAT('Successfully created ', @target_violence_quoted) AS message;
 
 -- create table link_facility_tracking--------------------
 
-SET @target_link_quoted = CONCAT('`', @datatools_schema, '`.`link_facility_tracking`');
-SET @src_link_quoted = CONCAT('`', @etl_schema, '`.`etl_link_facility_tracking`');
+SET @target_link_quoted = CONCAT(datatools_schema, '.link_facility_tracking');
+SET @src_link_quoted = CONCAT(@etl_schema, '.etl_link_facility_tracking');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_link_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2340,10 +2368,10 @@ SET @sql_stmt = CONCAT(
     'date_initiated_tpt, ',
     '(CASE data_collected_through WHEN 1502 THEN ''Visiting Facility'' WHEN 162189 THEN ''Calling Facility'' WHEN 978 THEN ''Self-reported'' ELSE '''' END) AS data_collected_through, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_link_quoted, ';'
+  'FROM ', @src_link_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_link_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT('`', @datatools_schema, '`.`patient_demographics`'), '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_link_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT(datatools_schema, '.patient_demographics'), '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_link_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2351,8 +2379,8 @@ SELECT CONCAT('Successfully created ', @target_link_quoted) AS message;
 
 -- create table depression_screening--------------------------------
 
-SET @target_depr_quoted = CONCAT('`', @datatools_schema, '`.`depression_screening`');
-SET @src_depr_quoted    = CONCAT('`', @etl_schema, '`.`etl_depression_screening`');
+SET @target_depr_quoted = CONCAT(datatools_schema, '.depression_screening');
+SET @src_depr_quoted    = CONCAT(@etl_schema, '.etl_depression_screening');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_depr_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2373,19 +2401,19 @@ SET @sql_stmt = CONCAT(
     '(CASE client_referred WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS client_referred, ',
     '(CASE facility_referred WHEN 163266 THEN ''This Facility'' WHEN 164407 THEN ''Other health facility'' END) AS facility_referred, ',
     'facility_name, services_referred_for, date_created, date_last_modified, voided ',
-  'FROM ', src_depr_quoted, ';'
+  'FROM ', @src_depr_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @target_pd_quoted = IFNULL(target_pd_quoted, CONCAT('`', @datatools_schema, '`.`patient_demographics`'));
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_depr_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @target_pd_quoted = IFNULL(@target_pd_quoted, CONCAT(datatools_schema, '.patient_demographics'));
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_depr_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_depr_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_depr_quoted) AS message;
 
 -- create table adverse_events (tenant-aware)
-SET @target_adv_quoted = CONCAT('`', @datatools_schema, '`.`adverse_events`');
-SET @src_adv_quoted    = CONCAT('`', @etl_schema, '`.`etl_adverse_events`');
+SET @target_adv_quoted = CONCAT(datatools_schema, '.adverse_events');
+SET @src_adv_quoted    = CONCAT(@etl_schema, '.etl_adverse_events');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_adv_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2398,10 +2426,10 @@ SET @sql_stmt = CONCAT(
     'start_date, ',
     '(CASE action_taken WHEN 1257 THEN ''CONTINUE REGIMEN'' WHEN 1259 THEN ''SWITCHED REGIMEN'' WHEN 981 THEN ''CHANGED DOSE'' WHEN 1258 THEN ''SUBSTITUTED DRUG'' WHEN 1107 THEN ''NONE'' WHEN 1260 THEN ''STOP'' WHEN 5622 THEN ''Other'' END) AS action_taken, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_adv_quoted, ';'
+  'FROM ', @src_adv_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_adv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT('`', @datatools_schema, '`.`patient_demographics`'), '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_adv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT(datatools_schema, '.patient_demographics'), '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_adv_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2414,8 +2442,8 @@ SELECT CONCAT('Successfully created ', @target_adv_quoted) AS message;
 -- Creates table, adds FK to patient_demographics and index on visit_date
 -- --------------------------------------
 
-SET @target_pre_hiv_quoted = CONCAT('`', @datatools_schema, '`.`pre_hiv_enrollment_art`');
-SET @src_pre_hiv_quoted    = CONCAT('`', @etl_schema, '`.`etl_pre_hiv_enrollment_art`');
+SET @target_pre_hiv_quoted = CONCAT(datatools_schema, '.pre_hiv_enrollment_art');
+SET @src_pre_hiv_quoted    = CONCAT(@etl_schema, '.etl_pre_hiv_enrollment_art');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_pre_hiv_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2525,10 +2553,10 @@ SET @sql_stmt = CONCAT(
       'WHEN 162559 THEN ''ABC/DDI/LPV/r'' ',
     'ELSE '''' END) AS HAART_regimen, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_pre_hiv_quoted, ';'
+  'FROM ', @src_pre_hiv_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pre_hiv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT('`', @datatools_schema, '`.`patient_demographics`'), '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pre_hiv_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', CONCAT(datatools_schema, '.patient_demographics'), '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_pre_hiv_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2538,13 +2566,13 @@ SELECT CONCAT('Successfully created ', @target_pre_hiv_quoted) AS message;
 -- sql
 -- --------------------------------------
 -- Create tenant-aware datatools table: covid_19_assessment
--- Source: `@etl_schema`.`etl_covid19_assessment`
--- Target: `@datatools_schema`.`covid_19_assessment`
+-- Source: @etl_schema.etl_covid19_assessment
+-- Target: datatools_schema.covid_19_assessment
 -- --------------------------------------
 
-SET @target_covid_quoted = CONCAT('`', @datatools_schema, '`.`covid_19_assessment`');
-SET @src_covid_quoted = CONCAT('`', @etl_schema, '`.`etl_covid19_assessment`');
-SET @target_pd_quoted = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_covid_quoted = CONCAT(datatools_schema, '.covid_19_assessment');
+SET @src_covid_quoted = CONCAT(@etl_schema, '.etl_covid19_assessment');
+SET @target_pd_quoted = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT(
   'DROP TABLE IF EXISTS ', @target_covid_quoted, ';'
 );
@@ -2576,12 +2604,12 @@ SET @sql_stmt = CONCAT(
     'admission_unit, (CASE on_ventillator WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS on_ventillator, ',
     '(CASE on_oxygen_supplement WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS on_oxygen_supplement, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_covid_quoted, ';'
+  'FROM ', @src_covid_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
   'ALTER TABLE ', @target_covid_quoted,
-  ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)'
+  ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_covid_quoted, ' ADD INDEX(visit_date)');
@@ -2592,13 +2620,13 @@ SELECT CONCAT('Successfully created ', @target_covid_quoted) AS message;
 -- sql
 -- --------------------------------------
 -- Create tenant-aware datatools table: covid_19_assessment
--- Source: `@etl_schema`.`etl_covid19_assessment`
--- Target: `@datatools_schema`.`covid_19_assessment`
+-- Source: @etl_schema.etl_covid19_assessment
+-- Target: datatools_schema.covid_19_assessment
 -- --------------------------------------
 
-SET @target_covid_quoted = CONCAT('`', @datatools_schema, '`.`covid_19_assessment`');
-SET @src_covid_quoted = CONCAT('`', @etl_schema, '`.`etl_covid19_assessment`');
-SET @target_pd_quoted = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_covid_quoted = CONCAT(datatools_schema, '.covid_19_assessment');
+SET @src_covid_quoted = CONCAT(@etl_schema, '.etl_covid19_assessment');
+SET @target_pd_quoted = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT(
   'DROP TABLE IF EXISTS ', @target_covid_quoted, ';'
 );
@@ -2630,12 +2658,12 @@ SET @sql_stmt = CONCAT(
     'admission_unit, (CASE on_ventillator WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS on_ventillator, ',
     '(CASE on_oxygen_supplement WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END) AS on_oxygen_supplement, ',
     'date_created, date_last_modified, voided ',
-  'FROM ', src_covid_quoted, ';'
+  'FROM ', @src_covid_quoted, ';'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
   'ALTER TABLE ', @target_covid_quoted,
-  ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)'
+  ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_covid_quoted, ' ADD INDEX(visit_date)');
@@ -2646,13 +2674,13 @@ SELECT CONCAT('Successfully created ', @target_covid_quoted) AS message;
 -- --------------------------------------
 -- Table: vmmc_enrolment
 -- Purpose: create tenant-aware datatools view of ETL vmmc_enrolment
--- Source: `@etl_schema`.`etl_vmmc_enrolment`
--- Target: `@datatools_schema`.`vmmc_enrolment`
+-- Source: @etl_schema.etl_vmmc_enrolment
+-- Target: datatools_schema.vmmc_enrolment
 -- --------------------------------------
 
-SET @target_vmmc_quoted = CONCAT('`', @datatools_schema, '`.`vmmc_enrolment`');
-SET @src_vmmc_quoted    = CONCAT('`', @etl_schema, '`.`etl_vmmc_enrolment`');
-SET @target_pd_quoted   = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_vmmc_quoted = CONCAT(datatools_schema, '.vmmc_enrolment');
+SET @src_vmmc_quoted    = CONCAT(@etl_schema, '.etl_vmmc_enrolment');
+SET @target_pd_quoted   = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_vmmc_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2677,10 +2705,10 @@ SET @sql_stmt = CONCAT(
       'WHEN 5622   THEN ''Other'' ',
       'ELSE NULL END) AS source_of_vmmc_info, ',
     'other_source_of_vmmc_info, county_of_origin, date_created, date_last_modified, voided ',
-  'FROM ', src_vmmc_quoted
+  'FROM ', @src_vmmc_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2694,13 +2722,13 @@ SELECT CONCAT('Successfully created ', @target_vmmc_quoted) AS message;
 -- --------------------------------------
 -- TABLE: vmmc_circumcision_procedure
 -- Purpose: create tenant-aware datatools view of ETL etl_vmmc_circumcision_procedure
--- Source: `@etl_schema`.`etl_vmmc_circumcision_procedure`
--- Target: `@datatools_schema`.`vmmc_circumcision_procedure`
+-- Source: @etl_schema.etl_vmmc_circumcision_procedure
+-- Target: datatools_schema.vmmc_circumcision_procedure
 -- --------------------------------------
 
-SET @target_vmmc_circum_quoted = CONCAT('`', @datatools_schema, '`.`vmmc_circumcision_procedure`');
-SET @src_vmmc_circum_quoted    = CONCAT('`', @etl_schema, '`.`etl_vmmc_circumcision_procedure`');
-SET @target_pd_quoted          = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_vmmc_circum_quoted = CONCAT(datatools_schema, '.vmmc_circumcision_procedure');
+SET @src_vmmc_circum_quoted    = CONCAT(@etl_schema, '.etl_vmmc_circumcision_procedure');
+SET @target_pd_quoted          = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_vmmc_circum_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2727,10 +2755,10 @@ SET @sql_stmt = CONCAT(
     'assist_clinician_name, ',
     '(CASE assist_clinician_cadre WHEN 162591 THEN ''MO'' WHEN 162592 THEN ''CO'' WHEN 1577 THEN ''Nurse'' END) AS assist_clinician_cadre, ',
     'theatre_number, date_created, date_last_modified, voided ',
-  'FROM ', src_vmmc_circum_quoted
+  'FROM ', @src_vmmc_circum_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_circum_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_circum_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_circum_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2745,13 +2773,13 @@ SELECT CONCAT('Successfully created ', @target_vmmc_circum_quoted) AS message;
 -- --------------------------------------
 -- TABLE: vmmc_medical_history
 -- Purpose: create tenant-aware datatools view of ETL etl_vmmc_medical_history
--- Source: `@etl_schema`.`etl_vmmc_medical_history`
--- Target: `@datatools_schema`.`vmmc_medical_history`
+-- Source: @etl_schema.etl_vmmc_medical_history
+-- Target: datatools_schema.vmmc_medical_history
 -- --------------------------------------
 
-SET @target_vmmc_med_hist_quoted = CONCAT('`', @datatools_schema, '`.`vmmc_medical_history`');
-SET @src_vmmc_med_hist_quoted    = CONCAT('`', @etl_schema, '`.`etl_vmmc_medical_history`');
-SET @target_pd_quoted            = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_vmmc_med_hist_quoted = CONCAT(datatools_schema, '.vmmc_medical_history');
+SET @src_vmmc_med_hist_quoted    = CONCAT(@etl_schema, '.etl_vmmc_medical_history');
+SET @target_pd_quoted            = CONCAT(datatools_schema, '.patient_demographics');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_vmmc_med_hist_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2830,7 +2858,7 @@ SET @sql_stmt = CONCAT(
     'date_created, ',
     'date_last_modified, ',
     'voided ',
-  'FROM ', src_vmmc_med_hist_quoted
+  'FROM ', @src_vmmc_med_hist_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;-- sql
 -- --------------------------------------
@@ -2838,9 +2866,9 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;-- sql
 -- Purpose: tenant-aware datatools view of ETL etl_vmmc_client_followup
 -- --------------------------------------
 
-SET @target_vmmc_client_followup_quoted = CONCAT('`', @datatools_schema, '`.`vmmc_client_followup`');
-SET @src_vmmc_client_followup_quoted = CONCAT('`', @etl_schema, '`.`etl_vmmc_client_followup`');
-SET @target_pd_quoted = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_vmmc_client_followup_quoted = CONCAT(datatools_schema, '.vmmc_client_followup');
+SET @src_vmmc_client_followup_quoted = CONCAT(@etl_schema, '.etl_vmmc_client_followup');
+SET @target_pd_quoted = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_vmmc_client_followup_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2867,21 +2895,21 @@ SET @sql_stmt = CONCAT(
     'date_created, ',
     'date_last_modified, ',
     'voided ',
-  'FROM ', src_vmmc_client_followup_quoted
+  'FROM ', @src_vmmc_client_followup_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_client_followup_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_client_followup_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_client_followup_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_vmmc_client_followup_quoted) AS message;
-SET @target_vmmc_circum_quoted = CONCAT('`', @datatools_schema, '`.`vmmc_circumcision_procedure`');
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_circum_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @target_vmmc_circum_quoted = CONCAT(datatools_schema, '.vmmc_circumcision_procedure');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_circum_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_circum_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully updated ', @target_vmmc_circum_quoted, ' with FK and index') AS message;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_med_hist_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_med_hist_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_med_hist_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2891,13 +2919,13 @@ SELECT CONCAT('Successfully created ', @target_vmmc_med_hist_quoted) AS message;
 -- --------------------------------------
 -- TABLE: vmmc_post_operation_assessment
 -- Purpose: tenant-aware datatools view of ETL etl_vmmc_post_operation_assessment
--- Source: `@etl_schema`.`etl_vmmc_post_operation_assessment`
--- Target: `@datatools_schema`.`vmmc_post_operation_assessment`
+-- Source: @etl_schema.etl_vmmc_post_operation_assessment
+-- Target: datatools_schema.vmmc_post_operation_assessment
 -- --------------------------------------
 
-SET @target_vmmc_post_quoted = CONCAT('`', @datatools_schema, '`.`vmmc_post_operation_assessment`');
-SET @src_vmmc_post_quoted    = CONCAT('`', @etl_schema, '`.`etl_vmmc_post_operation_assessment`');
-SET @target_pd_quoted        = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_vmmc_post_quoted = CONCAT(datatools_schema, '.vmmc_post_operation_assessment');
+SET @src_vmmc_post_quoted    = CONCAT(@etl_schema, '.etl_vmmc_post_operation_assessment');
+SET @target_pd_quoted        = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_vmmc_post_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -2926,10 +2954,10 @@ SET @sql_stmt = CONCAT(
     'date_created, ',
     'date_last_modified, ',
     'voided ',
-  'FROM ', src_vmmc_post_quoted
+  'FROM ', @src_vmmc_post_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_post_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_post_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_vmmc_post_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -2940,13 +2968,13 @@ SELECT CONCAT('Successfully created ', @target_vmmc_post_quoted) AS message;
 -- --------------------------------------
 -- TABLE: hts_eligibility_screening (tenant-aware)
 -- Purpose: create tenant-aware datatools view of ETL etl_hts_eligibility_screening
--- Source: `@etl_schema`.`etl_hts_eligibility_screening`
--- Target: `@datatools_schema`.`hts_eligibility_screening`
+-- Source: @etl_schema.etl_hts_eligibility_screening
+-- Target: datatools_schema.hts_eligibility_screening
 -- --------------------------------------
 
-SET @target_hts_quoted   = CONCAT('`', @datatools_schema, '`.`hts_eligibility_screening`');
-SET @src_hts_quoted      = CONCAT('`', @etl_schema, '`.`etl_hts_eligibility_screening`');
-SET @target_pd_quoted    = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_hts_quoted   = CONCAT(datatools_schema, '.hts_eligibility_screening');
+SET @src_hts_quoted      = CONCAT(@etl_schema, '.etl_hts_eligibility_screening');
+SET @target_pd_quoted    = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_hts_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -3026,7 +3054,7 @@ SET @sql_stmt = CONCAT(
 );
 
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_hts_quoted, ' ADD INDEX(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -3047,41 +3075,41 @@ SELECT CONCAT('Successfully created ', @target_hts_quoted) AS message;
 -- --------------------------------------
 -- TABLE: drug_order
 -- Purpose: create tenant-aware datatools view of ETL etl_drug_order
--- Source: `@etl_schema`.`etl_drug_order`
--- Target: `@datatools_schema`.`drug_order`
+-- Source: @etl_schema.etl_drug_order
+-- Target: datatools_schema.drug_order
 -- --------------------------------------
 
-SET @target_drug_order_quoted = CONCAT('`', @datatools_schema, '`.`drug_order`');
-SET @src_drug_order_quoted    = CONCAT('`', @etl_schema, '`.`etl_drug_order`');
-SET @target_pd_quoted         = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
-SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', target_drug_order_quoted);
+SET @target_drug_order_quoted = CONCAT(datatools_schema, '.drug_order');
+SET @src_drug_order_quoted    = CONCAT(@etl_schema, '.etl_drug_order');
+SET @target_pd_quoted         = CONCAT(datatools_schema, '.patient_demographics');
+SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_drug_order_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('CREATE TABLE ', target_drug_order_quoted, ' AS SELECT * FROM ', src_drug_order_quoted);
+SET @sql_stmt = CONCAT('CREATE TABLE ', @target_drug_order_quoted, ' AS SELECT * FROM ', @src_drug_order_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_drug_order_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_order_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_drug_order_quoted, ' ADD INDEX(visit_date)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_order_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_drug_order_quoted, ' ADD INDEX(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_order_quoted, ' ADD INDEX(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_drug_order_quoted, ' ADD INDEX(encounter_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_order_quoted, ' ADD INDEX(encounter_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', target_drug_order_quoted, ' ADD INDEX(order_group_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_drug_order_quoted, ' ADD INDEX(order_group_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('SELECT CONCAT(''Successfully created '', ', target_drug_order_quoted, ') AS message');
+SET @sql_stmt = CONCAT('SELECT CONCAT(''Successfully created '', ', @target_drug_order_quoted, ') AS message');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
 -- sql
 -- --------------------------------------
 -- TABLE: preventive_services (tenant-aware)
--- Source: `@etl_schema`.`etl_preventive_services`
--- Target: `@datatools_schema`.`preventive_services`
+-- Source: @etl_schema.etl_preventive_services
+-- Target: datatools_schema.preventive_services
 -- --------------------------------------
 
-SET @target_preventive_quoted = CONCAT('`', @datatools_schema, '`.`preventive_services`');
-SET @src_preventive_quoted    = CONCAT('`', @etl_schema, '`.`etl_preventive_services`');
-SET @target_pd_quoted        = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_preventive_quoted = CONCAT(datatools_schema, '.preventive_services');
+SET @src_preventive_quoted    = CONCAT(@etl_schema, '.etl_preventive_services');
+SET @target_pd_quoted        = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_preventive_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -3117,28 +3145,27 @@ SET @sql_stmt = CONCAT(
     'date_last_modified, ',
     'date_created, ',
     'voided ',
-  'FROM ', src_preventive_quoted
+  'FROM ', @src_preventive_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_preventive_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_preventive_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_preventive_quoted, ' ADD INDEX(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_preventive_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_preventive_quoted) AS message;
-
 -- sql
 -- --------------------------------------
 -- TABLE: overdose_reporting
 -- Purpose: tenant-aware datatools view of ETL etl_overdose_reporting
--- Source: `@etl_schema`.`etl_overdose_reporting`
--- Target: `@datatools_schema`.`overdose_reporting`
+-- Source: @etl_schema.etl_overdose_reporting
+-- Target: datatools_schema.overdose_reporting
 -- --------------------------------------
 
-SET @target_overdose_quoted = CONCAT('`', @datatools_schema, '`.`overdose_reporting`');
-SET @src_overdose_quoted = CONCAT('`', @etl_schema, '`.`etl_overdose_reporting`');
-SET @target_pd_quoted = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_overdose_quoted = CONCAT(datatools_schema, '.overdose_reporting');
+SET @src_overdose_quoted = CONCAT(@etl_schema, '.etl_overdose_reporting');
+SET @target_pd_quoted = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_overdose_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -3187,10 +3214,10 @@ SET @sql_stmt = CONCAT(
     'date_created, ',
     'date_last_modified, ',
     'voided ',
-  'FROM ', src_overdose_quoted
+  'FROM ', @src_overdose_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_overdose_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_overdose_quoted, ' ADD FOREIGN KEY (client_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_overdose_quoted, ' ADD INDEX(client_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -3207,13 +3234,13 @@ SELECT CONCAT('Successfully created ', @target_overdose_quoted) AS message;
 -- --------------------------------------
 -- TABLE: art_fast_track (tenant-aware)
 -- Purpose: create tenant-aware datatools view of ETL etl_art_fast_track
--- Source: `@etl_schema`.`etl_art_fast_track`
--- Target: `@datatools_schema`.`art_fast_track`
+-- Source: @etl_schema.etl_art_fast_track
+-- Target: datatools_schema.art_fast_track
 -- --------------------------------------
 
-SET @target_art_quoted = CONCAT('`', @datatools_schema, '`.`art_fast_track`');
-SET @src_art_quoted    = CONCAT('`', @etl_schema, '`.`etl_art_fast_track`');
-SET @target_pd_quoted  = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_art_quoted = CONCAT(datatools_schema, '.art_fast_track');
+SET @src_art_quoted    = CONCAT(@etl_schema, '.etl_art_fast_track');
+SET @target_pd_quoted  = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_art_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -3253,7 +3280,7 @@ SET @sql_stmt = CONCAT(
   'FROM ', @src_art_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_art_quoted, ' ADD INDEX(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -3265,16 +3292,15 @@ SELECT CONCAT('Successfully created ', @target_art_quoted) AS message;
 -- --------------------------------------
 -- TABLE: clinical_encounter (tenant-aware)
 -- Purpose: create tenant-aware datatools view of ETL etl_clinical_encounter
--- Source: `@etl_schema`.`etl_clinical_encounter`
--- Target: `@datatools_schema`.`clinical_encounter`
+-- Source: @etl_schema.etl_clinical_encounter
+-- Target: datatools_schema.clinical_encounter
 -- --------------------------------------
 
-SET @target_clinical_quoted = CONCAT('`', @datatools_schema, '`.`clinical_encounter`');
-SET @src_clinical_quoted    = CONCAT('`', @etl_schema, '`.`etl_clinical_encounter`');
-SET @target_pd_quoted       = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_clinical_quoted = CONCAT(datatools_schema, '.clinical_encounter');
+SET @src_clinical_quoted    = CONCAT(@etl_schema, '.etl_clinical_encounter');
+SET @target_pd_quoted       = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_clinical_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 SET @sql_stmt = CONCAT(
   'CREATE TABLE ', @target_clinical_quoted, ' AS ',
   'SELECT patient_id, ',
@@ -3285,10 +3311,10 @@ SET @sql_stmt = CONCAT(
     'general_examination, admission_needed, date_of_patient_admission, admission_reason, admission_type, ',
     'priority_of_admission, admission_ward, hospital_stay, referral_needed, referral_ordered, referral_to, ',
     'other_facility, this_facility, voided ',
-  'FROM ', src_clinical_quoted
+  'FROM ', @src_clinical_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_clinical_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_clinical_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_clinical_quoted, ' ADD INDEX(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -3296,16 +3322,15 @@ SET @sql_stmt = CONCAT('ALTER TABLE ', @target_clinical_quoted, ' ADD INDEX(visi
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_clinical_quoted) AS message;
 
-
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/DataTools.sql`
+-- File: src/main/resources/sql/hiv/DataTools.sql
 -- TABLE: kvp_clinical_enrollment
 -- Purpose: create tenant-aware datatools view of ETL etl_kvp_clinical_enrollment
 -- --------------------------------------
 
-SET @target_kvp_quoted = CONCAT('`', @datatools_schema, '`.`kvp_clinical_enrollment`');
-SET @src_kvp_quoted    = CONCAT('`', @etl_schema, '`.`etl_kvp_clinical_enrollment`');
-SET @target_pd_quoted  = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_kvp_quoted = CONCAT(datatools_schema, '.kvp_clinical_enrollment');
+SET @src_kvp_quoted    = CONCAT(@etl_schema, '.etl_kvp_clinical_enrollment');
+SET @target_pd_quoted  = CONCAT(datatools_schema, '.patient_demographics');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_kvp_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -3345,29 +3370,28 @@ SET @sql_stmt = CONCAT(
     'date_created, ',
     'date_last_modified, ',
     'voided ',
-  'FROM ', src_kvp_quoted
+  'FROM ', @src_kvp_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kvp_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kvp_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kvp_quoted, ' ADD INDEX (patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_kvp_quoted, ' ADD INDEX (visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_kvp_quoted) AS message;
-
 -- sql
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/DataTools.sql`
+-- File: src/main/resources/sql/hiv/DataTools.sql
 -- TABLE: high_iit_intervention
 -- Purpose: create tenant-aware datatools view of ETL etl_high_iit_intervention
--- Source: `@etl_schema`.`etl_high_iit_intervention`
--- Target: `@datatools_schema`.`high_iit_intervention`
+-- Source: @etl_schema.etl_high_iit_intervention
+-- Target: datatools_schema.high_iit_intervention
 -- --------------------------------------
 
-SET @target_high_quoted = CONCAT('`', @datatools_schema, '`.`high_iit_intervention`');
-SET @src_high_quoted    = CONCAT('`', @etl_schema, '`.`etl_high_iit_intervention`');
-SET @target_pd_quoted   = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_high_quoted = CONCAT(datatools_schema, '.high_iit_intervention');
+SET @src_high_quoted    = CONCAT(@etl_schema, '.etl_high_iit_intervention');
+SET @target_pd_quoted   = CONCAT(datatools_schema, '.patient_demographics');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_high_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -3385,11 +3409,11 @@ SET @sql_stmt = CONCAT(
     'CASE expanding_differentiated_service_delivery_interventions WHEN 166443 THEN ''Offer options for community delivery of drugs including courier if eligible for MMD'' END AS expanding_differentiated_service_delivery_interventions, ',
     'CASE enrolled_in_nishauri WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END AS enrolled_in_nishauri, ',
     'expanded_differentiated_service_delivery_interventions_date, date_created, date_last_modified ',
-  'FROM ', src_high_quoted
+  'FROM ', @src_high_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_high_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_high_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_high_quoted, ' ADD INDEX (patient_id)');
@@ -3401,14 +3425,14 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_high_quoted) AS message;
 
 -- sql
--- File: `src/main/resources/sql/hiv/DataTools.sql`
+-- File: src/main/resources/sql/hiv/DataTools.sql
 -- TABLE: home_visit_checklist (tenant-aware)
--- Source: `@etl_schema`.`etl_home_visit_checklist`
--- Target: `@datatools_schema`.`home_visit_checklist`
+-- Source: @etl_schema.etl_home_visit_checklist
+-- Target: datatools_schema.home_visit_checklist
 
-SET @target_home_quoted = CONCAT('`', @datatools_schema, '`.`home_visit_checklist`');
-SET @src_home_quoted    = CONCAT('`', @etl_schema, '`.`etl_home_visit_checklist`');
-SET @target_pd_quoted   = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_home_quoted = CONCAT(datatools_schema, '.home_visit_checklist');
+SET @src_home_quoted    = CONCAT(@etl_schema, '.etl_home_visit_checklist');
+SET @target_pd_quoted   = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_home_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -3428,34 +3452,32 @@ SET @sql_stmt = CONCAT(
     'CASE uses_drugs_alcohol WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END AS uses_drugs_alcohol, ',
     'CASE has_side_medications_effects WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' END AS has_side_medications_effects, ',
     'medication_side_effects, assessment_notes, date_created, date_last_modified ',
-  'FROM ', src_home_quoted
+  'FROM ', @src_home_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_home_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_home_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_home_quoted, ' ADD INDEX(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_home_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_home_quoted) AS message;
-
 -- sql
--- File: `src/main/resources/sql/hiv/DataTools.sql`
+-- File: src/main/resources/sql/hiv/DataTools.sql
 -- --------------------------------------
 -- TABLE: ncd_enrollment (tenant-aware)
--- Purpose: create tenant-aware datatools view of ETL `etl_ncd_enrollment`
--- Source: `@etl_schema`.`etl_ncd_enrollment`
--- Target: `@datatools_schema`.`ncd_enrollment`
--- Tenant-aware: builds quoted identifiers from `@datatools_schema` and `@etl_schema`
+-- Purpose: create tenant-aware datatools view of ETL etl_ncd_enrollment
+-- Source: @etl_schema.etl_ncd_enrollment
+-- Target: datatools_schema.ncd_enrollment
+-- Tenant-aware: builds quoted identifiers from datatools_schema and @etl_schema
 -- --------------------------------------
 
-SET @target_ncd_quoted   = CONCAT('`', @datatools_schema, '`.`ncd_enrollment`');
-SET @src_ncd_quoted      = CONCAT('`', @etl_schema, '`.`etl_ncd_enrollment`');
-SET @target_pd_quoted    = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_ncd_quoted   = CONCAT(datatools_schema, '.ncd_enrollment');
+SET @src_ncd_quoted      = CONCAT(@etl_schema, '.etl_ncd_enrollment');
+SET @target_pd_quoted    = CONCAT(datatools_schema, '.patient_demographics');
 
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ncd_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 SET @sql_stmt = CONCAT(
   'CREATE TABLE ', @target_ncd_quoted, ' AS ',
   'SELECT ',
@@ -3492,30 +3514,33 @@ SET @sql_stmt = CONCAT(
     'describe_diabetic_foot_type, treatment_given, other_treatment_given, lifestyle_advice, nutrition_assessment, ',
     'CASE footcare_outcome WHEN 162130 THEN ''Ulcer healed'' WHEN 2001766 THEN ''Surgical debridement'' WHEN 164009 THEN ''Amputation'' WHEN 5240 THEN ''Loss to follow up'' WHEN 1654 THEN ''Admitted'' WHEN 1648 THEN ''Referred'' END AS footcare_outcome, ',
     'referred_to, reasons_for_referral, clinical_notes, date_created, date_last_modified, voided ',
-  'FROM ', src_ncd_quoted
+  'FROM ', @src_ncd_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ncd_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)');
+
+SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ncd_quoted, ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ncd_quoted, ' ADD INDEX (patient_id)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ncd_quoted, ' ADD INDEX (visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SELECT CONCAT('Successfully created ', @target_ncd_quoted, ' table') AS message;
 
+SELECT CONCAT('Successfully created ', @target_ncd_quoted, ' table') AS message;
 
 
 -- sql
 -- --------------------------------------
 -- TABLE: ncd_followup (tenant-aware)
--- Purpose: create tenant-aware datatools view of ETL `etl_ncd_followup`
--- Source: `@etl_schema`.`etl_ncd_followup`
--- Target: `@datatools_schema`.`ncd_followup`
+-- Purpose: create tenant-aware datatools view of ETL etl_ncd_followup
+-- Source: @etl_schema.etl_ncd_followup
+-- Target: datatools_schema.ncd_followup
 -- --------------------------------------
 
-SET @target_ncd_followup_quoted = CONCAT('`', @datatools_schema, '`.`ncd_followup`');
-SET @src_ncd_followup_quoted    = CONCAT('`', @etl_schema, '`.`etl_ncd_followup`');
-SET @target_pd_quoted           = CONCAT('`', @datatools_schema, '`.`patient_demographics`');
+SET @target_ncd_followup_quoted = CONCAT(datatools_schema, '.ncd_followup');
+SET @src_ncd_followup_quoted    = CONCAT(@etl_schema, '.etl_ncd_followup');
+SET @target_pd_quoted           = CONCAT(datatools_schema, '.patient_demographics');
 SET @sql_stmt = CONCAT('DROP TABLE IF EXISTS ', @target_ncd_followup_quoted);
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
@@ -3553,12 +3578,12 @@ SET @sql_stmt = CONCAT(
     'date_created, ',
     'date_last_modified, ',
     'voided ',
-  'FROM ', src_ncd_followup_quoted
+  'FROM ', @src_ncd_followup_quoted
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT(
   'ALTER TABLE ', @target_ncd_followup_quoted,
-  ' ADD FOREIGN KEY (patient_id) REFERENCES ', target_pd_quoted, '(patient_id)'
+  ' ADD FOREIGN KEY (patient_id) REFERENCES ', @target_pd_quoted, '(patient_id)'
 );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ncd_followup_quoted, ' ADD INDEX(patient_id)');
@@ -3566,8 +3591,7 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql_stmt = CONCAT('ALTER TABLE ', @target_ncd_followup_quoted, ' ADD INDEX(visit_date)');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT CONCAT('Successfully created ', @target_ncd_followup_quoted) AS message;
-SET @sql_stmt = CONCAT('UPDATE `', @etl_schema, '`.etl_script_status SET stop_time=NOW() WHERE id= script_id');
+SET @sql_stmt = CONCAT('UPDATE ', @etl_schema, '.etl_script_status SET stop_time=NOW() WHERE id= script_id');
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
 
 END $$

@@ -1,47 +1,26 @@
-
-
-SET @OLD_SQL_MODE=@@SQL_MODE $$
-SET SQL_MODE='' $$
-
+SET @OLD_SQL_MODE = @SQL_MODE $$
+SET SQL_MODE = '' $$
 DROP PROCEDURE IF EXISTS sp_set_tenant_session_vars $$
 CREATE PROCEDURE sp_set_tenant_session_vars()
 BEGIN
-    DECLARE current_schema VARCHAR(200);
+    DECLARE current_db VARCHAR(200);
     DECLARE tenant_suffix VARCHAR(100);
-    DECLARE etl_schema_name VARCHAR(200);
-    DECLARE sql_stmt TEXT;
 
-    SET current_schema = DATABASE();
-    IF INSTR(current_schema, 'openmrs_') = 0 THEN
-        SET tenant_suffix = '';
-ELSE
-        SET tenant_suffix = SUBSTRING_INDEX(current_schema, 'openmrs_', -1);
+    SET current_db = DATABASE();
+    IF current_db IS NULL OR current_db = '' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No database selected.';
 END IF;
-    IF tenant_suffix <> '' AND tenant_suffix NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid tenant suffix in DATABASE()';
-END IF;
-    SET etl_schema_name = IF(tenant_suffix = '', 'kenyaemr_etl', CONCAT('kenyaemr_etl_', tenant_suffix));
-    SET @etl_schema = CONCAT('`', etl_schema_name, '`');
-    SET @script_status_table = CONCAT(@etl_schema, '.`etl_script_status`');
-    SET sql_stmt = CONCAT('CREATE DATABASE IF NOT EXISTS ', @etl_schema, ' DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET sql_stmt = CONCAT(
-      'CREATE TABLE IF NOT EXISTS ', @script_status_table, ' (',
-        'id INT NOT NULL AUTO_INCREMENT,',
-        'script_name VARCHAR(200) NOT NULL,',
-        'start_time DATETIME NOT NULL,',
-        'stop_time DATETIME NULL,',
-        'status VARCHAR(50) DEFAULT NULL,',
-        'message TEXT,',
-        'PRIMARY KEY (id),',
-        'INDEX (script_name),',
-        'INDEX (start_time)',
-      ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
-    );
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+    SET tenant_suffix = SUBSTRING_INDEX(current_db, 'openmrs_', -1);
+    SET @etl_schema_raw = CONCAT('kenyaemr_etl_', tenant_suffix);
+    SET @etl_schema = CONCAT('', @etl_schema_raw, '');
+    SET @script_status_table_quoted = CONCAT(@etl_schema, '.etl_script_status');
+
+    SET @create_db = CONCAT('CREATE DATABASE IF NOT EXISTS ', @etl_schema, ' DEFAULT CHARACTER SET utf8;');
+PREPARE stmt FROM @create_db; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 END $$
 
--- ---------------------------------------------------------
+- ---------------------------------------------------------
 -- 2. Worker: Update Patient Demographics (Incremental)
 -- ---------------------------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_demographics $$
@@ -51,11 +30,11 @@ BEGIN
     DECLARE target_table_quoted VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT(@etl_schema, '.`etl_patient_demographics`');
+SET target_table_quoted = CONCAT(@etl_schema, '.etl_patient_demographics');
 
     SET @last_ts = IFNULL(CONCAT('''', last_update_time, ''''), '''1900-01-01 00:00:00''');
     SET sql_stmt = CONCAT(
-      'INSERT INTO ', target_table_quoted, ' (patient_id, uuid, given_name, middle_name, family_name, Gender, DOB, dead, date_created, date_last_modified, voided, death_date) ',
+      'INSERT INTO ', @target_table_quoted, ' (patient_id, uuid, given_name, middle_name, family_name, Gender, DOB, dead, date_created, date_last_modified, voided, death_date) ',
       'SELECT p.person_id, p.uuid, p.given_name, p.middle_name, p.family_name, p.gender, p.birthdate, p.dead, p.date_created, ',
       'IF((p.date_last_modified = ''0000-00-00 00:00:00'' OR p.date_last_modified = p.date_created), NULL, p.date_last_modified), p.voided, p.death_date ',
       'FROM (',
@@ -70,7 +49,7 @@ SET target_table_quoted = CONCAT(@etl_schema, '.`etl_patient_demographics`');
     );
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET sql_stmt = CONCAT(
-      'UPDATE ', target_table_quoted, ' d ',
+      'UPDATE ', @target_table_quoted, ' d ',
       'INNER JOIN (',
          'SELECT pa.person_id, ',
            'MAX(IF(pat.uuid = ''8d8718c2-c2cc-11de-8d13-0010c6dffd0f'', pa.value, NULL)) AS birthplace, ',
@@ -96,10 +75,10 @@ BEGIN
     DECLARE target_table_quoted VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_hiv_enrollment`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_hiv_enrollment');
 
     SET sql_stmt = CONCAT(
-      'INSERT INTO ', target_table_quoted, ' (',
+      'INSERT INTO ', @target_table_quoted, ' (',
       'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, patient_type, date_first_enrolled_in_care, entry_point, ',
       'transfer_in_date, facility_transferred_from, district_transferred_from, previous_regimen, date_started_art_at_transferring_facility, date_confirmed_hiv_positive, facility_confirmed_hiv_positive, ',
       'arv_status, ever_on_pmtct, ever_on_pep, ever_on_prep, ever_on_haart, cd4_test_result, cd4_test_date, viral_load_test_result, viral_load_test_date, who_stage, name_of_treatment_supporter, ',
@@ -165,10 +144,10 @@ BEGIN
     DECLARE sql_stmt TEXT;
     DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_patient_hiv_followup`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_patient_hiv_followup');
 
 SET sql_stmt = CONCAT(
-'INSERT INTO ', target_table_quoted, ' (',
+'INSERT INTO ', @target_table_quoted, ' (',
 'uuid, patient_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
 'visit_scheduled, person_present, weight, systolic_pressure, diastolic_pressure, height, temperature, pulse_rate, respiratory_rate, ',
 'oxygen_saturation, muac, z_score_absolute, z_score, nutritional_status, population_type, key_population_type, who_stage, ',
@@ -400,10 +379,10 @@ BEGIN
     DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_laboratory_extract`');
+SET @target_table = CONCAT(@etl_schema, '.etl_laboratory_extract');
 
    SET @sql = CONCAT(
-  'INSERT INTO ', target_table, ' (',
+  'INSERT INTO ', @target_table, ' (',
     'uuid, encounter_id, patient_id, location_id, visit_date, visit_id, order_id, lab_test, urgency, order_reason, ',
     'order_test_name, obs_id, result_test_name, result_name, set_member_conceptId, test_result, ',
     'date_test_requested, date_test_result_received, date_created, date_last_modified, created_by',
@@ -488,9 +467,9 @@ BEGIN
     DECLARE sql_stmt TEXT;
     DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_pharmacy_extract`');
+SET @target_table = CONCAT(@etl_schema, '.etl_pharmacy_extract');
     SET @sql = CONCAT(
-      'INSERT INTO ', target_table, ' (',
+      'INSERT INTO ', @target_table, ' (',
         'obs_group_id, patient_id, uuid, visit_date, visit_id, encounter_id, date_created, date_last_modified, encounter_name, location_id, ',
         'drug, drug_name, is_arv, is_ctx, is_dapsone, frequency, duration, duration_units, voided, date_voided, dispensing_provider',
       ') ',
@@ -549,7 +528,7 @@ DEALLOCATE PREPARE stmt;
 
 -- Compute duration_in_days in tenant table
 SET @sql = CONCAT(
-      'UPDATE ', target_table, ' SET duration_in_days = ',
+      'UPDATE ', @target_table, ' SET duration_in_days = ',
         'CASE ',
           'WHEN duration_units = ''Days'' THEN duration ',
           'WHEN duration_units = ''Weeks'' THEN duration * 7 ',
@@ -574,12 +553,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_patient_program_discontinuation`');
+SET @target_table = CONCAT(@etl_schema, '.etl_patient_program_discontinuation');
 
 SELECT "Processing program discontinuations", CONCAT("Time: ", NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, visit_id, visit_date, program_uuid, program_name, encounter_id, ',
       'discontinuation_reason, effective_discontinuation_date, trf_out_verified, trf_out_verification_date, ',
       'date_died, transfer_facility, transfer_date, death_reason, specific_death_cause, natural_causes, non_natural_cause, ',
@@ -588,7 +567,7 @@ SET sql_stmt = CONCAT(
     'SELECT ',
       'q.patient_id, q.uuid, q.visit_id, q.encounter_datetime, q.program_uuid, q.program_name, q.encounter_id, ',
       'q.reason_discontinued, q.effective_discontinuation_date, q.trf_out_verified, q.trf_out_verification_date, ',
-      'q.date_died, COALESCE(l.`name`, q.to_facility_raw) AS transfer_facility, q.to_date, q.death_reason, q.specific_death_cause, ',
+      'q.date_died, COALESCE(l.name, q.to_facility_raw) AS transfer_facility, q.to_date, q.death_reason, q.specific_death_cause, ',
       'q.natural_causes, q.non_natural_cause, q.date_created, q.date_last_modified ',
     'FROM (',
       'SELECT ',
@@ -667,12 +646,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_mch_enrollment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_mch_enrollment');
 
 SELECT "Processing MCH Enrollments", CONCAT("Time: ", NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, service_type, anc_number, ',
       'first_anc_visit_date, gravida, parity, parity_abortion, age_at_menarche, lmp, lmp_estimated, edd_ultrasound, ',
       'blood_group, serology, tb_screening, bs_for_mps, hiv_status, hiv_test_date, partner_hiv_status, partner_hiv_test_date, ',
@@ -754,10 +733,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_mch_antenatal_visit`');
+SET @target_table = CONCAT(@etl_schema, '.etl_mch_antenatal_visit');
 
 SET sql_stmt = CONCAT(
-  'INSERT INTO ', target_table, ' (',
+  'INSERT INTO ', @target_table, ' (',
     'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, provider, anc_visit_number, temperature, pulse_rate, systolic_bp, diastolic_bp, respiratory_rate, oxygen_saturation, weight,',
     'height, muac, hemoglobin, breast_exam_done, pallor, maturity, fundal_height, fetal_presentation, lie, fetal_heart_rate, fetal_movement, who_stage, cd4, vl_sample_taken, viral_load, ldl, arv_status,',
     'final_test_result, patient_given_result, partner_hiv_tested, partner_hiv_status, prophylaxis_given, haart_given, date_given_haart, baby_azt_dispensed, baby_nvp_dispensed, deworming_done_anc,',
@@ -924,7 +903,7 @@ DROP PROCEDURE IF EXISTS sp_update_etl_mch_delivery $$
 CREATE PROCEDURE sp_update_etl_mch_delivery(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_mchs_delivery`');
+SET @target_table = CONCAT(@etl_schema, '.etl_mchs_delivery');
   SET @sql_stmt = CONCAT(
     'INSERT INTO ', @target_table, ' (',
       'patient_id,uuid,provider,visit_id,visit_date,location_id,encounter_id,date_created,date_last_modified,number_of_anc_visits,',
@@ -1046,12 +1025,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_mchs_discharge`');
+SET @target_table = CONCAT(@etl_schema, '.etl_mchs_discharge');
 
 SELECT "Processing MCH Discharge ", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, date_created, date_last_modified, ',
       'counselled_on_feeding, baby_status, vitamin_A_dispensed, birth_notification_number, condition_of_mother, discharge_date, ',
       'referred_from, referred_to, clinical_notes',
@@ -1108,12 +1087,12 @@ CREATE PROCEDURE sp_update_etl_mch_postnatal_visit(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_mch_postnatal_visit`');
+SET @target_table = CONCAT(@etl_schema, '.etl_mch_postnatal_visit');
 
 SELECT "Processing MCH postnatal visits ", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, visit_id, visit_date, location_id, encounter_id, provider, pnc_register_no, pnc_visit_no, delivery_date, ',
       'mode_of_delivery, place_of_delivery, visit_timing_mother, visit_timing_baby, delivery_outcome, temperature, pulse_rate, ',
       'systolic_bp, diastolic_bp, respiratory_rate, oxygen_saturation, weight, height, muac, hemoglobin, arv_status, general_condition, ',
@@ -1259,11 +1238,11 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_hei_enrollment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hei_enrollment');
 SELECT "Processing HEI Enrollments", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, child_exposed, ',
       'spd_number, birth_weight, gestation_at_birth, birth_type, date_first_seen, birth_notification_number, ',
       'birth_certificate_number, need_for_special_care, reason_for_special_care, referral_source, transfer_in, ',
@@ -1360,12 +1339,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_hei_follow_up_visit`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hei_follow_up_visit');
 
 SELECT "Processing HEI Followup visits", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, weight, height, muac, primary_caregiver, ',
       'revisit_this_year, height_length, referred, referral_reason, danger_signs, infant_feeding, stunted, tb_assessment_outcome, ',
       'social_smile_milestone, head_control_milestone, response_to_sound_milestone, hand_extension_milestone, sitting_milestone, ',
@@ -1454,12 +1433,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_immunization`');
+SET @target_table = CONCAT(@etl_schema, '.etl_immunization');
 
 SELECT "Processing hei_immunization data ", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, visit_date, created_by, date_created, date_last_modified, encounter_id, ',
       'BCG, OPV_birth, OPV_1, OPV_2, OPV_3, IPV, DPT_Hep_B_Hib_1, DPT_Hep_B_Hib_2, DPT_Hep_B_Hib_3, ',
       'PCV_10_1, PCV_10_2, PCV_10_3, ROTA_1, ROTA_2, ROTA_3, Measles_rubella_1, Measles_rubella_2, ',
@@ -1595,12 +1574,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_tb_enrollment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_tb_enrollment');
 
 SELECT "Processing TB Enrollments ", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, ',
       'date_treatment_started, district, referred_by, referral_date, date_transferred_in, ',
       'facility_transferred_from, district_transferred_from, date_first_enrolled_in_tb_care, ',
@@ -1681,12 +1660,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_tb_follow_up_visit`');
+SET @target_table = CONCAT(@etl_schema, '.etl_tb_follow_up_visit');
 
 SELECT "Processing TB Followup visits ", CONCAT("Time: ", NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, location_id, encounter_id, ',
       'spatum_test, spatum_result, result_serial_number, quantity, date_test_done, ',
       'bacterial_colonie_growth, number_of_colonies, resistant_s, resistant_r, resistant_inh, resistant_e, ',
@@ -1750,12 +1729,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_tb_screening`');
+SET @target_table = CONCAT(@etl_schema, '.etl_tb_screening');
 
 SELECT "Processing TB Screening data ", CONCAT("Time: ", NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, encounter_id, location_id, ',
       'cough_for_2wks_or_more, confirmed_tb_contact, fever_for_2wks_or_more, noticeable_weight_loss, ',
       'night_sweat_for_2wks_or_more, lethargy, spatum_smear_ordered, chest_xray_ordered, genexpert_ordered, ',
@@ -1830,10 +1809,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_drug_event`');
+SET @target_table = CONCAT(@etl_schema, '.etl_drug_event');
 SELECT 'Processing Drug Event Data', CONCAT('Time: ', NOW());
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, patient_id, date_started, visit_date, provider, encounter_id, program, regimen, regimen_name, regimen_line, discontinued, regimen_stopped, regimen_discontinued, date_discontinued, reason_discontinued, reason_discontinued_other, date_created, date_last_modified',
     ') ',
     'SELECT ',
@@ -2004,14 +1983,14 @@ BEGIN
 
     -- 1. Initialize tenant variables
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT(@etl_schema, '.`etl_hts_test`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hts_test');
 
     -- 2. Handle the timestamp for the WHERE clause
     SET last_ts_str = IFNULL(CONCAT('''', last_update_time, ''''), '''1900-01-01 00:00:00''');
 
     -- 3. Prepare and Execute the dynamic SQL
     SET @sql_stmt = CONCAT(
-        'INSERT INTO ', target_table, ' (
+        'INSERT INTO ', @target_table, ' (
             patient_id, visit_id, encounter_id, encounter_uuid, encounter_location, creator, date_created, date_last_modified,
             visit_date, test_type, population_type, key_population_type, priority_population_type, ever_tested_for_hiv, months_since_last_test,
             patient_disabled, disability_type, patient_consented, client_tested_as, setting, approach, test_strategy, hts_entry_point,
@@ -2129,7 +2108,7 @@ PREPARE stmt FROM @sql_stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SELECT CONCAT('Completed processing HTS tests. Target: ', target_table, ' Time: ', NOW()) AS message;
+SELECT CONCAT('Completed processing HTS tests. Target: ', @target_table, ' Time: ', NOW()) AS message;
 END $$
 
 
@@ -2144,7 +2123,7 @@ BEGIN
   DECLARE where_clause TEXT;
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_hts_referral_and_linkage`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hts_referral_and_linkage');
 
   SET where_clause = IF(
     last_update_time IS NULL,
@@ -2155,7 +2134,7 @@ SET target_table = CONCAT('`', @etl_schema, '`.`etl_hts_referral_and_linkage`');
   );
 
   SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, visit_id, encounter_id, encounter_uuid, encounter_location, creator, date_created, date_last_modified, visit_date, ',
       'tracing_type, tracing_status, referral_facility, facility_linked_to, enrollment_date, art_start_date, ccc_number, provider_handed_to, ',
       'cadre, remarks, voided) ',
@@ -2207,7 +2186,7 @@ BEGIN
   DECLARE target_table VARCHAR(300);
   DECLARE where_clause TEXT;
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_hts_referral`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hts_referral');
     SET where_clause = IF(
       last_update_time IS NULL,
       'e.voided = 0',
@@ -2226,7 +2205,7 @@ SET target_table = CONCAT('`', @etl_schema, '`.`etl_hts_referral`');
       )
     );
   SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, visit_id, encounter_id, encounter_uuid, encounter_location, creator, date_created, date_last_modified, ',
       'visit_date, facility_referred_to, date_to_enrol, remarks, voided',
     ') ',
@@ -2272,7 +2251,7 @@ BEGIN
   DECLARE where_clause TEXT;
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ipt_screening`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ipt_screening');
 
   SET where_clause = IF(
     last_update_time IS NULL,
@@ -2288,7 +2267,7 @@ SET target_table = CONCAT('`', @etl_schema, '`.`etl_ipt_screening`');
   );
 
   SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, encounter_id, location_id, ipt_started, date_created, date_last_modified',
     ') ',
     'SELECT ',
@@ -2324,7 +2303,7 @@ BEGIN
   DECLARE where_clause TEXT;
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ipt_follow_up`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ipt_follow_up');
 
 SELECT 'Processing TPT followup forms', CONCAT('Time: ', NOW());
 
@@ -2342,7 +2321,7 @@ SET where_clause = IF(
   );
 
   SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, uuid, provider, visit_id, visit_date, encounter_id, location_id, ',
       'ipt_due_date, date_collected_ipt, hepatotoxity, peripheral_neuropathy, rash, has_other_symptoms, adherence, action_taken, date_created, date_last_modified, voided',
     ') ',
@@ -2386,11 +2365,11 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ccc_defaulter_tracing`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ccc_defaulter_tracing');
 SELECT 'Processing ccc defaulter tracing form', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, tracing_type, missed_appointment_date, reason_for_missed_appointment, non_coded_missed_appointment_reason, tracing_outcome, reason_not_contacted, attempt_number, is_final_trace, true_status, cause_of_death, comments, booking_date, date_created, date_last_modified) ',
+    'INSERT INTO ', @target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, tracing_type, missed_appointment_date, reason_for_missed_appointment, non_coded_missed_appointment_reason, tracing_outcome, reason_not_contacted, attempt_number, is_final_trace, true_status, cause_of_death, comments, booking_date, date_created, date_last_modified) ',
     'SELECT ',
       'e.uuid, e.creator AS provider, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
       'MAX(IF(o.concept_id = 164966, o.value_coded, NULL)) AS tracing_type, ',
@@ -2450,12 +2429,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ART_preparation`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ART_preparation');
 
 SELECT 'Processing ART Preparation', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, patient_id, visit_id, visit_date, location_id, encounter_id, provider, ',
       'understands_hiv_art_benefits, screened_negative_substance_abuse, screened_negative_psychiatric_illness, ',
       'HIV_status_disclosure, trained_drug_admin, informed_drug_side_effects, caregiver_committed, adherance_barriers_identified, ',
@@ -2517,12 +2496,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_enhanced_adherence`');
+SET @target_table = CONCAT(@etl_schema, '.etl_enhanced_adherence');
 
 SELECT 'Processing Enhanced Adherence ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, patient_id, visit_id, visit_date, location_id, encounter_id, provider, ',
       'session_number, first_session_date, pill_count, ',
       'MMAS4_1_forgets_to_take_meds, MMAS4_2_careless_taking_meds, MMAS4_3_stops_on_reactive_meds, MMAS4_4_stops_meds_on_feeling_good, ',
@@ -2627,10 +2606,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_patient_triage`');
+SET @target_table = CONCAT(@etl_schema, '.etl_patient_triage');
 SELECT 'Processing Patient Triage', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, patient_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
       'visit_reason, complaint_today, complaint_duration, weight, height, systolic_pressure, diastolic_pressure, temperature, ',
       'temperature_collection_mode, pulse_rate, respiratory_rate, oxygen_saturation, oxygen_saturation_collection_mode, muac, ',
@@ -2701,12 +2680,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_generalized_anxiety_disorder`');
+SET @target_table = CONCAT(@etl_schema, '.etl_generalized_anxiety_disorder');
 
 SELECT 'Processing Generalized Anxiety Disorder', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, patient_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
       'feeling_nervous_anxious, control_worrying, worrying_much, trouble_relaxing, being_restless, feeling_bad, feeling_afraid, assessment_outcome, voided',
     ') ',
@@ -2756,12 +2735,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_prep_behaviour_risk_assessment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_prep_behaviour_risk_assessment');
 
 SELECT 'Processing Behaviour risk assessment', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, date_created, date_last_modified, ',
       'sexual_partner_hiv_status, sexual_partner_on_art, risk, high_risk_partner, sex_with_multiple_partners, ipv_gbv, transactional_sex, ',
       'recent_sti_infected, recurrent_pep_use, recurrent_sex_under_influence, inconsistent_no_condom_use, sharing_drug_needles, ',
@@ -2868,12 +2847,12 @@ CREATE PROCEDURE sp_update_etl_prep_monthly_refill(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_prep_monthly_refill`');
+SET @target_table = CONCAT(@etl_schema, '.etl_prep_monthly_refill');
 
 SELECT 'Processing monthly refill', CONCAT('Time: ', NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, date_created, date_last_modified, ',
       'assessed_for_behavior_risk, risk_for_hiv_positive_partner, client_assessment, adherence_assessment, ',
       'poor_adherence_reasons, other_poor_adherence_reasons, adherence_counselling_done, prep_status, switching_option, switching_date, ',
@@ -2941,12 +2920,12 @@ BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_prep_discontinuation`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_prep_discontinuation');
 
 SELECT 'Processing PrEP discontinuation', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (',
+    'INSERT INTO ', @target_table_quoted, ' (',
       'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, date_created, date_last_modified, discontinue_reason, care_end_date, last_prep_dose_date, voided',
     ') ',
     'SELECT ',
@@ -3010,10 +2989,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_prep_enrolment`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_prep_enrolment');
 SELECT 'Processing PrEP enrolment', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (',
+    'INSERT INTO ', @target_table_quoted, ' (',
       'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, date_created, date_last_modified, ',
       'patient_type, population_type, kp_type, transfer_in_entry_point, referred_from, transit_from, transfer_in_date, transfer_from, ',
       'initial_enrolment_date, date_started_prep_trf_facility, previously_on_prep, prep_type, regimen, prep_last_date, in_school, ',
@@ -3080,12 +3059,12 @@ BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_prep_followup`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_prep_followup');
 
 SELECT 'Processing PrEP follow-up', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (',
+    'INSERT INTO ', @target_table_quoted, ' (',
       'uuid, form, provider, patient_id, visit_id, visit_date, location_id, encounter_id, date_created, date_last_modified, ',
       'sti_screened, genital_ulcer_disease, vaginal_discharge, cervical_discharge, pid, urethral_discharge, anal_discharge, other_sti_symptoms, sti_treated, ',
       'vmmc_screened, vmmc_status, vmmc_referred, lmp, menopausal_status, pregnant, edd, planned_pregnancy, wanted_pregnancy, breastfeeding, fp_status, fp_method, ',
@@ -3218,7 +3197,7 @@ DROP PROCEDURE IF EXISTS sp_update_etl_progress_note $$
 CREATE PROCEDURE sp_update_etl_progress_note(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_progress_note`');
+SET @target_table = CONCAT(@etl_schema, '.etl_progress_note');
 
 SELECT 'Processing progress', CONCAT('Time: ', NOW());
 
@@ -3266,12 +3245,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ipt_initiation`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ipt_initiation');
 
 SELECT 'Processing TPT initiations ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (patient_id, uuid, encounter_provider, visit_date, location_id, encounter_id, date_created, date_last_modified, ipt_indication, voided) ',
+    'INSERT INTO ', @target_table, ' (patient_id, uuid, encounter_provider, visit_date, location_id, encounter_id, date_created, date_last_modified, ipt_indication, voided) ',
     'SELECT ',
       'e.patient_id, e.uuid, e.creator, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, e.date_created, ',
       'IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
@@ -3307,10 +3286,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ipt_outcome`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ipt_outcome');
 SELECT 'Processing TPT outcome ', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (patient_id, uuid, encounter_provider, visit_date, location_id, encounter_id, date_created, date_last_modified, outcome, voided) ',
+    'INSERT INTO ', @target_table, ' (patient_id, uuid, encounter_provider, visit_date, location_id, encounter_id, date_created, date_last_modified, outcome, voided) ',
     'SELECT ',
       'e.patient_id, e.uuid, e.creator AS encounter_provider, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, e.date_created, ',
       'IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
@@ -3344,12 +3323,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_hts_linkage_tracing`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hts_linkage_tracing');
 
 SELECT 'Processing HTS Linkage tracing ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, patient_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, tracing_type, tracing_outcome, reason_not_contacted, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, patient_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, tracing_type, tracing_outcome, reason_not_contacted, voided) ',
     'SELECT ',
       'e.uuid, e.patient_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id AS encounter_id, e.creator AS encounter_provider, e.date_created AS date_created, ',
       'IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
@@ -3387,12 +3366,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_patient_program`');
+SET @target_table = CONCAT(@etl_schema, '.etl_patient_program');
 
 SELECT 'Updating patient program ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, patient_id, location_id, program, date_enrolled, date_completed, outcome, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, patient_id, location_id, program, date_enrolled, date_completed, outcome, date_created, date_last_modified, voided) ',
     'SELECT ',
       'pp.uuid, pp.patient_id, pp.location_id, ',
       'CASE p.uuid ',
@@ -3444,10 +3423,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_person_address`');
+SET @target_table = CONCAT(@etl_schema, '.etl_person_address');
 SELECT 'Processing person addresses ', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, patient_id, county, sub_county, location, ward, sub_location, village, postal_address, land_mark, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, patient_id, county, sub_county, location, ward, sub_location, village, postal_address, land_mark, voided) ',
     'SELECT pa.uuid, pa.person_id, COALESCE(pa.country, pa.county_district) AS county, pa.state_province AS sub_county, pa.address6 AS location, pa.address4 AS ward, pa.address5 AS sub_location, pa.city_village AS village, pa.address1 AS postal_address, pa.address2 AS land_mark, pa.voided ',
     'FROM person_address pa ',
     'INNER JOIN person pt ON pt.person_id = pa.person_id AND pt.voided = 0 ',
@@ -3476,10 +3455,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_otz_activity`');
+SET @target_table = CONCAT(@etl_schema, '.etl_otz_activity');
 SELECT 'Processing OTZ Activity ', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, patient_id, visit_date, visit_id, location_id, encounter_id, encounter_provider, date_created, date_last_modified, orientation, leadership, participation, treatment_literacy, transition_to_adult_care, making_decision_future, srh, beyond_third_ninety, attended_support_group, remarks, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, patient_id, visit_date, visit_id, location_id, encounter_id, encounter_provider, date_created, date_last_modified, orientation, leadership, participation, treatment_literacy, transition_to_adult_care, making_decision_future, srh, beyond_third_ninety, attended_support_group, remarks, voided) ',
     'SELECT ',
       'e.uuid, e.patient_id, DATE(e.encounter_datetime) AS visit_date, e.visit_id, e.location_id, e.encounter_id AS encounter_id, e.creator AS encounter_provider, e.date_created AS date_created, ',
       'IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
@@ -3527,10 +3506,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_otz_enrollment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_otz_enrollment');
 SELECT 'Processing OTZ Enrollment ', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, patient_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, orientation, leadership, participation, treatment_literacy, transition_to_adult_care, making_decision_future, srh, beyond_third_ninety, transfer_in, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, patient_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, orientation, leadership, participation, treatment_literacy, transition_to_adult_care, making_decision_future, srh, beyond_third_ninety, transfer_in, voided) ',
     'SELECT ',
       'e.uuid, e.patient_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id AS encounter_id, e.creator AS encounter_provider, e.date_created AS date_created, ',
       'IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
@@ -3578,10 +3557,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_ovc_enrolment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ovc_enrolment');
 SELECT 'Processing OVC Enrolment ', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, patient_id, visit_date, location_id, visit_id, encounter_id, encounter_provider, date_created, date_last_modified, caregiver_enrolled_here, caregiver_name, caregiver_gender, relationship_to_client, caregiver_phone_number, client_enrolled_cpims, partner_offering_ovc, ovc_comprehensive_program, dreams_program, ovc_preventive_program, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, patient_id, visit_date, location_id, visit_id, encounter_id, encounter_provider, date_created, date_last_modified, caregiver_enrolled_here, caregiver_name, caregiver_gender, relationship_to_client, caregiver_phone_number, client_enrolled_cpims, partner_offering_ovc, ovc_comprehensive_program, dreams_program, ovc_preventive_program, voided) ',
     'SELECT ',
       'e.uuid, e.patient_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.visit_id, e.encounter_id AS encounter_id, e.creator AS encounter_provider, ',
       'e.date_created AS date_created, IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
@@ -3632,12 +3611,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_cervical_cancer_screening`');
+SET @target_table = CONCAT(@etl_schema, '.etl_cervical_cancer_screening');
 
 SELECT 'Processing CAXC screening', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
    'uuid, encounter_id, encounter_provider, patient_id, visit_id, visit_date, location_id, date_created, date_last_modified, ',
    'visit_type, screening_type, post_treatment_complication_cause, post_treatment_complication_other, cervical_cancer, ',
    'colposcopy_screening_method, hpv_screening_method, pap_smear_screening_method, via_vili_screening_method, ',
@@ -3902,11 +3881,11 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_patient_contact`');
+SET @target_table = CONCAT(@etl_schema, '.etl_patient_contact');
 SELECT 'Processing patient contact ', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
-      '`uuid`,`date_created`,`encounter_id`,`encounter_provider`,`location_id`,`patient_id`,`patient_related_to`,`relationship_type`,`start_date`,`end_date`,`date_last_modified`,`voided`',
+    'INSERT INTO ', @target_table, ' (',
+      'uuid,date_created,encounter_id,encounter_provider,location_id,patient_id,patient_related_to,relationship_type,start_date,end_date,date_last_modified,voided',
     ') ',
     'SELECT ',
       'p.uuid, DATE(e.encounter_datetime) AS date_created, e.encounter_id, e.creator AS encounter_provider, e.location_id, ',
@@ -3929,7 +3908,7 @@ SET sql_stmt = CONCAT(
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET sql_stmt = CONCAT(
-    'UPDATE ', target_table, ' c JOIN (',
+    'UPDATE ', @target_table, ' c JOIN (',
       'SELECT pa.person_id, ',
         'MAX(IF(pat.uuid = ''3ca03c84-632d-4e53-95ad-91f1bd9d96d6'', CASE pa.value WHEN 703 THEN ''Positive'' WHEN 664 THEN ''Negative'' WHEN 1067 THEN ''Unknown'' END, NULL)) AS baseline_hiv_status, ',
         'MAX(IF(pat.uuid = ''35a08d84-9f80-4991-92b4-c4ae5903536e'', pa.value, NULL)) AS living_with_patient, ',
@@ -3947,7 +3926,7 @@ SET sql_stmt = CONCAT(
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET sql_stmt = CONCAT(
-    'UPDATE ', target_table, ' c LEFT JOIN (',
+    'UPDATE ', @target_table, ' c LEFT JOIN (',
       'SELECT pa.person_id, MAX(pa.address1) AS physical_address, MAX(pa.date_changed) AS date_last_modified, MAX(pa.date_created) AS date_created ',
       'FROM person_address pa ',
       'WHERE pa.voided = 0 AND (pa.date_changed >= ', IFNULL(CONCAT('''', last_update_time, ''''), 'NULL'), ' OR pa.date_created >= ', IFNULL(CONCAT('''', last_update_time, ''''), 'NULL'), ') ',
@@ -3969,12 +3948,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_contact`');
+SET @target_table = CONCAT(@etl_schema, '.etl_contact');
 
 SELECT 'Processing client contact data ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, client_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
       'patient_type, transfer_in_date, date_first_enrolled_in_kp, facility_transferred_from, key_population_type, priority_population_type, ',
       'implementation_county, implementation_subcounty, implementation_ward, contacted_by_peducator, program_name, frequent_hotspot_name, ',
@@ -4044,7 +4023,7 @@ PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SELECT 'Completed processing KP contact data', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'UPDATE ', target_table, ' c ',
+    'UPDATE ', @target_table, ' c ',
     'JOIN (',
       'SELECT pi.patient_id, MAX(IF(pit.uuid = ''b7bfefd0-239b-11e9-ab14-d663bd873d93'', pi.identifier, NULL)) AS unique_identifier ',
       'FROM patient_identifier pi ',
@@ -4068,12 +4047,12 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_client_enrollment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_client_enrollment');
 
 SELECT 'Processing client enrollment data ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, client_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
       'contacted_for_prevention, has_regular_free_sex_partner, year_started_sex_work, year_started_sex_with_men, year_started_drugs, ',
       'has_expereienced_sexual_violence, has_expereienced_physical_violence, ever_tested_for_hiv, test_type, share_test_results, ',
@@ -4141,12 +4120,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_clinical_visit`');
+SET @target_table = CONCAT(@etl_schema, '.etl_clinical_visit');
 
 SELECT 'Processing Clinical Visit ', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, client_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
       'implementing_partner, type_of_visit, visit_reason, service_delivery_model, sti_screened, sti_results, sti_treated, sti_referred, sti_referred_text, ',
       'tb_screened, tb_results, tb_treated, tb_referred, tb_referred_text, hepatitisB_screened, hepatitisB_results, hepatitisB_confirmatory_results, hepatitisB_vaccinated, ',
@@ -4349,12 +4328,12 @@ CREATE PROCEDURE sp_update_etl_kp_peer_calendar(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_peer_calendar`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_peer_calendar');
 
 SELECT CONCAT('Processing Peer calendar ', CONCAT('Time: ', NOW()));
 
 SET @sql = CONCAT(
-'INSERT INTO ', target_table_quoted, ' (uuid, client_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, hotspot_name, typology, other_hotspots, weekly_sex_acts, monthly_condoms_required, weekly_anal_sex_acts, monthly_lubes_required, daily_injections, monthly_syringes_required, years_in_sexwork_drugs, experienced_violence, service_provided_within_last_month, monthly_n_and_s_distributed, monthly_male_condoms_distributed, monthly_lubes_distributed, monthly_female_condoms_distributed, monthly_self_test_kits_distributed, received_clinical_service, violence_reported, referred, health_edu, remarks, voided) ',
+'INSERT INTO ', @target_table_quoted, ' (uuid, client_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, hotspot_name, typology, other_hotspots, weekly_sex_acts, monthly_condoms_required, weekly_anal_sex_acts, monthly_lubes_required, daily_injections, monthly_syringes_required, years_in_sexwork_drugs, experienced_violence, service_provided_within_last_month, monthly_n_and_s_distributed, monthly_male_condoms_distributed, monthly_lubes_distributed, monthly_female_condoms_distributed, monthly_self_test_kits_distributed, received_clinical_service, violence_reported, referred, health_edu, remarks, voided) ',
 'SELECT e.uuid, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id AS encounter_id, e.creator AS encounter_provider, e.date_created AS date_created, IF(MAX(o.date_created) > MIN(e.date_created), MAX(o.date_created), NULL) AS date_last_modified, ',
 'MAX(IF(o.concept_id=165006, o.value_text, NULL)) AS hotspot_name, ',
 'MAX(IF(o.concept_id=165005, (CASE o.value_coded WHEN 165011 THEN ''Street'' WHEN 165012 THEN ''Injecting den'' WHEN 165013 THEN ''Uninhabitable building'' WHEN 165014 THEN ''Park'' WHEN 1536 THEN ''Homes'' WHEN 165015 THEN ''Beach'' WHEN 165016 THEN ''Casino'' WHEN 165017 THEN ''Bar with lodging'' WHEN 165018 THEN ''Bar without lodging'' WHEN 165019 THEN ''Sex den'' WHEN 165020 THEN ''Strip club'' WHEN 165021 THEN ''Highways'' WHEN 165022 THEN ''Brothel'' WHEN 165023 THEN ''Guest house/Hotels/Lodgings'' WHEN 165024 THEN ''Massage parlor'' WHEN 165025 THEN ''Chang''aa den'' WHEN 165026 THEN ''Barbershop/Salon'' WHEN 165297 THEN ''Virtual Space'' WHEN 5622 THEN ''Other (Specify)'' ELSE '''' END), NULL)) AS typology, ',
@@ -4405,10 +4384,10 @@ CREATE PROCEDURE sp_update_etl_kp_sti_treatment(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_sti_treatment`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_sti_treatment');
 SELECT CONCAT('Processing STI Treatment ', CONCAT('Time: ', NOW()));
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (',
+    'INSERT INTO ', @target_table_quoted, ' (',
       'uuid, client_id, visit_id, visit_date, location_id, encounter_id, encounter_provider, date_created, date_last_modified, ',
       'visit_reason, syndrome, other_syndrome, drug_prescription, other_drug_prescription, genital_exam_done, lab_referral, lab_form_number, ',
       'referred_to_facility, facility_name, partner_referral_done, given_lubes, no_of_lubes, given_condoms, no_of_condoms, provider_comments, ',
@@ -4474,10 +4453,10 @@ CREATE PROCEDURE sp_update_etl_kp_peer_tracking(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_peer_tracking`');
+SET @target_table = CONCAT(@etl_schema, '.etl_peer_tracking');
 SELECT CONCAT('Processing kp peer tracking form ', CONCAT('Time: ', NOW()));
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, provider, client_id, visit_id, visit_date, location_id, encounter_id, tracing_attempted, tracing_not_attempted_reason, attempt_number, tracing_date, tracing_type, tracing_outcome, is_final_trace, tracing_outcome_status, voluntary_exit_comment, status_in_program, source_of_information, other_informant, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, provider, client_id, visit_id, visit_date, location_id, encounter_id, tracing_attempted, tracing_not_attempted_reason, attempt_number, tracing_date, tracing_type, tracing_outcome, is_final_trace, tracing_outcome_status, voluntary_exit_comment, status_in_program, source_of_information, other_informant, date_created, date_last_modified, voided) ',
     'SELECT ',
       'e.uuid, e.creator, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
       'MAX(IF(o.concept_id=165004, (CASE o.value_coded WHEN 1065 THEN ''Yes'' WHEN 1066 THEN ''No'' ELSE '''' END), NULL)) AS tracing_attempted, ',
@@ -4525,10 +4504,10 @@ CREATE PROCEDURE sp_update_etl_kp_treatment_verification(IN last_update_time DAT
 BEGIN
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_treatment_verification`');
+SET @target_table = CONCAT(@etl_schema, '.etl_treatment_verification');
 SELECT CONCAT('Processing kp treatment verification form ', CONCAT('Time: ', NOW()));
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, provider, client_id, visit_id, visit_date, location_id, encounter_id, ',
       'date_diagnosed_with_hiv, art_health_facility, ccc_number, is_pepfar_site, date_initiated_art, ',
       'current_regimen, information_source, cd4_test_date, cd4, vl_test_date, viral_load, disclosed_status, ',
@@ -4615,12 +4594,12 @@ CREATE PROCEDURE sp_update_etl_PrEP_verification(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_PrEP_verification`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_PrEP_verification');
 
 SELECT CONCAT('Processing PrEP verification form ', CONCAT('Time: ', NOW()));
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (uuid, provider, client_id, visit_id, visit_date, location_id, encounter_id, date_enrolled, health_facility_accessing_PrEP, is_pepfar_site, date_initiated_PrEP, PrEP_regimen, information_source, PrEP_status, verification_date, discontinuation_reason, other_discontinuation_reason, appointment_date, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table_quoted, ' (uuid, provider, client_id, visit_id, visit_date, location_id, encounter_id, date_enrolled, health_facility_accessing_PrEP, is_pepfar_site, date_initiated_PrEP, PrEP_regimen, information_source, PrEP_status, verification_date, discontinuation_reason, other_discontinuation_reason, appointment_date, date_created, date_last_modified, voided) ',
     'SELECT ',
       'e.uuid, e.creator AS provider, e.patient_id AS client_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
       'MAX(IF(o.concept_id = 163526, o.value_datetime, NULL)) AS date_enrolled, ',
@@ -4666,11 +4645,11 @@ CREATE PROCEDURE sp_update_etl_alcohol_drug_abuse_screening(IN last_update_time 
 BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_alcohol_drug_abuse_screening`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_alcohol_drug_abuse_screening');
 SELECT 'Processing Alcohol and Drug Abuse Screening(CAGE-AID/CRAFFT)', CONCAT('Time: ', NOW());
 
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (patient_id, uuid, provider, visit_id, visit_date, encounter_id, location_id, alcohol_drinking_frequency, smoking_frequency, drugs_use_frequency, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table_quoted, ' (patient_id, uuid, provider, visit_id, visit_date, encounter_id, location_id, alcohol_drinking_frequency, smoking_frequency, drugs_use_frequency, date_created, date_last_modified, voided) ',
     'SELECT e.patient_id, e.uuid, e.creator, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.encounter_id, e.location_id, ',
     'MAX(IF(o.concept_id = 159449, o.value_coded, NULL)) AS alcohol_drinking_frequency, ',
     'MAX(IF(o.concept_id = 163201, o.value_coded, NULL)) AS smoking_frequency, ',
@@ -4704,10 +4683,10 @@ CREATE PROCEDURE sp_update_etl_gbv_screening(IN last_update_time DATETIME)
 BEGIN
   DECLARE target_table_quoted VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table_quoted = CONCAT('`', @etl_schema, '`.`etl_gbv_screening`');
+SET @target_table_quoted = CONCAT(@etl_schema, '.etl_gbv_screening');
 SELECT 'Processing GBV Screening', CONCAT('Time: ', NOW());
 SET @sql = CONCAT(
-    'INSERT INTO ', target_table_quoted, ' (',
+    'INSERT INTO ', @target_table_quoted, ' (',
       'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, ',
       'ipv, physical_ipv, emotional_ipv, sexual_ipv, ipv_relationship, date_created, date_last_modified, voided',
     ') ',
@@ -4755,7 +4734,7 @@ CREATE PROCEDURE sp_update_etl_gbv_screening_action(IN last_update_time DATETIME
 BEGIN
   DECLARE sql_stmt TEXT;
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_gbv_screening_action`');
+SET @target_table = CONCAT(@etl_schema, '.etl_gbv_screening_action');
 SELECT 'Processing GBV Screening Action', CONCAT('Time: ', NOW());
 SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -4820,7 +4799,7 @@ CREATE PROCEDURE sp_update_etl_violence_reporting(IN last_update_time DATETIME)
 BEGIN
   DECLARE sql_stmt TEXT;
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_violence_reporting`');
+SET @target_table = CONCAT(@etl_schema, '.etl_violence_reporting');
 SELECT 'Processing violence reporting', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
 'INSERT INTO ', @target_table, ' (',
@@ -4924,10 +4903,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_link_facility_tracking`');
+SET @target_table = CONCAT(@etl_schema, '.etl_link_facility_tracking');
 SELECT 'Processing link facility tracking form', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
     'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, ',
     'county, sub_county, ward, facility_name, ccc_number, date_diagnosed, date_initiated_art, ',
     'original_regimen, current_regimen, date_switched, reason_for_switch, date_of_last_visit, ',
@@ -5014,7 +4993,7 @@ CREATE PROCEDURE sp_update_etl_depression_screening(IN last_update_time DATETIME
 BEGIN
   DECLARE sql_stmt TEXT;
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_depression_screening`');
+SET @target_table = CONCAT(@etl_schema, '.etl_depression_screening');
 SELECT 'Processing depression screening', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -5072,10 +5051,10 @@ BEGIN
   DECLARE sql_stmt TEXT;
   DECLARE target_table VARCHAR(300);
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_adverse_events`');
+SET @target_table = CONCAT(@etl_schema, '.etl_adverse_events');
 SELECT 'Processing adverse events', CONCAT('Time: ', NOW());
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, form, provider, patient_id, visit_id, visit_date, location_id, encounter_id, obs_id, cause, adverse_event, severity, start_date, action_taken, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, form, provider, patient_id, visit_id, visit_date, location_id, encounter_id, obs_id, cause, adverse_event, severity, start_date, action_taken, date_created, date_last_modified, voided) ',
     'SELECT ',
       'e.uuid, ',
       '(CASE f.uuid ',
@@ -5120,8 +5099,8 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_pre_hiv_enrollment_art
--- Purpose: populate tenant-aware `etl_pre_hiv_enrollment_art`
--- Tenant-aware: uses `sp_set_tenant_session_vars()` and dynamic INSERT target
+-- Purpose: populate tenant-aware etl_pre_hiv_enrollment_art
+-- Tenant-aware: uses sp_set_tenant_session_vars() and dynamic INSERT target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_pre_hiv_enrollment_art $$
 CREATE PROCEDURE sp_update_etl_pre_hiv_enrollment_art(IN last_update_time DATETIME)
@@ -5130,12 +5109,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_pre_hiv_enrollment_art`');
+SET @target_table = CONCAT(@etl_schema, '.etl_pre_hiv_enrollment_art');
 
 SELECT 'Processing pre_hiv enrollment ART', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, obs_id, ',
       'PMTCT, PMTCT_regimen, PEP, PEP_regimen, PrEP, PrEP_regimen, HAART, HAART_regimen, ',
       'date_created, date_last_modified, voided',
@@ -5187,15 +5166,15 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_covid_19_assessment
--- Purpose: update tenant-aware `etl_covid19_assessment`
--- Notes: calls sp_set_tenant_session_vars() to resolve `etl_schema` then
+-- Purpose: update tenant-aware etl_covid19_assessment
+-- Notes: calls sp_set_tenant_session_vars() to resolve etl_schema then
 --        builds and executes a dynamic INSERT ... ON DUPLICATE KEY UPDATE
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_covid_19_assessment $$
 CREATE PROCEDURE sp_update_etl_covid_19_assessment(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_covid19_assessment`');
+SET @target_table = CONCAT('', etl_schema, '.etl_covid19_assessment');
 
 SELECT 'Processing etl_covid19_assessment', CONCAT('Time: ', NOW());
 
@@ -5266,7 +5245,7 @@ END $$
 -- sql
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_vmmc_enrolment
--- Purpose: update tenant-aware `etl_vmmc_enrolment`
+-- Purpose: update tenant-aware etl_vmmc_enrolment
 -- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 
@@ -5279,12 +5258,12 @@ BEGIN
 
   -- resolve tenant schema
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_vmmc_enrolment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_vmmc_enrolment');
 
 SELECT 'Processing VMMC enrolment', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, referee, other_referee, source_of_vmmc_info, other_source_of_vmmc_info, county_of_origin, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, referee, other_referee, source_of_vmmc_info, other_source_of_vmmc_info, county_of_origin, date_created, date_last_modified, voided) ',
     'SELECT e.uuid, e.creator, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
     'MAX(IF(o.concept_id = 160482, o.value_coded, NULL)) AS referee, ',
     'MAX(IF(o.concept_id = 165143, o.value_text, NULL)) AS other_referee, ',
@@ -5320,7 +5299,7 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_vmmc_circumcision_procedure
--- Purpose: update tenant-aware `etl_vmmc_circumcision_procedure`
+-- Purpose: update tenant-aware etl_vmmc_circumcision_procedure
 -- Notes: calls sp_set_tenant_session_vars() then builds and executes dynamic INSERT ... ON DUPLICATE KEY UPDATE
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_circumcision_procedure $$
@@ -5330,12 +5309,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_vmmc_circumcision_procedure`');
+SET @target_table = CONCAT(@etl_schema, '.etl_vmmc_circumcision_procedure');
 
 SELECT CONCAT('Processing VMMC circumcision procedure for ', @etl_schema, '.etl_vmmc_circumcision_procedure Time: ', NOW()) AS status;
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, circumcision_method, surgical_circumcision_method, reason_circumcision_ineligible, circumcision_device, specific_other_device, device_size, lot_number, anaesthesia_type, anaesthesia_used, anaesthesia_concentration, anaesthesia_volume, time_of_first_placement_cut, time_of_last_device_closure, has_adverse_event, adverse_event, severity, adverse_event_management, clinician_name, clinician_cadre, assist_clinician_name, assist_clinician_cadre, theatre_number, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, circumcision_method, surgical_circumcision_method, reason_circumcision_ineligible, circumcision_device, specific_other_device, device_size, lot_number, anaesthesia_type, anaesthesia_used, anaesthesia_concentration, anaesthesia_volume, time_of_first_placement_cut, time_of_last_device_closure, has_adverse_event, adverse_event, severity, adverse_event_management, clinician_name, clinician_cadre, assist_clinician_name, assist_clinician_cadre, theatre_number, date_created, date_last_modified, voided) ',
     'SELECT e.uuid, e.creator, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
     'MAX(IF(o.concept_id = 167118, o.value_coded, NULL)) AS circumcision_method, ',
     'MAX(IF(o.concept_id = 167119, o.value_coded, NULL)) AS surgical_circumcision_method, ',
@@ -5400,9 +5379,9 @@ END $$
 -- sql
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_vmmc_medical_history
--- Purpose: update tenant-aware `etl_vmmc_medical_history`
+-- Purpose: update tenant-aware etl_vmmc_medical_history
 -- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- --------------------------------------
 
 
@@ -5413,12 +5392,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_vmmc_medical_history`');
+SET @target_table = CONCAT(@etl_schema, '.etl_vmmc_medical_history');
 
 SELECT 'Processing VMMC medical history examination', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
     'uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, assent_given, consent_given, hiv_status, hiv_test_date, art_start_date, current_regimen, ccc_number, next_appointment_date, hiv_care_facility, hiv_care_facility_name, vl, cd4_count, bleeding_disorder, diabetes, client_presenting_complaints, other_complaints, ongoing_treatment, other_ongoing_treatment, hb_level, sugar_level, has_known_allergies, ever_had_surgical_operation, specific_surgical_operation, proven_tetanus_booster, ever_received_tetanus_booster, date_received_tetanus_booster, blood_pressure, pulse_rate, temperature, in_good_health, counselled, reason_ineligible, circumcision_method_chosen, conventional_method_chosen, device_name, device_size, other_conventional_method_device_chosen, services_referral, date_created, date_last_modified, voided',
     ') ',
     'SELECT ',
@@ -5560,7 +5539,7 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_vmmc_client_followup
--- Purpose: populate tenant-aware `etl_vmmc_client_followup`
+-- Purpose: populate tenant-aware etl_vmmc_client_followup
 -- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_vmmc_client_followup $$
@@ -5570,12 +5549,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_vmmc_client_followup`');
+SET @target_table = CONCAT(@etl_schema, '.etl_vmmc_client_followup');
 
 SELECT 'Processing VMMC client followup', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, visit_type, days_since_circumcision, has_adverse_event, adverse_event, severity, adverse_event_management, medications_given, other_medications_given, clinician_name, clinician_cadre, clinician_notes, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, visit_type, days_since_circumcision, has_adverse_event, adverse_event, severity, adverse_event_management, medications_given, other_medications_given, clinician_name, clinician_cadre, clinician_notes, date_created, date_last_modified, voided) ',
     'SELECT e.uuid, e.creator, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
     'MAX(IF(o.concept_id = 164181, o.value_coded, NULL)) AS visit_type, ',
     'MAX(IF(o.concept_id = 161011, o.value_text, NULL)) AS days_since_circumcision, ',
@@ -5634,7 +5613,7 @@ PREPARE stmt FROM @sql_stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SELECT CONCAT('Completed processing VMMC client followup data ', target_table, ' Time: ', NOW()) AS status;
+SELECT CONCAT('Completed processing VMMC client followup data ', @target_table, ' Time: ', NOW()) AS status;
 END $$
 
 
@@ -5650,12 +5629,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_vmmc_post_operation_assessment`');
+SET @target_table = CONCAT(@etl_schema, '.etl_vmmc_post_operation_assessment');
 
 SELECT "Processing post vmmc operation assessment", CONCAT("Time: ", NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, blood_pressure, pulse_rate, temperature, penis_elevated, given_post_procedure_instruction, post_procedure_instructions, given_post_operation_medication, medication_given, other_medication_given, removal_date, next_appointment_date, discharged_by, cadre, date_created, date_last_modified, voided) ',
+    'INSERT INTO ', @target_table, ' (uuid, provider, patient_id, visit_id, visit_date, location_id, encounter_id, blood_pressure, pulse_rate, temperature, penis_elevated, given_post_procedure_instruction, post_procedure_instructions, given_post_operation_medication, medication_given, other_medication_given, removal_date, next_appointment_date, discharged_by, cadre, date_created, date_last_modified, voided) ',
     'SELECT e.uuid, e.creator, e.patient_id, e.visit_id, DATE(e.encounter_datetime) AS visit_date, e.location_id, e.encounter_id, ',
       'CONCAT_WS(\'/\', MAX(IF(o.concept_id = 5085, o.value_numeric, NULL)), MAX(IF(o.concept_id = 5086, o.value_numeric, NULL))) AS blood_pressure, ',
       'MAX(IF(o.concept_id = 5087, o.value_numeric, NULL)) AS pulse_rate, ',
@@ -5705,7 +5684,7 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_hts_eligibility_screening
--- Purpose: populate tenant-aware `etl_hts_eligibility_screening`
+-- Purpose: populate tenant-aware etl_hts_eligibility_screening
 -- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 -- --------------------------------------
 
@@ -5716,12 +5695,12 @@ BEGIN
   DECLARE target_table VARCHAR(300);
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_hts_eligibility_screening`');
+SET @target_table = CONCAT(@etl_schema, '.etl_hts_eligibility_screening');
 
 SELECT 'Processing hts screening', CONCAT('Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-'INSERT INTO ', target_table, ' (
+'INSERT INTO ', @target_table, ' (
     patient_id, visit_id, encounter_id, uuid, location_id, provider, visit_date,
     population_type, key_population_type, priority_population_type, patient_disabled,
     disability_type, department, patient_type, is_health_worker, recommended_test,
@@ -5946,8 +5925,8 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_patient_appointments
--- Purpose: populate tenant-aware `etl_patient_appointment`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: populate tenant-aware etl_patient_appointment
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_patient_appointments $$
 CREATE PROCEDURE sp_update_etl_patient_appointments(IN last_update_time DATETIME)
@@ -5956,11 +5935,11 @@ BEGIN
   DECLARE sql_stmt TEXT;
   -- resolve tenant schema
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_patient_appointment`');
-SELECT 'Processing Patient appointment updates', CONCAT('Target: ', target_table, ' Time: ', NOW());
+SET @target_table = CONCAT(@etl_schema, '.etl_patient_appointment');
+SELECT 'Processing Patient appointment updates', CONCAT('Target: ', @target_table, ' Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (patient_appointment_id, provider_id, patient_id, visit_date, start_date_time, end_date_time, appointment_service_id, status, location_id, date_created) ',
+    'INSERT INTO ', @target_table, ' (patient_appointment_id, provider_id, patient_id, visit_date, start_date_time, end_date_time, appointment_service_id, status, location_id, date_created) ',
     'SELECT patient_appointment_id, provider_id, patient_id, DATE(date_appointment_scheduled) AS visit_date, start_date_time, end_date_time, appointment_service_id, status, location_id, date_created ',
     'FROM patient_appointment ',
     'WHERE voided = 0 AND (date_created >= ', IFNULL(CONCAT('''', last_update_time, ''''), 'NULL'),
@@ -5980,9 +5959,9 @@ END $$
 -- sql
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_drug_order
--- Purpose: populate tenant-aware `etl_drug_order`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- Purpose: populate tenant-aware etl_drug_order
+-- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- --------------------------------------
 
 
@@ -5993,12 +5972,12 @@ BEGIN
   DECLARE sql_stmt TEXT;
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_drug_order`');
+SET @target_table = CONCAT(@etl_schema, '.etl_drug_order');
 
-SELECT 'Processing Drug orders', CONCAT('Target: ', target_table, ' Time: ', NOW());
+SELECT 'Processing Drug orders', CONCAT('Target: ', @target_table, ' Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (uuid, encounter_id, order_group_id, patient_id, location_id, visit_date, visit_id, provider, order_id, urgency, drug_id, drug_concept_id, drug_name, frequency, enc_name, dose, dose_units, quantity, quantity_units, dosing_instructions, duration, duration_units, instructions, route, voided, date_voided, date_created, date_last_modified) ',
+    'INSERT INTO ', @target_table, ' (uuid, encounter_id, order_group_id, patient_id, location_id, visit_date, visit_id, provider, order_id, urgency, drug_id, drug_concept_id, drug_name, frequency, enc_name, dose, dose_units, quantity, quantity_units, dosing_instructions, duration, duration_units, instructions, route, voided, date_voided, date_created, date_last_modified) ',
     'SELECT e.uuid, e.encounter_id, o.order_group_id, e.patient_id, e.location_id, DATE(e.encounter_datetime) AS visit_date, e.visit_id, e.creator AS provider, do.order_id, o.urgency, d.drug_id, GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR ''|'') AS drug_concept_id, GROUP_CONCAT(DISTINCT LEFT(d.name,255) SEPARATOR ''+'') AS drug_name, ',
     'COALESCE(GROUP_CONCAT(DISTINCT CASE do.frequency WHEN 1 THEN ''Once daily, in the evening'' WHEN 2 THEN ''Once daily, in the morning'' WHEN 3 THEN ''Twice daily'' WHEN 4 THEN ''Once daily, at bedtime'' WHEN 5 THEN ''Once daily'' WHEN 6 THEN ''Thrice daily'' ELSE ''Unknown'' END SEPARATOR ''|''), ''Unknown'') AS frequency, ',
     'et.name AS enc_name, GROUP_CONCAT(DISTINCT do.dose SEPARATOR ''|'') AS dose, do.dose_units AS dose_units, do.quantity AS quantity, do.quantity_units AS quantity_units, do.dosing_instructions, do.duration, ',
@@ -6023,8 +6002,8 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_preventive_services
--- Purpose: populate tenant-aware `etl_preventive_services`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: populate tenant-aware etl_preventive_services
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_preventive_services $$
 CREATE PROCEDURE sp_update_etl_preventive_services(IN last_update_time DATETIME)
@@ -6033,12 +6012,12 @@ BEGIN
   DECLARE sql_stmt TEXT;
 
 CALL sp_set_tenant_session_vars();
-SET target_table = CONCAT('`', @etl_schema, '`.`etl_preventive_services`');
+SET @target_table = CONCAT(@etl_schema, '.etl_preventive_services');
 
-SELECT 'Processing Preventive services', CONCAT('Target: ', target_table, ' Time: ', NOW());
+SELECT 'Processing Preventive services', CONCAT('Target: ', @target_table, ' Time: ', NOW());
 
 SET sql_stmt = CONCAT(
-    'INSERT INTO ', target_table, ' (',
+    'INSERT INTO ', @target_table, ' (',
       'patient_id, visit_date, provider, location_id, encounter_id, obs_group_id, ',
       'malaria_prophylaxis_1, malaria_prophylaxis_2, malaria_prophylaxis_3, ',
       'tetanus_taxoid_1, tetanus_taxoid_2, tetanus_taxoid_3, tetanus_taxoid_4, ',
@@ -6108,7 +6087,7 @@ PREPARE stmt FROM @sql_stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SELECT 'Completed processing Preventive services data', CONCAT('Target: ', target_table, ' Time: ', NOW());
+SELECT 'Completed processing Preventive services data', CONCAT('Target: ', @target_table, ' Time: ', NOW());
 END $$
 
 
@@ -6118,9 +6097,9 @@ END $$
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_overdose_reporting
--- Purpose: populate tenant-aware `etl_overdose_reporting`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- Purpose: populate tenant-aware etl_overdose_reporting
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- --------------------------------------
 
 
@@ -6135,12 +6114,12 @@ BEGIN
 CALL sp_set_tenant_session_vars();
 
 -- 3. Define the target table and the safe timestamp string
-SET target_table = CONCAT(@etl_schema, '.`etl_overdose_reporting`');
+SET @target_table = CONCAT(@etl_schema, '.etl_overdose_reporting');
     SET last_ts_str = IFNULL(CONCAT('''', last_update_time, ''''), '''1900-01-01 00:00:00''');
 
     -- 4. Build the SQL statement using the @ session variable
     SET @sql_stmt = CONCAT(
-        'INSERT INTO ', target_table, ' (',
+        'INSERT INTO ', @target_table, ' (',
           'client_id, visit_id, encounter_id, uuid, provider, location_id, visit_date, ',
           'overdose_location, overdose_date, incident_type, incident_site_name, incident_site_type, ',
           'naloxone_provided, risk_factors, other_risk_factors, drug, other_drug, outcome, remarks, ',
@@ -6206,14 +6185,14 @@ PREPARE stmt FROM @sql_stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SELECT CONCAT('Completed processing overdose reporting. Target: ', target_table, ' Time: ', NOW()) AS message;
+SELECT CONCAT('Completed processing overdose reporting. Target: ', @target_table, ' Time: ', NOW()) AS message;
 END $$
 
 
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_art_fast_track
--- Purpose: populate tenant-aware `etl_art_fast_track`
--- Notes: calls sp_set_tenant_session_vars() to resolve `etl_schema` then
+-- Purpose: populate tenant-aware etl_art_fast_track
+-- Notes: calls sp_set_tenant_session_vars() to resolve etl_schema then
 --        builds and executes a dynamic INSERT ... ON DUPLICATE KEY UPDATE
 -- --------------------------------------
 
@@ -6224,7 +6203,7 @@ BEGIN
 CALL sp_set_tenant_session_vars();
 
 -- build target table name for tenant
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_art_fast_track`');
+SET @target_table = CONCAT('', etl_schema, '.etl_art_fast_track');
 
   SET @sql_stmt = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -6315,9 +6294,9 @@ END $$
 DROP PROCEDURE IF EXISTS sp_update_etl_clinical_encounter $$
 CREATE PROCEDURE sp_update_etl_clinical_encounter(IN last_update_time DATETIME)
 BEGIN
-  -- set tenant/session vars (expects sp_set_tenant_session_vars to populate `etl_schema`)
+  -- set tenant/session vars (expects sp_set_tenant_session_vars to populate etl_schema)
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_clinical_encounter`');
+SET @target_table = CONCAT(@etl_schema, '.etl_clinical_encounter');
 
 SELECT 'Processing Clinical Encounter' AS status;
 
@@ -6466,17 +6445,17 @@ END $$
 -- sql
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_pep_management_survivor
--- Purpose: update tenant-aware `etl_pep_management_survivor`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: update tenant-aware etl_pep_management_survivor
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_pep_management_survivor $$
 CREATE PROCEDURE sp_update_etl_pep_management_survivor(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
 
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_pep_management_survivor`');
+SET @target_table = CONCAT(@etl_schema, '.etl_pep_management_survivor');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -6551,10 +6530,10 @@ END $$
 
 sql
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_sgbv_pep_followup
--- Purpose: populate tenant-aware `etl_sgbv_pep_followup`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: populate tenant-aware etl_sgbv_pep_followup
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_sgbv_pep_followup $$
@@ -6563,7 +6542,7 @@ BEGIN
   -- resolve tenant schema (expects sp_set_tenant_session_vars to set @etl_schema)
 CALL sp_set_tenant_session_vars();
 
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_sgbv_pep_followup`');
+SET @target_table = CONCAT(@etl_schema, '.etl_sgbv_pep_followup');
 
 SELECT CONCAT('Processing SGBV PEP followup -> ', @target_table) AS status;
 
@@ -6632,16 +6611,16 @@ END $$
 
 
 
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_sgbv_post_rape_care
--- Purpose: populate tenant-aware `etl_sgbv_post_rape_care`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: populate tenant-aware etl_sgbv_post_rape_care
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 DROP PROCEDURE IF EXISTS sp_update_etl_sgbv_post_rape_care $$
 CREATE PROCEDURE sp_update_etl_sgbv_post_rape_care(IN last_update_time DATETIME)
 BEGIN
   -- resolve tenant schema variable @etl_schema
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_sgbv_post_rape_care`');
+SET @target_table = CONCAT(@etl_schema, '.etl_sgbv_post_rape_care');
 
 SELECT CONCAT('Processing SGBV post rape care -> ', @target_table) AS status;
 
@@ -6771,17 +6750,17 @@ END $$
 
 
 
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_gbv_physical_emotional_abuse
--- Purpose: populate tenant-aware `etl_gbv_physical_emotional_abuse`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: populate tenant-aware etl_gbv_physical_emotional_abuse
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 DROP PROCEDURE IF EXISTS sp_update_etl_gbv_physical_emotional_abuse $$
 CREATE PROCEDURE sp_update_etl_gbv_physical_emotional_abuse(IN last_update_time DATETIME)
 BEGIN
   -- resolve tenant schema; implementation must set @etl_schema
 CALL sp_set_tenant_session_vars();
 
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_gbv_physical_emotional_abuse`');
+SET @target_table = CONCAT(@etl_schema, '.etl_gbv_physical_emotional_abuse');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (patient_id, visit_id, encounter_id, uuid, location_id, provider, visit_date, gbv_number, referred_from, entry_point, other_referral_source, type_of_violence, date_of_incident, trauma_counselling, trauma_counselling_comments, referred_to, other_referral, voided) ',
@@ -6831,17 +6810,17 @@ END $$
 
 -- sql
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_family_planning
--- Purpose: populate tenant-aware `etl_family_planning`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and builds dynamic INSERT target
+-- Purpose: populate tenant-aware etl_family_planning
+-- Tenant-aware: calls sp_set_tenant_session_vars() and builds dynamic INSERT target
 -- --------------------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_family_planning $$
 CREATE PROCEDURE sp_update_etl_family_planning(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_family_planning`');
+SET @target_table = CONCAT(@etl_schema, '.etl_family_planning');
 
 SELECT CONCAT('Processing Family planning -> ', @target_table) AS status;
 
@@ -6916,10 +6895,10 @@ END $$
 
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_physiotherapy
--- Purpose: populate tenant-aware `etl_physiotherapy`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and builds dynamic INSERT target
+-- Purpose: populate tenant-aware etl_physiotherapy
+-- Tenant-aware: calls sp_set_tenant_session_vars() and builds dynamic INSERT target
 
 
 -- --------------------------------------
@@ -6928,7 +6907,7 @@ CREATE PROCEDURE sp_update_etl_physiotherapy(IN last_update_time DATETIME)
 BEGIN
   -- initialize tenant variables
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_physiotherapy`');
+SET @target_table = CONCAT(@etl_schema, '.etl_physiotherapy');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -7025,17 +7004,17 @@ END $$
 
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_psychiatry
--- Purpose: populate tenant-aware `etl_psychiatry`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
+-- Purpose: populate tenant-aware etl_psychiatry
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
 -- --------------------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_psychiatry $$
 CREATE PROCEDURE sp_update_etl_psychiatry(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_psychiatry`');
+SET @target_table = CONCAT('', etl_schema, '.etl_psychiatry');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (patient_id, visit_id, encounter_id, uuid, location_id, provider, visit_date, visit_type, referred_from, referred_from_department, presenting_allegations, other_allegations, contact_with_TB_case, history_of_present_illness, surgical_history, type_of_surgery, surgery_date, on_medication, childhood_mistreatment, persistent_cruelty_meanness, physically_abused, sexually_abused, patient_occupation_history, reproductive_history, lmp_date, general_examination_findings, mental_status, attitude_and_behaviour, speech, mood, illusions, attention_concentration, memory_recall, judgement, insight, affect, thought_process, thought_content, hallucinations, orientation_status, management_plan, counselling_prescribed, patient_outcome, referred_to, facility_transferred_to, date_of_admission, reason_for_admission, type_of_admission, priority_of_admission, admission_ward, duration_of_hospital_stay, voided) ',
@@ -7149,17 +7128,17 @@ END $$
 
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_kvp_clinical_enrollment
--- Purpose: update tenant-aware `etl_kvp_clinical_enrollment`
--- Notes: calls sp_set_tenant_session_vars() to resolve `etl_schema` then
+-- Purpose: update tenant-aware etl_kvp_clinical_enrollment
+-- Notes: calls sp_set_tenant_session_vars() to resolve etl_schema then
 --        builds and executes a dynamic INSERT ... ON DUPLICATE KEY UPDATE
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_kvp_clinical_enrollment $$
 CREATE PROCEDURE sp_update_etl_kvp_clinical_enrollment(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_kvp_clinical_enrollment`');
+SET @target_table = CONCAT('', etl_schema, '.etl_kvp_clinical_enrollment');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (patient_id, visit_id, encounter_id, uuid, location_id, provider, visit_date, contacted_by_pe_for_health_services, has_regular_non_paying_sexual_partner, number_of_sexual_partners, year_started_fsw, year_started_msm, year_started_using_drugs, trucker_duration_on_transit, duration_working_as_trucker, duration_working_as_fisherfolk, year_tested_discordant_couple, ever_experienced_violence, type_of_violence_experienced, ever_tested_for_hiv, latest_hiv_test_method, latest_hiv_test_results, willing_to_test_for_hiv, reason_not_willing_to_test_for_hiv, receiving_hiv_care, hiv_care_facility, other_hiv_care_facility, ccc_number, consent_followup, date_created, date_last_modified, voided) ',
@@ -7204,18 +7183,18 @@ SELECT CONCAT('Completed processing KVP Clinical enrollment -> ', @target_table,
 END $$
 
 
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_special_clinics
--- Purpose: update tenant-aware `etl_special_clinics`
+-- Purpose: update tenant-aware etl_special_clinics
 -- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 
 DROP PROCEDURE IF EXISTS sp_update_etl_special_clinics $$
 CREATE PROCEDURE sp_update_etl_special_clinics(IN last_update_time DATETIME)
 BEGIN
-  -- initialize tenant session vars (must set `etl_schema`)
+  -- initialize tenant session vars (must set etl_schema)
 CALL sp_set_tenant_session_vars();
 
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_special_clinics`');
+SET @target_table = CONCAT('', etl_schema, '.etl_special_clinics');
 
 SELECT CONCAT('Processing ', @target_table) AS status;
 
@@ -7459,17 +7438,17 @@ END $$
 
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_high_iit_intervention
--- Purpose: update tenant-aware `etl_high_iit_intervention`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
+-- Purpose: update tenant-aware etl_high_iit_intervention
+-- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_high_iit_intervention $$
 CREATE PROCEDURE sp_update_etl_high_iit_intervention(IN last_update_time DATETIME)
 BEGIN
   -- resolve tenant schema variable
 CALL sp_set_tenant_session_vars();
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_high_iit_intervention`');
+SET @target_table = CONCAT('', etl_schema, '.etl_high_iit_intervention');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -7546,10 +7525,10 @@ END $$
 -- sql
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_home_visit_checklist
--- Purpose: update tenant-aware `etl_home_visit_checklist`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and builds dynamic INSERT target
+-- Purpose: update tenant-aware etl_home_visit_checklist
+-- Tenant-aware: calls sp_set_tenant_session_vars() and builds dynamic INSERT target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_home_visit_checklist $$
 CREATE PROCEDURE sp_update_etl_home_visit_checklist(IN last_update_time DATETIME)
@@ -7558,7 +7537,7 @@ BEGIN
 CALL sp_set_tenant_session_vars();
 
 -- fully qualified target table for the current tenant
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_home_visit_checklist`');
+SET @target_table = CONCAT('', etl_schema, '.etl_home_visit_checklist');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -7629,21 +7608,21 @@ END $$
 
 
 -- sql
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_ncd_enrollment
--- Purpose: update tenant-aware `etl_ncd_enrollment`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
+-- Purpose: update tenant-aware etl_ncd_enrollment
+-- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 -- --------------------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_ncd_enrollment $$
 CREATE PROCEDURE sp_update_etl_ncd_enrollment(IN last_update_time DATETIME)
 BEGIN
-  -- ensure tenant variables (sets `etl_schema` etc.)
+  -- ensure tenant variables (sets etl_schema etc.)
 CALL sp_set_tenant_session_vars();
 
 -- build target table name for tenant
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_ncd_enrollment`');
+SET @target_table = CONCAT('', etl_schema, '.etl_ncd_enrollment');
 
 SELECT CONCAT('Processing NCD Enrollment data ', 'Target: ', @target_table, ' Time: ', NOW()) AS status;
 
@@ -7829,10 +7808,10 @@ END $$
 -- sql
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_adr_assessment_tool
--- Purpose: update tenant-aware `etl_adr_assessment_tool`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
+-- Purpose: update tenant-aware etl_adr_assessment_tool
+-- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_adr_assessment_tool $$
 CREATE PROCEDURE sp_update_etl_adr_assessment_tool(IN last_update_time DATETIME)
@@ -7840,7 +7819,7 @@ BEGIN
   -- set tenant session variables (must be implemented elsewhere)
 CALL sp_set_tenant_session_vars();
 
-SET @target_table = CONCAT('`', etl_schema, '`.`etl_adr_assessment_tool`');
+SET @target_table = CONCAT('', etl_schema, '.etl_adr_assessment_tool');
 
   SET @sql = CONCAT(
     'INSERT INTO ', @target_table, ' (',
@@ -7962,17 +7941,17 @@ END $$
 -- sql
 
 -- --------------------------------------
--- File: `src/main/resources/sql/hiv/Scheduled_Updates.sql`
+-- File: src/main/resources/sql/hiv/Scheduled_Updates.sql
 -- PROCEDURE: sp_update_etl_ncd_followup
--- Purpose: update tenant-aware `etl_ncd_followup`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and inserts into dynamic target
+-- Purpose: update tenant-aware etl_ncd_followup
+-- Tenant-aware: calls sp_set_tenant_session_vars() and inserts into dynamic target
 -- --------------------------------------
 DROP PROCEDURE IF EXISTS sp_update_etl_ncd_followup $$
 CREATE PROCEDURE sp_update_etl_ncd_followup(IN last_update_time DATETIME)
 BEGIN
 CALL sp_set_tenant_session_vars();
 
-SET @target_table = CONCAT('`', @etl_schema, '`.`etl_ncd_followup`');
+SET @target_table = CONCAT(@etl_schema, '.etl_ncd_followup');
 
   SET @sql = CONCAT(
 'INSERT INTO ', @target_table, ' (',
@@ -8070,9 +8049,9 @@ END $$
 -- sql
 -- --------------------------------------
 -- PROCEDURE: sp_update_etl_inpatient_admission
--- Purpose: update tenant-aware `etl_inpatient_admission`
--- Tenant-aware: calls `sp_set_tenant_session_vars()` and uses dynamic INSERT target
--- File: `src/main/resources/sql/hiv/DML.sql`
+-- Purpose: update tenant-aware etl_inpatient_admission
+-- Tenant-aware: calls sp_set_tenant_session_vars() and uses dynamic INSERT target
+-- File: src/main/resources/sql/hiv/DML.sql
 -- --------------------------------------
 
 DROP PROCEDURE IF EXISTS sp_update_etl_inpatient_admission $$
@@ -8162,29 +8141,25 @@ END $$
 
 
 
--- ---------------------------------------------------------
--- 3. Master: Scheduled Updates Master Procedure
--- ---------------------------------------------------------
-;
+/* =========================================================
+   First Time Setup (Master)
+   ========================================================= */
 DROP PROCEDURE IF EXISTS sp_scheduled_updates $$
 CREATE PROCEDURE sp_scheduled_updates()
 BEGIN
-    DECLARE update_script_id INT DEFAULT NULL;
+    DECLARE update_script_id INT(11);
     DECLARE last_update_time DATETIME;
-    DECLARE sql_stmt TEXT;
-CALL sp_set_tenant_session_vars();
 
+    CALL sp_set_tenant_session_vars();
 
-SET sql_stmt = CONCAT('SELECT MAX(start_time) INTO @last_update_time FROM ', @script_status_table, ' WHERE stop_time IS NOT NULL AND script_name IN (''initial_population_of_tables'', ''scheduled_updates'');');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET last_update_time = @last_update_time;
+    SELECT 'Beginning scheduled update', NOW();
 
-    SET sql_stmt = CONCAT('INSERT INTO ', @script_status_table, ' (script_name, start_time, status) VALUES (''scheduled_updates'', NOW(), ''Running'');');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-SET update_script_id = LAST_INSERT_ID();
+    -- Log start in status table
+    SET @sql_log := CONCAT('INSERT INTO ', @script_status_table_quoted, ' (script_name, start_time) VALUES (''initial_population'', NOW())');
+    PREPARE stmt FROM @sql_log; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+    SET update_script_id = LAST_INSERT_ID();
 
-    -- 4. Run worker
-CALL sp_update_etl_patient_demographics(last_update_time);
+    CALL sp_update_etl_patient_demographics(last_update_time);
 CALL sp_update_etl_hiv_enrollment(last_update_time);
 CALL sp_update_etl_hiv_followup(last_update_time);
 CALL sp_update_etl_program_discontinuation(last_update_time);
@@ -8234,7 +8209,6 @@ CALL sp_update_etl_kp_sti_treatment(last_update_time);
 CALL sp_update_etl_kp_peer_calendar(last_update_time);
 CALL sp_update_etl_kp_peer_tracking(last_update_time);
 CALL sp_update_etl_kp_treatment_verification(last_update_time);
--- CALL sp_update_etl_gender_based_violence(last_update_time);
 CALL sp_update_etl_PrEP_verification(last_update_time);
 CALL sp_update_etl_alcohol_drug_abuse_screening(last_update_time);
 CALL sp_update_etl_gbv_screening(last_update_time);
@@ -8263,7 +8237,6 @@ CALL sp_update_etl_gbv_physical_emotional_abuse(last_update_time);
 CALL sp_update_etl_family_planning(last_update_time);
 CALL sp_update_etl_physiotherapy(last_update_time);
 CALL sp_update_etl_psychiatry(last_update_time);
--- CALL sp_update_etl_special_clinics(last_update_time);
 CALL sp_update_etl_kvp_clinical_enrollment(last_update_time);
 CALL sp_update_etl_high_iit_intervention(last_update_time);
 CALL sp_update_etl_home_visit_checklist(last_update_time);
@@ -8276,15 +8249,8 @@ CALL sp_update_etl_inpatient_admission(last_update_time);
 CALL sp_update_etl_inpatient_discharge(last_update_time);
 CALL sp_update_dashboard_table();
 
+    SET @sql_upd := CONCAT('UPDATE ', @script_status_table_quoted, ' SET stop_time=NOW() WHERE id=', update_script_id);
+    PREPARE stmt FROM @sql_upd; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-
-SET sql_stmt = CONCAT('UPDATE ', @script_status_table, ' SET stop_time = NOW(), status = ''Completed'' WHERE id = ', update_script_id, ';');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SET sql_stmt = CONCAT('DELETE FROM ', @script_status_table, ' WHERE start_time < DATE_SUB(NOW(), INTERVAL 12 HOUR);');
-PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
-SELECT update_script_id AS 'Update_ID', last_update_time AS 'Incremental_From';
+    SELECT update_script_id, NOW();
 END $$
-
-SET SQL_MODE=@OLD_SQL_MODE $$
