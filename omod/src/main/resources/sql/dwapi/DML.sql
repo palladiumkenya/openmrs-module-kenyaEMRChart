@@ -3574,6 +3574,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
         other_reason_specify,
         risk_education_offered,
         risk_reduction,
+        on_contraceptives,
         assessment_outcome,
         willing_to_take_prep,
         reason_not_willing,
@@ -3613,6 +3614,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
            max(if(o.concept_id = 160632, o.value_text, null )) as other_reason_specify,
            max(if(o.concept_id = 165053, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as risk_education_offered,
            max(if(o.concept_id = 165092, o.value_text, null )) as risk_reduction,
+           max(if(o.concept_id = 374, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as on_contraceptives,
            max(if(o.concept_id = 165091, (case o.value_coded when 138643 then "Risk" when 1066 then "No risk" else "" end), "" )) as assessment_outcome,
            max(if(o.concept_id = 165094, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as willing_to_take_prep,
            CONCAT_WS(',',max(if(o.concept_id = 1743 and o.value_coded = 1107,  "None",NULL)),
@@ -3648,7 +3650,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_behaviour_risk_assessment()
     from encounter e
              inner join person p on p.person_id=e.patient_id and p.voided=0
              inner join form f on f.form_id=e.form_id and f.uuid in ("40374909-05fc-4af8-b789-ed9c394ac785")
-             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825,164393,165356) and o.voided=0
+             inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1436,160119,163310,160581,159385,160579,156660,164845,141814,165088,165089,165090,165241,160632,165091,165053,165092,165094,1743,161595,161011,165093,161550,160082,165095,162053,159599,165096,165097,1825,164393,165356,374) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing Behaviour risk assessment forms", CONCAT("Time: ", NOW());
   END $$
@@ -3679,6 +3681,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
         prep_status,
         switching_option,
         switching_date,
+        dosing_strategy,
         prep_type,
         prescribed_prep_today,
         prescribed_regimen,
@@ -3711,7 +3714,8 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
            max(if(o.concept_id = 161641, (case o.value_coded when 159836 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 159835 then "Continue" else "" end), "" )) as prep_status,
            max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
            max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
-           max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
+           max(if(o.concept_id = 166535, (case o.value_coded when 5424 then "Event Driven" when 165269 then "Daily Oral PrEP" when 168050 then "Long acting PrEP" else "" end), "" )) as dosing_strategy,
+           max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven"  when 168709 then "Lenacapavir" else "" end), "" )) as prep_type,
            max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as prescribed_prep_today,
            max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" when 168050 then "CAB-LA" when 168049 then "Dapivirine Ring"  else "" end), "" )) as prescribed_regimen,
            max(if(o.concept_id = 164433, o.value_text, null )) as prescribed_regimen_months,
@@ -3727,7 +3731,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_monthly_refill()
     from encounter e
            inner join person p on p.person_id=e.patient_id and p.voided=0
            inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055) and o.voided=0
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055,166535) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
   END $$
@@ -3809,6 +3813,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
         initial_enrolment_date,
         date_started_prep_trf_facility,
         previously_on_prep,
+        dosing_strategy,
         prep_type,
         regimen,
         prep_last_date,
@@ -3834,7 +3839,8 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
            max(if(o.concept_id = 160555, o.value_datetime, null )) as initial_enrolment_date,
            max(if(o.concept_id = 159599, o.value_datetime, null )) as date_started_prep_trf_facility,
            max(if(o.concept_id = 160533, (case o.value_coded when 1065 then "Yes" when 1066 then "No" else "" end), "" )) as previously_on_prep,
-           max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
+           max(if(o.concept_id = 166535, (case o.value_coded when 5424 then "Event Driven" when 165269 then "Daily Oral PrEP" when 168050 then "Long acting PrEP" else "" end), "" )) as dosing_strategy,
+           max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" when 168709 then "Lenacapavir" else "" end), "" )) as prep_type,
            max(if(o.concept_id = 1088, (case o.value_coded when 104567 then "TDF/FTC" when 84795 then "TDF" when 161364 then "TDF/3TC" else "" end), "" )) as regimen,
            max(if(o.concept_id = 162881, o.value_datetime, null )) as prep_last_date,
            max(if(o.concept_id = 5629, o.value_coded, null )) as in_school,
@@ -3847,7 +3853,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_enrolment()
     from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581,166866) and o.voided=0
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088162881,5629,160638,165038,160640,160642,160641,164930,160581,166866,166535) and o.voided=0
     group by e.encounter_id;
     SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
   END $$
@@ -3909,8 +3915,10 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
         prep_contraindications,
         treatment_plan,
         reason_for_starting_prep,
+        other_reason_for_prep,
         switching_option,
         switching_date,
+        dosing_strategy,
         prep_type,
         prescribed_PrEP,
         regimen_prescribed,
@@ -3982,9 +3990,11 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
                   max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
         max(if(o.concept_id = 165109, (case o.value_coded when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 1257 then "Continue" else "" end), "" )) as treatment_plan,
         max(if(o.concept_id = 159623, o.value_coded, null)) as reason_for_starting_prep,
+        max(if(o.concept_id = 165241, o.value_coded, null)) as other_reason_for_prep,
         max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
         max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
-        max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven" else "" end), "" )) as prep_type,
+        max(if(o.concept_id = 166535, (case o.value_coded when 5424 then "Event Driven" when 165269 then "Daily Oral PrEP" when 168050 then "Long acting PrEP" else "" end), "" )) as dosing_strategy,
+        max(if(o.concept_id = 166866, (case o.value_coded when 165269 then "Daily Oral PrEP" when 168050 then "CAB-LA" when 168049 then "Dapivirine ring" when 5424 then "Event Driven"  when 168709 then "Lenacapavir" else "" end), "" )) as prep_type,
         max(if(o.concept_id = 1417, (case o.value_coded when 1065 then "Yes" when 1066 then "No" end), "" )) as prescribed_PrEP,
         max(if(o.concept_id = 164515, (case o.value_coded when 161364 then "TDF/3TC" when 84795 then "TDF" when 104567 then "TDF/FTC(Preferred)" when 168050 then "CAB-LA" when 168049 then "Dapivirine Ring" end), "" )) as regimen_prescribed,
         max(if(o.concept_id = 164433, o.value_text, null)) as months_prescribed_regimen,
@@ -4000,7 +4010,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
              inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
-                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354,159623) and o.voided=0
+                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354,159623,165241,166535) and o.voided=0
     group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
   END $$
