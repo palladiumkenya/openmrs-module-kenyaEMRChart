@@ -4202,7 +4202,7 @@ CREATE PROCEDURE sp_populate_etl_prep_monthly_refill()
     from encounter e
            inner join person p on p.person_id=e.patient_id and p.voided=0
            inner join form f on f.form_id=e.form_id and f.uuid in ("291c03c8-a216-11e9-a2a3-2a2ae2dbcce4")
-           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055) and o.voided=0
+           inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (1169,162189,164075,160582,160632,165144,167788,164425,166866,161641,1417,164515,164433,161555,164999,161011,5096,138643,165055,166535) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing monthly refill", CONCAT("Time: ", NOW());
@@ -4327,7 +4327,7 @@ CREATE PROCEDURE sp_populate_etl_prep_enrolment()
     from encounter e
 			inner join person p on p.person_id=e.patient_id and p.voided=0
 			inner join form f on f.form_id=e.form_id and f.uuid in ("d5ca78be-654e-4d23-836e-a934739be555")
-      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088,166866,162881,5629,160638,165038,160640,160642,160641,164930,160581) and o.voided=0
+      inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (164932,160540,162724,161550,160534,160535,160555,159599,160533,1088,166866,162881,5629,160638,165038,160640,160642,160641,164930,160581,166535) and o.voided=0
     where e.voided=0
     group by e.encounter_id;
     SELECT "Completed processing PrEP enrolment", CONCAT("Time: ", NOW());
@@ -4483,7 +4483,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
              inner join form f on f.form_id=e.form_id and f.uuid in ("ee3e2017-52c0-4a54-99ab-ebb542fb8984","1bfb09fc-56d7-4108-bd59-b2765fd312b8")
              inner join obs o on o.encounter_id = e.encounter_id and o.concept_id in (161558,165098,165200,165308,165099,1272,1472,5272,5596,1426,164933,5632,160653,374,
                                                                                       165103,161033,1596,164122,162747,1284,159948,1282,1443,1444,160855,159368,1732,121764,1193,159935,162760,1255,160557,160643,159935,162760,160753,165101,165104,165106,
-                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354,159623,165241) and o.voided=0
+                                                                                      165109,167788,165144,166866,159777,165055,165309,5096,165310,163042,134346,164075,160582,160632,1417,164515,164433,165353,165354,159623,165241,166535) and o.voided=0
     where e.voided=0
     group by e.patient_id,visit_date;
     SELECT "Completed processing PrEP follow-up form", CONCAT("Time: ", NOW());
