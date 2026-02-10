@@ -3524,7 +3524,6 @@ CREATE TABLE kenyaemr_etl.etl_patient_appointment(
 );
 
 -- create table etl_drug_orders
-
 CREATE TABLE kenyaemr_etl.etl_drug_order (
   uuid CHAR(38),
   encounter_id INT(11) NOT NULL PRIMARY KEY,
@@ -3537,9 +3536,9 @@ CREATE TABLE kenyaemr_etl.etl_drug_order (
   order_id INT(11),
   urgency VARCHAR(50),
   drug_id INT(11),
-  drug_concept_id VARCHAR(50),
-  drug_short_name VARCHAR(50),
-  drug_name VARCHAR(255),
+  drug_concept_id VARCHAR(500),
+  drug_short_name VARCHAR(500),
+  drug_name VARCHAR(1000),
   frequency VARCHAR(100),
   enc_name VARCHAR(100),
   dose VARCHAR(50),
@@ -4054,6 +4053,7 @@ CREATE TABLE kenyaemr_etl.etl_psychiatry
     referred_from                INT(11),
     referred_from_department     INT(11),
     presenting_allegations       INT(11),
+    screened_for_alcohol_abuse   INT(11),
     other_allegations            VARCHAR(255),
     contact_with_TB_case         INT(11),
     history_of_present_illness   VARCHAR(255),

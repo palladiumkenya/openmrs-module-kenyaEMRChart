@@ -3988,7 +3988,7 @@ CREATE PROCEDURE sp_populate_dwapi_prep_followup()
                   max(if(o.concept_id = 165106 and o.value_coded = 155589, "Renal impairment",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 127750, "Not willing",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
-        max(if(o.concept_id = 165109, (case o.value_coded when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 164515 then "Switch"  when 1257 then "Continue" else "" end), "" )) as treatment_plan,
+        max(if(o.concept_id = 165109, (case o.value_coded when 165203 then 'Start' when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 2032221 then "Switch" when 164515  then 'Switch' when 1257 then "Continue" else "" end), "" )) as treatment_plan,
         max(if(o.concept_id = 159623, o.value_coded, null)) as reason_for_starting_prep,
         max(if(o.concept_id = 165241, o.value_coded, null)) as other_reason_for_prep,
         max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
@@ -7442,7 +7442,7 @@ BEGIN
         o.urgency,
         d.drug_id,
         GROUP_CONCAT(DISTINCT o.concept_id SEPARATOR '|') AS drug_concept_id,
-        GROUP_CONCAT(DISTINCT LEFT(d.name, 255) SEPARATOR '+') AS drug_name,
+        GROUP_CONCAT(DISTINCT d.name SEPARATOR '+') AS drug_name,
         COALESCE(
                 GROUP_CONCAT(DISTINCT
                              CASE do.frequency
@@ -8692,6 +8692,7 @@ INSERT INTO dwapi_etl.etl_psychiatry (patient_id,
   referred_from,
   referred_from_department,
   presenting_allegations,
+  screened_for_alcohol_abuse,
   other_allegations,
   contact_with_TB_case,
   history_of_present_illness,
@@ -8747,6 +8748,7 @@ max(if(o.concept_id = 164181, o.value_coded, null))                             
 max(if(o.concept_id = 160338, o.value_coded, null))                                     as referred_from,
 max(if(o.concept_id = 160478, o.value_coded, null))                                     as referred_from_department,
 max(if(o.concept_id = 5219, o.value_coded, null))                                       as presenting_allegations,
+max(if(o.concept_id = 165043, o.value_coded, null))                                     as screened_for_alcohol_abuse,
 max(if(o.concept_id = 165250, o.value_text, null))                                      as other_allegations,
 max(if(o.concept_id = 124068, o.value_coded, null))                                     as contact_with_TB_case,
 max(if(o.concept_id = 1390, o.value_text, null))                                        as history_of_present_illness,
@@ -8837,7 +8839,7 @@ left outer join obs o on o.encounter_id = e.encounter_id and o.concept_id in
                                    167106, 167112, 167181, 167084, 163104,
                                    165104, 160433,
                                    163145, 159495, 162724, 1640, 162879, 162477,
-                                   1655, 1000075, 1896, 165302)
+                                   1655, 1000075, 1896, 165302, 165043)
 and o.voided = 0
 group by e.patient_id, date(e.encounter_datetime);
 SELECT "Completed processing psychiatry";
