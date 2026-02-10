@@ -4454,7 +4454,7 @@ CREATE PROCEDURE sp_populate_etl_prep_followup()
                   max(if(o.concept_id = 165106 and o.value_coded = 155589, "Renal impairment",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 127750, "Not willing",NULL)),
                   max(if(o.concept_id = 165106 and o.value_coded = 165105, "Less than 35ks and under 15 yrs",NULL))) as prep_contraindications,
-        max(if(o.concept_id = 165109, (case o.value_coded when 165203 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 2032221 then "Switch"  when 1257 then "Continue" else "" end), "" )) as treatment_plan,
+        max(if(o.concept_id = 165109, (case o.value_coded when 165203 then 'Start' when 1256 then 'Start' when 1260 then "Discontinue" when 162904 then "Restart" when 2032221 then "Switch" when 164515  then 'Switch' when 1257 then "Continue" else "" end), "" )) as treatment_plan,
         max(if(o.concept_id = 159623, o.value_coded, null)) as reason_for_starting_prep,
         max(if(o.concept_id = 167788, (case o.value_coded when 159737 then "Client Preference" when 160662 then "Stock-out" when 121760 then "Adverse Drug Reactions" when 141748 then "Drug Interactions" when 167533 then "Discontinuing Injection PrEP" else "" end), "" )) as switching_option,
         max(if(o.concept_id = 165144, o.value_datetime, null )) as switching_date,
